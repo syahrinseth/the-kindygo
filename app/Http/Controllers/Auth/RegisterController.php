@@ -3,10 +3,12 @@
 namespace App\Http\Controllers\Auth;
 
 use App\Http\Controllers\Controller;
+use App\Models\Tenant;
 use App\Models\User;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Hash;
 use Spatie\Permission\Models\Role;
 
 class RegisterController extends Controller
@@ -24,17 +26,39 @@ class RegisterController extends Controller
             'password' => 'required|string|min:8|confirmed',
         ]);
 
-        $user = User::create([
+        // Wrap creation in a transaction
+        $data = DB::transaction(function () use ($request) {
+            // Create the user
+            $user = User::create([
             'name' => $request->name,
             'email' => $request->email,
             'password' => Hash::make($request->password),
-        ]);
+            ]);
 
-        // Assign the Parent role to the new user
-        $user->assignRole('Parent');
+            // Assign the Admin role to the new user
+            $user->assignRole('Admin');
+
+            // Create a personal tenant for the user
+            $tenant = Tenant::create([
+            'name' => "{$user->name}'s Company",
+            'slug' => str($user->name)->slug() . '-company',
+            'user_id' => $user->id,
+            'personal_tenant' => true,
+            'email' => $user->email,
+            ]);
+
+            return ['user' => $user, 'tenant' => $tenant];
+        });
+
+        $user = $data['user'];
+        $tenant = $data['tenant'];
+
+        // Add user to the tenant
+        $tenant->addUser($user);
 
         Auth::login($user);
 
-        return redirect()->route('home');
+        return redirect()->route('filament.app.tenant')
+            ->with('success', 'Registration successful! Welcome to the platform.');
     }
 }

@@ -17,8 +17,3 @@ Route::middleware('guest')->group(function () {
 });
 
 Route::post('/logout', [LoginController::class, 'logout'])->name('logout')->middleware('auth');
-
-// After login route
-Route::get('/dashboard', function () {
-    return view('dashboard');
-})->middleware('auth')->name('home');

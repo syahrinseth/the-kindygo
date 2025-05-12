@@ -23,6 +23,8 @@ class ParentResource extends Resource
     protected static ?string $navigationGroup = 'User Management';
 
     protected static ?string $navigationLabel = 'Parents';
+    
+    protected static ?string $tenantOwnershipRelationshipName = 'tenants';
 
     protected static ?string $label = 'Parent';
 

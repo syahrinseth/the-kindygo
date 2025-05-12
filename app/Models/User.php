@@ -35,7 +35,6 @@ class User extends Authenticatable implements FilamentUser, HasDefaultTenant, Ha
         'name',
         'email',
         'password',
-        'tenant_id',
     ];
 
     /**
@@ -59,16 +58,6 @@ class User extends Authenticatable implements FilamentUser, HasDefaultTenant, Ha
             'email_verified_at' => 'datetime',
             'password' => 'hashed',
         ];
-    }
-
-    /**
-     * Get the tenant that owns the user.
-     *
-     * @return BelongsTo
-     */
-    public function tenant(): BelongsTo
-    {
-        return $this->belongsTo(Tenant::class);
     }
 
     public function tenants(): BelongsToMany
@@ -96,12 +85,7 @@ class User extends Authenticatable implements FilamentUser, HasDefaultTenant, Ha
      */
     public function getDefaultTenant(Panel $panel): ?Model
     {
-        // First try the directly assigned tenant
-        if ($this->tenant_id && $this->tenant) {
-            return $this->tenant;
-        }
-
-        // Then try to find a personal tenant
+        // Try to find a personal tenant first
         $personalTenant = $this->tenants()
             ->where('personal_tenant', true)
             ->first();
@@ -122,12 +106,11 @@ class User extends Authenticatable implements FilamentUser, HasDefaultTenant, Ha
     /**
      * Get the latest tenant relationship
      */
-    public function latestTenant(): BelongsTo
+    public function latestTenant(): BelongsToMany
     {
-        return $this->belongsTo(Tenant::class, 'tenant_id')
-            ->latest('tenant_user.updated_at')
-            ->join('tenant_user', 'tenants.id', '=', 'tenant_user.tenant_id')
-            ->where('tenant_user.user_id', $this->id);
+        return $this->belongsToMany(Tenant::class)
+            ->orderByPivot('updated_at', 'desc')
+            ->limit(1);
     }
 
     /**
@@ -135,25 +118,11 @@ class User extends Authenticatable implements FilamentUser, HasDefaultTenant, Ha
      */
     public function setCurrentTenant(?Tenant $tenant): void
     {
-        $this->tenant()->associate($tenant);
-        $this->save();
-
-        if ($tenant) {
+        if ($tenant && $this->canAccessTenant($tenant)) {
             // Update the last access timestamp in the pivot table
             $this->tenants()->updateExistingPivot($tenant->id, [
                 'updated_at' => now(),
             ]);
-        }
-    }
-
-    /**
-     * Set the default tenant for the user
-     */
-    public function setDefaultTenant(Tenant $tenant): void
-    {
-        if ($this->canAccessTenant($tenant)) {
-            $this->tenant()->associate($tenant);
-            $this->save();
         }
     }
 }
