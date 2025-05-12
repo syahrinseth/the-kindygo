@@ -2,8 +2,8 @@
 
 namespace App\Filament\Resources;
 
-use App\Filament\Resources\UserResource\Pages;
-use App\Filament\Resources\UserResource\RelationManagers;
+use App\Filament\Resources\ParentResource\Pages;
+use App\Filament\Resources\ParentResource\RelationManagers;
 use App\Models\User;
 use Filament\Forms;
 use Filament\Forms\Form;
@@ -14,17 +14,29 @@ use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\SoftDeletingScope;
 use App\Filament\Forms\UserForm;
 
-class UserResource extends Resource
+class ParentResource extends Resource
 {
     protected static ?string $model = User::class;
 
-    protected static ?string $navigationIcon = 'heroicon-o-users';
+    protected static ?string $navigationIcon = 'heroicon-o-user-group';
 
     protected static ?string $navigationGroup = 'User Management';
 
+    protected static ?string $navigationLabel = 'Parents';
+
+    protected static ?string $label = 'Parent';
+
+    public static function getEloquentQuery(): Builder
+    {
+        return parent::getEloquentQuery()
+            ->whereHas('roles', fn (Builder $query) => 
+                $query->where('name', 'parent')
+            );
+    }
+
     public static function form(Form $form): Form
     {
-        return $form->schema(UserForm::make(showRoleSelect: true));
+        return $form->schema(UserForm::make(showRoleSelect: false));
     }
 
     public static function table(Table $table): Table
@@ -35,9 +47,6 @@ class UserResource extends Resource
                     ->searchable()
                     ->sortable(),
                 Tables\Columns\TextColumn::make('email')
-                    ->searchable()
-                    ->sortable(),
-                Tables\Columns\TextColumn::make('roles.name')
                     ->searchable()
                     ->sortable(),
                 Tables\Columns\TextColumn::make('created_at')
@@ -54,7 +63,6 @@ class UserResource extends Resource
             ])
             ->actions([
                 Tables\Actions\EditAction::make(),
-                Tables\Actions\DeleteAction::make(),
             ])
             ->bulkActions([
                 Tables\Actions\BulkActionGroup::make([
@@ -73,9 +81,9 @@ class UserResource extends Resource
     public static function getPages(): array
     {
         return [
-            'index' => Pages\ListUsers::route('/'),
-            'create' => Pages\CreateUser::route('/create'),
-            'edit' => Pages\EditUser::route('/{record}/edit'),
+            'index' => Pages\ListParents::route('/'),
+            'create' => Pages\CreateParent::route('/create'),
+            'edit' => Pages\EditParent::route('/{record}/edit'),
         ];
     }
 }
