@@ -49,6 +49,11 @@ class Tenant extends Model
         return $this->belongsTo(User::class, 'user_id');
     }
 
+    public function centres(): HasMany
+    {
+        return $this->hasMany(Centre::class);
+    }
+
     /**
      * Get the users belonging to the tenant.
      */
