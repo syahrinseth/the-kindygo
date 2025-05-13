@@ -35,7 +35,12 @@ class LoginController extends Controller
             $request->session()->regenerate();
             
             // Redirect to the intended URL if it exists, otherwise go to /app
-            return redirect()->intended('/app');
+            if (session()->has('url.intended')) {
+                $redirectUrl = session('url.intended');
+                session()->forget('url.intended');
+                return redirect()->to($redirectUrl);
+            }
+            return redirect('/app');
         }
 
         return back()->withErrors([

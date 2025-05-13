@@ -28,17 +28,17 @@ class TenantInvitationController extends Controller
             $user = User::where('email', $invitation->email)->first();
             $invitationUrl = route('tenant-invitations.accept', $token);
             
-            // if ($user) {
+            if ($user) {
                 return redirect()->route('login', ['redirect' => $invitationUrl])
                     ->with('info', 'Please log in to accept the invitation.')
                     ->withInput(['email' => $invitation->email]);
-            // }
+            }
 
             // New user needs to register
-            // return redirect()->route('register', ['redirect' => $invitationUrl])
-            //     ->with('info', 'Please register to accept the invitation.')
-            //     ->with('invitation_token', $token)
-            //     ->withInput(['email' => $invitation->email]);
+            return redirect()->route('register', ['redirect' => $invitationUrl])
+                ->with('info', 'Please register to accept the invitation.')
+                ->with('invitation_token', $token)
+                ->withInput(['email' => $invitation->email]);
         }
 
         $user = Auth::user();

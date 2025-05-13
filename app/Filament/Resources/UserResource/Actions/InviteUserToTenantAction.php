@@ -2,17 +2,18 @@
 
 namespace App\Filament\Resources\UserResource\Actions;
 
-use App\Models\User;
 use App\Models\Tenant;
-use Illuminate\Support\Str;
-use Illuminate\Support\Facades\DB;
-use Filament\Tables\Actions\Action;
-use Illuminate\Support\Facades\Auth;
+use App\Models\User;
+use App\Notifications\TenantInvitation as TenantInvitationNotification;
+use Filament\Facades\Filament;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\TextInput;
+use Filament\Tables\Actions\Action;
+use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Notification;
+use Illuminate\Support\Str;
 use Spatie\Permission\Models\Role;
-use App\Notifications\TenantInvitation as TenantInvitationNotification;
 
 class InviteUserToTenantAction extends Action
 {
@@ -25,13 +26,6 @@ class InviteUserToTenantAction extends Action
             ->label('Invite User to Company')
             ->icon('heroicon-o-envelope')
             ->form([
-                Select::make('tenant_id')
-                    ->label('Company')
-                    ->options(fn () => Tenant::where('user_id', Auth::id())
-                        ->orWhereHas('users', fn ($query) => $query->where('users.id', Auth::id()))
-                        ->pluck('name', 'id'))
-                    ->required()
-                    ->searchable(),
                 TextInput::make('email')
                     ->label('Email Address')
                     ->email()
@@ -45,7 +39,7 @@ class InviteUserToTenantAction extends Action
             ->modalHeading('Invite User to a Company')
             ->action(function (array $data): void {
                 DB::transaction(function () use ($data) {
-                    $tenant = Tenant::findOrFail($data['tenant_id']);
+                    $tenant = Filament::getTenant();
                     
                     // Check if the user already exists
                     $existingUser = User::where('email', $data['email'])->first();
