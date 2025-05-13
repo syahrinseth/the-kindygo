@@ -54,7 +54,8 @@ class Tenant extends Model
      */
     public function users(): BelongsToMany
     {
-        return $this->belongsToMany(User::class, 'tenant_user');
+        return $this->belongsToMany(User::class)
+            ->withTimestamps();
     }
 
     /**
@@ -89,6 +90,14 @@ class Tenant extends Model
     public function removeUser(User $user): void
     {
         $this->users()->detach($user->id);
+    }
+
+    /**
+     * Get the tenant's pending invitations.
+     */
+    public function invitations(): HasMany
+    {
+        return $this->hasMany(TenantInvitation::class);
     }
 
     /**

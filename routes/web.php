@@ -3,6 +3,7 @@
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\Auth\LoginController;
 use App\Http\Controllers\Auth\RegisterController;
+use App\Http\Controllers\TenantInvitationController;
 
 Route::get('/', function () {
     return view('welcome');
@@ -17,3 +18,7 @@ Route::middleware('guest')->group(function () {
 });
 
 Route::post('/logout', [LoginController::class, 'logout'])->name('logout')->middleware('auth');
+
+// Tenant Invitation Routes
+Route::get('/invitations/{token}', [TenantInvitationController::class, 'accept'])
+    ->name('tenant-invitations.accept');

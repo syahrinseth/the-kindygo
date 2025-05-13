@@ -13,8 +13,13 @@ use Spatie\Permission\Models\Role;
 
 class RegisterController extends Controller
 {
-    public function showRegistrationForm()
+    public function showRegistrationForm(Request $request)
     {
+        // Store redirect URL in session if provided
+        if ($request->has('redirect')) {
+            session(['url.intended' => $request->redirect]);
+        }
+        
         return view('auth.register');
     }
 
@@ -30,9 +35,9 @@ class RegisterController extends Controller
         $data = DB::transaction(function () use ($request) {
             // Create the user
             $user = User::create([
-            'name' => $request->name,
-            'email' => $request->email,
-            'password' => Hash::make($request->password),
+                'name' => $request->name,
+                'email' => $request->email,
+                'password' => Hash::make($request->password),
             ]);
 
             // Assign the Admin role to the new user
@@ -40,11 +45,11 @@ class RegisterController extends Controller
 
             // Create a personal tenant for the user
             $tenant = Tenant::create([
-            'name' => "{$user->name}'s Company",
-            'slug' => str($user->name)->slug() . '-company',
-            'user_id' => $user->id,
-            'personal_tenant' => true,
-            'email' => $user->email,
+                'name' => "{$user->name}'s Company",
+                'slug' => str($user->name)->slug() . '-company',
+                'user_id' => $user->id,
+                'personal_tenant' => true,
+                'email' => $user->email,
             ]);
 
             return ['user' => $user, 'tenant' => $tenant];
@@ -58,7 +63,8 @@ class RegisterController extends Controller
 
         Auth::login($user);
 
-        return redirect()->route('filament.app.tenant')
+        // Redirect to the intended URL if it exists, otherwise go to tenant dashboard
+        return redirect()->intended(route('filament.app.tenant'))
             ->with('success', 'Registration successful! Welcome to the platform.');
     }
 }

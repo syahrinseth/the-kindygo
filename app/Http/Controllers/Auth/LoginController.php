@@ -11,8 +11,13 @@ class LoginController extends Controller
     /**
      * Show the login form
      */
-    public function showLoginForm()
+    public function showLoginForm(Request $request)
     {
+        // Store redirect URL in session if provided
+        if ($request->has('redirect')) {
+            session(['url.intended' => $request->redirect]);
+        }
+        
         return view('auth.login');
     }
 
@@ -28,6 +33,8 @@ class LoginController extends Controller
 
         if (Auth::attempt($credentials, $request->boolean('remember'))) {
             $request->session()->regenerate();
+            
+            // Redirect to the intended URL if it exists, otherwise go to /app
             return redirect()->intended('/app');
         }
 

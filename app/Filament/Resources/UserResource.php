@@ -2,6 +2,7 @@
 
 namespace App\Filament\Resources;
 
+use App\Filament\Resources\UserResource\Actions\InviteUserToTenantAction;
 use App\Filament\Resources\UserResource\Pages;
 use App\Filament\Resources\UserResource\RelationManagers;
 use App\Models\User;
@@ -57,6 +58,9 @@ class UserResource extends Resource
             ->actions([
                 Tables\Actions\EditAction::make(),
                 Tables\Actions\DeleteAction::make(),
+            ])
+            ->headerActions([
+                InviteUserToTenantAction::make(),
             ])
             ->bulkActions([
                 Tables\Actions\BulkActionGroup::make([
