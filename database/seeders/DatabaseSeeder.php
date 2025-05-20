@@ -18,6 +18,10 @@ class DatabaseSeeder extends Seeder
     public function run(): void
     {
         // User::factory(10)->create();
+        // Call the RoleSeeder
+        $this->call([
+            RoleSeeder::class,
+        ]);
 
         // Create Super Admin role if it doesn't exist
         $role = Role::firstOrCreate(['name' => 'Super Admin']);

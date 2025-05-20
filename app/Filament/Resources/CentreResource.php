@@ -43,7 +43,7 @@ class CentreResource extends Resource
                                 TextInput::make('name')
                                     ->required()
                                     ->maxLength(255)
-                                    ->live()
+                                    ->live(debounce: 2000) // Wait 2 seconds after typing stops
                                     ->afterStateUpdated(function (string $state, Forms\Set $set) {
                                         $set('slug', str()->slug($state));
                                     }),

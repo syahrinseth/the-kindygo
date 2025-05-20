@@ -16,7 +16,7 @@ class TenantForm
                         ->required()
                         ->maxLength(255)
                         ->live(onBlur: true)
-                        ->afterStateUpdated(function (string $state, Forms\Set $set) {
+                        ->afterStateUpdated(function ($state, Forms\Set $set) {
                             $set('slug', Str::slug($state));
                         }),
                     Forms\Components\TextInput::make('slug')
