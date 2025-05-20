@@ -125,4 +125,13 @@ class User extends Authenticatable implements FilamentUser, HasDefaultTenant, Ha
             ]);
         }
     }
+
+    /**
+     * Get the centres that belong to the user
+     */
+    public function centres(): BelongsToMany
+    {
+        return $this->belongsToMany(Centre::class)
+            ->withTimestamps();
+    }
 }

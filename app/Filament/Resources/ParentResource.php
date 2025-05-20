@@ -51,6 +51,10 @@ class ParentResource extends Resource
                 Tables\Columns\TextColumn::make('email')
                     ->searchable()
                     ->sortable(),
+                Tables\Columns\TextColumn::make('centres.name')
+                    ->badge()
+                    ->searchable()
+                    ->sortable(),
                 Tables\Columns\TextColumn::make('created_at')
                     ->dateTime()
                     ->sortable()
@@ -76,7 +80,7 @@ class ParentResource extends Resource
     public static function getRelations(): array
     {
         return [
-            //
+            RelationManagers\CentresRelationManager::class,
         ];
     }
 

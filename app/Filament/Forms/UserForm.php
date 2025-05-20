@@ -41,6 +41,17 @@ class UserForm
                             })
                             ->required(),
                 ])->columns(2),
+            
+            Forms\Components\Section::make('Centre Assignments')
+                ->schema([
+                    Forms\Components\Select::make('centres')
+                        ->multiple()
+                        ->relationship('centres', 'name')
+                        ->preload()
+                        ->searchable()
+                ])
+                ->columns(1)
+                ->collapsible(),
 
             Forms\Components\Section::make('Password')
                 ->schema([

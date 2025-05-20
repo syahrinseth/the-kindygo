@@ -5,6 +5,7 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 
 class Centre extends Model
 {
@@ -50,5 +51,14 @@ class Centre extends Model
     public function campus(): BelongsTo
     {
         return $this->belongsTo(Campus::class);
+    }
+
+    /**
+     * Get the users associated with the centre
+     */
+    public function users(): BelongsToMany
+    {
+        return $this->belongsToMany(User::class)
+            ->withTimestamps();
     }
 }

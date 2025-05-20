@@ -43,6 +43,10 @@ class UserResource extends Resource
                 Tables\Columns\TextColumn::make('roles.name')
                     ->searchable()
                     ->sortable(),
+                Tables\Columns\TextColumn::make('centres.name')
+                    ->badge()
+                    ->searchable()
+                    ->sortable(),
                 Tables\Columns\TextColumn::make('created_at')
                     ->dateTime()
                     ->sortable()
@@ -72,7 +76,7 @@ class UserResource extends Resource
     public static function getRelations(): array
     {
         return [
-            //
+            RelationManagers\CentresRelationManager::class,
         ];
     }
 
