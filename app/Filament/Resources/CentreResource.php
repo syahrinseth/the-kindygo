@@ -25,6 +25,31 @@ class CentreResource extends Resource
 
     protected static ?string $navigationIcon = 'heroicon-o-academic-cap';
 
+    public static function shouldCheckPolicyExistence(): bool
+    {
+        return true;
+    }
+
+    public static function getEloquentQuery(): Builder
+    {
+        return parent::getEloquentQuery()->forCurrentUser();
+    }
+
+    public static function canViewAny(): bool
+    {
+        return auth()->user()->can('viewAny', Centre::class);
+    }
+
+    public static function canCreate(): bool
+    {
+        return auth()->user()->can('create', Centre::class);
+    }
+
+    public static function shouldRegisterNavigation(): bool
+    {
+        return auth()->user()->can('viewAny', Centre::class);
+    }
+
     protected static ?string $navigationGroup = 'Campus Management';
 
     protected static ?string $modelLabel = 'Centre';
