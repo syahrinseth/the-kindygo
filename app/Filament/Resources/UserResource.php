@@ -13,6 +13,7 @@ use Filament\Tables;
 use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\SoftDeletingScope;
+use Illuminate\Support\Facades\Auth;
 use App\Filament\Forms\UserForm;
 
 class UserResource extends Resource
@@ -25,12 +26,38 @@ class UserResource extends Resource
 
     protected static ?string $tenantOwnershipRelationshipName = 'tenants';
 
+    // Use policy to check if user can view any users
+    public static function canViewAny(): bool
+    {
+        return Auth::user()->can('viewAny', User::class);
+    }
+
+    // Use policy to check if user can create users
+    public static function canCreate(): bool
+    {
+        return Auth::user()->can('create', User::class);
+    }
+
     public static function getEloquentQuery(): Builder
     {
-        return parent::getEloquentQuery()
-            ->whereHas('centres', function (Builder $query) {
-                $query->where('id', auth()->user()->currentCentre?->id);
+        $query = parent::getEloquentQuery();
+        $user = Auth::user();
+
+        // Use policy to determine query scope
+        if ($user->can('viewAllUsers', User::class)) {
+            // Super Admin and Admin can see all users in their context
+            return $query;
+        } else {
+            // Principal and others see users in their current centre only
+            return $query->whereHas('centres', function (Builder $query) use ($user) {
+                $query->where('centres.id', $user->currentCentre?->id);
             });
+        }
+    }
+
+    public static function shouldRegisterNavigation(): bool
+    {
+        return Auth::user()->can('viewAny', User::class);
     }
 
     public static function form(Form $form): Form
@@ -49,6 +76,7 @@ class UserResource extends Resource
                     ->searchable()
                     ->sortable(),
                 Tables\Columns\TextColumn::make('roles.name')
+                    ->badge()
                     ->searchable()
                     ->sortable(),
                 Tables\Columns\TextColumn::make('centres.name')
@@ -65,18 +93,33 @@ class UserResource extends Resource
                     ->toggleable(isToggledHiddenByDefault: true),
             ])
             ->filters([
-                //
+                Tables\Filters\SelectFilter::make('roles')
+                    ->relationship('roles', 'name')
+                    ->multiple()
+                    ->preload(),
+                Tables\Filters\SelectFilter::make('centres')
+                    ->relationship('centres', 'name')
+                    ->multiple()
+                    ->preload(),
             ])
             ->actions([
-                Tables\Actions\EditAction::make(),
-                Tables\Actions\DeleteAction::make(),
+                Tables\Actions\ViewAction::make()
+                    ->visible(fn (User $record) => Auth::user()->can('view', $record)),
+                
+                Tables\Actions\EditAction::make()
+                    ->visible(fn (User $record) => Auth::user()->can('update', $record)),
+                
+                Tables\Actions\DeleteAction::make()
+                    ->visible(fn (User $record) => Auth::user()->can('delete', $record)),
             ])
             ->headerActions([
-                InviteUserToTenantAction::make(),
+                InviteUserToTenantAction::make()
+                    ->visible(fn () => Auth::user()->can('inviteUsers', User::class)),
             ])
             ->bulkActions([
                 Tables\Actions\BulkActionGroup::make([
-                    Tables\Actions\DeleteBulkAction::make(),
+                    Tables\Actions\DeleteBulkAction::make()
+                        ->visible(fn () => Auth::user()->can('deleteAny', User::class)),
                 ]),
             ]);
     }
