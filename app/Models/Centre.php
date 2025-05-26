@@ -2,14 +2,26 @@
 
 namespace App\Models;
 
+use App\Models\Scopes\TenantScope;
+use App\Models\Scopes\UserCentreScope;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
+use Illuminate\Support\Facades\Auth;
 
 class Centre extends Model
 {
     use HasFactory;
+
+    /**
+     * The "booted" method of the model.
+     */
+    protected static function booted(): void
+    {
+        static::addGlobalScope(new TenantScope);
+    }
 
     /**
      * The attributes that are mass assignable.
@@ -60,5 +72,18 @@ class Centre extends Model
     {
         return $this->belongsToMany(User::class)
             ->withTimestamps();
+    }
+    
+    /**
+     * Scope a query to only include centres that the authenticated user has access to
+     * and that belong to the user's current tenant.
+     *
+     * @param  \Illuminate\Database\Eloquent\Builder  $query
+     * @return \Illuminate\Database\Eloquent\Builder
+     */
+    public function scopeForCurrentUser(Builder $query): Builder
+    {
+        return $query->withoutGlobalScope(UserCentreScope::class)
+            ->withGlobalScope('user_centre', new UserCentreScope());
     }
 }

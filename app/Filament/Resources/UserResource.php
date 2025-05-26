@@ -25,6 +25,14 @@ class UserResource extends Resource
 
     protected static ?string $tenantOwnershipRelationshipName = 'tenants';
 
+    public static function getEloquentQuery(): Builder
+    {
+        return parent::getEloquentQuery()
+            ->whereHas('centres', function (Builder $query) {
+                $query->where('id', auth()->user()->currentCentre?->id);
+            });
+    }
+
     public static function form(Form $form): Form
     {
         return $form->schema(UserForm::make(showRoleSelect: true));
@@ -71,13 +79,6 @@ class UserResource extends Resource
                     Tables\Actions\DeleteBulkAction::make(),
                 ]),
             ]);
-    }
-
-    public static function getRelations(): array
-    {
-        return [
-            RelationManagers\CentresRelationManager::class,
-        ];
     }
 
     public static function getPages(): array

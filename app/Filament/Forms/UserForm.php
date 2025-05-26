@@ -51,6 +51,15 @@ class UserForm
                         ->searchable()
                 ])
                 ->columns(1)
+                ->afterStateUpdated(function ($component, $state) {
+                    // Clear current centre if no centres are assigned
+                    if (empty($state)) {
+                        $user = $component->getRecord();
+                        if ($user && $user->exists) {
+                            $user->setCurrentCentre(null);
+                        }
+                    }
+                })
                 ->collapsible(),
 
             Forms\Components\Section::make('Password')

@@ -5,6 +5,8 @@ namespace App\Providers\Filament;
 use App\Filament\Forms\TenantForm;
 use App\Filament\Pages\Tenancy\EditTenantProfilePage;
 use App\Filament\Pages\Tenancy\RegisterTenancyPage;
+use App\Filament\Widgets\CurrentCentreSelector;
+use App\Http\Middleware\UpdateCurrentTenant;
 use App\Models\Tenant;
 use Filament\Http\Middleware\Authenticate;
 use Filament\Http\Middleware\AuthenticateSession;
@@ -20,6 +22,8 @@ use Illuminate\Cookie\Middleware\EncryptCookies;
 use Illuminate\Foundation\Http\Middleware\VerifyCsrfToken;
 use Illuminate\Routing\Middleware\SubstituteBindings;
 use Illuminate\Session\Middleware\StartSession;
+use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Blade;
 use Illuminate\View\Middleware\ShareErrorsFromSession;
 
 class AppPanelProvider extends PanelProvider
@@ -41,7 +45,7 @@ class AppPanelProvider extends PanelProvider
             ->discoverWidgets(in: app_path('Filament/Widgets'), for: 'App\\Filament\\Widgets')
             ->widgets([
                 Widgets\AccountWidget::class,
-                Widgets\FilamentInfoWidget::class,
+                CurrentCentreSelector::class,
             ])
             ->tenant(Tenant::class)
             ->tenant(Tenant::class, slugAttribute: 'slug')
@@ -57,6 +61,7 @@ class AppPanelProvider extends PanelProvider
                 SubstituteBindings::class,
                 DisableBladeIconComponents::class,
                 DispatchServingFilamentEvent::class,
+                UpdateCurrentTenant::class,
             ])
             ->authMiddleware([
                 Authenticate::class,

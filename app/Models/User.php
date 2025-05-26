@@ -15,6 +15,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
+use Illuminate\Support\Facades\DB;
 
 class User extends Authenticatable implements FilamentUser, HasDefaultTenant, HasTenants
 {
@@ -35,6 +36,7 @@ class User extends Authenticatable implements FilamentUser, HasDefaultTenant, Ha
         'name',
         'email',
         'password',
+        'current_tenant_id',
     ];
 
     /**
@@ -62,7 +64,8 @@ class User extends Authenticatable implements FilamentUser, HasDefaultTenant, Ha
 
     public function tenants(): BelongsToMany
     {
-        return $this->belongsToMany(Tenant::class);
+        return $this->belongsToMany(Tenant::class)
+            ->withTimestamps();
     }
 
     public function getTenants(Panel $panel): Collection
@@ -133,5 +136,88 @@ class User extends Authenticatable implements FilamentUser, HasDefaultTenant, Ha
     {
         return $this->belongsToMany(Centre::class)
             ->withTimestamps();
+    }
+
+    /**
+     * Get the user's current centre based on current tenant
+     */
+    public function currentCentre()
+    {
+        if (!$this->current_tenant_id) {
+            // Return an empty BelongsTo relationship when no current tenant
+            return $this->belongsTo(Centre::class, 'non_existent_column');
+        }
+
+        // Create a HasOneThrough relationship via tenant_user table
+        return $this->hasOneThrough(
+            Centre::class,           // Final model we want
+            TenantUser::class,       // Intermediate model
+            'user_id',               // Foreign key on tenant_user table
+            'id',                    // Foreign key on centres table
+            'id',                    // Local key on users table
+            'current_centre_id'      // Local key on tenant_user table
+        )->where('tenant_user.tenant_id', $this->current_tenant_id);
+    }
+
+    /**
+     * Helper method to get current centre directly
+     */
+    public function getCurrentCentre(): ?Centre
+    {
+        if (!$this->current_tenant_id) {
+            return null;
+        }
+
+        // Get the tenant_user record for current tenant
+        $tenantUser = DB::table('tenant_user')
+            ->where('user_id', $this->id)
+            ->where('tenant_id', $this->current_tenant_id)
+            ->first();
+
+        if (!$tenantUser || !$tenantUser->current_centre_id) {
+            return null;
+        }
+
+        return Centre::find($tenantUser->current_centre_id);
+    }
+
+    /**
+     * Get centres for the current tenant that the user has access to
+     */
+    public function getCentresForCurrentTenant(): Collection
+    {
+        if (!$this->current_tenant_id) {
+            return collect();
+        }
+
+        // Use the scope from Centre model for better reusability
+        return Centre::whereHas('users', function ($query) {
+                $query->where('users.id', $this->id);
+            })
+            ->get();
+    }
+
+    /**
+     * Set the current centre for the user
+     */
+    public function setCurrentCentre(?Centre $centre): void
+    {
+        if (!$this->current_tenant_id) {
+            return;
+        }
+
+        if ($centre && $this->centres()->where('centre_id', $centre->id)->exists()) {
+            // Update the tenant_user record with the current centre
+            DB::table('tenant_user')
+                ->where('user_id', $this->id)
+                ->where('tenant_id', $this->current_tenant_id)
+                ->update(['current_centre_id' => $centre->id]);
+        } else {
+            // Clear the current centre if no centre is provided or user doesn't have access
+            DB::table('tenant_user')
+                ->where('user_id', $this->id)
+                ->where('tenant_id', $this->current_tenant_id)
+                ->update(['current_centre_id' => null]);
+        }
     }
 }

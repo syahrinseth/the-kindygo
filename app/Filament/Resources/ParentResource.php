@@ -33,7 +33,9 @@ class ParentResource extends Resource
         return parent::getEloquentQuery()
             ->whereHas('roles', fn (Builder $query) => 
                 $query->where('name', 'parent')
-            );
+            )->whereHas('centres', function (Builder $query) {
+                $query->where('id', auth()->user()->currentCentre?->id);
+            });
     }
 
     public static function form(Form $form): Form

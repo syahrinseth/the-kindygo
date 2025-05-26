@@ -4,6 +4,7 @@ namespace App\Filament\Resources;
 
 use App\Filament\Resources\CentreResource\Pages;
 use App\Filament\Resources\CentreResource\RelationManagers;
+use App\Models\Campus;
 use App\Models\Centre;
 use Filament\Forms;
 use Filament\Forms\Form;
@@ -59,6 +60,7 @@ class CentreResource extends Resource
                                     ->default('active'),
                                 Select::make('campus_id')
                                     ->relationship('campus', 'name')
+                                    ->options(Campus::pluck('name', 'id'))
                                     ->searchable()
                                     ->preload()
                                     ->required()
