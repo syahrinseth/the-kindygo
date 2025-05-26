@@ -50,7 +50,7 @@ class UserResource extends Resource
         } else {
             // Principal and others see users in their current centre only
             return $query->whereHas('centres', function (Builder $query) use ($user) {
-                $query->where('centres.id', $user->currentCentre?->id);
+                $query->whereIn('id', $user->centres()->pluck('id'));
             });
         }
     }

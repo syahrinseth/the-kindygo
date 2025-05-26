@@ -5,7 +5,6 @@ namespace App\Providers\Filament;
 use App\Filament\Forms\TenantForm;
 use App\Filament\Pages\Tenancy\EditTenantProfilePage;
 use App\Filament\Pages\Tenancy\RegisterTenancyPage;
-use App\Filament\Widgets\CurrentCentreSelector;
 use App\Http\Middleware\UpdateCurrentTenant;
 use App\Models\Tenant;
 use Filament\Http\Middleware\Authenticate;
@@ -45,7 +44,6 @@ class AppPanelProvider extends PanelProvider
             ->discoverWidgets(in: app_path('Filament/Widgets'), for: 'App\\Filament\\Widgets')
             ->widgets([
                 Widgets\AccountWidget::class,
-                CurrentCentreSelector::class,
             ])
             ->tenant(Tenant::class)
             ->tenant(Tenant::class, slugAttribute: 'slug')

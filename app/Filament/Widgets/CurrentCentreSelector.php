@@ -21,6 +21,9 @@ class CurrentCentreSelector extends Widget implements HasForms
     
     protected static ?string $heading = 'Current Centre';
     
+    // Temporarily disable this widget
+    protected static bool $shouldLoad = false;
+    
     public ?string $currentCentreId = null;
     
     public $data = [];
@@ -80,11 +83,6 @@ class CurrentCentreSelector extends Widget implements HasForms
 
     public static function canView(): bool
     {
-        if (!Auth::check()) {
-            return false;
-        }
-
-        // Only show widget if user has centres in the current tenant
-        return Centre::forCurrentUser()->exists();
+        return false; // Temporarily disable the widget
     }
 }

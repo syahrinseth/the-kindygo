@@ -7,6 +7,7 @@ use App\Filament\Resources\ParentResource\RelationManagers;
 use App\Models\User;
 use Filament\Forms;
 use Filament\Forms\Form;
+use Illuminate\Support\Facades\Auth;
 use Filament\Resources\Resource;
 use Filament\Tables;
 use Filament\Tables\Table;
@@ -28,14 +29,41 @@ class ParentResource extends Resource
 
     protected static ?string $label = 'Parent';
 
+    public static function canViewAny(): bool
+    {
+        return Auth::user()->can('viewAny', User::class);
+    }
+
+    public static function canCreate(): bool
+    {
+        // Only allow creating if user can create users AND has permission to manage parents
+        return Auth::user()->can('create', User::class);
+    }
+
+    public static function shouldRegisterNavigation(): bool
+    {
+        return Auth::user()->can('viewAny', User::class);
+    }
+
     public static function getEloquentQuery(): Builder
     {
-        return parent::getEloquentQuery()
+        $query = parent::getEloquentQuery()
             ->whereHas('roles', fn (Builder $query) => 
-                $query->where('name', 'parent')
-            )->whereHas('centres', function (Builder $query) {
-                $query->where('id', auth()->user()->currentCentre?->id);
-            });
+                $query->where('name', 'Parent')
+            );
+
+        $user = Auth::user();
+
+        // Use policy to determine query scope
+        if ($user->can('viewAllUsers', User::class)) {
+            // Super Admin and Admin can see all parents in their context
+            return $query;
+        }
+
+        // Principal and others see parents in their current centre only
+        return $query->whereHas('centres', function (Builder $q) use ($user) {
+            $q->whereIn('id', $user->centres()->pluck('id'));
+        });
     }
 
     public static function form(Form $form): Form
@@ -67,14 +95,25 @@ class ParentResource extends Resource
                     ->toggleable(isToggledHiddenByDefault: true),
             ])
             ->filters([
-                //
+                Tables\Filters\SelectFilter::make('centres')
+                    ->relationship('centres', 'name')
+                    ->multiple()
+                    ->preload(),
             ])
             ->actions([
-                Tables\Actions\EditAction::make(),
+                Tables\Actions\ViewAction::make()
+                    ->visible(fn (User $record) => Auth::user()->can('view', $record)),
+                
+                Tables\Actions\EditAction::make()
+                    ->visible(fn (User $record) => Auth::user()->can('update', $record)),
+                
+                Tables\Actions\DeleteAction::make()
+                    ->visible(fn (User $record) => Auth::user()->can('delete', $record)),
             ])
             ->bulkActions([
                 Tables\Actions\BulkActionGroup::make([
-                    Tables\Actions\DeleteBulkAction::make(),
+                    Tables\Actions\DeleteBulkAction::make()
+                        ->visible(fn () => Auth::user()->can('deleteAny', User::class)),
                 ]),
             ]);
     }
