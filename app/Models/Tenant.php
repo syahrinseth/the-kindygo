@@ -2,12 +2,16 @@
 
 namespace App\Models;
 
-use Illuminate\Database\Eloquent\Factories\HasFactory;
+use App\Models\User;
+use App\Models\Child;
+use App\Models\Invoice;
+use App\Enums\ChildStatus;
+use Spatie\Permission\Models\Role;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
-use Spatie\Permission\Models\Role;
 
 class Tenant extends Model
 {
@@ -97,6 +101,14 @@ class Tenant extends Model
         $this->users()->detach($user->id);
     }
 
+    /**
+     * Get the invoices belonging to the tenant.
+     */
+    public function invoices(): HasMany
+    {
+        return $this->hasMany(Invoice::class);
+    }
+    
     /**
      * Get the tenant's pending invitations.
      */

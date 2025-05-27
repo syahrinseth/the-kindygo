@@ -73,10 +73,7 @@ class UserForm
                         })
                         ->visible($showRoleSelect),
                 ])
-                ->visible(function (?User $record = null) {
-                    if (!$record) return Auth::user()->can('assignHigherRoles', User::class);
-                    return Auth::user()->can('manageRoles', $record);
-                })
+                ->visible($showRoleSelect)
                 ->collapsible(),
             
             Forms\Components\Section::make('Centre Assignments')

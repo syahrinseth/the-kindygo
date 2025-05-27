@@ -4,6 +4,10 @@ namespace App\Models;
 
 // use Illuminate\Contracts\Auth\MustVerifyEmail;
 use Filament\Panel;
+use App\Models\Child;
+use App\Models\Tenant;
+use App\Models\Centre;
+use App\Models\Invoice;
 use Illuminate\Support\Collection;
 use Spatie\Permission\Traits\HasRoles;
 use Illuminate\Database\Eloquent\Model;
@@ -16,6 +20,7 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class User extends Authenticatable implements FilamentUser, HasDefaultTenant, HasTenants
 {
@@ -219,6 +224,16 @@ class User extends Authenticatable implements FilamentUser, HasDefaultTenant, Ha
                 ->where('tenant_id', $this->current_tenant_id)
                 ->update(['current_centre_id' => null]);
         }
+    }
+
+    /**
+     * Get the invoices associated with this user.
+     *
+     * @return \Illuminate\Database\Eloquent\Relations\HasMany
+     */
+    public function invoices()
+    {
+        return $this->hasMany(Invoice::class);
     }
 
     /**

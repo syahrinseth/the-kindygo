@@ -21,6 +21,7 @@ class DatabaseSeeder extends Seeder
         // Call the RoleSeeder
         $this->call([
             RoleSeeder::class,
+            InvoiceSeeder::class, // Add the Invoice seeder
         ]);
 
         // Create Super Admin role if it doesn't exist

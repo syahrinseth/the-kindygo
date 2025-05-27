@@ -2,6 +2,9 @@
 
 namespace App\Models;
 
+use App\Models\Tenant;
+use App\Models\Campus;
+use App\Models\Invoice;
 use App\Models\Scopes\TenantScope;
 use App\Models\Scopes\UserCentreScope;
 use Illuminate\Database\Eloquent\Builder;
@@ -9,6 +12,7 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Support\Facades\Auth;
 
 class Centre extends Model
@@ -73,7 +77,15 @@ class Centre extends Model
         return $this->belongsToMany(User::class)
             ->withTimestamps();
     }
-    
+
+    /**
+     * Get the invoices belonging to the centre.
+     */
+    public function invoices(): HasMany
+    {
+        return $this->hasMany(Invoice::class);
+    }
+
     /**
      * Scope a query to only include centres that the authenticated user has access to
      * and that belong to the user's current tenant.
