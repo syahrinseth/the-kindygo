@@ -73,17 +73,17 @@ class InvoiceResource extends Resource
 
     public static function canViewAny(): bool
     {
-        return auth()->user()->can('viewAny', Invoice::class);
+        return Auth::user()->can('viewAny', Invoice::class);
     }
 
     public static function canCreate(): bool
     {
-        return auth()->user()->can('create', Invoice::class);
+        return Auth::user()->can('create', Invoice::class);
     }
 
     public static function shouldRegisterNavigation(): bool
     {
-        return auth()->user()->can('viewAny', Invoice::class);
+        return Auth::user()->can('viewAny', Invoice::class);
     }
 
     public static function form(Form $form): Form

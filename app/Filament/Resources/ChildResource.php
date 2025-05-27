@@ -31,32 +31,32 @@ class ChildResource extends Resource
     
     public static function canViewAny(): bool
     {
-        return auth()->user()->can('viewAny', Child::class);
+        return Auth::user()->can('viewAny', Child::class);
     }
     
     public static function canView(Model $record): bool
     {
-        return auth()->user()->can('view', $record);
+        return Auth::user()->can('view', $record);
     }
     
     public static function canCreate(): bool
     {
-        return auth()->user()->can('create', Child::class);
+        return Auth::user()->can('create', Child::class);
     }
     
     public static function canEdit(Model $record): bool
     {
-        return auth()->user()->can('update', $record);
+        return Auth::user()->can('update', $record);
     }
     
     public static function canDelete(Model $record): bool
     {
-        return auth()->user()->can('delete', $record);
+        return Auth::user()->can('delete', $record);
     }
     
     public static function canDeleteAny(): bool
     {
-        return auth()->user()->can('deleteAny', Child::class);
+        return Auth::user()->can('deleteAny', Child::class);
     }
 
     public static function getEloquentQuery(): Builder

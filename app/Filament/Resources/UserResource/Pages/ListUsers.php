@@ -15,7 +15,7 @@ class ListUsers extends ListRecords
     {
         return [
             Actions\CreateAction::make()
-                ->visible(fn () => auth()->user()->can('create', UserResource::getModel())),
+                ->visible(fn () => Auth::user()->can('create', UserResource::getModel())),
         ];
     }
 }

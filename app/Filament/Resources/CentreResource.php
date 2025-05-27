@@ -7,18 +7,19 @@ use App\Filament\Resources\CentreResource\RelationManagers;
 use App\Filament\Resources\CentreResource\RelationManagers\InvoicesRelationManager;
 use App\Models\Campus;
 use App\Models\Centre;
+use Filament\Facades\Filament;
 use Filament\Forms;
+use Filament\Forms\Components\Grid;
+use Filament\Forms\Components\Hidden;
+use Filament\Forms\Components\Section;
+use Filament\Forms\Components\Select;
+use Filament\Forms\Components\TextInput;
 use Filament\Forms\Form;
 use Filament\Resources\Resource;
 use Filament\Tables;
 use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Builder;
-use Filament\Forms\Components\Select;
-use Filament\Forms\Components\TextInput;
-use Filament\Forms\Components\Grid;
-use Filament\Forms\Components\Section;
-use Filament\Facades\Filament;
-use Filament\Forms\Components\Hidden;
+use Illuminate\Support\Facades\Auth;
 
 class CentreResource extends Resource
 {
@@ -38,17 +39,17 @@ class CentreResource extends Resource
 
     public static function canViewAny(): bool
     {
-        return auth()->user()->can('viewAny', Centre::class);
+        return Auth::user()->can('viewAny', Centre::class);
     }
 
     public static function canCreate(): bool
     {
-        return auth()->user()->can('create', Centre::class);
+        return Auth::user()->can('create', Centre::class);
     }
 
     public static function shouldRegisterNavigation(): bool
     {
-        return auth()->user()->can('viewAny', Centre::class);
+        return Auth::user()->can('viewAny', Centre::class);
     }
 
     protected static ?string $navigationGroup = 'Campus Management';

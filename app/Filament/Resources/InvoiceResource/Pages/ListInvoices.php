@@ -5,6 +5,7 @@ namespace App\Filament\Resources\InvoiceResource\Pages;
 use App\Filament\Resources\InvoiceResource;
 use Filament\Actions;
 use Filament\Resources\Pages\ListRecords;
+use Illuminate\Support\Facades\Auth;
 
 class ListInvoices extends ListRecords
 {
@@ -14,7 +15,7 @@ class ListInvoices extends ListRecords
     {
         return [
             Actions\CreateAction::make()
-                ->visible(fn () => auth()->user()->can('create', \App\Models\Invoice::class)),
+                ->visible(fn () => Auth::user()->can('create', \App\Models\Invoice::class)),
         ];
     }
 }
