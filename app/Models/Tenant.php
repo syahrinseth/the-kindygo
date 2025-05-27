@@ -104,6 +104,147 @@ class Tenant extends Model
     {
         return $this->hasMany(TenantInvitation::class);
     }
+    
+    /**
+     * Get the children belonging to the tenant.
+     */
+    public function children(): BelongsToMany
+    {
+        return $this->belongsToMany(Child::class, 'tenant_child')
+            ->withPivot('status')
+            ->withTimestamps()
+            ->using(TenantChild::class);
+    }
+    
+    /**
+     * Add a child to this tenant with a specific status.
+     *
+     * @param Child|int $child The child or child ID
+     * @param ChildStatus $status The initial status
+     * @return void
+     */
+    public function addChild($child, ChildStatus $status = ChildStatus::NEW): void
+    {
+        $childId = $child instanceof Child ? $child->id : $child;
+        
+        if (!$this->hasChild($childId)) {
+            $this->children()->attach($childId, [
+                'status' => $status,
+            ]);
+        }
+    }
+    
+    /**
+     * Remove a child from this tenant.
+     *
+     * @param Child|int $child The child or child ID
+     * @return void
+     */
+    public function removeChild($child): void
+    {
+        $childId = $child instanceof Child ? $child->id : $child;
+        
+        $this->children()->detach($childId);
+    }
+    
+    /**
+     * Check if a child belongs to this tenant.
+     *
+     * @param Child|int $child The child or child ID
+     * @return bool
+     */
+    public function hasChild($child): bool
+    {
+        $childId = $child instanceof Child ? $child->id : $child;
+        
+        return $this->children()->where('child_id', $childId)->exists();
+    }
+    
+    /**
+     * Get the status of a child at this tenant.
+     *
+     * @param Child|int $child The child or child ID
+     * @return ChildStatus|null The status or null if the child is not associated with this tenant
+     */
+    public function getChildStatus($child): ?ChildStatus
+    {
+        $childId = $child instanceof Child ? $child->id : $child;
+        
+        $pivotData = $this->children()->where('child_id', $childId)->first()?->pivot;
+        
+        return $pivotData ? $pivotData->status : null;
+    }
+    
+    /**
+     * Update the status of a child at this tenant.
+     *
+     * @param Child|int $child The child or child ID
+     * @param ChildStatus $status The new status
+     * @return bool Whether the update was successful
+     */
+    public function updateChildStatus($child, ChildStatus $status): bool
+    {
+        $childId = $child instanceof Child ? $child->id : $child;
+        
+        $updated = $this->children()->updateExistingPivot($childId, [
+            'status' => $status,
+        ]);
+        
+        return $updated > 0;
+    }
+    
+    /**
+     * Get children with a specific status at this tenant.
+     *
+     * @param ChildStatus $status The status to filter by
+     * @return \Illuminate\Database\Eloquent\Collection The children with the specified status
+     */
+    public function getChildrenByStatus(ChildStatus $status)
+    {
+        return $this->children()
+            ->wherePivot('status', $status)
+            ->get();
+    }
+    
+    /**
+     * Get new children at this tenant.
+     *
+     * @return \Illuminate\Database\Eloquent\Collection
+     */
+    public function getNewChildren()
+    {
+        return $this->getChildrenByStatus(ChildStatus::NEW);
+    }
+    
+    /**
+     * Get active children at this tenant.
+     *
+     * @return \Illuminate\Database\Eloquent\Collection
+     */
+    public function getActiveChildren()
+    {
+        return $this->getChildrenByStatus(ChildStatus::ACTIVE);
+    }
+    
+    /**
+     * Get returning children at this tenant.
+     *
+     * @return \Illuminate\Database\Eloquent\Collection
+     */
+    public function getReturningChildren()
+    {
+        return $this->getChildrenByStatus(ChildStatus::RETURN);
+    }
+    
+    /**
+     * Get alumni children at this tenant.
+     *
+     * @return \Illuminate\Database\Eloquent\Collection
+     */
+    public function getAlumniChildren()
+    {
+        return $this->getChildrenByStatus(ChildStatus::ALUMNI);
+    }
 
     /**
      * Create a personal tenant for a user.

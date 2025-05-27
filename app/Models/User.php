@@ -220,4 +220,17 @@ class User extends Authenticatable implements FilamentUser, HasDefaultTenant, Ha
                 ->update(['current_centre_id' => null]);
         }
     }
+
+    /**
+     * Get the children associated with this user.
+     *
+     * @return \Illuminate\Database\Eloquent\Relations\BelongsToMany
+     */
+    public function children(): BelongsToMany
+    {
+        return $this->belongsToMany(Child::class, 'child_user')
+            ->withPivot('relationship_type')
+            ->using(ChildUser::class)
+            ->withTimestamps();
+    }
 }
