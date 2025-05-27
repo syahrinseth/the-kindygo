@@ -58,16 +58,26 @@ class ExportInvoicesAction extends BulkAction
                     ]);
                 }
                 
-                // Set the CSV response
-                return response(
-                    $csv->toString(),
-                    200,
+                // Create a temporary file to store the CSV
+                $tempFile = storage_path('app/temp/invoices_' . now()->format('Y-m-d') . '_' . uniqid() . '.csv');
+                
+                // Ensure the directory exists
+                if (!file_exists(dirname($tempFile))) {
+                    mkdir(dirname($tempFile), 0755, true);
+                }
+                
+                // Save the CSV to the temporary file
+                file_put_contents($tempFile, $csv->toString());
+                
+                // Set the CSV response to download the file
+                return response()->download(
+                    $tempFile,
+                    'invoices_' . now()->format('Y-m-d') . '.csv',
                     [
                         'Content-Type' => 'text/csv',
                         'Content-Disposition' => 'attachment; filename="invoices_' . now()->format('Y-m-d') . '.csv"',
-                        'Content-Transfer-Encoding' => 'binary',
                     ]
-                );
+                )->deleteFileAfterSend(true);
             })
             ->deselectRecordsAfterCompletion();
     }
