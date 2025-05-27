@@ -4,6 +4,7 @@ namespace App\Filament\Resources;
 
 use App\Filament\Resources\CentreResource\Pages;
 use App\Filament\Resources\CentreResource\RelationManagers;
+use App\Filament\Resources\CentreResource\RelationManagers\InvoicesRelationManager;
 use App\Models\Campus;
 use App\Models\Centre;
 use Filament\Forms;
@@ -23,7 +24,7 @@ class CentreResource extends Resource
 {
     protected static ?string $model = Centre::class;
 
-    protected static ?string $navigationIcon = 'heroicon-o-academic-cap';
+    protected static ?string $navigationIcon = 'heroicon-o-building-storefront';
 
     public static function shouldCheckPolicyExistence(): bool
     {
@@ -206,6 +207,7 @@ class CentreResource extends Resource
     {
         return [
             RelationManagers\UsersRelationManager::class,
+            InvoicesRelationManager::class,
         ];
     }
 

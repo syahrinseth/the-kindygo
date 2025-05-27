@@ -13,6 +13,7 @@ use Filament\Resources\Resource;
 use Filament\Tables;
 use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletingScope;
 use Illuminate\Support\Facades\Auth;
 
@@ -20,13 +21,56 @@ class ChildResource extends Resource
 {
     protected static ?string $model = Child::class;
 
-    protected static ?string $navigationIcon = 'heroicon-o-user-group';
+    protected static ?string $navigationIcon = 'heroicon-o-academic-cap';
     
     protected static ?string $navigationLabel = 'Children';
     
     protected static ?int $navigationSort = 2;
 
     protected static ?string $tenantOwnershipRelationshipName = 'tenants';
+    
+    public static function canViewAny(): bool
+    {
+        return auth()->user()->can('viewAny', Child::class);
+    }
+    
+    public static function canView(Model $record): bool
+    {
+        return auth()->user()->can('view', $record);
+    }
+    
+    public static function canCreate(): bool
+    {
+        return auth()->user()->can('create', Child::class);
+    }
+    
+    public static function canEdit(Model $record): bool
+    {
+        return auth()->user()->can('update', $record);
+    }
+    
+    public static function canDelete(Model $record): bool
+    {
+        return auth()->user()->can('delete', $record);
+    }
+    
+    public static function canDeleteAny(): bool
+    {
+        return auth()->user()->can('deleteAny', Child::class);
+    }
+
+    public static function getEloquentQuery(): Builder
+    {
+        $query = parent::getEloquentQuery();
+        $user = Auth::user();
+
+        // If user is Parent, restrict to their invoices
+        if ($user->hasRole('Parent')) {
+            $query->whereHas('users', fn($q) => $q->where('users.id', $user->id));
+        }
+
+        return $query;
+    }
 
     public static function form(Form $form): Form
     {
@@ -281,7 +325,8 @@ class ChildResource extends Resource
                         }
                         
                         $status = $record->getStatusAtTenant($user->current_tenant_id);
-                        return $status === ChildStatus::NEW || $status === ChildStatus::RETURN;
+                        return ($status === ChildStatus::NEW || $status === ChildStatus::RETURN) && 
+                               $user->can('changeStatus', $record);
                     })
                     ->action(function (Child $record): void {
                         $user = Auth::user();
@@ -302,7 +347,8 @@ class ChildResource extends Resource
                         }
                         
                         $status = $record->getStatusAtTenant($user->current_tenant_id);
-                        return $status === ChildStatus::ALUMNI;
+                        return $status === ChildStatus::ALUMNI && 
+                               $user->can('changeStatus', $record);
                     })
                     ->action(function (Child $record): void {
                         $user = Auth::user();
@@ -323,7 +369,8 @@ class ChildResource extends Resource
                         }
                         
                         $status = $record->getStatusAtTenant($user->current_tenant_id);
-                        return $status === ChildStatus::ACTIVE;
+                        return $status === ChildStatus::ACTIVE && 
+                               $user->can('changeStatus', $record);
                     })
                     ->action(function (Child $record): void {
                         $user = Auth::user();

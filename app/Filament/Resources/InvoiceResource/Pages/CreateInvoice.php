@@ -1,0 +1,34 @@
+<?php
+
+namespace App\Filament\Resources\InvoiceResource\Pages;
+
+use App\Filament\Resources\InvoiceResource;
+use Filament\Resources\Pages\CreateRecord;
+use Illuminate\Support\Facades\Auth;
+use App\Enums\InvoiceStatus;
+
+class CreateInvoice extends CreateRecord
+{
+    protected static string $resource = InvoiceResource::class;
+    
+    protected function mutateFormDataBeforeCreate(array $data): array
+    {
+        // Set tenant_id to the current tenant
+        $data['tenant_id'] = Auth::user()->current_tenant_id;
+        
+        // Set the default status to DRAFT if not specified
+        $data['status'] = $data['status'] ?? InvoiceStatus::DRAFT->value;
+        
+        // Calculate the total if not specified
+        if (!isset($data['total']) || $data['total'] == 0) {
+            $data['total'] = ($data['total_amount'] ?? 0) - ($data['total_discounts'] ?? 0);
+        }
+        
+        return $data;
+    }
+    
+    protected function getRedirectUrl(): string
+    {
+        return $this->getResource()::getUrl('index');
+    }
+}

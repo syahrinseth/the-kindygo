@@ -5,6 +5,7 @@ namespace App\Filament\Resources;
 use App\Filament\Resources\UserResource\Actions\InviteUserToTenantAction;
 use App\Filament\Resources\UserResource\Pages;
 use App\Filament\Resources\UserResource\RelationManagers;
+use App\Filament\Resources\UserResource\RelationManagers\InvoicesRelationManager;
 use App\Models\User;
 use Filament\Forms;
 use Filament\Forms\Form;
@@ -122,6 +123,13 @@ class UserResource extends Resource
                         ->visible(fn () => Auth::user()->can('deleteAny', User::class)),
                 ]),
             ]);
+    }
+
+    public static function getRelations(): array
+    {
+        return [
+            InvoicesRelationManager::class,
+        ];
     }
 
     public static function getPages(): array
