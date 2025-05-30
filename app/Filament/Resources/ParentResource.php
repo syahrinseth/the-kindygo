@@ -122,6 +122,7 @@ class ParentResource extends Resource
     {
         return [
             RelationManagers\CentresRelationManager::class,
+            RelationManagers\ChildrenRelationManager::class,
         ];
     }
 

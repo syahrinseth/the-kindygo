@@ -32,9 +32,6 @@ class CentresRelationManager extends RelationManager
                 Tables\Columns\TextColumn::make('name')
                     ->searchable()
                     ->sortable(),
-                Tables\Columns\TextColumn::make('tenant.name')
-                    ->searchable()
-                    ->sortable(),
                 Tables\Columns\TextColumn::make('campus.name')
                     ->searchable()
                     ->sortable(),

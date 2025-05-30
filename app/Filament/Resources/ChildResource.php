@@ -3,6 +3,7 @@
 namespace App\Filament\Resources;
 
 use App\Enums\ChildStatus;
+use App\Filament\Forms\ChildForm;
 use App\Filament\Resources\ChildResource\Pages;
 use App\Filament\Resources\ChildResource\RelationManagers;
 use App\Models\Child;
@@ -74,119 +75,7 @@ class ChildResource extends Resource
 
     public static function form(Form $form): Form
     {
-        return $form
-            ->schema([
-                Forms\Components\Section::make('Basic Information')
-                    ->schema([
-                        Forms\Components\TextInput::make('first_name')
-                            ->required()
-                            ->maxLength(255),
-                        Forms\Components\TextInput::make('last_name')
-                            ->required()
-                            ->maxLength(255),
-                        Forms\Components\TextInput::make('patronymic')
-                            ->maxLength(255),
-                        Forms\Components\Select::make('gender')
-                            ->required()
-                            ->options([
-                                'male' => 'Male',
-                                'female' => 'Female',
-                            ]),
-                        Forms\Components\DatePicker::make('date_of_birth')
-                            ->required()
-                            ->maxDate(now()),
-                        Forms\Components\TextInput::make('place_of_birth')
-                            ->maxLength(255),
-                    ])->columns(2),
-                
-                Forms\Components\Section::make('Identification')
-                    ->schema([
-                        Forms\Components\TextInput::make('mykid_no')
-                            ->label('MyKid Number')
-                            ->maxLength(255),
-                        Forms\Components\TextInput::make('cert_number')
-                            ->label('Certificate Number')
-                            ->maxLength(255),
-                        Forms\Components\TextInput::make('position_of_child')
-                            ->label('Position in Family')
-                            ->helperText('E.g. 1st child, 2nd child, etc.')
-                            ->numeric()
-                            ->minValue(1),
-                    ])->columns(3),
-                
-                Forms\Components\Section::make('Background')
-                    ->schema([
-                        Forms\Components\TextInput::make('race')
-                            ->maxLength(255),
-                        Forms\Components\TextInput::make('religion')
-                            ->maxLength(255),
-                        Forms\Components\TextInput::make('languages')
-                            ->helperText('Languages spoken by the child, comma separated')
-                            ->maxLength(255),
-                    ])->columns(3),
-                
-                Forms\Components\Section::make('Health Information')
-                    ->schema([
-                        Forms\Components\Textarea::make('allergies')
-                            ->maxLength(65535)
-                            ->columnSpanFull(),
-                        Forms\Components\Textarea::make('diseases')
-                            ->maxLength(65535)
-                            ->columnSpanFull(),
-                        Forms\Components\TextInput::make('family_clinic')
-                            ->maxLength(255),
-                        Forms\Components\TextInput::make('family_clinic_phone')
-                            ->tel()
-                            ->maxLength(255),
-                    ])->columns(2),
-                
-                Forms\Components\Section::make('Associated Users')
-                    ->schema([
-                        Forms\Components\Select::make('users')
-                            ->label('Parents/Guardians')
-                            ->multiple()
-                            ->relationship('users', 'name')
-                            ->preload()
-                            ->searchable()
-                            ->createOptionForm([
-                                Forms\Components\TextInput::make('name')
-                                    ->required()
-                                    ->maxLength(255),
-                                Forms\Components\TextInput::make('email')
-                                    ->email()
-                                    ->required()
-                                    ->maxLength(255),
-                                Forms\Components\TextInput::make('password')
-                                    ->password()
-                                    ->required()
-                                    ->minLength(8)
-                                    ->maxLength(255),
-                                Forms\Components\Select::make('relationship_type')
-                                    ->label('Relationship')
-                                    ->options([
-                                        'parent' => 'Parent',
-                                        'guardian' => 'Guardian',
-                                        'relative' => 'Relative',
-                                        'other' => 'Other',
-                                    ])
-                                    ->default('parent')
-                                    ->required(),
-                            ])
-                            ->optionsLimit(50)
-                            ->afterStateUpdated(function ($record, $state, Forms\Set $set) {
-                                if ($state && isset($state['relationship_type'])) {
-                                    $set('relationship_type', $state['relationship_type']);
-                                }
-                            })
-                            ->saveRelationshipsUsing(function (Child $record, array $data) {
-                                foreach ($data as $userId) {
-                                    $record->users()->attach($userId, [
-                                        'relationship_type' => 'parent', // Default to parent
-                                    ]);
-                                }
-                            }),
-                    ])->columnSpanFull(),
-            ]);
+        return $form->schema(ChildForm::make());
     }
 
     public static function table(Table $table): Table
