@@ -55,7 +55,7 @@ class InvoiceListWidget extends BaseWidget
             ])
             ->actions([
                 Action::make('view')
-                    ->url(fn (Invoice $record): string => InvoiceResource::getUrl('edit', ['record' => $record]))
+                    ->url(fn (Invoice $record): string => InvoiceResource::getUrl('view', ['record' => $record]))
                     ->icon('heroicon-o-eye'),
             ])
             ->paginated(false);
