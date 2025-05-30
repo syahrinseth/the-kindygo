@@ -4,6 +4,7 @@ namespace App\Filament\Resources;
 
 use App\Filament\Resources\InvoiceResource\Pages;
 use App\Filament\Resources\InvoiceResource\Actions\MarkAsPaidAction;
+use App\Filament\Resources\InvoiceResource\Actions\MakePaymentAction;
 use App\Filament\Resources\InvoiceResource\Actions\ExportInvoicesAction;
 use App\Models\Invoice;
 use App\Models\Centre;
@@ -55,20 +56,9 @@ class InvoiceResource extends Resource
     public static function getEloquentQuery(): Builder
     {
         $query = parent::getEloquentQuery();
-        $user = Auth::user();
         
-        // If user is Principal, restrict to their centres
-        if ($user->hasAnyRole(['Principal', 'Teacher', 'Parent'])) {
-            $query->whereIn('centre_id', $user->centres()->pluck('centres.id'));
-        }
-
-        // If user is Parent, restrict to their invoices
-        if ($user->hasRole('Parent')) {
-            $query->where('user_id', Auth::id())
-                ->where('status', '!=', InvoiceStatus::DRAFT->value);
-        }
-
-        return $query;
+        // Apply the forCurrentUser scope for multi-tenant filtering
+        return $query->forCurrentUser();
     }
 
     public static function canViewAny(): bool
@@ -316,6 +306,12 @@ class InvoiceResource extends Resource
                 Tables\Actions\ViewAction::make()
                     ->visible(fn (Invoice $record) => Auth::user()->can('view', $record)),
                 
+                MakePaymentAction::make()
+                    ->visible(fn (Invoice $record) => 
+                        $record->status !== InvoiceStatus::PAID && 
+                        $record->status !== InvoiceStatus::CANCELLED
+                    ),
+                
                 MarkAsPaidAction::make(),
                 
                 Tables\Actions\EditAction::make()
@@ -345,6 +341,7 @@ class InvoiceResource extends Resource
         return [
             'index' => Pages\ListInvoices::route('/'),
             'create' => Pages\CreateInvoice::route('/create'),
+            'view' => Pages\ViewInvoice::route('/{record}'),
             'edit' => Pages\EditInvoice::route('/{record}/edit'),
         ];
     }

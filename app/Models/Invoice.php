@@ -152,6 +152,37 @@ class Invoice extends Model
     }
 
     /**
+     * Scope a query to filter invoices based on current user's role and permissions.
+     *
+     * @param  \Illuminate\Database\Eloquent\Builder  $query
+     * @param  \App\Models\User|null  $user
+     * @return \Illuminate\Database\Eloquent\Builder
+     */
+    public function scopeForCurrentUser($query, $user = null)
+    {
+        if (!$user) {
+            $user = \Illuminate\Support\Facades\Auth::user();
+        }
+
+        if (!$user) {
+            return $query->whereRaw('1 = 0'); // Return empty result if no user
+        }
+        
+        // If user is Principal, Teacher, or Parent, restrict to their centres
+        if ($user->hasAnyRole(['Principal', 'Teacher', 'Parent'])) {
+            $query->whereIn('centre_id', $user->centres()->pluck('centres.id'));
+        }
+
+        // If user is Parent, restrict to their invoices and exclude drafts
+        if ($user->hasRole('Parent')) {
+            $query->where('user_id', $user->id)
+                ->where('status', '!=', InvoiceStatus::DRAFT->value);
+        }
+
+        return $query;
+    }
+
+    /**
      * Update the status based on the due date.
      * This is useful for automatically marking invoices as overdue.
      *
@@ -202,6 +233,38 @@ class Invoice extends Model
     public function getFormattedTotal(bool $includeCurrency = true): string
     {
         return self::formatMoney($this->total, $includeCurrency);
+    }
+    
+    /**
+     * Get the payments associated with the invoice.
+     *
+     * @return \Illuminate\Database\Eloquent\Relations\BelongsToMany
+     */
+    public function payments()
+    {
+        return $this->belongsToMany(Payment::class, 'invoice_payment')
+            ->withPivot('amount')
+            ->withTimestamps();
+    }
+    
+    /**
+     * Get the total amount paid for this invoice.
+     *
+     * @return int
+     */
+    public function getTotalPaid(): int
+    {
+        return $this->payments->sum('pivot.amount');
+    }
+    
+    /**
+     * Get the remaining balance for this invoice.
+     *
+     * @return int
+     */
+    public function getRemainingBalance(): int
+    {
+        return $this->total - $this->getTotalPaid();
     }
     
     /**

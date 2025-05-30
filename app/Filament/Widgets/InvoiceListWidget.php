@@ -28,7 +28,7 @@ class InvoiceListWidget extends BaseWidget
     {
         return $table
             ->query(
-                Invoice::query()
+                Invoice::forCurrentUser()
                     ->latest('date')
                     ->limit(5)
             )
