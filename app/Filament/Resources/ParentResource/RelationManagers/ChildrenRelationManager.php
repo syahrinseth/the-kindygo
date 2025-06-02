@@ -10,6 +10,7 @@ use Filament\Forms;
 use Filament\Forms\Form;
 use Filament\Resources\RelationManagers\RelationManager;
 use Filament\Tables;
+use Filament\Tables\Columns\SpatieMediaLibraryImageColumn;
 use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
@@ -30,8 +31,8 @@ class ChildrenRelationManager extends RelationManager
 
     public function form(Form $form): Form
     {
-        // Use the ChildForm basic schema for quick operations like detach forms
-        return $form->schema(ChildForm::basic());
+        // Use the full ChildForm without associated users since we're in parent context
+        return $form->schema(ChildForm::withoutAssociatedUsers());
     }
 
     public function table(Table $table): Table
@@ -39,6 +40,15 @@ class ChildrenRelationManager extends RelationManager
         return $table
             ->recordTitleAttribute('first_name')
             ->columns([
+                SpatieMediaLibraryImageColumn::make('photo')
+                    ->label('Photo')
+                    ->collection('photo')
+                    ->conversion('thumb')
+                    ->height(40)
+                    ->width(40)
+                    ->circular()
+                    ->defaultImageUrl(url('/images/default-avatar.png'))
+                    ->toggleable(),
                 Tables\Columns\TextColumn::make('first_name')
                     ->searchable()
                     ->sortable(),

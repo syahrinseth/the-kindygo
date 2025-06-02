@@ -3,11 +3,13 @@
 namespace App\Filament\Resources\CentreResource\RelationManagers;
 
 use App\Enums\ChildStatus;
+use App\Filament\Forms\ChildForm;
 use Filament\Forms;
 use Filament\Forms\Form;
 use Filament\Resources\RelationManagers\RelationManager;
 use Filament\Tables;
 use Filament\Tables\Table;
+use Filament\Tables\Columns\SpatieMediaLibraryImageColumn;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\SoftDeletingScope;
 use Illuminate\Support\Facades\Auth;
@@ -18,19 +20,7 @@ class ChildrenRelationManager extends RelationManager
 
     public function form(Form $form): Form
     {
-        return $form
-            ->schema([
-                Forms\Components\TextInput::make('first_name')
-                    ->required()
-                    ->maxLength(255)
-                    ->disabled(),
-                Forms\Components\TextInput::make('last_name')
-                    ->required()
-                    ->maxLength(255)
-                    ->disabled(),
-                Forms\Components\DatePicker::make('date_of_birth')
-                    ->disabled(),
-            ]);
+        return $form->schema(ChildForm::make());
     }
 
     public function table(Table $table): Table
@@ -38,6 +28,12 @@ class ChildrenRelationManager extends RelationManager
         return $table
             ->recordTitleAttribute('first_name')
             ->columns([
+                SpatieMediaLibraryImageColumn::make('photo')
+                    ->collection('photo')
+                    ->conversion('thumb')
+                    ->circular()
+                    ->defaultImageUrl(url('/images/default-avatar.svg'))
+                    ->size(40),
                 Tables\Columns\TextColumn::make('first_name')
                     ->searchable()
                     ->sortable(),

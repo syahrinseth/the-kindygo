@@ -3,6 +3,7 @@
 namespace App\Filament\Forms;
 
 use Filament\Forms;
+use Filament\Forms\Components\SpatieMediaLibraryFileUpload;
 
 class ChildForm
 {
@@ -72,6 +73,47 @@ class ChildForm
                         ->tel()
                         ->maxLength(255),
                 ])->columns(2),
+            
+            Forms\Components\Section::make('Documents & Photos')
+                ->schema([
+                    SpatieMediaLibraryFileUpload::make('photo')
+                        ->label('Child Photo')
+                        ->collection('photo')
+                        ->disk('private')
+                        ->image()
+                        ->imagePreviewHeight('250')
+                        ->loadingIndicatorPosition('left')
+                        ->panelAspectRatio('2:3')
+                        ->panelLayout('integrated')
+                        ->removeUploadedFileButtonPosition('right')
+                        ->uploadButtonPosition('left')
+                        ->uploadProgressIndicatorPosition('left')
+                        ->acceptedFileTypes(['image/jpeg', 'image/png', 'image/webp'])
+                        ->maxSize(5120) // 5MB
+                        ->helperText('Upload a photo of the child. Maximum size: 5MB'),
+                        
+                    SpatieMediaLibraryFileUpload::make('birth_certificate')
+                        ->label('Birth Certificate')
+                        ->collection('birth_certificate')
+                        ->disk('private')
+                        ->acceptedFileTypes(['image/jpeg', 'image/png', 'image/webp', 'application/pdf'])
+                        ->maxSize(10240) // 10MB
+                        ->panelLayout('compact')
+                        ->downloadable()
+                        ->openable()
+                        ->helperText('Upload the child\'s birth certificate. Accepted formats: JPG, PNG, WebP, PDF. Maximum size: 10MB'),
+                        
+                    SpatieMediaLibraryFileUpload::make('immunization_card')
+                        ->label('Immunization Card')
+                        ->collection('immunization_card')
+                        ->disk('private')
+                        ->acceptedFileTypes(['image/jpeg', 'image/png', 'image/webp', 'application/pdf'])
+                        ->maxSize(10240) // 10MB
+                        ->panelLayout('compact')
+                        ->downloadable()
+                        ->openable()
+                        ->helperText('Upload the child\'s immunization card. Accepted formats: JPG, PNG, WebP, PDF. Maximum size: 10MB'),
+                ])->columns(3),
         ];
 
         // Add relationship type section if requested (for relation managers)

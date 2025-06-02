@@ -8,10 +8,14 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
+use Spatie\MediaLibrary\HasMedia;
+use Spatie\MediaLibrary\InteractsWithMedia;
+use Spatie\MediaLibrary\MediaCollections\Models\Media;
+use Spatie\MediaLibrary\MediaCollections\MediaCollection;
 
-class Child extends Model
+class Child extends Model implements HasMedia
 {
-    use HasFactory, SoftDeletes;
+    use HasFactory, SoftDeletes, InteractsWithMedia;
     
     /**
      * The "booted" method of the model.
@@ -243,5 +247,44 @@ class Child extends Model
         $centreId = $centre instanceof Centre ? $centre->id : $centre;
         
         return $this->centres()->where('centre_id', $centreId)->exists();
+    }
+    
+    /**
+     * Register media collections for the child.
+     */
+    public function registerMediaCollections(): void
+    {
+        $this->addMediaCollection('photo')
+            ->acceptsMimeTypes(['image/jpeg', 'image/png', 'image/webp'])
+            ->singleFile()
+            ->useDisk('private');
+            
+        $this->addMediaCollection('birth_certificate')
+            ->acceptsMimeTypes(['image/jpeg', 'image/png', 'image/webp', 'application/pdf'])
+            ->singleFile()
+            ->useDisk('private');
+            
+        $this->addMediaCollection('immunization_card')
+            ->acceptsMimeTypes(['image/jpeg', 'image/png', 'image/webp', 'application/pdf'])
+            ->singleFile()
+            ->useDisk('private');
+    }
+    
+    /**
+     * Register media conversions for the child.
+     */
+    public function registerMediaConversions(Media $media = null): void
+    {
+        $this->addMediaConversion('thumb')
+            ->width(300)
+            ->height(300)
+            ->sharpen(10)
+            ->performOnCollections('photo');
+            
+        $this->addMediaConversion('preview')
+            ->width(800)
+            ->height(600)
+            ->quality(90)
+            ->performOnCollections('birth_certificate', 'immunization_card');
     }
 }
