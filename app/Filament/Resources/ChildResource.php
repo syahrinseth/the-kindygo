@@ -6,6 +6,7 @@ use App\Enums\ChildStatus;
 use App\Filament\Forms\ChildForm;
 use App\Filament\Resources\ChildResource\Pages;
 use App\Filament\Resources\ChildResource\RelationManagers;
+use App\Models\Centre;
 use App\Models\Child;
 use App\Models\Scopes\ChildStatusScope;
 use Filament\Forms;
@@ -197,6 +198,38 @@ class ChildResource extends Resource
                         'male' => 'Male',
                         'female' => 'Female',
                     ]),
+                Tables\Filters\SelectFilter::make('centre')
+                    ->label('Centre')
+                    ->options(function () {
+                        $user = Auth::user();
+                        
+                        if (!$user || !$user->current_tenant_id) {
+                            return [];
+                        }
+                        
+                        // Get centres based on user role and permissions
+                        if ($user->hasAnyRole(['Super Admin', 'Admin'])) {
+                            // Super Admin and Admin can see all centres in their tenant
+                            return Centre::where('tenant_id', $user->current_tenant_id)
+                                ->pluck('name', 'id');
+                        } else if ($user->hasAnyRole(['Teacher', 'Principal'])) {
+                            // Teachers and Principals can only see centres they're assigned to
+                            return $user->centres()
+                                ->where('centres.tenant_id', $user->current_tenant_id)
+                                ->pluck('name', 'id');
+                        }
+                        
+                        return [];
+                    })
+                    ->query(function (Builder $query, array $data): Builder {
+                        if (empty($data['value'])) {
+                            return $query;
+                        }
+                        
+                        return $query->whereHas('centres', function (Builder $subQuery) use ($data) {
+                            $subQuery->where('centres.id', $data['value']);
+                        });
+                    }),
                 Tables\Filters\Filter::make('date_of_birth')
                     ->form([
                         Forms\Components\DatePicker::make('birth_from'),
