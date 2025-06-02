@@ -10,7 +10,7 @@ use Spatie\Permission\Models\Role;
 
 class UserForm
 {
-    public static function make(bool $showRoleSelect = true): array
+    public static function make(): array
     {
         return [
             Forms\Components\Section::make('Basic Information')
@@ -61,19 +61,13 @@ class UserForm
                             // Set default role only for new users and if no selection exists
                             if (!$record && empty($component->getState())) {
                                 $user = Auth::user();
-                                
-                                // If Principal is creating user, default to Parent
-                                if ($user->hasRole('Principal')) {
-                                    $parentRole = Role::where('name', 'Parent')->first();
-                                    if ($parentRole) {
-                                        $component->state([$parentRole->id]);
-                                    }
+                                $parentRole = Role::where('name', 'Parent')->first();
+                                if ($parentRole) {
+                                    $component->state([$parentRole->id]);
                                 }
                             }
                         })
-                        ->visible($showRoleSelect),
                 ])
-                ->visible($showRoleSelect)
                 ->collapsible(),
             
             Forms\Components\Section::make('Centre Assignments')

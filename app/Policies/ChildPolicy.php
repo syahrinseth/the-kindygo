@@ -36,7 +36,7 @@ class ChildPolicy
 
         // Principal and Teacher can view children in their centres
         if ($user->hasAnyRole(['Principal', 'Teacher'])) {
-            return $this->childBelongsToUserTenant($user, $child);
+            return $this->canAccessChildBasedOnCentres($user, $child);
         }
 
         // Parents can only view their associated children
@@ -73,7 +73,7 @@ class ChildPolicy
 
         // Principal and Teacher can update children in their centres
         if ($user->hasAnyRole(['Principal', 'Teacher'])) {
-            return $this->childBelongsToUserTenant($user, $child);
+            return $this->canAccessChildBasedOnCentres($user, $child);
         }
 
         // Parents can update limited information for their associated children
@@ -101,7 +101,7 @@ class ChildPolicy
 
         // Principal can delete children in their centres
         if ($user->hasRole('Principal')) {
-            return $this->childBelongsToUserTenant($user, $child);
+            return $this->canAccessChildBasedOnCentres($user, $child);
         }
 
         // Teachers and Parents cannot delete children
@@ -145,14 +145,14 @@ class ChildPolicy
             return true;
         }
 
-        // Admin and Principal can change status for children in their tenant
+        // Admin and Principal can change status for children in their tenant/centres
         if ($user->hasAnyRole(['Admin', 'Principal'])) {
-            return $this->childBelongsToUserTenant($user, $child);
+            return $this->canAccessChildBasedOnCentres($user, $child);
         }
 
         // Teachers can change status for children in their centres with restrictions
         if ($user->hasRole('Teacher')) {
-            return $this->childBelongsToUserTenant($user, $child);
+            return $this->canAccessChildBasedOnCentres($user, $child);
         }
 
         return false;
@@ -177,9 +177,32 @@ class ChildPolicy
             return true;
         }
 
-        // Admin and Principal can manage parents for children in their tenant
+        // Admin and Principal can manage parents for children in their tenant/centres
         if ($user->hasAnyRole(['Admin', 'Principal'])) {
+            return $this->canAccessChildBasedOnCentres($user, $child);
+        }
+
+        return false;
+    }
+    
+    /**
+     * Determine whether the user can associate/disassociate centres with children.
+     */
+    public function manageCentres(User $user, Child $child): bool
+    {
+        // Super Admin can manage any child's centres
+        if ($user->hasRole('Super Admin')) {
+            return true;
+        }
+
+        // Admin can manage centres for children in their tenant
+        if ($user->hasRole('Admin')) {
             return $this->childBelongsToUserTenant($user, $child);
+        }
+
+        // Principal can manage centres for children they have access to
+        if ($user->hasRole('Principal')) {
+            return $this->canAccessChildBasedOnCentres($user, $child);
         }
 
         return false;
@@ -203,5 +226,48 @@ class ChildPolicy
     private function isParentOfChild(User $user, Child $child): bool
     {
         return $child->users()->where('users.id', $user->id)->exists();
+    }
+    
+    /**
+     * Helper method to check if a child belongs to any of the user's centres.
+     */
+    private function childBelongsToUserCentres(User $user, Child $child): bool
+    {
+        if (!$user->current_tenant_id) {
+            return false;
+        }
+
+        // Get the centres that the user has access to in the current tenant
+        $userCentreIds = $user->centres()
+            ->where('centres.tenant_id', $user->current_tenant_id)
+            ->pluck('centres.id');
+
+        if ($userCentreIds->isEmpty()) {
+            return false;
+        }
+
+        // Check if the child is in any of the user's centres
+        return $child->centres()
+            ->whereIn('centres.id', $userCentreIds)
+            ->exists();
+    }
+    
+    /**
+     * Helper method to check centre access based on user role.
+     */
+    private function canAccessChildBasedOnCentres(User $user, Child $child): bool
+    {
+        // Super Admin and Admin can access all children in their tenant (no centre restriction)
+        if ($user->hasAnyRole(['Super Admin', 'Admin'])) {
+            return $this->childBelongsToUserTenant($user, $child);
+        }
+
+        // Principal and Teacher can only access children in their assigned centres
+        if ($user->hasAnyRole(['Principal', 'Teacher'])) {
+            return $this->childBelongsToUserTenant($user, $child) && 
+                   $this->childBelongsToUserCentres($user, $child);
+        }
+
+        return false;
     }
 }

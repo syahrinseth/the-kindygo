@@ -190,4 +190,57 @@ class Child extends Model
             ->using(ChildUser::class)
             ->withTimestamps();
     }
+    
+    /**
+     * Get the centres associated with this child.
+     *
+     * @return \Illuminate\Database\Eloquent\Relations\BelongsToMany
+     */
+    public function centres(): BelongsToMany
+    {
+        return $this->belongsToMany(Centre::class, 'centre_child')
+            ->using(CentreChild::class)
+            ->withTimestamps();
+    }
+    
+    /**
+     * Add this child to a centre.
+     *
+     * @param Centre|int $centre The centre or centre ID
+     * @return void
+     */
+    public function addToCentre($centre): void
+    {
+        $centreId = $centre instanceof Centre ? $centre->id : $centre;
+        
+        if (!$this->centres()->where('centre_id', $centreId)->exists()) {
+            $this->centres()->attach($centreId);
+        }
+    }
+    
+    /**
+     * Remove this child from a centre.
+     *
+     * @param Centre|int $centre The centre or centre ID
+     * @return void
+     */
+    public function removeFromCentre($centre): void
+    {
+        $centreId = $centre instanceof Centre ? $centre->id : $centre;
+        
+        $this->centres()->detach($centreId);
+    }
+    
+    /**
+     * Check if this child is associated with a specific centre.
+     *
+     * @param Centre|int $centre The centre or centre ID
+     * @return bool
+     */
+    public function isInCentre($centre): bool
+    {
+        $centreId = $centre instanceof Centre ? $centre->id : $centre;
+        
+        return $this->centres()->where('centre_id', $centreId)->exists();
+    }
 }

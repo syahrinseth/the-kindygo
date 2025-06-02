@@ -65,9 +65,23 @@ class ChildResource extends Resource
         $query = parent::getEloquentQuery();
         $user = Auth::user();
 
-        // If user is Parent, restrict to their invoices
+        // If user is Parent, restrict to their children
         if ($user->hasRole('Parent')) {
             $query->whereHas('users', fn($q) => $q->where('users.id', $user->id));
+        }
+        
+        // If user is Teacher or Principal, restrict to children in their centres
+        if ($user->hasAnyRole(['Teacher', 'Principal'])) {
+            $userCentreIds = $user->centres()
+                ->where('centres.tenant_id', $user->current_tenant_id)
+                ->pluck('centres.id');
+                
+            if ($userCentreIds->isNotEmpty()) {
+                $query->whereHas('centres', fn($q) => $q->whereIn('centres.id', $userCentreIds));
+            } else {
+                // If user has no centres assigned, show no children
+                $query->whereRaw('1 = 0');
+            }
         }
 
         return $query;
@@ -98,9 +112,9 @@ class ChildResource extends Resource
                         'female' => 'pink',
                         default => 'gray',
                     }),
-                Tables\Columns\TextColumn::make('allergies')
+                Tables\Columns\TextColumn::make('centres.name')
                     ->searchable()
-                    ->toggleable(),
+                    ->sortable(),
                 Tables\Columns\TextColumn::make('tenant_status')
                     ->label('Status')
                     ->badge()
@@ -280,6 +294,7 @@ class ChildResource extends Resource
     public static function getRelations(): array
     {
         return [
+            RelationManagers\CentresRelationManager::class,
             // RelationManagers\UsersRelationManager::class,
         ];
     }

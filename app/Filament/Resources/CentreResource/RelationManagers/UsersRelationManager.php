@@ -17,7 +17,7 @@ class UsersRelationManager extends RelationManager
 
     public function form(Form $form): Form
     {
-        return $form->schema(UserForm::make(showRoleSelect: true));
+        return $form->schema(UserForm::make());
     }
 
     public function table(Table $table): Table

@@ -85,6 +85,59 @@ class Centre extends Model
     {
         return $this->hasMany(Invoice::class);
     }
+    
+    /**
+     * Get the children associated with this centre.
+     *
+     * @return \Illuminate\Database\Eloquent\Relations\BelongsToMany
+     */
+    public function children(): BelongsToMany
+    {
+        return $this->belongsToMany(Child::class, 'centre_child')
+            ->using(CentreChild::class)
+            ->withTimestamps();
+    }
+    
+    /**
+     * Add a child to this centre.
+     *
+     * @param Child|int $child The child or child ID
+     * @return void
+     */
+    public function addChild($child): void
+    {
+        $childId = $child instanceof Child ? $child->id : $child;
+        
+        if (!$this->children()->where('child_id', $childId)->exists()) {
+            $this->children()->attach($childId);
+        }
+    }
+    
+    /**
+     * Remove a child from this centre.
+     *
+     * @param Child|int $child The child or child ID
+     * @return void
+     */
+    public function removeChild($child): void
+    {
+        $childId = $child instanceof Child ? $child->id : $child;
+        
+        $this->children()->detach($childId);
+    }
+    
+    /**
+     * Check if a specific child is in this centre.
+     *
+     * @param Child|int $child The child or child ID
+     * @return bool
+     */
+    public function hasChild($child): bool
+    {
+        $childId = $child instanceof Child ? $child->id : $child;
+        
+        return $this->children()->where('child_id', $childId)->exists();
+    }
 
     /**
      * Scope a query to only include centres that the authenticated user has access to

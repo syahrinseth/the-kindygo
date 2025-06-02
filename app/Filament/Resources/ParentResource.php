@@ -68,7 +68,7 @@ class ParentResource extends Resource
 
     public static function form(Form $form): Form
     {
-        return $form->schema(UserForm::make(showRoleSelect: false));
+        return $form->schema(UserForm::make());
     }
 
     public static function table(Table $table): Table

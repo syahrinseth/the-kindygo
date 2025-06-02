@@ -11,15 +11,14 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('tenant_child', function (Blueprint $table) {
+        Schema::create('centre_child', function (Blueprint $table) {
             $table->id();
-            $table->foreignId('tenant_id')->constrained()->onDelete('cascade');
+            $table->foreignId('centre_id')->constrained()->onDelete('cascade');
             $table->foreignId('child_id')->constrained('children')->onDelete('cascade');
-            $table->string('status')->default(\App\Enums\ChildStatus::NEW->value);
             $table->timestamps();
             
-            // Make sure a child can only be associated with a tenant once
-            $table->unique(['tenant_id', 'child_id']);
+            // Ensure a child can only be associated with a centre once
+            $table->unique(['centre_id', 'child_id']);
         });
     }
 
@@ -28,6 +27,6 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::dropIfExists('tenant_children');
+        Schema::dropIfExists('centre_child');
     }
 };
