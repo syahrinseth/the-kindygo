@@ -3,29 +3,33 @@
 namespace App\Models;
 
 // use Illuminate\Contracts\Auth\MustVerifyEmail;
-use Filament\Panel;
-use App\Models\Child;
-use App\Models\Tenant;
 use App\Models\Centre;
+use App\Models\Child;
 use App\Models\Invoice;
-use Illuminate\Support\Collection;
-use Spatie\Permission\Traits\HasRoles;
-use Illuminate\Database\Eloquent\Model;
-use Illuminate\Notifications\Notifiable;
-use Filament\Models\Contracts\HasTenants;
+use App\Models\Tenant;
 use Filament\Models\Contracts\FilamentUser;
+use Filament\Models\Contracts\HasAvatar;
 use Filament\Models\Contracts\HasDefaultTenant;
-use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Filament\Models\Contracts\HasTenants;
+use Filament\Panel;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
-use Illuminate\Foundation\Auth\User as Authenticatable;
+use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
-use Illuminate\Support\Facades\DB;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Foundation\Auth\User as Authenticatable;
+use Illuminate\Notifications\Notifiable;
+use Illuminate\Support\Collection;
+use Illuminate\Support\Facades\DB;
+use Spatie\MediaLibrary\HasMedia;
+use Spatie\MediaLibrary\InteractsWithMedia;
+use Spatie\MediaLibrary\MediaCollections\Models\Media;
+use Spatie\Permission\Traits\HasRoles;
 
-class User extends Authenticatable implements FilamentUser, HasDefaultTenant, HasTenants
+class User extends Authenticatable implements FilamentUser, HasDefaultTenant, HasTenants, HasMedia, HasAvatar
 {
     /** @use HasFactory<\Database\Factories\UserFactory> */
-    use HasFactory, Notifiable, HasRoles;
+    use HasFactory, Notifiable, HasRoles, InteractsWithMedia;
 
     public function canAccessPanel(Panel $panel): bool
     {
@@ -247,5 +251,63 @@ class User extends Authenticatable implements FilamentUser, HasDefaultTenant, Ha
             ->withPivot('relationship_type')
             ->using(ChildUser::class)
             ->withTimestamps();
+    }
+
+    /**
+     * Register media collections for the user.
+     */
+    public function registerMediaCollections(): void
+    {
+        $this->addMediaCollection('mykad')
+            ->acceptsMimeTypes(['image/jpeg', 'image/png', 'image/webp', 'application/pdf'])
+            ->singleFile()
+            ->useDisk('private');
+
+        $this->addMediaCollection('photo')
+            ->acceptsMimeTypes(['image/jpeg', 'image/png', 'image/webp'])
+            ->singleFile()
+            ->useDisk('private');
+
+        $this->addMediaCollection('immunization_card')
+            ->acceptsMimeTypes(['image/jpeg', 'image/png', 'image/webp', 'application/pdf'])
+            ->singleFile()
+            ->useDisk('private');
+    }
+
+    /**
+     * Register media conversions for the user.
+     */
+    public function registerMediaConversions(Media $media = null): void
+    {
+        $this->addMediaConversion('thumb')
+            ->width(300)
+            ->height(300)
+            ->sharpen(10)
+            ->performOnCollections('photo');
+
+        $this->addMediaConversion('preview')
+            ->width(800)
+            ->height(600)
+            ->quality(90)
+            ->performOnCollections('mykad', 'immunization_card');
+    }
+
+    /**
+     * Get the user's avatar URL for Filament.
+     */
+    public function getFilamentAvatarUrl(): ?string
+    {
+        $media = $this->getFirstMedia('photo');
+        
+        if (!$media) {
+            return null;
+        }
+
+        // Use the thumb conversion if available, otherwise use the original
+        if ($media->hasGeneratedConversion('thumb')) {
+            return $media->getUrl('thumb');
+        }
+
+        return $media->getUrl();
     }
 }

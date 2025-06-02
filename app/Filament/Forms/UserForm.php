@@ -4,6 +4,7 @@ namespace App\Filament\Forms;
 
 use App\Models\User;
 use Filament\Forms;
+use Filament\Forms\Components\SpatieMediaLibraryFileUpload;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
 use Spatie\Permission\Models\Role;
@@ -23,6 +24,48 @@ class UserForm
                         ->required()
                         ->maxLength(255),
                 ])->columns(2),
+
+            Forms\Components\Section::make('Documents & Photos')
+                ->schema([
+
+                    SpatieMediaLibraryFileUpload::make('photo')
+                        ->label('Photo')
+                        ->collection('photo')
+                        ->disk('private')
+                        ->image()
+                        ->imagePreviewHeight('250')
+                        ->loadingIndicatorPosition('left')
+                        ->panelAspectRatio('2:3')
+                        ->panelLayout('integrated')
+                        ->removeUploadedFileButtonPosition('right')
+                        ->uploadButtonPosition('left')
+                        ->uploadProgressIndicatorPosition('left')
+                        ->acceptedFileTypes(['image/jpeg', 'image/png', 'image/webp'])
+                        ->maxSize(5120) // 5MB
+                        ->helperText('Upload photo. Maximum size: 5MB'),
+                        
+                    SpatieMediaLibraryFileUpload::make('mykad')
+                        ->label('MyKad')
+                        ->collection('mykad')
+                        ->disk('private')
+                        ->acceptedFileTypes(['image/jpeg', 'image/png', 'image/webp', 'application/pdf'])
+                        ->maxSize(10240) // 10MB
+                        ->panelLayout('compact')
+                        ->downloadable()
+                        ->openable()
+                        ->helperText('Upload MyKad document. Accepted formats: JPG, PNG, WebP, PDF. Maximum size: 10MB'),
+
+                    SpatieMediaLibraryFileUpload::make('immunization_card')
+                        ->label('Immunization Card')
+                        ->collection('immunization_card')
+                        ->disk('private')
+                        ->acceptedFileTypes(['image/jpeg', 'image/png', 'image/webp', 'application/pdf'])
+                        ->maxSize(10240) // 10MB
+                        ->panelLayout('compact')
+                        ->downloadable()
+                        ->openable()
+                        ->helperText('Upload immunization card. Accepted formats: JPG, PNG, WebP, PDF. Maximum size: 10MB'),
+                ])->columns(3),
 
             Forms\Components\Section::make('Role Assignment')
                 ->schema([
