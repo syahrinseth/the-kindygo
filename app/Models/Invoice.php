@@ -33,6 +33,70 @@ class Invoice extends Model
     ];
 
     /**
+     * Boot the model.
+     */
+    protected static function boot()
+    {
+        parent::boot();
+
+        static::creating(function ($invoice) {
+            if (empty($invoice->number)) {
+                $invoice->number = $invoice->generateInvoiceNumber();
+            }
+        });
+    }
+
+    /**
+     * Generate a unique invoice number using format: #{centre_code}/{year}/{running_number}
+     *
+     * @return string
+     */
+    public function generateInvoiceNumber(): string
+    {
+        $date = $this->date ?? now();
+        $year = $date->format('Y');
+        
+        // Get centre code - use the dedicated code field if available, otherwise fallback to name
+        $centre = $this->centre ?? Centre::find($this->centre_id);
+        $centreCode = $centre->code ?? strtoupper(preg_replace('/[^A-Za-z0-9]/', '', $centre->name ?? 'CENTRE'));
+        
+        // Generate sequential number unique to tenant_id, centre_id, and year
+        $sequentialNumber = $this->getNextSequentialNumber($year);
+        $runningNumber = str_pad($sequentialNumber, 4, '0', STR_PAD_LEFT);
+        
+        // Format: #{centre_code}/{year}/{running_number}
+        $number = "#{$centreCode}/{$year}/{$runningNumber}";
+        
+        return $number;
+    }
+
+    /**
+     * Get the next sequential number for invoice generation.
+     * Numbers are unique based on tenant_id, centre_id, and year.
+     *
+     * @param string $year
+     * @return int
+     */
+    private function getNextSequentialNumber(string $year): int
+    {
+        $lastInvoice = static::where('tenant_id', $this->tenant_id)
+            ->where('centre_id', $this->centre_id)
+            ->whereYear('date', $year)
+            ->orderBy('created_at', 'desc')
+            ->first();
+            
+        if (!$lastInvoice) {
+            return 1;
+        }
+        
+        // Extract number from the last invoice using the new format #{CODE}/{YEAR}/{NUMBER}
+        preg_match('/\#[A-Z0-9]+\/\d{4}\/(\d+)$/', $lastInvoice->number, $matches);
+        $lastNumber = isset($matches[1]) ? (int)$matches[1] : 0;
+        
+        return $lastNumber + 1;
+    }
+
+    /**
      * The attributes that should be cast.
      *
      * @var array<string, string>
@@ -164,22 +228,12 @@ class Invoice extends Model
             $user = \Illuminate\Support\Facades\Auth::user();
         }
 
-        if (!$user) {
-            return $query->whereRaw('1 = 0'); // Return empty result if no user
+        if (!$user || !$user->current_tenant_id) {
+            return $query->whereRaw('1 = 0'); // Return empty result if no user or tenant
         }
         
-        // If user is Principal, Teacher, or Parent, restrict to their centres
-        if ($user->hasAnyRole(['Principal', 'Teacher', 'Parent'])) {
-            $query->whereIn('centre_id', $user->centres()->pluck('centres.id'));
-        }
-
-        // If user is Parent, restrict to their invoices and exclude drafts
-        if ($user->hasRole('Parent')) {
-            $query->where('user_id', $user->id)
-                ->where('status', '!=', InvoiceStatus::DRAFT->value);
-        }
-
-        return $query;
+        // Filter by current tenant
+        return $query->where('tenant_id', $user->current_tenant_id);
     }
 
     /**

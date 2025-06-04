@@ -82,21 +82,22 @@ class InvoiceResource extends Resource
             ->schema([
                 Section::make('Invoice Details')
                     ->schema([
-                        Grid::make()
+                        // Show generated invoice number on edit forms
+                        TextInput::make('number')
+                            ->label('Invoice Number')
+                            ->disabled()
+                            ->visible(fn ($livewire) => $livewire instanceof \Filament\Resources\Pages\EditRecord)
+                            ->columnSpanFull()
+                            ->helperText('Auto-generated in format: #{CENTRE_CODE}/{YEAR}/{NUMBER}'),
+                            
+                        Grid::make(3)
                             ->schema([
-                                TextInput::make('number')
-                                    ->required()
-                                    ->unique(ignoreRecord: true)
-                                    ->placeholder('INV-XXXXXXXX')
-                                    ->helperText('A unique invoice number')
-                                    ->columnSpan(1),
-                                
                                 Select::make('status')
                                     ->options(collect(InvoiceStatus::cases())->pluck('value', 'value')->toArray())
                                     ->required()
                                     ->native(false)
                                     ->columnSpan(1),
-                            ]),
+                            ])->columns(3),
                         
                         Grid::make(2)
                             ->schema([

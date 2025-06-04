@@ -36,6 +36,7 @@ class Centre extends Model
         'tenant_id',
         'campus_id',
         'slug',
+        'code',
         'name',
         'status',
         'phone',

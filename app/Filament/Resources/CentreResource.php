@@ -74,7 +74,21 @@ class CentreResource extends Resource
                                     ->live(debounce: 2000) // Wait 2 seconds after typing stops
                                     ->afterStateUpdated(function (string $state, Forms\Set $set) {
                                         $set('slug', str()->slug($state));
+                                        // Auto-generate code from name if not set
+                                        $currentCode = $set->get('code');
+                                        if (empty($currentCode)) {
+                                            $code = strtoupper(preg_replace('/[^A-Za-z0-9]/', '', substr($state, 0, 6)));
+                                            $set('code', $code);
+                                        }
                                     }),
+                                TextInput::make('code')
+                                    ->label('Centre Code')
+                                    ->required()
+                                    ->maxLength(10)
+                                    ->rule('alpha_num')
+                                    ->unique(ignoreRecord: true)
+                                    ->helperText('Short unique code for this centre (e.g., CTR001, MAIN, etc.)')
+                                    ->placeholder('e.g., CTR001'),
                                 TextInput::make('slug')
                                     ->readOnly()
                                     ->dehydrated(),
@@ -157,6 +171,12 @@ class CentreResource extends Resource
     {
         return $table
             ->columns([
+                Tables\Columns\TextColumn::make('code')
+                    ->label('Code')
+                    ->searchable()
+                    ->sortable()
+                    ->badge()
+                    ->color('primary'),
                 Tables\Columns\TextColumn::make('name')
                     ->searchable()
                     ->sortable(),
