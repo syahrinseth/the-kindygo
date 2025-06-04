@@ -7,10 +7,13 @@ use App\Models\Scopes\TenantScope;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
+use Spatie\MediaLibrary\InteractsWithMedia;
+use Spatie\MediaLibrary\HasMedia;
+use Spatie\MediaLibrary\MediaCollections\Models\Media;
 
-class Payment extends Model
+class Payment extends Model implements HasMedia
 {
-    use HasFactory;
+    use HasFactory, InteractsWithMedia;
 
     /**
      * The attributes that are mass assignable.
@@ -67,5 +70,29 @@ class Payment extends Model
     {
         $formatted = number_format($this->amount / 100, 2);
         return $includeCurrency ? 'RM' . $formatted : $formatted;
+    }
+
+    /**
+     * Register media collections for the payment model.
+     */
+    public function registerMediaCollections(): void
+    {
+        $this->addMediaCollection('payment_proof')
+            ->acceptsMimeTypes(['image/jpeg', 'image/png', 'image/jpg', 'application/pdf'])
+            ->useDisk('private')
+            ->singleFile();
+    }
+
+    /**
+     * Register media conversions for the payment model.
+     */
+    public function registerMediaConversions(Media $media = null): void
+    {
+        $this->addMediaConversion('thumb')
+              ->width(300)
+              ->height(300)
+              ->sharpen(10)
+              ->performOnCollections('payment_proof')
+              ->nonQueued();
     }
 }

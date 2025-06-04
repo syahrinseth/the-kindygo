@@ -6,8 +6,13 @@ use App\Filament\Resources\InvoiceResource;
 use App\Filament\Resources\InvoiceResource\Actions\MakePaymentAction;
 use App\Models\Invoice;
 use Filament\Actions;
+use Filament\Forms;
+use Filament\Forms\Components\FileUpload;
+use Filament\Forms\Components\SpatieMediaLibraryFileUpload;
 use Filament\Infolists\Components\Grid;
 use Filament\Infolists\Components\Group;
+use Filament\Infolists\Components\ImageEntry;
+use Filament\Infolists\Components\SpatieMediaLibraryImageEntry;
 use Filament\Infolists\Components\RepeatableEntry;
 use Filament\Infolists\Components\Section;
 use Filament\Infolists\Components\TextEntry;
@@ -97,26 +102,36 @@ class ViewInvoice extends ViewRecord
                     ->schema([
                         RepeatableEntry::make('payments')
                             ->schema([
-                                Grid::make(4)
+                                Grid::make(2)
                                     ->schema([
-                                        TextEntry::make('reference_no')
-                                            ->label('Reference'),
-                                        TextEntry::make('gateway')
-                                            ->label('Method')
-                                            ->formatStateUsing(fn (string $state): string => match ($state) {
-                                                'cash' => 'Cash',
-                                                'bank_transfer' => 'Bank Transfer',
-                                                'credit_card' => 'Credit Card',
-                                                default => $state,
-                                            }),
-                                        TextEntry::make('paid_at')
-                                            ->label('Date')
-                                            ->date('M d, Y'),
-                                        TextEntry::make('pivot.amount')
-                                            ->label('Amount')
-                                            ->money('MYR')
-                                            ->formatStateUsing(fn ($state) => $state / 100),
-                                    ])
+                                        Group::make([
+                                            Grid::make(4)
+                                                ->schema([
+                                                    TextEntry::make('reference_no')
+                                                        ->label('Reference'),
+                                                    TextEntry::make('gateway')
+                                                        ->label('Method')
+                                                        ->formatStateUsing(fn (string $state): string => match ($state) {
+                                                            'cash' => 'Cash',
+                                                            'bank_transfer' => 'Bank Transfer',
+                                                            'credit_card' => 'Credit Card',
+                                                            default => $state,
+                                                        }),
+                                                    TextEntry::make('paid_at')
+                                                        ->label('Date')
+                                                        ->date('M d, Y'),
+                                                    TextEntry::make('pivot.amount')
+                                                        ->label('Amount')
+                                                        ->money('MYR')
+                                                        ->formatStateUsing(fn ($state) => $state / 100),
+                                                ]),
+                                        ]),
+                                        Group::make([
+                                            SpatieMediaLibraryImageEntry::make('payment_proof')
+                                                ->label('Proof')
+                                                ->collection('payment_proof'),
+                                        ])->visible(fn ($record) => $record->gateway === 'bank_transfer'),
+                                    ]),
                             ])
                     ]),
             ]);

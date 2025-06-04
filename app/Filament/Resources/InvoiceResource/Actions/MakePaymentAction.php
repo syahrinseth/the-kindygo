@@ -10,7 +10,10 @@ use Carbon\Carbon;
 use Filament\Actions\Action as FilamentAction;
 use Filament\Forms;
 use Filament\Forms\Components\DateTimePicker;
+use Filament\Forms\Components\FileUpload;
+use Filament\Forms\Components\Grid;
 use Filament\Forms\Components\Select;
+use Filament\Forms\Components\SpatieMediaLibraryFileUpload;
 use Filament\Forms\Components\TextInput;
 use Filament\Notifications\Notification;
 use Filament\Tables\Actions\Action;
@@ -56,18 +59,33 @@ class MakePaymentAction
     protected static function getFormSchema(): array
     {
         return [
-            Select::make('gateway')
-                ->label('Payment Gateway')
-                ->options([
-                    'cash' => 'Cash',
-                    'bank_transfer' => 'Bank Transfer',
-                    'chip' => 'CHIP',
-                ])
-                ->required(),
+            Grid::make(2)
+                ->schema([
+                    Select::make('gateway')
+                        ->label('Payment Gateway')
+                        ->options([
+                            // 'cash' => 'Cash',
+                            'bank_transfer' => 'Bank Transfer',
+                            'chip' => 'CHIP',
+                        ])
+                        ->required()
+                        ->live(),
 
-            TextInput::make('reference_no')
-                ->label('Reference Number')
-                ->required(),
+                    TextInput::make('reference_no')
+                        ->label('Reference Number')
+                        ->required(),
+                ]),
+
+            FileUpload::make('payment_proof')
+                ->label('Photo')
+                ->disk('private')
+                ->directory('payment-proofs')
+                ->image()
+                ->acceptedFileTypes(['image/jpeg', 'image/png', 'image/webp'])
+                ->maxSize(5120) // 5MB
+                ->helperText('Upload photo. Maximum size: 5MB')
+                ->required(fn (Forms\Get $get): bool => $get('gateway') === 'bank_transfer')
+                ->visible(fn (Forms\Get $get): bool => $get('gateway') === 'bank_transfer'),
 
             TextInput::make('amount')
                 ->label('Amount')
@@ -118,6 +136,20 @@ class MakePaymentAction
                     'description' => $data['description'] ?? null,
                     'paid_at' => Carbon::parse($data['paid_at']),
                 ]);
+
+                // Handle payment proof upload if provided
+                if (isset($data['payment_proof']) && !empty($data['payment_proof'])) {
+                    // Handle regular FileUpload - move uploaded file to payment media collection
+                    $filePaths = is_array($data['payment_proof']) ? $data['payment_proof'] : [$data['payment_proof']];
+                    
+                    foreach ($filePaths as $filePath) {
+                        if ($filePath) {
+                            // Add file to payment's media collection
+                            $payment->addMediaFromDisk($filePath, 'private')
+                                ->toMediaCollection('payment_proof', 'private');
+                        }
+                    }
+                }
 
                 // Link payment to invoice
                 $record->payments()->attach($payment->id, [
