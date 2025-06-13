@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use App\Enums\InvoiceStatus;
+use App\Enums\PaymentStatus;
 use App\Models\Scopes\TenantScope;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
@@ -302,13 +303,15 @@ class Invoice extends Model
     }
     
     /**
-     * Get the total amount paid for this invoice.
+     * Get the total amount paid for this invoice (only from 'paid' payments).
      *
      * @return int
      */
     public function getTotalPaid(): int
     {
-        return $this->payments->sum('pivot.amount');
+        return $this->payments()
+            ->where('status', PaymentStatus::PAID)
+            ->sum('invoice_payment.amount');
     }
     
     /**

@@ -2,6 +2,7 @@
 
 namespace App\Filament\Resources\InvoiceResource\Pages;
 
+use App\Enums\Gateway;
 use App\Filament\Resources\InvoiceResource;
 use App\Filament\Resources\InvoiceResource\Actions\MakePaymentAction;
 use App\Models\Invoice;
@@ -110,27 +111,48 @@ class ViewInvoice extends ViewRecord
                                                     TextEntry::make('reference_no')
                                                         ->label('Reference'),
                                                     TextEntry::make('gateway')
-                                                        ->label('Method')
-                                                        ->formatStateUsing(fn (string $state): string => match ($state) {
+                                                        ->label('Gateway')
+                                                        ->formatStateUsing(fn (Gateway $state): string => match ($state?->value) {
                                                             'cash' => 'Cash',
                                                             'bank_transfer' => 'Bank Transfer',
-                                                            'credit_card' => 'Credit Card',
-                                                            default => $state,
+                                                            'chip' => 'CHIP',
+                                                            default => $state->value,
                                                         }),
-                                                    TextEntry::make('paid_at')
-                                                        ->label('Date')
-                                                        ->date('M d, Y'),
+                                                    TextEntry::make('status')
+                                                        ->label('Status')
+                                                        ->badge()
+                                                        ->color(fn ($state): string => match ($state->value) {
+                                                            'pending' => 'warning',
+                                                            'paid' => 'success',
+                                                            'failed' => 'danger',
+                                                            'cancelled' => 'gray',
+                                                            'refunded' => 'info',
+                                                            default => 'gray',
+                                                        }),
                                                     TextEntry::make('pivot.amount')
                                                         ->label('Amount')
                                                         ->money('MYR')
                                                         ->formatStateUsing(fn ($state) => $state / 100),
                                                 ]),
+                                            Grid::make(2)
+                                                ->schema([
+                                                    TextEntry::make('user.name')
+                                                        ->label('Paid By'),
+                                                    TextEntry::make('paid_at')
+                                                        ->label('Payment Date')
+                                                        ->date('M d, Y H:i')
+                                                        ->placeholder('Not paid yet'),
+                                                ]),
+                                            TextEntry::make('description')
+                                                ->label('Description')
+                                                ->placeholder('No description')
+                                                ->columnSpanFull(),
                                         ]),
                                         Group::make([
                                             SpatieMediaLibraryImageEntry::make('payment_proof')
-                                                ->label('Proof')
+                                                ->label('Payment Proof')
                                                 ->collection('payment_proof'),
-                                        ])->visible(fn ($record) => $record->gateway === 'bank_transfer'),
+                                        ])->visible(fn ($record) => $record->gateway === Gateway::BANK_TRANSFER),
                                     ]),
                             ])
                     ]),

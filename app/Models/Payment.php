@@ -2,10 +2,12 @@
 
 namespace App\Models;
 
+use App\Enums\Gateway;
 use App\Enums\PaymentStatus;
 use App\Models\Scopes\TenantScope;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Spatie\MediaLibrary\InteractsWithMedia;
 use Spatie\MediaLibrary\HasMedia;
@@ -26,6 +28,7 @@ class Payment extends Model implements HasMedia
         'user_id',
         'gateway',
         'reference_no',
+        'gateway_payment_id',
         'status',
         'amount',
         'description',
@@ -38,6 +41,7 @@ class Payment extends Model implements HasMedia
      * @var array<string, string>
      */
     protected $casts = [
+        'gateway' => Gateway::class,
         'status' => PaymentStatus::class,
         'amount' => 'integer',
         'paid_at' => 'datetime',
@@ -58,6 +62,16 @@ class Payment extends Model implements HasMedia
         return $this->belongsToMany(Invoice::class, 'invoice_payment')
             ->withPivot('amount')
             ->withTimestamps();
+    }
+
+    /**
+     * Get the user who made the payment.
+     *
+     * @return \Illuminate\Database\Eloquent\Relations\BelongsTo
+     */
+    public function user(): BelongsTo
+    {
+        return $this->belongsTo(User::class);
     }
 
     /**
@@ -94,5 +108,10 @@ class Payment extends Model implements HasMedia
               ->sharpen(10)
               ->performOnCollections('payment_proof')
               ->nonQueued();
+    }
+
+    public function tenant()
+    {
+        return $this->belongsTo(Tenant::class);
     }
 }

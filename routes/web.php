@@ -5,6 +5,7 @@ use App\Http\Controllers\Auth\LoginController;
 use App\Http\Controllers\Auth\RegisterController;
 use App\Http\Controllers\TenantInvitationController;
 use App\Http\Controllers\SecureMediaController;
+use App\Http\Controllers\ChipPaymentController;
 
 Route::get('/', function () {
     return view('welcome');
@@ -29,4 +30,12 @@ Route::middleware('auth')->group(function () {
     Route::get('/media/{media}', [SecureMediaController::class, 'show'])->name('media.show');
     Route::get('/media/{media}/download', [SecureMediaController::class, 'download'])->name('media.download');
     Route::get('/media/{media}/conversions/{conversion}', [SecureMediaController::class, 'conversion'])->name('media.conversion');
+});
+
+// CHIP Payment Routes
+Route::prefix('chip')->name('chip.')->group(function () {
+    Route::get('success/{payment}', [ChipPaymentController::class, 'success'])->name('success');
+    Route::get('failure/{payment}', [ChipPaymentController::class, 'failure'])->name('failure');
+    Route::get('cancel/{payment}', [ChipPaymentController::class, 'cancel'])->name('cancel');
+    Route::post('webhook', [ChipPaymentController::class, 'webhook'])->name('webhook');
 });
