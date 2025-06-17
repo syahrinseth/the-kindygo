@@ -53,6 +53,47 @@ class TenantForm
                 ])
                 ->columns(2)
                 ->collapsible(),
+
+            Forms\Components\Section::make('Business Information')
+                ->description('Required for e-Invoice generation and LHDN compliance')
+                ->schema([
+                    Forms\Components\TextInput::make('tax_identification_number')
+                        ->label('Tax Identification Number (TIN)')
+                        ->helperText('Required for e-Invoice submission to LHDN')
+                        ->maxLength(50),
+                    Forms\Components\TextInput::make('business_registration_number')
+                        ->label('Business Registration Number')
+                        ->helperText('ROC/ROB registration number')
+                        ->maxLength(50),
+                    Forms\Components\TextInput::make('business_activity_code')
+                        ->label('Business Activity Code')
+                        ->helperText('MSIC code (e.g., 85100 for childcare)')
+                        ->maxLength(10)
+                        ->default('85100'),
+                    Forms\Components\TextInput::make('business_activity_description')
+                        ->label('Business Activity Description')
+                        ->maxLength(255)
+                        ->default('Child day-care activities'),
+                    Forms\Components\Select::make('country')
+                        ->label('Country')
+                        ->options([
+                            'MY' => 'Malaysia',
+                            'SG' => 'Singapore',
+                            'ID' => 'Indonesia',
+                            'TH' => 'Thailand',
+                            'VN' => 'Vietnam',
+                            'PH' => 'Philippines',
+                        ])
+                        ->default('MY')
+                        ->required(),
+                    Forms\Components\TextInput::make('state_code')
+                        ->label('State Code')
+                        ->helperText('For Malaysian states (e.g., 14 for Selangor)')
+                        ->maxLength(10)
+                        ->default('14'),
+                ])
+                ->columns(2)
+                ->collapsible(),
         ];
     }
 }

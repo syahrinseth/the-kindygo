@@ -207,6 +207,16 @@ class Child extends Model implements HasMedia
             ->using(CentreChild::class)
             ->withTimestamps();
     }
+
+    /**
+     * Get the invoice items associated with this child.
+     *
+     * @return \Illuminate\Database\Eloquent\Relations\HasMany
+     */
+    public function invoiceItems()
+    {
+        return $this->hasMany(InvoiceItem::class);
+    }
     
     /**
      * Add this child to a centre.

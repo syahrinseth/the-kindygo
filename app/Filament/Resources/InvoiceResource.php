@@ -159,57 +159,6 @@ class InvoiceResource extends Resource
                             ]),
                     ]),
                     
-                Section::make('Financial Details')
-                    ->schema([
-                        Grid::make(4)
-                            ->schema([
-                                TextInput::make('total_items')
-                                    ->numeric()
-                                    ->required()
-                                    ->default(0)
-                                    ->minValue(0),
-                                    
-                                TextInput::make('total_amount')
-                                    ->numeric()
-                                    ->required()
-                                    ->default(0)
-                                    ->minValue(0)
-                                    ->prefix('RM')
-                                    ->step(0.01)
-                                    ->afterStateHydrated(function (TextInput $component, $state) {
-                                        // Convert from cents to decimal for display
-                                        $component->state(number_format($state / 100, 2, '.', ''));
-                                    })
-                                    ->dehydrateStateUsing(fn ($state) => (int) ($state * 100)), // Convert to cents for storage
-                                    
-                                TextInput::make('total_discounts')
-                                    ->numeric()
-                                    ->required()
-                                    ->default(0)
-                                    ->minValue(0)
-                                    ->prefix('RM')
-                                    ->step(0.01)
-                                    ->afterStateHydrated(function (TextInput $component, $state) {
-                                        // Convert from cents to decimal for display
-                                        $component->state(number_format($state / 100, 2, '.', ''));
-                                    })
-                                    ->dehydrateStateUsing(fn ($state) => (int) ($state * 100)), // Convert to cents for storage
-                                    
-                                TextInput::make('total')
-                                    ->numeric()
-                                    ->required()
-                                    ->default(0)
-                                    ->minValue(0)
-                                    ->prefix('RM')
-                                    ->step(0.01)
-                                    ->afterStateHydrated(function (TextInput $component, $state) {
-                                        // Convert from cents to decimal for display
-                                        $component->state(number_format($state / 100, 2, '.', ''));
-                                    })
-                                    ->dehydrateStateUsing(fn ($state) => (int) ($state * 100)), // Convert to cents for storage
-                            ]),
-                    ]),
-                    
                 Forms\Components\Hidden::make('tenant_id')
                     ->default(function () {
                         return Auth::user()->current_tenant_id;
@@ -333,7 +282,7 @@ class InvoiceResource extends Resource
     public static function getRelations(): array
     {
         return [
-            //
+            \App\Filament\Resources\InvoiceResource\RelationManagers\InvoiceItemsRelationManager::class,
         ];
     }
 

@@ -94,6 +94,48 @@ class UserResource extends Resource
                     ->badge()
                     ->searchable()
                     ->sortable(),
+                Tables\Columns\TextColumn::make('nric')
+                    ->label('NRIC')
+                    ->searchable()
+                    ->toggleable(isToggledHiddenByDefault: true)
+                    ->placeholder('Not set'),
+                Tables\Columns\TextColumn::make('passport')
+                    ->label('Passport')
+                    ->searchable()
+                    ->toggleable(isToggledHiddenByDefault: true)
+                    ->placeholder('Not set'),
+                Tables\Columns\TextColumn::make('city')
+                    ->label('City')
+                    ->searchable()
+                    ->toggleable(isToggledHiddenByDefault: true)
+                    ->placeholder('Not set'),
+                Tables\Columns\IconColumn::make('einvoice_ready')
+                    ->label('E-Invoice Ready')
+                    ->boolean()
+                    ->getStateUsing(function (User $record): bool {
+                        return $record->hasCompleteAddress() && 
+                               (!empty($record->nric) || !empty($record->passport));
+                    })
+                    ->trueIcon('heroicon-o-check-circle')
+                    ->falseIcon('heroicon-o-x-circle')
+                    ->trueColor('success')
+                    ->falseColor('danger')
+                    ->tooltip(function (User $record): string {
+                        if ($record->hasCompleteAddress() && (!empty($record->nric) || !empty($record->passport))) {
+                            return 'Customer has complete e-Invoice information';
+                        }
+                        
+                        $missing = [];
+                        if (empty($record->nric) && empty($record->passport)) {
+                            $missing[] = 'NRIC or Passport';
+                        }
+                        if (!$record->hasCompleteAddress()) {
+                            $missing[] = 'Complete address';
+                        }
+                        
+                        return 'Missing: ' . implode(', ', $missing);
+                    })
+                    ->toggleable(),
                 Tables\Columns\TextColumn::make('created_at')
                     ->dateTime()
                     ->sortable()
@@ -112,6 +154,26 @@ class UserResource extends Resource
                     ->relationship('centres', 'name')
                     ->multiple()
                     ->preload(),
+                Tables\Filters\Filter::make('einvoice_ready')
+                    ->label('E-Invoice Ready')
+                    ->query(fn (Builder $query): Builder => 
+                        $query->where(function ($q) {
+                            $q->whereNotNull('nric')
+                              ->orWhereNotNull('passport');
+                        })
+                        ->whereNotNull('address')
+                        ->whereNotNull('city')
+                        ->whereNotNull('postal_code')
+                        ->whereNotNull('state_code')
+                    )
+                    ->toggle(),
+                Tables\Filters\Filter::make('missing_identification')
+                    ->label('Missing ID (NRIC/Passport)')
+                    ->query(fn (Builder $query): Builder => 
+                        $query->whereNull('nric')
+                              ->whereNull('passport')
+                    )
+                    ->toggle(),
             ])
             ->actions([
                 Tables\Actions\ViewAction::make()

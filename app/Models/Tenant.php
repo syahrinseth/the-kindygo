@@ -34,6 +34,13 @@ class Tenant extends Model
         'postal_code',
         'city',
         'state',
+        // Business Information for e-Invoice
+        'tax_identification_number',
+        'business_registration_number',
+        'business_activity_code',
+        'business_activity_description',
+        'country',
+        'state_code',
     ];
 
     /**

@@ -31,6 +31,12 @@ class Invoice extends Model
         'total_discounts',
         'total_amount',
         'total',
+        // E-Invoice related fields
+        'einvoice_uuid',
+        'einvoice_submission_id',
+        'einvoice_status',
+        'einvoice_validation_url',
+        'einvoice_submitted_at',
     ];
 
     /**
@@ -48,7 +54,7 @@ class Invoice extends Model
     }
 
     /**
-     * Generate a unique invoice number using format: #{centre_code}/{year}/{running_number}
+     * Generate a unique invoice number using format: KG{centre_code}/{year}/{running_number}
      *
      * @return string
      */
@@ -59,16 +65,114 @@ class Invoice extends Model
         
         // Get centre code - use the dedicated code field if available, otherwise fallback to name
         $centre = $this->centre ?? Centre::find($this->centre_id);
-        $centreCode = $centre->code ?? strtoupper(preg_replace('/[^A-Za-z0-9]/', '', $centre->name ?? 'CENTRE'));
+        
+        // Generate preschool-friendly centre code
+        $centreCode = $this->generatePreschoolCentreCode($centre);
         
         // Generate sequential number unique to tenant_id, centre_id, and year
         $sequentialNumber = $this->getNextSequentialNumber($year);
         $runningNumber = str_pad($sequentialNumber, 4, '0', STR_PAD_LEFT);
         
-        // Format: #{centre_code}/{year}/{running_number}
-        $number = "#{$centreCode}/{$year}/{$runningNumber}";
+        // Format: KG{centre_code}/{year}/{running_number}
+        // KG prefix indicates KindyGo/Kindergarten
+        $number = "KG{$centreCode}/{$year}/{$runningNumber}";
         
         return $number;
+    }
+
+    /**
+     * Generate a preschool-friendly centre code.
+     *
+     * @param \App\Models\Centre|null $centre
+     * @return string
+     */
+    private function generatePreschoolCentreCode($centre): string
+    {
+        if (!$centre) {
+            return 'PS01'; // Default preschool code
+        }
+
+        // If centre has a dedicated code field, use it
+        if (!empty($centre->code)) {
+            return strtoupper($centre->code);
+        }
+
+        // Generate code from centre name with preschool context
+        $name = $centre->name ?? 'Preschool';
+        
+        // Common preschool/childcare name patterns
+        $preschoolKeywords = [
+            'kindergarten' => 'KG',
+            'preschool' => 'PS',
+            'childcare' => 'CC',
+            'nursery' => 'NR',
+            'daycare' => 'DC',
+            'montessori' => 'MT',
+            'academy' => 'AC',
+            'learning' => 'LC',
+            'centre' => 'CT',
+            'center' => 'CT',
+            'kids' => 'KD',
+            'children' => 'CH',
+            'little' => 'LT',
+            'tiny' => 'TN',
+            'bright' => 'BR',
+            'smart' => 'SM',
+            'happy' => 'HP',
+            'sunny' => 'SN',
+            'rainbow' => 'RB',
+            'star' => 'ST',
+            'golden' => 'GD',
+        ];
+
+        $nameLower = strtolower($name);
+        $prefix = 'PS'; // Default to Preschool
+        
+        // Check for keywords in the name to determine appropriate prefix
+        foreach ($preschoolKeywords as $keyword => $code) {
+            if (strpos($nameLower, $keyword) !== false) {
+                $prefix = $code;
+                break;
+            }
+        }
+
+        // Extract meaningful parts from the name
+        $cleanName = preg_replace('/[^A-Za-z0-9\s]/', '', $name);
+        $words = explode(' ', $cleanName);
+        
+        // Try to create a meaningful suffix from the name
+        $suffix = '';
+        foreach ($words as $word) {
+            $word = strtoupper($word);
+            if (strlen($word) >= 2 && !in_array(strtolower($word), array_keys($preschoolKeywords))) {
+                $suffix .= substr($word, 0, 2);
+                if (strlen($suffix) >= 4) {
+                    break;
+                }
+            }
+        }
+        
+        // If we couldn't generate a good suffix, use first letters of each word
+        if (strlen($suffix) < 2) {
+            $suffix = '';
+            foreach ($words as $word) {
+                if (!empty($word) && !in_array(strtolower($word), array_keys($preschoolKeywords))) {
+                    $suffix .= strtoupper($word[0]);
+                    if (strlen($suffix) >= 3) {
+                        break;
+                    }
+                }
+            }
+        }
+        
+        // Ensure we have at least 2 characters for suffix
+        if (strlen($suffix) < 2) {
+            $suffix = '01';
+        } else {
+            $suffix = substr($suffix, 0, 3); // Limit to 3 characters
+        }
+        
+        return $prefix . $suffix;
     }
 
     /**
@@ -110,6 +214,7 @@ class Invoice extends Model
         'total_discounts' => 'integer',
         'total_amount' => 'integer',
         'total' => 'integer',
+        'einvoice_submitted_at' => 'datetime',
     ];
 
     /**
@@ -301,6 +406,71 @@ class Invoice extends Model
             ->withPivot('amount')
             ->withTimestamps();
     }
+
+    /**
+     * Get the invoice items associated with the invoice.
+     *
+     * @return \Illuminate\Database\Eloquent\Relations\HasMany
+     */
+    public function invoiceItems()
+    {
+        return $this->hasMany(InvoiceItem::class);
+    }
+    
+    /**
+     * Calculate totals based on invoice items and update the invoice.
+     * Discount is now applied per unit and multiplied by quantity.
+     *
+     * @return void
+     */
+    public function calculateAndUpdateTotals(): void
+    {
+        $invoiceItems = $this->invoiceItems;
+        
+        $totalItems = $invoiceItems->count();
+        $totalAmount = $invoiceItems->sum(function ($item) {
+            return $item->price * $item->quantity;
+        });
+        $totalDiscounts = $invoiceItems->sum(function ($item) {
+            return $item->discount * $item->quantity; // Discount per unit * quantity
+        });
+        $total = $invoiceItems->sum('total');
+        
+        // Update the invoice totals
+        $this->update([
+            'total_items' => $totalItems,
+            'total_amount' => $totalAmount, // Before discount amount
+            'total_discounts' => $totalDiscounts,
+            'total' => $total,
+        ]);
+    }
+    
+    /**
+     * Recalculate totals from invoice items.
+     * Discount is now applied per unit and multiplied by quantity.
+     *
+     * @return array
+     */
+    public function recalculateTotals(): array
+    {
+        $invoiceItems = $this->invoiceItems;
+        
+        $totalItems = $invoiceItems->count();
+        $totalAmount = $invoiceItems->sum(function ($item) {
+            return $item->price * $item->quantity;
+        });
+        $totalDiscounts = $invoiceItems->sum(function ($item) {
+            return $item->discount * $item->quantity; // Discount per unit * quantity
+        });
+        $total = $invoiceItems->sum('total');
+        
+        return [
+            'total_items' => $totalItems,
+            'total_amount' => $totalAmount,
+            'total_discounts' => $totalDiscounts,
+            'total' => $total,
+        ];
+    }
     
     /**
      * Get the total amount paid for this invoice (only from 'paid' payments).
@@ -336,5 +506,358 @@ class Invoice extends Model
         
         // For now, we'll just return a string indicating the feature is not implemented
         return 'PDF generation not implemented yet';
+    }
+
+    /**
+     * Submit invoice to LHDN e-Invoice system.
+     *
+     * @return array
+     * @throws \Exception
+     */
+    public function submitToEInvoice(): array
+    {
+        if ($this->einvoice_uuid) {
+            throw new \Exception('Invoice already submitted to e-Invoice system');
+        }
+
+        // Get tenant's TIN for authentication
+        $tenant = $this->tenant;
+        $tenantTin = $tenant->tax_identification_number ?? config('einvoice.supplier_tin');
+        
+        // Create e-Invoice service with tenant-specific TIN
+        $eInvoiceService = new \App\Services\EInvoiceSDKService($tenantTin);
+        
+        // Convert invoice data to e-Invoice format
+        $invoiceData = $this->toEInvoiceFormat();
+        
+        // Submit to LHDN
+        try {
+            $response = $eInvoiceService->submitInvoice($invoiceData);
+        } catch (\Exception $e) {
+            throw new \Exception('Failed to submit invoice to e-Invoice system: ' . $e->getMessage());
+        }
+        
+        // Update invoice with e-Invoice details
+        $this->update([
+            'einvoice_uuid' => $response['uuid'] ?? null,
+            'einvoice_submission_id' => $response['submissionId'] ?? null,
+            'einvoice_status' => $response['status'] ?? 'submitted',
+            'einvoice_validation_url' => $response['validationUrl'] ?? null,
+            'einvoice_submitted_at' => now(),
+        ]);
+        
+        return $response;
+    }
+
+    /**
+     * Convert invoice to e-Invoice format (UBL 2.1 format).
+     *
+     * @return array
+     */
+    public function toEInvoiceFormat(): array
+    {
+        return [
+            '_D' => 'urn:oasis:names:specification:ubl:schema:xsd:Invoice-2',
+            '_A' => 'urn:oasis:names:specification:ubl:schema:xsd:CommonAggregateComponents-2',
+            '_B' => 'urn:oasis:names:specification:ubl:schema:xsd:CommonBasicComponents-2',
+            'Invoice' => [
+                'ID' => $this->number,
+                'IssueDate' => $this->date->format('Y-m-d'),
+                'DueDate' => $this->due_at->format('Y-m-d'),
+                'InvoiceTypeCode' => [
+                    '_' => config('einvoice.invoice_types.standard', '01'),
+                    'listVersionID' => '1.0'
+                ],
+                'DocumentCurrencyCode' => config('einvoice.default_currency', 'MYR'),
+                'AccountingSupplierParty' => $this->getSupplierPartyData(),
+                'AccountingCustomerParty' => $this->getCustomerPartyData(),
+                'InvoiceLine' => $this->getInvoiceLines(),
+                'LegalMonetaryTotal' => [
+                    'TaxExclusiveAmount' => [
+                        '_' => number_format($this->total_amount / 100, 2, '.', ''),
+                        'currencyID' => config('einvoice.default_currency', 'MYR')
+                    ],
+                    'TaxInclusiveAmount' => [
+                        '_' => number_format($this->total / 100, 2, '.', ''),
+                        'currencyID' => config('einvoice.default_currency', 'MYR')
+                    ],
+                    'PayableAmount' => [
+                        '_' => number_format($this->total / 100, 2, '.', ''),
+                        'currencyID' => config('einvoice.default_currency', 'MYR')
+                    ]
+                ]
+            ]
+        ];
+    }
+
+    /**
+     * Get supplier party data for e-Invoice.
+     *
+     * @return array
+     */
+    private function getSupplierPartyData(): array
+    {
+        $centre = $this->centre;
+        $tenant = $this->tenant;
+        
+        return [
+            'Party' => [
+                'PartyIdentification' => [
+                    'ID' => [
+                        '_' => $tenant->tax_identification_number ?? config('einvoice.supplier_tin'),
+                        'schemeID' => 'TIN' // Tax Identification Number
+                    ]
+                ],
+                'PostalAddress' => [
+                    'CityName' => $tenant->city ?? config('einvoice.supplier_city', 'Kuala Lumpur'),
+                    'PostalZone' => $tenant->postal_code ?? config('einvoice.supplier_postal_code', '50000'),
+                    'CountrySubentityCode' => $tenant->state_code ?? config('einvoice.default_state_code', '14'),
+                    'AddressLine' => [
+                        'Line' => $tenant->address_1 . ($tenant->address_2 ? ', ' . $tenant->address_2 : '')
+                    ],
+                    'Country' => [
+                        'IdentificationCode' => [
+                            '_' => $tenant->country ?? config('einvoice.supplier_country', 'MY'),
+                            'listID' => 'ISO3166-1',
+                            'listAgencyID' => '6'
+                        ]
+                    ]
+                ],
+                'PartyTaxScheme' => [
+                    'CompanyID' => [
+                        '_' => $tenant->tax_identification_number ?? config('einvoice.supplier_tin'),
+                        'schemeID' => 'TIN'
+                    ],
+                    'TaxScheme' => [
+                        'ID' => [
+                            '_' => 'OTH',
+                            'schemeID' => 'UN/ECE 5153',
+                            'schemeAgencyID' => '6'
+                        ]
+                    ]
+                ],
+                'PartyLegalEntity' => [
+                    'RegistrationName' => $tenant->name,
+                    'CompanyID' => [
+                        '_' => $tenant->business_registration_number ?? config('einvoice.supplier_registration_number'),
+                        'schemeID' => 'BRN' // Business Registration Number
+                    ]
+                ],
+                // Contact removed due to MyInvois validation issues
+                // 'Contact' => [
+                //     'Telephone' => $tenant->phone ?? config('einvoice.supplier_phone'),
+                //     'ElectronicMail' => $tenant->email ?? config('einvoice.supplier_email')
+                // ]
+            ]
+        ];
+    }
+
+    /**
+     * Get customer party data for e-Invoice.
+     *
+     * @return array
+     */
+    private function getCustomerPartyData(): array
+    {
+        $user = $this->user;
+        
+        return [
+            'Party' => [
+                'PartyIdentification' => [
+                    'ID' => [
+                        '_' => $user->getEInvoiceIdentification(),
+                        'schemeID' => $user->getEInvoiceSchemeId()
+                    ]
+                ],
+                'PartyName' => [
+                    'Name' => $user->name
+                ],
+                'PostalAddress' => [
+                    'CityName' => $user->city ?? config('einvoice.default_city', 'Kuala Lumpur'),
+                    'PostalZone' => $user->postal_code ?? config('einvoice.default_postal_code', '50000'),
+                    'CountrySubentityCode' => $user->state_code ?? config('einvoice.default_state_code', '14'),
+                    'AddressLine' => [
+                        'Line' => $user->address ?? 'Address not provided'
+                    ],
+                    'Country' => [
+                        'IdentificationCode' => [
+                            '_' => config('einvoice.default_country_code', 'MYS'),
+                            'listID' => 'ISO3166-1',
+                            'listAgencyID' => '6'
+                        ]
+                    ]
+                ],
+                'PartyLegalEntity' => [
+                    'RegistrationName' => $user->name
+                ],
+                'PartyTaxScheme' => [
+                    'CompanyID' => [
+                        '_' => $user->getEInvoiceIdentification(),
+                        'schemeID' => $user->getEInvoiceSchemeId()
+                    ],
+                    'TaxScheme' => [
+                        'ID' => [
+                            '_' => 'OTH',
+                            'schemeID' => 'UN/ECE 5153',
+                            'schemeAgencyID' => '6'
+                        ]
+                    ]
+                ]
+                // Contact removed due to MyInvois validation issues
+                // 'Contact' => [
+                //     'Telephone' => $user->phone ?? '',
+                //     'ElectronicMail' => $user->email ?? ''
+                // ]
+            ]
+        ];
+    }
+
+    /**
+     * Get invoice lines for e-Invoice.
+     * This creates a single line item for childcare services.
+     * You can expand this to handle multiple line items if needed.
+     *
+     * @return array
+     */
+    private function getInvoiceLines(): array
+    {
+        return [
+            [
+                'ID' => '1',
+                'InvoicedQuantity' => [
+                    '_' => '1',
+                    'unitCode' => config('einvoice.unit_codes.service', 'C62')
+                ],
+                'LineExtensionAmount' => [
+                    '_' => number_format($this->total_amount / 100, 2, '.', ''),
+                    'currencyID' => config('einvoice.default_currency', 'MYR')
+                ],
+                'Item' => [
+                    'Description' => 'Childcare Services - ' . ($this->centre->name ?? 'KindyGo Services'),
+                    'ClassifiedTaxCategory' => [
+                        'ID' => config('einvoice.tax_categories.exempt', 'E'), // Exempt from tax
+                        'TaxScheme' => [
+                            'ID' => [
+                                '_' => 'OTH',
+                                'schemeID' => 'UN/ECE 5153',
+                                'schemeAgencyID' => '6'
+                            ]
+                        ]
+                    ]
+                ],
+                'Price' => [
+                    'PriceAmount' => [
+                        '_' => number_format($this->total_amount / 100, 2, '.', ''),
+                        'currencyID' => config('einvoice.default_currency', 'MYR')
+                    ]
+                ]
+            ]
+        ];
+    }
+
+    /**
+     * Check if invoice is submitted to e-Invoice system.
+     *
+     * @return bool
+     */
+    public function isEInvoiceSubmitted(): bool
+    {
+        return !empty($this->einvoice_uuid);
+    }
+
+    /**
+     * Get e-Invoice validation URL.
+     *
+     * @return string|null
+     */
+    public function getEInvoiceValidationUrl(): ?string
+    {
+        return $this->einvoice_validation_url;
+    }
+
+    /**
+     * Get e-Invoice status with human-readable description.
+     *
+     * @return array
+     */
+    public function getEInvoiceStatus(): array
+    {
+        $status = $this->einvoice_status;
+        
+        $statusMap = [
+            'submitted' => 'Submitted to LHDN',
+            'valid' => 'Validated by LHDN',
+            'invalid' => 'Rejected by LHDN',
+            'cancelled' => 'Cancelled',
+            'pending' => 'Pending Validation'
+        ];
+        
+        return [
+            'status' => $status,
+            'description' => $statusMap[$status] ?? 'Unknown Status',
+            'submitted_at' => $this->einvoice_submitted_at?->format('Y-m-d H:i:s'),
+            'validation_url' => $this->einvoice_validation_url
+        ];
+    }
+
+    /**
+     * Cancel the e-Invoice if it was submitted.
+     *
+     * @param string $reason
+     * @return array
+     * @throws \Exception
+     */
+    public function cancelEInvoice(string $reason): array
+    {
+        if (!$this->einvoice_uuid) {
+            throw new \Exception('Invoice not submitted to e-Invoice system');
+        }
+
+        // Get tenant's TIN for authentication
+        $tenant = $this->tenant;
+        $tenantTin = $tenant->tax_identification_number ?? config('einvoice.supplier_tin');
+        
+        // Create e-Invoice service with tenant-specific TIN
+        $eInvoiceService = new \App\Services\EInvoiceSDKService($tenantTin);
+        
+        $response = $eInvoiceService->cancelDocument($this->einvoice_uuid, $reason);
+        
+        // Update invoice status
+        $this->update([
+            'einvoice_status' => 'cancelled'
+        ]);
+        
+        return $response;
+    }
+
+    /**
+     * Refresh e-Invoice status from LHDN.
+     *
+     * @return array
+     * @throws \Exception
+     */
+    public function refreshEInvoiceStatus(): array
+    {
+        if (!$this->einvoice_uuid) {
+            throw new \Exception('Invoice not submitted to e-Invoice system');
+        }
+
+        // Get tenant's TIN for authentication
+        $tenant = $this->tenant;
+        $tenantTin = $tenant->tax_identification_number ?? config('einvoice.supplier_tin');
+        
+        // Create e-Invoice service with tenant-specific TIN
+        $eInvoiceService = new \App\Services\EInvoiceSDKService($tenantTin);
+        
+        $response = $eInvoiceService->getDocumentStatus($this->einvoice_uuid);
+        
+        // Update invoice with latest status
+        if (isset($response['status'])) {
+            $this->update([
+                'einvoice_status' => $response['status']
+            ]);
+        }
+        
+        return $response;
     }
 }

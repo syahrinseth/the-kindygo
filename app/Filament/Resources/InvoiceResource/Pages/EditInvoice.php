@@ -20,6 +20,14 @@ class EditInvoice extends EditRecord
         ];
     }
     
+    protected function mutateFormDataBeforeFill(array $data): array
+    {
+        // Recalculate and update totals from invoice items to ensure accuracy
+        $totals = $this->record->recalculateTotals();
+        
+        return array_merge($data, $totals);
+    }
+    
     protected function mutateFormDataBeforeSave(array $data): array
     {
         // We don't allow changing tenant_id

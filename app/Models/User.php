@@ -46,6 +46,13 @@ class User extends Authenticatable implements FilamentUser, HasDefaultTenant, Ha
         'email',
         'password',
         'current_tenant_id',
+        // E-invoice related fields
+        'nric',
+        'passport',
+        'city',
+        'postal_code',
+        'state_code',
+        'address',
     ];
 
     /**
@@ -309,5 +316,109 @@ class User extends Authenticatable implements FilamentUser, HasDefaultTenant, Ha
         }
 
         return $media->getUrl();
+    }
+
+    // E-Invoice Helper Methods
+    
+    /**
+     * Get the appropriate identification scheme for e-invoice.
+     * Returns 'TIN', 'NRIC', or 'PASSPORT' based on available data.
+     *
+     * @return string
+     */
+    public function getEInvoiceSchemeId(): string
+    {
+        // For Malaysian individuals, use NRIC if available
+        if (!empty($this->nric)) {
+            return 'NRIC';
+        }
+        
+        // For foreign customers, use passport
+        if (!empty($this->passport)) {
+            return 'PASSPORT';
+        }
+        
+        // Default to NRIC for Malaysian customers
+        return 'NRIC';
+    }
+    
+    /**
+     * Get the identification value for e-invoice.
+     *
+     * @return string
+     * @throws \Exception if no valid identification is available
+     */
+    public function getEInvoiceIdentification(): string
+    {
+        // Priority: NRIC > Passport
+        if (!empty($this->nric)) {
+            return $this->nric;
+        }
+        
+        if (!empty($this->passport)) {
+            return $this->passport;
+        }
+        
+        // If no identification available, throw exception
+        throw new \Exception("Customer '{$this->name}' must have a valid NRIC or Passport number for e-Invoice submission.");
+    }
+    
+    /**
+     * Check if user has complete address information for e-invoice.
+     *
+     * @return bool
+     */
+    public function hasCompleteAddress(): bool
+    {
+        return !empty($this->address) && 
+               !empty($this->city) && 
+               !empty($this->postal_code) && 
+               !empty($this->state_code);
+    }
+    
+    /**
+     * Get formatted address for e-invoice display.
+     *
+     * @return string
+     */
+    public function getFormattedAddress(): string
+    {
+        $parts = array_filter([
+            $this->address,
+            $this->city,
+            $this->postal_code,
+            $this->getStateName(),
+        ]);
+        
+        return implode(', ', $parts);
+    }
+    
+    /**
+     * Get state name from state code.
+     *
+     * @return string
+     */
+    public function getStateName(): string
+    {
+        $stateMapping = [
+            '01' => 'Johor',
+            '02' => 'Kedah',
+            '03' => 'Kelantan',
+            '04' => 'Melaka',
+            '05' => 'Negeri Sembilan',
+            '06' => 'Pahang',
+            '07' => 'Pulau Pinang',
+            '08' => 'Perak',
+            '09' => 'Perlis',
+            '10' => 'Selangor',
+            '11' => 'Terengganu',
+            '12' => 'Sabah',
+            '13' => 'Sarawak',
+            '14' => 'Wilayah Persekutuan Kuala Lumpur',
+            '15' => 'Wilayah Persekutuan Labuan',
+            '16' => 'Wilayah Persekutuan Putrajaya',
+        ];
+        
+        return $stateMapping[$this->state_code] ?? $this->state_code ?? '';
     }
 }

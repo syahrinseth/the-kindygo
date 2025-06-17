@@ -25,6 +25,81 @@ class UserForm
                         ->maxLength(255),
                 ])->columns(2),
 
+            Forms\Components\Section::make('User Detail Information')
+                ->description('Personal identification and address information for this user')
+                ->schema([
+                    Forms\Components\TextInput::make('nric')
+                        ->label('NRIC/IC Number')
+                        ->placeholder('e.g., 950101014321')
+                        ->helperText('Malaysian NRIC/IC number for individual customers')
+                        ->maxLength(12)
+                        ->rules(['nullable', 'digits:12'])
+                        ->reactive()
+                        ->afterStateUpdated(function ($state, callable $set) {
+                            // Clear passport if NRIC is entered
+                            if (filled($state)) {
+                                $set('passport', null);
+                            }
+                        }),
+                    
+                    Forms\Components\TextInput::make('passport')
+                        ->label('Passport Number')
+                        ->placeholder('e.g., A12345678')
+                        ->helperText('Passport number for foreign customers (if no NRIC)')
+                        ->maxLength(20)
+                        ->reactive()
+                        ->afterStateUpdated(function ($state, callable $set) {
+                            // Clear NRIC if passport is entered
+                            if (filled($state)) {
+                                $set('nric', null);
+                            }
+                        }),
+                        
+                    Forms\Components\Textarea::make('address')
+                        ->label('Address')
+                        ->placeholder('e.g., 123 Jalan Test, Taman Example')
+                        ->helperText('Full street address for e-Invoice')
+                        ->rows(2)
+                        ->maxLength(500),
+                    
+                    Forms\Components\TextInput::make('city')
+                        ->label('City')
+                        ->placeholder('e.g., Kuala Lumpur')
+                        ->maxLength(100),
+                        
+                    Forms\Components\TextInput::make('postal_code')
+                        ->label('Postal Code')
+                        ->placeholder('e.g., 50000')
+                        ->maxLength(10)
+                        ->rules(['nullable', 'regex:/^\d{5}$/']),
+                        
+                    Forms\Components\Select::make('state_code')
+                        ->label('State')
+                        ->placeholder('Select state')
+                        ->options([
+                            '01' => 'Johor',
+                            '02' => 'Kedah',
+                            '03' => 'Kelantan',
+                            '04' => 'Melaka',
+                            '05' => 'Negeri Sembilan',
+                            '06' => 'Pahang',
+                            '07' => 'Pulau Pinang',
+                            '08' => 'Perak',
+                            '09' => 'Perlis',
+                            '10' => 'Selangor',
+                            '11' => 'Terengganu',
+                            '12' => 'Sabah',
+                            '13' => 'Sarawak',
+                            '14' => 'Wilayah Persekutuan Kuala Lumpur',
+                            '15' => 'Wilayah Persekutuan Labuan',
+                            '16' => 'Wilayah Persekutuan Putrajaya',
+                        ])
+                        ->searchable(),
+                ])
+                ->columns(2)
+                ->collapsible()
+                ->collapsed(false),
+
             Forms\Components\Section::make('Documents & Photos')
                 ->schema([
 
