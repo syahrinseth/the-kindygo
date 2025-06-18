@@ -345,6 +345,7 @@ class ChildResource extends Resource
     {
         return [
             RelationManagers\CentresRelationManager::class,
+            RelationManagers\EnrollmentsRelationManager::class,
             // RelationManagers\UsersRelationManager::class,
         ];
     }
