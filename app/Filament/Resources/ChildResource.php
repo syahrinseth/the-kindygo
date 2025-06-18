@@ -28,7 +28,9 @@ class ChildResource extends Resource
     
     protected static ?string $navigationLabel = 'Children';
     
-    protected static ?int $navigationSort = 2;
+    protected static ?string $navigationGroup = 'Child Management';
+    
+    protected static ?int $navigationSort = 1;
 
     protected static ?string $tenantOwnershipRelationshipName = 'tenants';
     

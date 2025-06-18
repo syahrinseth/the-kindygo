@@ -88,6 +88,30 @@ class Centre extends Model
     }
     
     /**
+     * Get the child enrollments belonging to the centre.
+     */
+    public function childEnrollments(): HasMany
+    {
+        return $this->hasMany(ChildEnrollment::class);
+    }
+    
+    /**
+     * Get the active child enrollments belonging to the centre.
+     */
+    public function activeChildEnrollments(): HasMany
+    {
+        return $this->hasMany(ChildEnrollment::class)->active();
+    }
+    
+    /**
+     * Get the current child enrollments belonging to the centre.
+     */
+    public function currentChildEnrollments(): HasMany
+    {
+        return $this->hasMany(ChildEnrollment::class)->current();
+    }
+    
+    /**
      * Get the children associated with this centre.
      *
      * @return \Illuminate\Database\Eloquent\Relations\BelongsToMany

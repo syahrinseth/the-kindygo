@@ -117,6 +117,30 @@ class Tenant extends Model
     }
     
     /**
+     * Get the child enrollments belonging to the tenant.
+     */
+    public function childEnrollments(): HasMany
+    {
+        return $this->hasMany(ChildEnrollment::class);
+    }
+    
+    /**
+     * Get the active child enrollments belonging to the tenant.
+     */
+    public function activeChildEnrollments(): HasMany
+    {
+        return $this->hasMany(ChildEnrollment::class)->active();
+    }
+    
+    /**
+     * Get the current child enrollments belonging to the tenant.
+     */
+    public function currentChildEnrollments(): HasMany
+    {
+        return $this->hasMany(ChildEnrollment::class)->current();
+    }
+    
+    /**
      * Get the tenant's pending invitations.
      */
     public function invitations(): HasMany

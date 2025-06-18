@@ -1,0 +1,376 @@
+<?php
+
+namespace App\Filament\Resources;
+
+use App\Filament\Resources\ChildEnrollmentResource\Pages;
+use App\Filament\Resources\ChildEnrollmentResource\RelationManagers;
+use App\Models\ChildEnrollment;
+use App\Models\Child;
+use App\Models\Product;
+use App\Models\Centre;
+use App\Enums\ChildEnrollmentStatus;
+use App\Enums\ChildEnrollmentBilledEvery;
+use App\Enums\ChildEnrollmentType;
+use Filament\Forms;
+use Filament\Forms\Form;
+use Filament\Resources\Resource;
+use Filament\Tables;
+use Filament\Tables\Table;
+use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Database\Eloquent\SoftDeletingScope;
+use Filament\Tables\Filters\SelectFilter;
+use Filament\Support\Enums\FontWeight;
+
+class ChildEnrollmentResource extends Resource
+{
+    protected static ?string $model = ChildEnrollment::class;
+
+    protected static ?string $navigationIcon = 'heroicon-o-academic-cap';
+    
+    protected static ?string $navigationLabel = 'Child Enrollments';
+    
+    protected static ?string $modelLabel = 'Child Enrollment';
+    
+    protected static ?string $pluralModelLabel = 'Child Enrollments';
+    
+    protected static ?string $navigationGroup = 'Child Management';
+    
+    protected static ?int $navigationSort = 2;
+
+    public static function form(Form $form): Form
+    {
+        return $form
+            ->schema([
+                Forms\Components\Section::make('Enrollment Details')
+                    ->schema([
+                        Forms\Components\Select::make('child_id')
+                            ->relationship('child', 'first_name')
+                            ->getOptionLabelFromRecordUsing(fn ($record) => $record->full_name)
+                            ->searchable()
+                            ->preload()
+                            ->required()
+                            ->live()
+                            ->afterStateUpdated(function (callable $set) {
+                                $set('centre_id', null); // Reset centre when child changes
+                            })
+                            ->columnSpan(1),
+                            
+                        Forms\Components\Select::make('centre_id')
+                            ->label('Centre')
+                            ->searchable()
+                            ->preload()
+                            ->required()
+                            ->live()
+                            ->afterStateUpdated(function (callable $set) {
+                                $set('product_id', null); // Reset product when centre changes
+                            })
+                            ->options(function (callable $get) {
+                                $childId = $get('child_id');
+                                if (!$childId) {
+                                    return [];
+                                }
+                                
+                                // Get centres associated with the selected child
+                                $child = Child::find($childId);
+                                if (!$child) {
+                                    return [];
+                                }
+                                
+                                $centres = $child->centres()->pluck('centres.name', 'centres.id')->toArray();
+                                
+                                // If no centres associated, return empty array (will show placeholder)
+                                return $centres;
+                            })
+                            ->placeholder(function (callable $get) {
+                                $childId = $get('child_id');
+                                if (!$childId) {
+                                    return 'Select a child first';
+                                }
+                                
+                                $child = Child::find($childId);
+                                if ($child && $child->centres()->count() === 0) {
+                                    return 'No centres associated with this child';
+                                }
+                                
+                                return 'Select a centre';
+                            })
+                            ->helperText(function (callable $get) {
+                                $childId = $get('child_id');
+                                if (!$childId) {
+                                    return 'Only centres associated with the selected child will be shown';
+                                }
+                                
+                                $child = Child::find($childId);
+                                if ($child && $child->centres()->count() === 0) {
+                                    return 'This child is not associated with any centres. Please associate the child with a centre first.';
+                                }
+                                
+                                return 'Only centres associated with the selected child are shown';
+                            })
+                            ->disabled(function (callable $get): bool {
+                                if (!$get('child_id')) {
+                                    return true;
+                                }
+                                
+                                $child = Child::find($get('child_id'));
+                                return $child && $child->centres()->count() === 0;
+                            })
+                            ->rules([
+                                function (callable $get) {
+                                    return function (string $attribute, $value, \Closure $fail) use ($get) {
+                                        $childId = $get('child_id');
+                                        if ($childId && $value) {
+                                            $child = Child::find($childId);
+                                            if ($child && !$child->centres()->where('centres.id', $value)->exists()) {
+                                                $fail('The selected centre is not associated with the selected child.');
+                                            }
+                                        }
+                                    };
+                                },
+                            ])
+                            ->columnSpan(1),
+                            
+                        Forms\Components\Select::make('product_id')
+                            ->label('Product')
+                            ->searchable()
+                            ->preload()
+                            ->required()
+                            ->options(function (callable $get) {
+                                $centreId = $get('centre_id');
+                                if (!$centreId) {
+                                    return [];
+                                }
+                                
+                                // Get products associated with the selected centre
+                                // Also include products that have no centres (available for all centres)
+                                return Product::where(function ($query) use ($centreId) {
+                                    $query->whereHas('centres', function ($centreQuery) use ($centreId) {
+                                        $centreQuery->where('centres.id', $centreId);
+                                    })
+                                    // Include products with no centre associations (available for all centres)
+                                    ->orWhereDoesntHave('centres');
+                                })->pluck('name', 'id')->toArray();
+                            })
+                            ->placeholder(function (callable $get) {
+                                $centreId = $get('centre_id');
+                                if (!$centreId) {
+                                    return 'Select a centre first';
+                                }
+                                return 'Select a product';
+                            })
+                            ->helperText(function (callable $get) {
+                                $centreId = $get('centre_id');
+                                if (!$centreId) {
+                                    return 'Products will be filtered based on the selected centre';
+                                }
+                                return 'Showing products available for the selected centre and products available for all centres';
+                            })
+                            ->disabled(fn (callable $get): bool => !$get('centre_id'))
+                            ->rules([
+                                function (callable $get) {
+                                    return function (string $attribute, $value, \Closure $fail) use ($get) {
+                                        $centreId = $get('centre_id');
+                                        if ($centreId && $value) {
+                                            $product = Product::find($value);
+                                            if ($product) {
+                                                // Check if product is associated with the centre OR has no centre associations
+                                                $hasAccess = $product->centres()->where('centres.id', $centreId)->exists() 
+                                                          || $product->centres()->count() === 0;
+                                                
+                                                if (!$hasAccess) {
+                                                    $fail('The selected product is not available for the selected centre.');
+                                                }
+                                            }
+                                        }
+                                    };
+                                },
+                            ])
+                            ->columnSpan(1),
+                            
+                        Forms\Components\Select::make('status')
+                            ->options(ChildEnrollmentStatus::options())
+                            ->default(ChildEnrollmentStatus::PENDING->value)
+                            ->required()
+                            ->columnSpan(1),
+                    ])
+                    ->columns(2),
+                    
+                Forms\Components\Section::make('Program Details')
+                    ->schema([
+                        Forms\Components\Select::make('type')
+                            ->options(ChildEnrollmentType::options())
+                            ->default(ChildEnrollmentType::FULL_TIME->value)
+                            ->required()
+                            ->columnSpan(1),
+                            
+                        Forms\Components\Select::make('billed_every')
+                            ->options(ChildEnrollmentBilledEvery::options())
+                            ->default(ChildEnrollmentBilledEvery::MONTHLY->value)
+                            ->required()
+                            ->columnSpan(1),
+                    ])
+                    ->columns(2),
+                    
+                Forms\Components\Section::make('Schedule')
+                    ->schema([
+                        Forms\Components\DateTimePicker::make('date_start')
+                            ->label('Start Date')
+                            ->required()
+                            ->default(now())
+                            ->columnSpan(1),
+                            
+                        Forms\Components\DateTimePicker::make('date_end')
+                            ->label('End Date')
+                            ->nullable()
+                            ->columnSpan(1),
+                    ])
+                    ->columns(2),
+            ]);
+    }
+
+    public static function table(Table $table): Table
+    {
+        return $table
+            ->columns([
+                Tables\Columns\TextColumn::make('child.full_name')
+                    ->label('Child')
+                    ->searchable(['first_name', 'last_name'])
+                    ->sortable()
+                    ->weight(FontWeight::Medium),
+                    
+                Tables\Columns\TextColumn::make('centre.name')
+                    ->label('Centre')
+                    ->searchable()
+                    ->sortable()
+                    ->weight(FontWeight::Medium),
+                    
+                Tables\Columns\TextColumn::make('product.name')
+                    ->label('Product')
+                    ->searchable()
+                    ->sortable()
+                    ->weight(FontWeight::Medium),
+                    
+                Tables\Columns\TextColumn::make('status')
+                    ->badge()
+                    ->color(fn ($state): string => match ($state) {
+                        'active' => 'success',
+                        'pending' => 'warning',
+                        'inactive' => 'gray',
+                        'completed' => 'info',
+                        'cancelled' => 'danger',
+                        default => 'gray',
+                    })
+                    ->formatStateUsing(fn ($state): string => ucfirst($state->value))
+                    ->sortable(),
+                    
+                Tables\Columns\TextColumn::make('type')
+                    ->badge()
+                    ->color('gray')
+                    ->formatStateUsing(fn ($state): string => ucwords(str_replace('_', ' ', $state->value)))
+                    ->sortable(),
+                    
+                Tables\Columns\TextColumn::make('billed_every')
+                    ->label('Billing Frequency')
+                    ->formatStateUsing(fn ($state): string => ucwords(str_replace('_', ' ', $state->value)))
+                    ->sortable(),
+                    
+                Tables\Columns\TextColumn::make('date_start')
+                    ->label('Start Date')
+                    ->date()
+                    ->sortable(),
+                    
+                Tables\Columns\TextColumn::make('date_end')
+                    ->label('End Date')
+                    ->date()
+                    ->placeholder('Ongoing')
+                    ->sortable(),
+                    
+                Tables\Columns\IconColumn::make('is_active')
+                    ->label('Active')
+                    ->boolean()
+                    ->getStateUsing(fn (ChildEnrollment $record): bool => $record->isActive())
+                    ->trueIcon('heroicon-o-check-circle')
+                    ->falseIcon('heroicon-o-x-circle')
+                    ->trueColor('success')
+                    ->falseColor('danger'),
+                    
+                Tables\Columns\TextColumn::make('created_at')
+                    ->dateTime()
+                    ->sortable()
+                    ->toggleable(isToggledHiddenByDefault: true),
+                    
+                Tables\Columns\TextColumn::make('updated_at')
+                    ->dateTime()
+                    ->sortable()
+                    ->toggleable(isToggledHiddenByDefault: true),
+            ])
+            ->filters([
+                SelectFilter::make('centre_id')
+                    ->label('Centre')
+                    ->relationship('centre', 'name')
+                    ->searchable()
+                    ->preload(),
+                    
+                SelectFilter::make('status')
+                    ->options(ChildEnrollmentStatus::options())
+                    ->multiple(),
+                    
+                SelectFilter::make('type')
+                    ->options(ChildEnrollmentType::options())
+                    ->multiple(),
+                    
+                SelectFilter::make('billed_every')
+                    ->label('Billing Frequency')
+                    ->options(ChildEnrollmentBilledEvery::options())
+                    ->multiple(),
+                    
+                Tables\Filters\Filter::make('active_only')
+                    ->label('Active Enrollments')
+                    ->query(fn (Builder $query): Builder => $query->where('status', ChildEnrollmentStatus::ACTIVE))
+                    ->toggle(),
+                    
+                Tables\Filters\Filter::make('current_only')
+                    ->label('Current Enrollments')
+                    ->query(fn (Builder $query): Builder => $query->current())
+                    ->toggle(),
+            ])
+            ->actions([
+                Tables\Actions\ViewAction::make(),
+                Tables\Actions\EditAction::make(),
+                Tables\Actions\DeleteAction::make(),
+            ])
+            ->bulkActions([
+                Tables\Actions\BulkActionGroup::make([
+                    Tables\Actions\DeleteBulkAction::make(),
+                ]),
+            ])
+            ->defaultSort('created_at', 'desc');
+    }
+
+    public static function getRelations(): array
+    {
+        return [
+            //
+        ];
+    }
+
+    public static function getPages(): array
+    {
+        return [
+            'index' => Pages\ListChildEnrollments::route('/'),
+            'create' => Pages\CreateChildEnrollment::route('/create'),
+            'view' => Pages\ViewChildEnrollment::route('/{record}'),
+            'edit' => Pages\EditChildEnrollment::route('/{record}/edit'),
+        ];
+    }
+    
+    public static function getNavigationBadge(): ?string
+    {
+        return static::getModel()::active()->count();
+    }
+    
+    public static function getNavigationBadgeColor(): string|array|null
+    {
+        return 'success';
+    }
+}

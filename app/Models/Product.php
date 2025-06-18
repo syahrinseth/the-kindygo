@@ -70,6 +70,36 @@ class Product extends Model
     }
 
     /**
+     * Get the child enrollments for this product.
+     *
+     * @return \Illuminate\Database\Eloquent\Relations\HasMany
+     */
+    public function enrollments(): HasMany
+    {
+        return $this->hasMany(ChildEnrollment::class);
+    }
+
+    /**
+     * Get the active child enrollments for this product.
+     *
+     * @return \Illuminate\Database\Eloquent\Relations\HasMany
+     */
+    public function activeEnrollments(): HasMany
+    {
+        return $this->hasMany(ChildEnrollment::class)->active();
+    }
+
+    /**
+     * Get the current child enrollments for this product.
+     *
+     * @return \Illuminate\Database\Eloquent\Relations\HasMany
+     */
+    public function currentEnrollments(): HasMany
+    {
+        return $this->hasMany(ChildEnrollment::class)->current();
+    }
+
+    /**
      * Scope a query to filter by status.
      *
      * @param  \Illuminate\Database\Eloquent\Builder  $query

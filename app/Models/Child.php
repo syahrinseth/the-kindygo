@@ -7,6 +7,7 @@ use App\Models\Scopes\BelongsToManyTenantScope;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Spatie\MediaLibrary\HasMedia;
 use Spatie\MediaLibrary\InteractsWithMedia;
@@ -216,6 +217,36 @@ class Child extends Model implements HasMedia
     public function invoiceItems()
     {
         return $this->hasMany(InvoiceItem::class);
+    }
+
+    /**
+     * Get the enrollments associated with this child.
+     *
+     * @return \Illuminate\Database\Eloquent\Relations\HasMany
+     */
+    public function enrollments(): HasMany
+    {
+        return $this->hasMany(ChildEnrollment::class);
+    }
+
+    /**
+     * Get the active enrollments for this child.
+     *
+     * @return \Illuminate\Database\Eloquent\Relations\HasMany
+     */
+    public function activeEnrollments(): HasMany
+    {
+        return $this->hasMany(ChildEnrollment::class)->active();
+    }
+
+    /**
+     * Get the current enrollments for this child.
+     *
+     * @return \Illuminate\Database\Eloquent\Relations\HasMany
+     */
+    public function currentEnrollments(): HasMany
+    {
+        return $this->hasMany(ChildEnrollment::class)->current();
     }
     
     /**
