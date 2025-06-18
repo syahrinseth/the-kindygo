@@ -7,6 +7,7 @@ use App\Enums\ProductType;
 use App\Models\Scopes\TenantScope;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 
@@ -102,5 +103,11 @@ class Product extends Model
     public function scopeByPriority($query, $priority)
     {
         return $query->where('priority', $priority);
+    }
+
+    public function centres(): BelongsToMany
+    {
+        return $this->belongsToMany(Centre::class, 'product_centre')
+            ->withTimestamps();
     }
 }

@@ -141,6 +141,14 @@ class Centre extends Model
     }
 
     /**
+     * Get the products associated with the centre.
+     */
+    public function products(): BelongsToMany
+    {
+        return $this->belongsToMany(Product::class, 'product_centre');
+    }
+
+    /**
      * Scope a query to only include centres that the authenticated user has access to
      * and that belong to the user's current tenant.
      *

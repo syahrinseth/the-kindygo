@@ -77,6 +77,32 @@ class ProductResource extends Resource
 
                 Forms\Components\Section::make('Assignment')
                     ->schema([
+                        Forms\Components\Select::make('centres')
+                            ->label('Centres')
+                            ->relationship('centres', 'name', function (Builder $query) {
+                                $user = Auth::user();
+                                if (!$user->current_tenant_id) {
+                                    return $query->whereRaw('1 = 0'); // Return empty query
+                                }
+                                
+                                $query->where('tenant_id', $user->current_tenant_id);
+                                
+                                // If Principal, limit to their centres
+                                if ($user->hasRole('Principal')) {
+                                    $query->whereHas('users', function (Builder $q) use ($user) {
+                                        $q->where('users.id', $user->id);
+                                    });
+                                }
+                                
+                                return $query;
+                            })
+                            ->multiple()
+                            ->searchable()
+                            ->preload()
+                            ->native(false)
+                            ->placeholder('Select centres (leave empty for all centres)')
+                            ->helperText('Assign this product to specific centres, or leave empty to make it available to all centres'),
+                            
                         Forms\Components\Hidden::make('tenant_id')
                             ->default(fn () => Auth::user()?->current_tenant_id),
                     ]),
@@ -126,6 +152,14 @@ class ProductResource extends Resource
                     ])
                     ->sortable(),
 
+                Tables\Columns\TextColumn::make('centres.name')
+                    ->label('Centres')
+                    ->badge()
+                    ->searchable()
+                    ->sortable()
+                    ->placeholder('All Centres')
+                    ->toggleable(),
+
                 Tables\Columns\TextColumn::make('created_at')
                     ->dateTime()
                     ->sortable()
@@ -149,15 +183,25 @@ class ProductResource extends Resource
                         'medium' => 'Medium',
                         'low' => 'Low',
                     ]),
+
+                Tables\Filters\SelectFilter::make('centres')
+                    ->relationship('centres', 'name')
+                    ->searchable()
+                    ->preload()
+                    ->placeholder('All Centres'),
             ])
             ->actions([
-                Tables\Actions\ViewAction::make(),
-                Tables\Actions\EditAction::make(),
-                Tables\Actions\DeleteAction::make(),
+                Tables\Actions\ViewAction::make()
+                    ->visible(fn (Product $record) => Auth::user()->can('view', $record)),
+                Tables\Actions\EditAction::make()
+                    ->visible(fn (Product $record) => Auth::user()->can('update', $record)),
+                Tables\Actions\DeleteAction::make()
+                    ->visible(fn (Product $record) => Auth::user()->can('delete', $record)),
             ])
             ->bulkActions([
                 Tables\Actions\BulkActionGroup::make([
-                    Tables\Actions\DeleteBulkAction::make(),
+                    Tables\Actions\DeleteBulkAction::make()
+                        ->visible(fn () => Auth::user()->can('deleteAny', Product::class)),
                 ]),
             ])
             ->defaultSort('created_at', 'desc');
@@ -182,5 +226,25 @@ class ProductResource extends Resource
     public static function getEloquentQuery(): Builder
     {
         return parent::getEloquentQuery()->where('tenant_id', Auth::user()?->current_tenant_id);
+    }
+
+    public static function shouldCheckPolicyExistence(): bool
+    {
+        return true;
+    }
+
+    public static function canViewAny(): bool
+    {
+        return Auth::user()->can('viewAny', Product::class);
+    }
+
+    public static function canCreate(): bool
+    {
+        return Auth::user()->can('create', Product::class);
+    }
+
+    public static function shouldRegisterNavigation(): bool
+    {
+        return Auth::user()->can('viewAny', Product::class);
     }
 }

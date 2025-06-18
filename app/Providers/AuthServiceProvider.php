@@ -7,12 +7,14 @@ use App\Models\Centre;
 use App\Models\Child;
 use App\Models\Invoice;
 use App\Models\Payment;
+use App\Models\Product;
 use App\Models\User;
 use App\Policies\CentrePolicy;
 use App\Policies\ChildPolicy;
 use App\Policies\FinanceDashboardPolicy;
 use App\Policies\InvoicePolicy;
 use App\Policies\PaymentPolicy;
+use App\Policies\ProductPolicy;
 use App\Policies\UserPolicy;
 use Illuminate\Foundation\Support\Providers\AuthServiceProvider as ServiceProvider;
 
@@ -29,6 +31,7 @@ class AuthServiceProvider extends ServiceProvider
         Child::class => ChildPolicy::class,
         Invoice::class => InvoicePolicy::class,
         Payment::class => PaymentPolicy::class,
+        Product::class => ProductPolicy::class,
         FinanceDashboard::class => FinanceDashboardPolicy::class,
     ];
 
