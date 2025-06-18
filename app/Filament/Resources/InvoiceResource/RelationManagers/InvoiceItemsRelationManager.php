@@ -37,20 +37,40 @@ class InvoiceItemsRelationManager extends RelationManager
                             ->relationship(
                                 name: 'product',
                                 titleAttribute: 'name',
-                                modifyQueryUsing: fn (Builder $query) => $query->where('tenant_id', Auth::user()?->current_tenant_id)
+                                modifyQueryUsing: fn (Builder $query) => $query
+                                    ->where('tenant_id', Auth::user()?->current_tenant_id)
+                                    ->with('currentPrice')
                             )
+                            ->getOptionLabelFromRecordUsing(function ($record) {
+                                $label = $record->name;
+                                if ($record->currentPrice) {
+                                    $price = number_format($record->currentPrice->price / 100, 2);
+                                    $label .= " (RM {$price})";
+                                }
+                                return $label;
+                            })
                             ->searchable()
                             ->preload()
                             ->live()
-                            ->afterStateUpdated(function ($state, Forms\Set $set) {
+                            ->afterStateUpdated(function ($state, Forms\Set $set, Forms\Get $get) {
                                 if ($state) {
-                                    $product = Product::find($state);
+                                    $product = Product::with('currentPrice')->find($state);
                                     if ($product) {
                                         $set('name', $product->name);
+                                        
+                                        // Auto-populate price if product has a current price
+                                        if ($product->currentPrice) {
+                                            // Convert from cents to decimal for the form
+                                            $price = $product->currentPrice->price / 100;
+                                            $set('price', number_format($price, 2, '.', ''));
+                                            
+                                            // Recalculate total after setting the price
+                                            $this->calculateTotal($set, $get);
+                                        }
                                     }
                                 }
                             })
-                            ->helperText('Select a product to auto-fill the name'),
+                            ->helperText('Select a product to auto-fill the name and price (if available)'),
 
                         Forms\Components\TextInput::make('name')
                             ->required()

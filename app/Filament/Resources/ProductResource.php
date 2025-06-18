@@ -160,6 +160,16 @@ class ProductResource extends Resource
                     ->placeholder('All Centres')
                     ->toggleable(),
 
+                Tables\Columns\TextColumn::make('current_price')
+                    ->label('Current Price')
+                    ->getStateUsing(function ($record) {
+                        $currentPrice = $record->currentPrice;
+                        return $currentPrice ? $currentPrice->price : null;
+                    })
+                    ->money('MYR', 100)
+                    ->placeholder('No price set')
+                    ->sortable(false),
+
                 Tables\Columns\TextColumn::make('created_at')
                     ->dateTime()
                     ->sortable()
@@ -211,6 +221,7 @@ class ProductResource extends Resource
     {
         return [
             RelationManagers\InvoiceItemsRelationManager::class,
+            RelationManagers\PricesRelationManager::class,
         ];
     }
 

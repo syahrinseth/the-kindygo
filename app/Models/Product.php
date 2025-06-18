@@ -110,4 +110,48 @@ class Product extends Model
         return $this->belongsToMany(Centre::class, 'product_centre')
             ->withTimestamps();
     }
+
+    /**
+     * Get the prices for this product.
+     *
+     * @return \Illuminate\Database\Eloquent\Relations\HasMany
+     */
+    public function prices(): HasMany
+    {
+        return $this->hasMany(ProductPrice::class)->orderBy('start_date', 'desc');
+    }
+
+    /**
+     * Get the current active price for this product.
+     *
+     * @return \Illuminate\Database\Eloquent\Relations\HasOne
+     */
+    public function currentPrice()
+    {
+        return $this->hasOne(ProductPrice::class)
+                    ->current()
+                    ->orderBy('start_date', 'desc');
+    }
+
+    /**
+     * Get the active price for a specific date.
+     *
+     * @param string|null $date
+     * @return ProductPrice|null
+     */
+    public function getPriceOn($date = null)
+    {
+        return $this->prices()->activeOn($date)->first();
+    }
+
+    /**
+     * Get the formatted current price.
+     *
+     * @return string
+     */
+    public function getCurrentFormattedPrice(): string
+    {
+        $currentPrice = $this->currentPrice;
+        return $currentPrice ? $currentPrice->formatted_price : 'No price set';
+    }
 }
