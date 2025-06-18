@@ -114,4 +114,9 @@ class Payment extends Model implements HasMedia
     {
         return $this->belongsTo(Tenant::class);
     }
+
+    public function centre()
+    {
+        return $this->belongsTo(Centre::class);
+    }
 }

@@ -207,19 +207,16 @@ class InvoiceResource extends Resource
                     
                 Tables\Columns\TextColumn::make('total_amount')
                     ->label('Amount')
-                    ->money('MYR')
-                    ->formatStateUsing(fn ($state) => $state / 100) // Convert cents to decimal for display
+                    ->money('MYR', 100)
                     ->sortable(),
                     
                 Tables\Columns\TextColumn::make('total_discounts')
                     ->label('Discounts')
-                    ->money('MYR')
-                    ->formatStateUsing(fn ($state) => $state / 100) // Convert cents to decimal for display
+                    ->money('MYR', 100)
                     ->sortable(),
                     
                 Tables\Columns\TextColumn::make('total')
-                    ->money('MYR')
-                    ->formatStateUsing(fn ($state) => $state / 100) // Convert cents to decimal for display
+                    ->money('MYR', 100)
                     ->sortable(),
             ])
             ->filters([
