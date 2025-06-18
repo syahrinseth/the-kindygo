@@ -21,7 +21,7 @@ return new class extends Migration
             $table->string('priority');
             $table->timestamps();
             
-            $table->index(['tenant_id', 'centre_id']);
+            $table->index('tenant_id');
         });
     }
 
