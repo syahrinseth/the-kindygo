@@ -40,8 +40,7 @@ class InvoiceListWidget extends BaseWidget
                     ->date()
                     ->sortable(),
                 TextColumn::make('total')
-                    ->money('MYR')
-                    ->formatStateUsing(fn ($state) => $state / 100) // Convert cents to decimal for display
+                    ->money('MYR', 100)
                     ->sortable(),
                 TextColumn::make('status')
                     ->badge()

@@ -41,8 +41,7 @@ class UpcomingPaymentsWidget extends BaseWidget
                     ->sortable()
                     ->label('Due Date'),
                 TextColumn::make('total')
-                    ->money('MYR')
-                    ->formatStateUsing(fn ($state) => $state / 100) // Convert cents to decimal for display
+                    ->money('MYR', 100)
                     ->sortable(),
                 TextColumn::make('days_until_due')
                     ->state(function (Invoice $record): string {
