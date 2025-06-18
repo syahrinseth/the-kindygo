@@ -134,6 +134,21 @@ class Product extends Model
     }
 
     /**
+     * Get the current active price for this product for a specific centre.
+     *
+     * @param int|null $centreId
+     * @return ProductPrice|null
+     */
+    public function currentPriceForCentre($centreId = null)
+    {
+        return $this->prices()
+                    ->with('centres')
+                    ->activeForCentre($centreId)
+                    ->orderBy('start_date', 'desc')
+                    ->first();
+    }
+
+    /**
      * Get the active price for a specific date.
      *
      * @param string|null $date
@@ -145,6 +160,22 @@ class Product extends Model
     }
 
     /**
+     * Get the active price for a specific date and centre.
+     *
+     * @param string|null $date
+     * @param int|null $centreId
+     * @return ProductPrice|null
+     */
+    public function getPriceForCentre($date = null, $centreId = null)
+    {
+        return $this->prices()
+                    ->with('centres')
+                    ->activeForCentre($centreId, $date)
+                    ->orderBy('start_date', 'desc')
+                    ->first();
+    }
+
+    /**
      * Get the formatted current price.
      *
      * @return string
@@ -152,6 +183,18 @@ class Product extends Model
     public function getCurrentFormattedPrice(): string
     {
         $currentPrice = $this->currentPrice;
+        return $currentPrice ? $currentPrice->formatted_price : 'No price set';
+    }
+
+    /**
+     * Get the formatted current price for a specific centre.
+     *
+     * @param int|null $centreId
+     * @return string
+     */
+    public function getCurrentFormattedPriceForCentre($centreId = null): string
+    {
+        $currentPrice = $this->currentPriceForCentre($centreId);
         return $currentPrice ? $currentPrice->formatted_price : 'No price set';
     }
 }

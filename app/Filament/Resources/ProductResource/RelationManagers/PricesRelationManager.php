@@ -56,6 +56,32 @@ class PricesRelationManager extends RelationManager
                                     ->helperText('Leave empty for open-ended pricing')
                                     ->afterOrEqual('start_date'),
                             ]),
+                            
+                        Forms\Components\Select::make('centres')
+                            ->label('Centres')
+                            ->relationship('centres', 'name', function (Builder $query) {
+                                $user = Auth::user();
+                                if (!$user->current_tenant_id) {
+                                    return $query->whereRaw('1 = 0');
+                                }
+                                
+                                $query->where('tenant_id', $user->current_tenant_id);
+                                
+                                // If Principal, limit to their centres
+                                if ($user->hasRole('Principal')) {
+                                    $query->whereHas('users', function (Builder $q) use ($user) {
+                                        $q->where('users.id', $user->id);
+                                    });
+                                }
+                                
+                                return $query;
+                            })
+                            ->multiple()
+                            ->searchable()
+                            ->preload()
+                            ->native(false)
+                            ->placeholder('Leave empty for global pricing')
+                            ->helperText('Select specific centres for this price, or leave empty to apply to all centres'),
                     ]),
             ]);
     }
@@ -68,8 +94,7 @@ class PricesRelationManager extends RelationManager
             ->columns([
                 Tables\Columns\TextColumn::make('price')
                     ->label('Price')
-                    ->money('MYR')
-                    ->formatStateUsing(fn ($state) => $state / 100)
+                    ->money('MYR', 100)
                     ->sortable(),
                     
                 Tables\Columns\TextColumn::make('start_date')
@@ -82,6 +107,35 @@ class PricesRelationManager extends RelationManager
                     ->date('M d, Y')
                     ->placeholder('Ongoing')
                     ->sortable(),
+                    
+                Tables\Columns\TextColumn::make('centres')
+                    ->label('Centres')
+                    ->getStateUsing(function (ProductPrice $record) {
+                        if ($record->centres->count() === 0) {
+                            return 'All Centres (Global)';
+                        }
+                        return $record->centres->pluck('name')->join(', ');
+                    })
+                    ->wrap()
+                    ->sortable(false)
+                    ->searchable(false)
+                    ->description(function (ProductPrice $record) {
+                        if ($record->centres->count() === 0) {
+                            return 'Applies to all centres assigned with the product';
+                        }
+                        $count = $record->centres->count();
+                        return $count === 1 ? '1 centre' : "{$count} centres";
+                    }),
+                    
+                Tables\Columns\TextColumn::make('scope')
+                    ->label('Applies To')
+                    ->badge()
+                    ->getStateUsing(function (ProductPrice $record) {
+                        return $record->scope;
+                    })
+                    ->color(fn (string $state): string => $state === 'Global' ? 'success' : 'primary')
+                    ->sortable(false)
+                    ->toggleable(isToggledHiddenByDefault: true),
                     
                 Tables\Columns\TextColumn::make('status')
                     ->label('Status')

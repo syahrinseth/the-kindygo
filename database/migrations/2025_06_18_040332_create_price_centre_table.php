@@ -1,0 +1,36 @@
+<?php
+
+use Illuminate\Database\Migrations\Migration;
+use Illuminate\Database\Schema\Blueprint;
+use Illuminate\Support\Facades\Schema;
+
+return new class extends Migration
+{
+    /**
+     * Run the migrations.
+     */
+    public function up(): void
+    {
+        Schema::create('price_centre', function (Blueprint $table) {
+            $table->id();
+            $table->foreignId('product_price_id')->constrained('product_prices')->onDelete('cascade');
+            $table->foreignId('centre_id')->constrained()->onDelete('cascade');
+            $table->timestamps();
+            
+            // Add unique constraint to prevent duplicate relationships
+            $table->unique(['product_price_id', 'centre_id']);
+            
+            // Add indexes for better performance
+            $table->index('product_price_id');
+            $table->index('centre_id');
+        });
+    }
+
+    /**
+     * Reverse the migrations.
+     */
+    public function down(): void
+    {
+        Schema::dropIfExists('price_centre');
+    }
+};

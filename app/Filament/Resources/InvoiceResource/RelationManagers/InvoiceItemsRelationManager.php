@@ -43,10 +43,17 @@ class InvoiceItemsRelationManager extends RelationManager
                             )
                             ->getOptionLabelFromRecordUsing(function ($record) {
                                 $label = $record->name;
-                                if ($record->currentPrice) {
-                                    $price = number_format($record->currentPrice->price / 100, 2);
+                                
+                                // Get centre-specific price for the invoice's centre
+                                $invoice = $this->getOwnerRecord();
+                                $centreId = $invoice->centre_id ?? null;
+                                $currentPrice = $record->currentPriceForCentre($centreId);
+                                
+                                if ($currentPrice) {
+                                    $price = number_format($currentPrice->price / 100, 2);
                                     $label .= " (RM {$price})";
                                 }
+                                
                                 return $label;
                             })
                             ->searchable()
@@ -54,14 +61,19 @@ class InvoiceItemsRelationManager extends RelationManager
                             ->live()
                             ->afterStateUpdated(function ($state, Forms\Set $set, Forms\Get $get) {
                                 if ($state) {
-                                    $product = Product::with('currentPrice')->find($state);
+                                    $product = Product::find($state);
                                     if ($product) {
                                         $set('name', $product->name);
                                         
-                                        // Auto-populate price if product has a current price
-                                        if ($product->currentPrice) {
+                                        // Get centre-specific price for the invoice's centre
+                                        $invoice = $this->getOwnerRecord();
+                                        $centreId = $invoice->centre_id ?? null;
+                                        $currentPrice = $product->currentPriceForCentre($centreId);
+                                        
+                                        // Auto-populate price if product has a current price for this centre
+                                        if ($currentPrice) {
                                             // Convert from cents to decimal for the form
-                                            $price = $product->currentPrice->price / 100;
+                                            $price = $currentPrice->price / 100;
                                             $set('price', number_format($price, 2, '.', ''));
                                             
                                             // Recalculate total after setting the price

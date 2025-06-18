@@ -4,6 +4,7 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Carbon\Carbon;
 
@@ -97,5 +98,70 @@ class ProductPrice extends Model
     public function isFuture(): bool
     {
         return $this->start_date > now()->toDateString();
+    }
+
+    /**
+     * Get the centres this price applies to.
+     */
+    public function centres(): BelongsToMany
+    {
+        return $this->belongsToMany(Centre::class, 'price_centre', 'product_price_id', 'centre_id')
+                    ->withTimestamps();
+    }
+
+    /**
+     * Scope to get prices for a specific centre or global prices.
+     */
+    public function scopeForCentre($query, $centreId = null)
+    {
+        return $query->where(function ($q) use ($centreId) {
+            // Include global prices (no centre assignment)
+            $q->whereDoesntHave('centres');
+            
+            // Include centre-specific prices if centre is specified
+            if ($centreId) {
+                $q->orWhereHas('centres', function ($centreQuery) use ($centreId) {
+                    $centreQuery->where('centre_id', $centreId);
+                });
+            }
+        });
+    }
+
+    /**
+     * Scope to get active prices for a specific centre on a specific date.
+     */
+    public function scopeActiveForCentre($query, $centreId = null, $date = null)
+    {
+        return $query->forCentre($centreId)->activeOn($date);
+    }
+
+    /**
+     * Check if this price applies to a specific centre.
+     */
+    public function appliesTo($centreId = null): bool
+    {
+        // If no centres are assigned, it's a global price
+        if ($this->centres->count() === 0) {
+            return true;
+        }
+        
+        // If centre is specified, check if this price applies to that centre
+        if ($centreId) {
+            return $this->centres->contains('id', $centreId);
+        }
+        
+        return false;
+    }
+
+    /**
+     * Get the applicable scope of this price.
+     */
+    public function getScopeAttribute(): string
+    {
+        if ($this->centres->count() === 0) {
+            return 'Global';
+        }
+        
+        return $this->centres->pluck('name')->join(', ');
     }
 }

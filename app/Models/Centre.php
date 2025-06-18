@@ -149,6 +149,15 @@ class Centre extends Model
     }
 
     /**
+     * Get the product prices associated with this centre.
+     */
+    public function prices(): BelongsToMany
+    {
+        return $this->belongsToMany(ProductPrice::class, 'price_centre', 'centre_id', 'product_price_id')
+                    ->withTimestamps();
+    }
+
+    /**
      * Scope a query to only include centres that the authenticated user has access to
      * and that belong to the user's current tenant.
      *
