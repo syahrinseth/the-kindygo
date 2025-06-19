@@ -1,6 +1,7 @@
 <?php
 
 use Illuminate\Support\Facades\Route;
+use Illuminate\Support\Facades\Auth;
 use App\Http\Controllers\Auth\LoginController;
 use App\Http\Controllers\Auth\RegisterController;
 use App\Http\Controllers\TenantInvitationController;
@@ -8,14 +9,20 @@ use App\Http\Controllers\SecureMediaController;
 use App\Http\Controllers\ChipPaymentController;
 
 Route::get('/', function () {
-    return view('welcome');
+    if (Auth::check()) {
+        return redirect('/app');
+    }
+    return redirect('/login');
 });
 
 // Authentication Routes
 Route::middleware('guest')->group(function () {
     Route::get('/login', [LoginController::class, 'showLoginForm'])->name('login');
     Route::post('/login', [LoginController::class, 'login']);
-    Route::get('/register', [RegisterController::class, 'showRegistrationForm'])->name('register');
+    // Temporarily redirect register route to login
+    Route::get('/register', function () {
+        return redirect('/login');
+    })->name('register');
     Route::post('/register', [RegisterController::class, 'register']);
 });
 
