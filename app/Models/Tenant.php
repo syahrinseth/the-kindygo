@@ -306,4 +306,9 @@ class Tenant extends Model
 
         return $tenant;
     }
+
+    public function products(): HasMany
+    {
+        return $this->hasMany(Product::class);
+    }
 }
