@@ -5,6 +5,8 @@ namespace App\Filament\Resources\CentreResource\RelationManagers;
 use App\Enums\InvoiceStatus;
 use Filament\Forms;
 use Filament\Forms\Form;
+use Filament\Infolists;
+use Filament\Infolists\Infolist;
 use Filament\Resources\RelationManagers\RelationManager;
 use Filament\Tables;
 use Filament\Tables\Table;
@@ -87,31 +89,144 @@ class InvoicesRelationManager extends RelationManager
                             );
                     }),
             ])
-            ->headerActions([
-                Tables\Actions\CreateAction::make()
-                    ->visible(fn () => Auth::user()->can('create', \App\Models\Invoice::class))
-                    ->mutateFormDataUsing(function (array $data, $livewire): array {
-                        // Set tenant_id to the current tenant
-                        $data['tenant_id'] = Auth::user()->current_tenant_id;
-                        // Set centre_id to the current centre
-                        $data['centre_id'] = $this->getOwnerRecord()->id;
-                        return $data;
-                    }),
-            ])
+            ->headerActions([])
             ->actions([
                 Tables\Actions\ViewAction::make()
-                    ->visible(fn ($record) => Auth::user()->can('view', $record)),
-                
-                Tables\Actions\EditAction::make()
-                    ->visible(fn ($record) => Auth::user()->can('update', $record)),
-                
-                Tables\Actions\DeleteAction::make()
-                    ->visible(fn ($record) => Auth::user()->can('delete', $record)),
+                    ->visible(fn ($record) => Auth::user()->can('view', $record))
+                    ->infolist([
+                        Infolists\Components\Section::make('Invoice Details')
+                            ->schema([
+                                Infolists\Components\TextEntry::make('number')
+                                    ->label('Invoice Number')
+                                    ->badge()
+                                    ->color('primary'),
+                                    
+                                Infolists\Components\TextEntry::make('status')
+                                    ->badge()
+                                    ->color(fn (InvoiceStatus $state): string => match ($state) {
+                                        InvoiceStatus::DRAFT => 'gray',
+                                        InvoiceStatus::PENDING => 'warning',
+                                        InvoiceStatus::PAID => 'success',
+                                        InvoiceStatus::OVERDUE => 'danger',
+                                        InvoiceStatus::CANCELLED => 'gray',
+                                    }),
+                                    
+                                Infolists\Components\TextEntry::make('date')
+                                    ->label('Invoice Date')
+                                    ->date('M d, Y'),
+                                    
+                                Infolists\Components\TextEntry::make('due_at')
+                                    ->label('Due Date')
+                                    ->date('M d, Y')
+                                    ->color(function ($record) {
+                                        if ($record->due_at && $record->due_at->isPast() && $record->status !== InvoiceStatus::PAID) {
+                                            return 'danger';
+                                        }
+                                        return null;
+                                    }),
+                            ])->columns(2),
+                            
+                        Infolists\Components\Section::make('Customer Information')
+                            ->schema([
+                                Infolists\Components\TextEntry::make('user.name')
+                                    ->label('Customer'),
+                                    
+                                Infolists\Components\TextEntry::make('user.email')
+                                    ->label('Email'),
+                                    
+                                Infolists\Components\TextEntry::make('centre.name')
+                                    ->label('Centre'),
+                            ])->columns(2),
+                            
+                        Infolists\Components\Section::make('Financial Summary')
+                            ->schema([
+                                Infolists\Components\TextEntry::make('total_items')
+                                    ->label('Subtotal')
+                                    ->money('MYR'),
+                                    
+                                Infolists\Components\TextEntry::make('total_discounts')
+                                    ->label('Total Discounts')
+                                    ->money('MYR')
+                                    ->visible(fn ($record) => $record->total_discounts > 0),
+                                    
+                                Infolists\Components\TextEntry::make('total')
+                                    ->label('Total Amount')
+                                    ->money('MYR')
+                                    ->weight('bold')
+                                    ->size('lg'),
+                                    
+                                Infolists\Components\TextEntry::make('totalPaid')
+                                    ->label('Amount Paid')
+                                    ->money('MYR')
+                                    ->state(fn ($record) => $record->getTotalPaid()),
+                                    
+                                Infolists\Components\TextEntry::make('remainingBalance')
+                                    ->label('Outstanding Balance')
+                                    ->money('MYR')
+                                    ->state(fn ($record) => $record->getRemainingBalance())
+                                    ->color(fn ($record) => $record->getRemainingBalance() > 0 ? 'warning' : 'success'),
+                            ])->columns(2),
+                            
+                        Infolists\Components\Section::make('Invoice Items')
+                            ->schema([
+                                Infolists\Components\RepeatableEntry::make('invoiceItems')
+                                    ->label('')
+                                    ->schema([
+                                        Infolists\Components\TextEntry::make('name')
+                                            ->label('Item'),
+                                            
+                                        Infolists\Components\TextEntry::make('child.name')
+                                            ->label('Child')
+                                            ->visible(fn ($state) => $state !== null),
+                                            
+                                        Infolists\Components\TextEntry::make('quantity')
+                                            ->label('Qty'),
+                                            
+                                        Infolists\Components\TextEntry::make('price')
+                                            ->label('Unit Price')
+                                            ->money('MYR'),
+                                            
+                                        Infolists\Components\TextEntry::make('discount')
+                                            ->label('Discount')
+                                            ->money('MYR')
+                                            ->visible(fn ($state) => $state > 0),
+                                            
+                                        Infolists\Components\TextEntry::make('total')
+                                            ->label('Total')
+                                            ->money('MYR')
+                                            ->weight('semibold'),
+                                    ])
+                                    ->columns(6)
+                                    ->grid(6),
+                            ]),
+                            
+                        Infolists\Components\Section::make('E-Invoice Information')
+                            ->schema([
+                                Infolists\Components\TextEntry::make('einvoice_status')
+                                    ->label('E-Invoice Status')
+                                    ->badge()
+                                    ->visible(fn ($record) => $record->einvoice_status !== null),
+                                    
+                                Infolists\Components\TextEntry::make('einvoice_uuid')
+                                    ->label('E-Invoice UUID')
+                                    ->copyable()
+                                    ->visible(fn ($record) => $record->einvoice_uuid !== null),
+                                    
+                                Infolists\Components\TextEntry::make('einvoice_submitted_at')
+                                    ->label('Submitted At')
+                                    ->dateTime('M d, Y H:i')
+                                    ->visible(fn ($record) => $record->einvoice_submitted_at !== null),
+                                    
+                                Infolists\Components\TextEntry::make('einvoice_validation_url')
+                                    ->label('Validation URL')
+                                    ->url(fn ($record) => $record->einvoice_validation_url)
+                                    ->openUrlInNewTab()
+                                    ->visible(fn ($record) => $record->einvoice_validation_url !== null),
+                            ])
+                            ->columns(2)
+                            ->visible(fn ($record) => $record->isEInvoiceSubmitted()),
+                    ]),
             ])
-            ->bulkActions([
-                Tables\Actions\BulkActionGroup::make([
-                    Tables\Actions\DeleteBulkAction::make(),
-                ]),
-            ]);
+            ->bulkActions([]);
     }
 }
