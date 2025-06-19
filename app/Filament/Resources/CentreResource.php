@@ -72,10 +72,10 @@ class CentreResource extends Resource
                                     ->required()
                                     ->maxLength(255)
                                     ->live(debounce: 2000) // Wait 2 seconds after typing stops
-                                    ->afterStateUpdated(function (string $state, Forms\Set $set) {
+                                    ->afterStateUpdated(function (string $state, Forms\Set $set, Forms\Get $get) {
                                         $set('slug', str()->slug($state));
                                         // Auto-generate code from name if not set
-                                        $currentCode = $set->get('code');
+                                        $currentCode = $get('code');
                                         if (empty($currentCode)) {
                                             $code = strtoupper(preg_replace('/[^A-Za-z0-9]/', '', substr($state, 0, 6)));
                                             $set('code', $code);
