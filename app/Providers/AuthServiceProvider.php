@@ -11,6 +11,7 @@ use App\Models\Product;
 use App\Models\User;
 use App\Policies\CentrePolicy;
 use App\Policies\ChildPolicy;
+use App\Policies\EInvoicePolicy;
 use App\Policies\FinanceDashboardPolicy;
 use App\Policies\InvoicePolicy;
 use App\Policies\PaymentPolicy;
@@ -33,6 +34,8 @@ class AuthServiceProvider extends ServiceProvider
         Payment::class => PaymentPolicy::class,
         Product::class => ProductPolicy::class,
         FinanceDashboard::class => FinanceDashboardPolicy::class,
+        // EInvoiceResource uses Invoice model but with EInvoicePolicy for specific e-invoice permissions
+        'App\Filament\Resources\EInvoiceResource' => EInvoicePolicy::class,
     ];
 
     /**
