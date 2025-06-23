@@ -5,6 +5,7 @@ namespace App\Filament\Resources\InvoiceResource\Pages;
 use App\Enums\Gateway;
 use App\Filament\Resources\InvoiceResource;
 use App\Filament\Resources\InvoiceResource\Actions\MakePaymentAction;
+use App\Filament\Resources\InvoiceResource\Actions\DownloadInvoicePdfAction;
 use App\Models\Invoice;
 use Filament\Actions;
 use Filament\Forms;
@@ -162,6 +163,8 @@ class ViewInvoice extends ViewRecord
     protected function getHeaderActions(): array
     {
         return [
+            DownloadInvoicePdfAction::makeHeaderAction(),
+            
             MakePaymentAction::makeHeaderAction(),
             
             Actions\EditAction::make()

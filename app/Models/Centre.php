@@ -193,4 +193,33 @@ class Centre extends Model
         return $query->withoutGlobalScope(UserCentreScope::class)
             ->withGlobalScope('user_centre', new UserCentreScope());
     }
+
+    /**
+     * Get the full address for this centre.
+     * If centre address is not available, fallback to tenant address.
+     *
+     * @return string|null
+     */
+    public function getFullAddressAttribute(): ?string
+    {
+        // Build centre address from individual fields
+        $centreAddress = collect([
+            $this->address_1,
+            $this->address_2,
+            $this->postal_code ? $this->postal_code . ' ' . $this->city : $this->city,
+            $this->state
+        ])->filter()->implode(', ');
+        
+        // If centre address is empty, use tenant address as fallback
+        if (empty($centreAddress) && $this->tenant) {
+            $centreAddress = collect([
+                $this->tenant->address_1,
+                $this->tenant->address_2,
+                $this->tenant->postal_code ? $this->tenant->postal_code . ' ' . $this->tenant->city : $this->tenant->city,
+                $this->tenant->state
+            ])->filter()->implode(', ');
+        }
+        
+        return !empty($centreAddress) ? $centreAddress : null;
+    }
 }

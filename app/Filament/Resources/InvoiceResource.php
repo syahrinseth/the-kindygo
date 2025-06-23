@@ -6,6 +6,7 @@ use App\Filament\Resources\InvoiceResource\Pages;
 use App\Filament\Resources\InvoiceResource\Actions\MarkAsPaidAction;
 use App\Filament\Resources\InvoiceResource\Actions\MakePaymentAction;
 use App\Filament\Resources\InvoiceResource\Actions\ExportInvoicesAction;
+use App\Filament\Resources\InvoiceResource\Actions\DownloadInvoicePdfAction;
 use App\Models\Invoice;
 use App\Models\Centre;
 use App\Models\User;
@@ -252,6 +253,8 @@ class InvoiceResource extends Resource
             ->actions([
                 Tables\Actions\ViewAction::make()
                     ->visible(fn (Invoice $record) => Auth::user()->can('view', $record)),
+                
+                DownloadInvoicePdfAction::make(),
                 
                 MakePaymentAction::make(),
                 

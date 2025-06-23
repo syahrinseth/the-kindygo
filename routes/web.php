@@ -7,6 +7,7 @@ use App\Http\Controllers\Auth\RegisterController;
 use App\Http\Controllers\TenantInvitationController;
 use App\Http\Controllers\SecureMediaController;
 use App\Http\Controllers\ChipPaymentController;
+use App\Http\Controllers\InvoicePdfController;
 
 Route::get('/', function () {
     if (Auth::check()) {
@@ -45,4 +46,10 @@ Route::prefix('chip')->name('chip.')->group(function () {
     Route::get('failure/{payment}', [ChipPaymentController::class, 'failure'])->name('failure');
     Route::get('cancel/{payment}', [ChipPaymentController::class, 'cancel'])->name('cancel');
     Route::post('webhook', [ChipPaymentController::class, 'webhook'])->name('webhook');
+});
+
+// Invoice PDF Download Route
+Route::middleware('auth')->group(function () {
+    Route::get('/invoice/{invoice}/download-pdf', [InvoicePdfController::class, 'download'])
+        ->name('invoice.download-pdf');
 });
