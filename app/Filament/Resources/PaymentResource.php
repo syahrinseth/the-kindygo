@@ -56,15 +56,49 @@ class PaymentResource extends Resource
 
     public static function getEloquentQuery(): Builder
     {
-        $query = parent::getEloquentQuery();
+        $query = parent::getEloquentQuery()
+            ->with(['tenant', 'centre', 'user', 'invoices']);
         
-        // Apply tenant filtering
         $user = Auth::user();
-        if ($user && $user->current_tenant_id) {
-            $query->where('tenant_id', $user->current_tenant_id);
+        if (!$user || !$user->current_tenant_id) {
+            return $query->whereRaw('1 = 0'); // Return empty result if no user or tenant
+        }
+
+        // Apply tenant filtering first
+        $query->where('tenant_id', $user->current_tenant_id);
+
+        // Apply role-based filtering
+        if ($user->hasRole('Super Admin') || $user->hasRole('Admin')) {
+            // Super Admin and Admin can view all payments in their tenant
+            return $query;
         }
         
-        return $query;
+        if ($user->hasRole('Principal')) {
+            // Principal can only view payments for their centres or payments without a specific centre
+            $userCentreIds = $user->centres()
+                ->where('centres.tenant_id', $user->current_tenant_id)
+                ->pluck('centres.id');
+            
+            return $query->where(function ($q) use ($userCentreIds) {
+                $q->whereNull('centre_id')
+                  ->orWhereIn('centre_id', $userCentreIds);
+            });
+        }
+        
+        if ($user->hasRole('Parent')) {
+            // Parents can only view payments directly related to them
+            return $query->where(function ($q) use ($user) {
+                // Direct payments where user_id matches
+                $q->where('user_id', $user->id)
+                  // Or payments related to their children through invoices
+                  ->orWhereHas('invoices', function ($invoiceQuery) use ($user) {
+                      $invoiceQuery->where('user_id', $user->id);
+                  });
+            });
+        }
+        
+        // For other roles (Teacher, etc.), return empty result
+        return $query->whereRaw('1 = 0');
     }
 
     public static function canViewAny(): bool
