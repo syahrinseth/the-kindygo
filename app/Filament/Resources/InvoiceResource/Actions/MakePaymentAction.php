@@ -20,6 +20,7 @@ use Filament\Notifications\Notification;
 use Filament\Tables\Actions\Action;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 use SyahrinSeth\ChipLaravel\ChipService;
 use Chip\Model\Product;
 
@@ -40,7 +41,70 @@ class MakePaymentAction
             ->icon('heroicon-o-currency-dollar')
             ->color('success')
             ->form(static::getFormSchema())
-            ->action(static::getActionCallback());
+            ->action(static::getActionCallback())
+            ->visible(function ($record) {
+                $user = \Illuminate\Support\Facades\Auth::user();
+
+                // Don't allow payments for cancelled or draft invoices
+                if ($record->status === InvoiceStatus::CANCELLED || $record->status === InvoiceStatus::DRAFT || $record->status === InvoiceStatus::PAID) {
+                    Log::info('MakePayment Debug: Invoice is cancelled or draft');
+                    return false;
+                }
+                
+                // Debug information - you can remove this later
+                Log::info('MakePayment Debug - Table Action', [
+                    'user_id' => $user?->id,
+                    'user_roles' => $user?->getRoleNames(),
+                    'current_tenant_id' => $user?->current_tenant_id,
+                    'record_type' => get_class($record ?? 'null'),
+                    'record_user_id' => $record?->user_id ?? 'null',
+                    'record_tenant_id' => $record?->tenant_id ?? 'null',
+                ]);
+                
+                if (!$user || !$user->current_tenant_id) {
+                    Log::info('MakePayment Debug: No user or tenant');
+                    return false;
+                }
+                
+                // Check if record is an Invoice instance
+                if (!$record instanceof \App\Models\Invoice) {
+                    Log::info('MakePayment Debug: Not an invoice record');
+                    return false;
+                }
+                
+                // Super Admin, Admin, Principal can make payments for invoices from their associated centres
+                if ($user->hasAnyRole(['Super Admin', 'Admin', 'Principal'])) {
+                    // For Super Admin and Admin, check if invoice is from their tenant
+                    if ($user->hasAnyRole(['Super Admin', 'Admin'])) {
+                        $result = $record->tenant_id === $user->current_tenant_id;
+                        Log::info('MakePayment Debug: Admin/SuperAdmin check', ['result' => $result]);
+                        return $result;
+                    }
+                    
+                    // For Principal, check if invoice is from centres they're associated with
+                    if ($user->hasRole('Principal') && $record->centre_id) {
+                        $result = $record->tenant_id === $user->current_tenant_id &&
+                               $user->centres()->where('centres.id', $record->centre_id)->exists();
+                        Log::info('MakePayment Debug: Principal check', ['result' => $result]);
+                        return $result;
+                    }
+                }
+                
+                // Parent and Teacher can only make payments for their own invoices
+                if ($user->hasAnyRole(['Parent', 'Teacher'])) {
+                    $result = $record->user_id === $user->id && 
+                           $record->tenant_id === $user->current_tenant_id;
+                    Log::info('MakePayment Debug: Parent/Teacher check', [
+                        'result' => $result,
+                        'user_id_match' => $record->user_id === $user->id,
+                        'tenant_match' => $record->tenant_id === $user->current_tenant_id
+                    ]);
+                    return $result;
+                }
+                
+                Log::info('MakePayment Debug: No role match');
+                return false;
+            });
     }
 
     /**
@@ -53,7 +117,70 @@ class MakePaymentAction
             ->icon('heroicon-o-currency-dollar')
             ->color('success')
             ->form(static::getFormSchema())
-            ->action(static::getActionCallback());
+            ->action(static::getActionCallback())
+            ->visible(function ($livewire) {
+                $user = \Illuminate\Support\Facades\Auth::user();
+                
+                // Get the record from livewire
+                $record = $livewire->record ?? null;
+                if (!$record instanceof \App\Models\Invoice) {
+                    Log::info('MakePayment Debug: Not an invoice record');
+                    return false;
+                }
+
+                if ($record->status === InvoiceStatus::CANCELLED || $record->status === InvoiceStatus::DRAFT || $record->status === InvoiceStatus::PAID) {
+                    Log::info('MakePayment Debug: Invoice is cancelled or draft');
+                    return false;
+                }
+                
+                // Debug information - you can remove this later
+                Log::info('MakePayment Debug - Header Action', [
+                    'user_id' => $user?->id,
+                    'user_roles' => $user?->getRoleNames(),
+                    'current_tenant_id' => $user?->current_tenant_id,
+                    'record_type' => get_class($livewire->record ?? 'null'),
+                    'record_user_id' => $livewire->record?->user_id ?? 'null',
+                    'record_tenant_id' => $livewire->record?->tenant_id ?? 'null',
+                ]);
+                
+                if (!$user || !$user->current_tenant_id) {
+                    Log::info('MakePayment Debug: No user or tenant');
+                    return false;
+                }
+                
+                // Super Admin, Admin, Principal can make payments for invoices from their associated centres
+                if ($user->hasAnyRole(['Super Admin', 'Admin', 'Principal'])) {
+                    // For Super Admin and Admin, check if invoice is from their tenant
+                    if ($user->hasAnyRole(['Super Admin', 'Admin'])) {
+                        $result = $record->tenant_id === $user->current_tenant_id;
+                        Log::info('MakePayment Debug: Admin/SuperAdmin check', ['result' => $result]);
+                        return $result;
+                    }
+                    
+                    // For Principal, check if invoice is from centres they're associated with
+                    if ($user->hasRole('Principal') && $record->centre_id) {
+                        $result = $record->tenant_id === $user->current_tenant_id &&
+                               $user->centres()->where('centres.id', $record->centre_id)->exists();
+                        Log::info('MakePayment Debug: Principal check', ['result' => $result]);
+                        return $result;
+                    }
+                }
+                
+                // Parent and Teacher can only make payments for their own invoices
+                if ($user->hasAnyRole(['Parent', 'Teacher'])) {
+                    $result = $record->user_id === $user->id && 
+                           $record->tenant_id === $user->current_tenant_id;
+                    Log::info('MakePayment Debug: Parent/Teacher check', [
+                        'result' => $result,
+                        'user_id_match' => $record->user_id === $user->id,
+                        'tenant_match' => $record->tenant_id === $user->current_tenant_id
+                    ]);
+                    return $result;
+                }
+                
+                Log::info('MakePayment Debug: No role match');
+                return false;
+            });
     }
 
     /**
@@ -66,10 +193,11 @@ class MakePaymentAction
                 ->schema([
                     Select::make('gateway')
                         ->label('Payment Gateway')
-                        ->options([
-                            Gateway::BANK_TRANSFER->value => 'Bank Transfer',
-                            Gateway::CHIP->value => 'CHIP',
-                        ])
+                        ->options(function () {
+                            $user = \Illuminate\Support\Facades\Auth::user();
+                            $policy = new \App\Policies\PaymentPolicy();
+                            return $policy->getAvailableGateways($user);
+                        })
                         ->required()
                         ->live(),
 
@@ -123,6 +251,19 @@ class MakePaymentAction
     protected static function getActionCallback(): \Closure
     {
         return function (array $data, Invoice $record): void {
+            // Validate gateway authorization
+            $user = \Illuminate\Support\Facades\Auth::user();
+            $policy = new \App\Policies\PaymentPolicy();
+            
+            if ($data['gateway'] === Gateway::BANK_TRANSFER->value && !$policy->useBankTransferGateway($user)) {
+                \Filament\Notifications\Notification::make()
+                    ->title('Unauthorized Payment Gateway')
+                    ->body('You are not authorized to use Bank Transfer gateway.')
+                    ->danger()
+                    ->send();
+                return;
+            }
+            
             if ($data['gateway'] === Gateway::CHIP->value) {
                 static::handleChipPayment($data, $record);
             } else {

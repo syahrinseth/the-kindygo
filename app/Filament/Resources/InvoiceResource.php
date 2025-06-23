@@ -253,11 +253,7 @@ class InvoiceResource extends Resource
                 Tables\Actions\ViewAction::make()
                     ->visible(fn (Invoice $record) => Auth::user()->can('view', $record)),
                 
-                MakePaymentAction::make()
-                    ->visible(fn (Invoice $record) => 
-                        $record->status !== InvoiceStatus::PAID && 
-                        $record->status !== InvoiceStatus::CANCELLED
-                    ),
+                MakePaymentAction::make(),
                 
                 MarkAsPaidAction::make(),
                 

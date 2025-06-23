@@ -162,11 +162,7 @@ class ViewInvoice extends ViewRecord
     protected function getHeaderActions(): array
     {
         return [
-            MakePaymentAction::makeHeaderAction()
-                ->visible(fn (Invoice $record) => 
-                    $record->status->value !== 'paid' && 
-                    $record->status->value !== 'cancelled'
-                ),
+            MakePaymentAction::makeHeaderAction(),
             
             Actions\EditAction::make()
                 ->visible(fn (Invoice $record) => Auth::user()->can('update', $record)),
