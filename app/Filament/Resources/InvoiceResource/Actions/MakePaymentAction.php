@@ -321,9 +321,46 @@ class MakePaymentAction
             );
 
             if ($purchaseResult && isset($purchaseResult->checkout_url)) {
-                // Store the CHIP purchase ID for this payment
+                // Store the CHIP purchase ID and comprehensive payment data
                 $payment->update([
                     'gateway_payment_id' => $purchaseResult->id,
+                    'gateway_payment_data' => [
+                        // Main chip_data structure with comprehensive information
+                        'chip_data' => [
+                            'id' => $purchaseResult->id,
+                            'status' => $purchaseResult->status ?? 'pending',
+                            'payment_method' => $purchaseResult->transaction_data?->payment_method ?? 
+                                              $purchaseResult->payment_method ?? null,
+                            'checkout_url' => $purchaseResult->checkout_url,
+                            'created_on' => $purchaseResult->created_on ?? now()->toISOString(),
+                            'updated_on' => $purchaseResult->updated_on ?? now()->toISOString(),
+                            'brand_id' => $purchaseResult->brand_id ?? null,
+                            'currency' => $purchaseResult->purchase?->currency ?? 'MYR',
+                            'total' => $purchaseResult->purchase?->total ?? $amountInCents,
+                            'client_email' => $record->user->email,
+                            'client_name' => $record->user->name,
+                            'reference' => $referenceNo,
+                        ],
+                        // Legacy support - keep some root level data for backward compatibility
+                        'id' => $purchaseResult->id,
+                        'status' => $purchaseResult->status ?? 'pending',
+                        'checkout_url' => $purchaseResult->checkout_url,
+                        'payment_method' => $purchaseResult->transaction_data?->payment_method ?? 
+                                          $purchaseResult->payment_method ?? null,
+                        'created_on' => $purchaseResult->created_on ?? now()->toISOString(),
+                        'updated_on' => $purchaseResult->updated_on ?? now()->toISOString(),
+                        'brand_id' => $purchaseResult->brand_id ?? null,
+                        'client' => [
+                            'email' => $record->user->email,
+                            'full_name' => $record->user->name,
+                        ],
+                        'purchase' => [
+                            'total' => $purchaseResult->purchase?->total ?? $amountInCents,
+                            'currency' => $purchaseResult->purchase?->currency ?? 'MYR',
+                            'products' => $purchaseResult->purchase?->products ?? [],
+                        ],
+                        'stored_at' => now()->toISOString(),
+                    ]
                 ]);
 
                 // Redirect to CHIP checkout

@@ -8,6 +8,7 @@ use App\Http\Controllers\TenantInvitationController;
 use App\Http\Controllers\SecureMediaController;
 use App\Http\Controllers\ChipPaymentController;
 use App\Http\Controllers\InvoicePdfController;
+use App\Http\Controllers\PaymentReceiptController;
 
 Route::get('/', function () {
     if (Auth::check()) {
@@ -52,4 +53,12 @@ Route::prefix('chip')->name('chip.')->group(function () {
 Route::middleware('auth')->group(function () {
     Route::get('/invoice/{invoice}/download-pdf', [InvoicePdfController::class, 'download'])
         ->name('invoice.download-pdf');
+});
+
+// Payment Receipt PDF Download Routes
+Route::middleware('auth')->group(function () {
+    Route::get('/payment/{payment}/download-receipt', [PaymentReceiptController::class, 'downloadReceipt'])
+        ->name('payment.download-receipt');
+    Route::get('/payment/{payment}/stream-receipt', [PaymentReceiptController::class, 'streamReceipt'])
+        ->name('payment.stream-receipt');
 });

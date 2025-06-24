@@ -3,13 +3,20 @@
 namespace App\Http\Controllers;
 
 use App\Models\Invoice;
+use App\Services\PdfConfigurationService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use function Spatie\LaravelPdf\Support\pdf;
-use Spatie\Browsershot\Browsershot;
 
 class InvoicePdfController extends Controller
 {
+    protected PdfConfigurationService $pdfConfig;
+
+    public function __construct(PdfConfigurationService $pdfConfig)
+    {
+        $this->pdfConfig = $pdfConfig;
+    }
+
     public function download(Invoice $invoice)
     {
         // Check if user can access this invoice
@@ -49,32 +56,11 @@ class InvoicePdfController extends Controller
         // Generate and return the PDF as download
         return pdf()
             ->view('pdf.invoice', ['invoice' => $invoice])
-            ->format('a4')
+            ->format($this->pdfConfig->getStandardFormat())
+            ->margins(...$this->pdfConfig->getStandardMargins())
             ->name($filename)
-            ->withBrowsershot(function (Browsershot $browsershot) {
-                $browsershot
-                    ->setOption('args', [
-                        '--no-sandbox',
-                        '--disable-setuid-sandbox',
-                        '--disable-gpu',
-                        '--disable-software-rasterizer',
-                        '--disable-features=site-per-process'
-                    ])
-                    ->noSandbox()
-                    ->timeout(300)
-                    ->writeOptionsToFile();
-
-                if (env('NODE_PATH')) {
-                    $browsershot->setNodeBinary(env('NODE_PATH'));
-                }
-
-                if (env('NPM_PATH')) {
-                    $browsershot->setNpmBinary(env('NPM_PATH'));
-                }
-
-                if (env('CHROME_PATH')) {
-                    $browsershot->setChromePath(env('CHROME_PATH'));
-                }
+            ->withBrowsershot(function ($browsershot) {
+                $this->pdfConfig->configureBrowsershot($browsershot);
             })
             ->download();
     }

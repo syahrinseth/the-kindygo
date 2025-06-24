@@ -26,6 +26,8 @@ use Filament\Forms\Components\SpatieMediaLibraryFileUpload;
 use Filament\Tables\Filters\SelectFilter;
 use Filament\Tables\Filters\Filter;
 use Illuminate\Database\Eloquent\SoftDeletingScope;
+use Illuminate\Support\Collection;
+use Filament\Notifications\Notification;
 
 class PaymentResource extends Resource
 {
@@ -328,6 +330,14 @@ class PaymentResource extends Resource
                 Tables\Actions\ViewAction::make()
                     ->visible(fn (Payment $record) => Auth::user()->can('view', $record)),
                 
+                Tables\Actions\Action::make('download_receipt')
+                    ->label('Download Receipt')
+                    ->icon('heroicon-o-document-arrow-down')
+                    ->color('success')
+                    ->url(fn (Payment $record): string => route('payment.download-receipt', $record))
+                    ->openUrlInNewTab()
+                    ->visible(fn (Payment $record) => Auth::user()->can('view', $record) && $record->status === PaymentStatus::PAID),
+                
                 Tables\Actions\EditAction::make()
                     ->visible(fn (Payment $record) => Auth::user()->can('update', $record)),
                 
@@ -338,6 +348,29 @@ class PaymentResource extends Resource
                 Tables\Actions\BulkActionGroup::make([
                     Tables\Actions\DeleteBulkAction::make()
                         ->visible(fn () => Auth::user()->can('deleteAny', Payment::class)),
+                    
+                    Tables\Actions\BulkAction::make('download_first_receipt')
+                        ->label('Download Receipt')
+                        ->icon('heroicon-o-document-arrow-down')
+                        ->color('success')
+                        ->action(function (Collection $records) {
+                            $paidRecord = $records->filter(fn (Payment $record) => $record->status === PaymentStatus::PAID)->first();
+                            
+                            if (!$paidRecord) {
+                                Notification::make()
+                                    ->title('No paid payments selected')
+                                    ->body('Only paid payments can have receipts downloaded.')
+                                    ->warning()
+                                    ->send();
+                                return;
+                            }
+                            
+                            return redirect()->route('payment.download-receipt', $paidRecord);
+                        })
+                        ->requiresConfirmation()
+                        ->modalHeading('Download Payment Receipt')
+                        ->modalDescription('This will download a PDF receipt for the first selected paid payment.')
+                        ->visible(fn () => Auth::user()->can('viewAny', Payment::class)),
                 ]),
             ]);
     }
