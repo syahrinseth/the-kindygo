@@ -2,6 +2,8 @@
 
 namespace App\Models;
 
+use App\Enums\InvoiceItemType;
+use App\Enums\InvoiceStatus;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
@@ -24,6 +26,11 @@ class InvoiceItem extends Model
         'quantity',
         'discount',
         'total',
+        'type',
+        'paid_amount',
+        'balance_amount',
+        'paid',
+        'effective_date',
     ];
 
     /**
@@ -36,6 +43,11 @@ class InvoiceItem extends Model
         'quantity' => 'integer',
         'discount' => 'integer',
         'total' => 'integer',
+        'type' => InvoiceItemType::class,
+        'paid_amount' => 'integer',
+        'balance_amount' => 'integer',
+        'paid' => 'boolean',
+        'effective_date' => 'date',
     ];
 
     /**
@@ -48,6 +60,7 @@ class InvoiceItem extends Model
         // Automatically calculate total when creating or updating
         static::saving(function ($invoiceItem) {
             $invoiceItem->calculateTotal();
+            $invoiceItem->calculateBalance();
         });
         
         // Update invoice totals after creating an item
@@ -122,6 +135,35 @@ class InvoiceItem extends Model
         $subtotal = $this->price * $this->quantity;
         $totalDiscount = $this->discount * $this->quantity;
         $this->total = $subtotal - $totalDiscount;
+    }
+
+    /**
+     * Calculate and set the balance amount.
+     *
+     * @return void
+     */
+    public function calculateBalance(): void
+    {
+        $this->balance_amount = $this->total - $this->paid_amount;
+        $this->paid = $this->balance_amount <= 0;
+    }
+
+    /**
+     * Get the payment status.
+     *
+     * @return string
+     */
+    public function getPaymentStatus(): string
+    {
+        if ($this->paid) {
+            return 'Paid';
+        }
+        
+        if ($this->paid_amount > 0) {
+            return 'Partially Paid';
+        }
+        
+        return 'Unpaid';
     }
 
     /**
@@ -200,6 +242,28 @@ class InvoiceItem extends Model
     }
 
     /**
+     * Get the formatted paid amount.
+     *
+     * @param bool $includeCurrency Whether to include the currency symbol
+     * @return string
+     */
+    public function getFormattedPaidAmount(bool $includeCurrency = true): string
+    {
+        return Invoice::formatMoney($this->paid_amount, $includeCurrency);
+    }
+
+    /**
+     * Get the formatted balance amount.
+     *
+     * @param bool $includeCurrency Whether to include the currency symbol
+     * @return string
+     */
+    public function getFormattedBalanceAmount(bool $includeCurrency = true): string
+    {
+        return Invoice::formatMoney($this->balance_amount, $includeCurrency);
+    }
+
+    /**
      * Check if the item has a discount.
      *
      * @return bool
@@ -207,6 +271,36 @@ class InvoiceItem extends Model
     public function hasDiscount(): bool
     {
         return $this->discount > 0;
+    }
+
+    /**
+     * Check if the item is fully paid.
+     *
+     * @return bool
+     */
+    public function isFullyPaid(): bool
+    {
+        return $this->paid;
+    }
+
+    /**
+     * Check if the item is partially paid.
+     *
+     * @return bool
+     */
+    public function isPartiallyPaid(): bool
+    {
+        return !$this->paid && $this->paid_amount > 0;
+    }
+
+    /**
+     * Check if the item is unpaid.
+     *
+     * @return bool
+     */
+    public function isUnpaid(): bool
+    {
+        return $this->paid_amount <= 0;
     }
 
     /**
@@ -257,5 +351,155 @@ class InvoiceItem extends Model
     public function scopeWithDiscount($query)
     {
         return $query->where('discount', '>', 0);
+    }
+
+    /**
+     * Scope a query to only include paid items.
+     *
+     * @param  \Illuminate\Database\Eloquent\Builder  $query
+     * @return \Illuminate\Database\Eloquent\Builder
+     */
+    public function scopePaid($query)
+    {
+        return $query->where('paid', true);
+    }
+
+    /**
+     * Scope a query to only include unpaid items.
+     *
+     * @param  \Illuminate\Database\Eloquent\Builder  $query
+     * @return \Illuminate\Database\Eloquent\Builder
+     */
+    public function scopeUnpaid($query)
+    {
+        return $query->where('paid', false);
+    }
+
+    /**
+     * Scope a query to only include partially paid items.
+     *
+     * @param  \Illuminate\Database\Eloquent\Builder  $query
+     * @return \Illuminate\Database\Eloquent\Builder
+     */
+    public function scopePartiallyPaid($query)
+    {
+        return $query->where('paid', false)->where('paid_amount', '>', 0);
+    }
+
+    /**
+     * Scope a query to filter by type.
+     *
+     * @param  \Illuminate\Database\Eloquent\Builder  $query
+     * @param  InvoiceItemType|string  $type
+     * @return \Illuminate\Database\Eloquent\Builder
+     */
+    public function scopeOfType($query, $type)
+    {
+        if ($type instanceof InvoiceItemType) {
+            return $query->where('type', $type->value);
+        }
+        
+        return $query->where('type', $type);
+    }
+
+    /**
+     * Scope a query to filter by effective date range.
+     *
+     * @param  \Illuminate\Database\Eloquent\Builder  $query
+     * @param  string  $from
+     * @param  string  $to
+     * @return \Illuminate\Database\Eloquent\Builder
+     */
+    public function scopeEffectiveDateBetween($query, $from, $to)
+    {
+        return $query->whereBetween('effective_date', [$from, $to]);
+    }
+
+    /**
+     * Scope a query to filter by specific effective date.
+     *
+     * @param  \Illuminate\Database\Eloquent\Builder  $query
+     * @param  string  $date
+     * @return \Illuminate\Database\Eloquent\Builder
+     */
+    public function scopeEffectiveDate($query, $date)
+    {
+        return $query->whereDate('effective_date', $date);
+    }
+
+    /**
+     * Scope a query to only include product items.
+     *
+     * @param  \Illuminate\Database\Eloquent\Builder  $query
+     * @return \Illuminate\Database\Eloquent\Builder
+     */
+    public function scopeProducts($query)
+    {
+        return $query->where('type', InvoiceItemType::PRODUCT->value);
+    }
+
+    /**
+     * Scope a query to only include invoice discount items.
+     *
+     * @param  \Illuminate\Database\Eloquent\Builder  $query
+     * @return \Illuminate\Database\Eloquent\Builder
+     */
+    public function scopeInvoiceDiscounts($query)
+    {
+        return $query->where('type', InvoiceItemType::INVOICE_DISCOUNT->value);
+    }
+
+    /**
+     * Get the type label for display.
+     *
+     * @return string
+     */
+    public function getTypeLabel(): string
+    {
+        return $this->type?->label() ?? '';
+    }
+
+    /**
+     * Check if the item is a product type.
+     *
+     * @return bool
+     */
+    public function isProduct(): bool
+    {
+        return $this->type === InvoiceItemType::PRODUCT;
+    }
+
+    /**
+     * Check if the item is an invoice discount type.
+     *
+     * @return bool
+     */
+    public function isInvoiceDiscount(): bool
+    {
+        return $this->type === InvoiceItemType::INVOICE_DISCOUNT;
+    }
+
+    /**
+     * Update payment status based on invoice status.
+     *
+     * @return void
+     */
+    public function updatePaymentStatusFromInvoice(): void
+    {
+        if (!$this->invoice) {
+            return;
+        }
+
+        $invoiceStatus = $this->invoice->status;
+        
+        if ($invoiceStatus === InvoiceStatus::PAID->value) {
+            // If invoice is paid in full, mark all items as paid
+            $this->paid_amount = $this->total;
+            $this->balance_amount = 0;
+            $this->paid = true;
+        } else {
+            // Calculate balance and determine paid status
+            $this->calculateBalance();
+        }
     }
 }
