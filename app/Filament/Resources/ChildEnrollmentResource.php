@@ -201,11 +201,61 @@ class ChildEnrollmentResource extends Resource
                             ->options(ChildEnrollmentType::options())
                             ->default(ChildEnrollmentType::FULL_TIME->value)
                             ->required()
+                            ->live()
+                            ->afterStateUpdated(function (callable $set, $state) {
+                                // Reset billed_every when type changes
+                                $oneTimeOnlyTypes = [
+                                    ChildEnrollmentType::TRIAL->value,
+                                    ChildEnrollmentType::SUMMER_PROGRAM->value,
+                                    ChildEnrollmentType::AFTER_SCHOOL->value,
+                                    ChildEnrollmentType::HOLIDAY_PROGRAM->value,
+                                ];
+                                
+                                if (in_array($state, $oneTimeOnlyTypes)) {
+                                    $set('billed_every', ChildEnrollmentBilledEvery::ONE_TIME->value);
+                                } else {
+                                    $set('billed_every', ChildEnrollmentBilledEvery::MONTHLY->value);
+                                }
+                            })
                             ->columnSpan(1),
                             
                         Forms\Components\Select::make('billed_every')
-                            ->options(ChildEnrollmentBilledEvery::options())
-                            ->default(ChildEnrollmentBilledEvery::MONTHLY->value)
+                            ->options(function (callable $get) {
+                                $type = $get('type');
+                                
+                                // Types that should only show ONE_TIME option
+                                $oneTimeOnlyTypes = [
+                                    ChildEnrollmentType::TRIAL->value,
+                                    ChildEnrollmentType::SUMMER_PROGRAM->value,
+                                    ChildEnrollmentType::AFTER_SCHOOL->value,
+                                    ChildEnrollmentType::HOLIDAY_PROGRAM->value,
+                                ];
+                                
+                                if (in_array($type, $oneTimeOnlyTypes)) {
+                                    return [
+                                        ChildEnrollmentBilledEvery::ONE_TIME->value => 'One Time'
+                                    ];
+                                }
+                                
+                                return ChildEnrollmentBilledEvery::options();
+                            })
+                            ->default(function (callable $get) {
+                                $type = $get('type');
+                                
+                                // Types that should default to ONE_TIME
+                                $oneTimeOnlyTypes = [
+                                    ChildEnrollmentType::TRIAL->value,
+                                    ChildEnrollmentType::SUMMER_PROGRAM->value,
+                                    ChildEnrollmentType::AFTER_SCHOOL->value,
+                                    ChildEnrollmentType::HOLIDAY_PROGRAM->value,
+                                ];
+                                
+                                if (in_array($type, $oneTimeOnlyTypes)) {
+                                    return ChildEnrollmentBilledEvery::ONE_TIME->value;
+                                }
+                                
+                                return ChildEnrollmentBilledEvery::MONTHLY->value;
+                            })
                             ->required()
                             ->columnSpan(1),
                     ])
