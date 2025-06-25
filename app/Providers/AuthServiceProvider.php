@@ -6,6 +6,7 @@ use App\Filament\Pages\FinanceDashboard;
 use App\Models\Centre;
 use App\Models\Child;
 use App\Models\Invoice;
+use App\Models\InvoiceItem;
 use App\Models\Payment;
 use App\Models\Product;
 use App\Models\User;
@@ -14,6 +15,7 @@ use App\Policies\ChildPolicy;
 use App\Policies\EInvoicePolicy;
 use App\Policies\FinanceDashboardPolicy;
 use App\Policies\InvoicePolicy;
+use App\Policies\InvoiceItemsLedgerPolicy;
 use App\Policies\PaymentPolicy;
 use App\Policies\ProductPolicy;
 use App\Policies\UserPolicy;
@@ -36,6 +38,8 @@ class AuthServiceProvider extends ServiceProvider
         FinanceDashboard::class => FinanceDashboardPolicy::class,
         // EInvoiceResource uses Invoice model but with EInvoicePolicy for specific e-invoice permissions
         'App\Filament\Resources\EInvoiceResource' => EInvoicePolicy::class,
+        // InvoiceItemsLedgerResource uses InvoiceItem model but with InvoiceItemsLedgerPolicy for ledger-specific permissions
+        'App\Filament\Resources\InvoiceItemsLedgerResource' => InvoiceItemsLedgerPolicy::class,
     ];
 
     /**
