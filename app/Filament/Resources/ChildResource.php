@@ -8,7 +8,6 @@ use App\Filament\Resources\ChildResource\Pages;
 use App\Filament\Resources\ChildResource\RelationManagers;
 use App\Models\Centre;
 use App\Models\Child;
-use App\Models\Scopes\ChildStatusScope;
 use Filament\Forms;
 use Filament\Forms\Form;
 use Filament\Resources\Resource;

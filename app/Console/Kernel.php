@@ -14,6 +14,19 @@ class Kernel extends ConsoleKernel
     {
         // Run the update-overdue-invoices command daily at midnight
         $schedule->command('app:update-overdue-invoices')->daily();
+        
+        // Generate recurring invoices daily at 2 AM
+        $schedule->command('invoices:generate-recurring')
+                 ->dailyAt('08:00')
+                 ->withoutOverlapping()
+                 ->runInBackground()
+                 ->emailOutputOnFailure(config('mail.admin_email'));
+                 
+        // Optional: Generate one-time invoices weekly (for any missed enrollments)
+        $schedule->command('invoices:generate-onetime')
+                 ->weeklyOn(1, '03:00') // Monday at 3 AM
+                 ->withoutOverlapping()
+                 ->runInBackground();
     }
 
     /**

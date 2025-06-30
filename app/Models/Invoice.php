@@ -184,18 +184,20 @@ class Invoice extends Model
      */
     private function getNextSequentialNumber(string $year): int
     {
-        $lastInvoice = static::where('tenant_id', $this->tenant_id)
+        $lastInvoice = static::withoutGlobalScope(TenantScope::class)
+            ->where('tenant_id', $this->tenant_id)
             ->where('centre_id', $this->centre_id)
             ->whereYear('date', $year)
             ->orderBy('created_at', 'desc')
             ->first();
-            
+
         if (!$lastInvoice) {
             return 1;
         }
         
         // Extract number from the last invoice using the new format #{CODE}/{YEAR}/{NUMBER}
-        preg_match('/\#[A-Z0-9]+\/\d{4}\/(\d+)$/', $lastInvoice->number, $matches);
+        preg_match('/[A-Z0-9]+\/\d{4}\/(\d+)$/', $lastInvoice->number, $matches);
+        
         $lastNumber = isset($matches[1]) ? (int)$matches[1] : 0;
         
         return $lastNumber + 1;

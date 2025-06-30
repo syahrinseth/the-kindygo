@@ -93,14 +93,24 @@ class InvoiceItemsLedgerResource extends Resource
     // Policy handles access control - canViewAny, view, etc.
     // Custom methods for additional functionality
     
+    public static function canViewAny(): bool
+    {
+        return Auth::user()?->can('viewAny', InvoiceItemsLedgerResource::class) ?? false;
+    }
+
+    public static function canView($record): bool
+    {
+        return Auth::user()?->can('view', [InvoiceItemsLedgerResource::class, $record]) ?? false;
+    }
+    
     public static function canExport(): bool
     {
-        return Auth::user()?->can('export', static::getModel());
+        return Auth::user()?->can('export', InvoiceItemsLedgerResource::class);
     }
 
     public static function canViewFinancials(): bool
     {
-        return Auth::user()?->can('viewFinancials', static::getModel());
+        return Auth::user()?->can('viewFinancials', InvoiceItemsLedgerResource::class);
     }
 
     public static function getEloquentQuery(): Builder
@@ -108,28 +118,22 @@ class InvoiceItemsLedgerResource extends Resource
         // Start with the base query and disable tenant scoping for relationships
         $query = parent::getEloquentQuery()
             ->with([
-                'invoice' => function ($query) {
-                    $query->withoutGlobalScope(TenantScope::class);
-                },
-                'child' => function ($query) {
-                    $query->withoutGlobalScope(BelongsToManyTenantScope::class);
-                },
-                'product' => function ($query) {
-                    $query->withoutGlobalScope(TenantScope::class);
-                }
+                'invoice',
+                'child',
+                'product',
             ]);
         
         $user = Auth::user();
-        
-        // If user is not super admin, filter by user association
-        if ($user && !in_array($user->role, ['super_admin'])) {
-            if (in_array($user->role, ['admin', 'principle'])) {
-                // Admin and principle can see items associated with their invoices
-                // Use withoutGlobalScope to bypass tenant filtering on the invoice relationship
-                $query->whereHas('invoice', function (Builder $q) use ($user) {
-                    $q->withoutGlobalScope(TenantScope::class)->where('user_id', $user->id);
-                });
-            }
+
+        // Filter data based on user role
+        if ($user && $user->hasRole(['Principal', 'Teacher'])) {
+            // Get user's assigned centre IDs
+            $userCentreIds = $user->centres->pluck('id')->toArray();
+            
+            // Filter invoice items to only show those from assigned centres
+            $query->whereHas('invoice', function (Builder $query) use ($userCentreIds) {
+                $query->whereIn('centre_id', $userCentreIds);
+            });
         }
         
         return $query;

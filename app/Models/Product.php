@@ -227,4 +227,14 @@ class Product extends Model
         $currentPrice = $this->currentPriceForCentre($centreId);
         return $currentPrice ? $currentPrice->formatted_price : 'No price set';
     }
+
+    public function scopeActive($query)
+    {
+        return $query->where('status', ProductStatus::ACTIVE);
+    }
+
+    public function scopeInactive($query)
+    {
+        return $query->where('status', ProductStatus::INACTIVE);
+    }
 }

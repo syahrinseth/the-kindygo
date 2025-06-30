@@ -153,7 +153,7 @@ class ChildEnrollmentResource extends Resource
                                     })
                                     // Include products with no centre associations (available for all centres)
                                     ->orWhereDoesntHave('centres');
-                                })->pluck('name', 'id')->toArray();
+                                })->active()->pluck('name', 'id')->toArray();
                             })
                             ->placeholder(function (callable $get) {
                                 $centreId = $get('centre_id');

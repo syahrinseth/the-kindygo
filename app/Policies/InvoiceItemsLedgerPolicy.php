@@ -13,8 +13,8 @@ class InvoiceItemsLedgerPolicy
      */
     public function viewAny(User $user): bool
     {
-        // Only super_admin, admin, and principle can access the ledger
-        return in_array($user->role, ['Super Admin', 'Admin', 'Principle']);
+        // Only super_admin, admin, and Principal can access the ledger
+        return $user->hasRole(['Super Admin', 'Admin', 'Principal']);
     }
 
     /**
@@ -22,14 +22,21 @@ class InvoiceItemsLedgerPolicy
      */
     public function view(User $user, InvoiceItem $invoiceItem): bool
     {
-        // Super admin can view any invoice item
-        if ($user->role === 'Super Admin') {
+        // Super Admin and Admin can view any invoice item
+        if ($user->hasRole(['Super Admin', 'Admin'])) {
             return true;
         }
 
-        // Admin and principle can only view items associated with their invoices
-        if (in_array($user->role, ['Admin', 'Principle'])) {
-            return $invoiceItem->invoice && $invoiceItem->invoice->user_id === $user->id;
+        // Principal and Teacher can view items within their scope
+        if ($user->hasRole(['Principal', 'Teacher'])) {
+            // Check if the invoice item belongs to their tenant
+            if ($invoiceItem->invoice && $invoiceItem->invoice->tenant_id === $user->current_tenant_id) {
+                // Check if the invoice item is associated with their assigned centres
+                $userCentreIds = $user->centres->pluck('id')->toArray();
+                if (in_array($invoiceItem->invoice->centre_id, $userCentreIds)) {
+                    return true;
+                }
+            }
         }
 
         return false;
@@ -86,7 +93,7 @@ class InvoiceItemsLedgerPolicy
     public function export(User $user): bool
     {
         // Allow export for authorized users
-        return in_array($user->role, ['Super Admin', 'Admin', 'Principle']);
+        return $user->hasRole(['Super Admin', 'Admin', 'Principal']);
     }
 
     /**
@@ -95,6 +102,6 @@ class InvoiceItemsLedgerPolicy
     public function viewFinancials(User $user): bool
     {
         // Financial details visible to authorized roles
-        return in_array($user->role, ['Super Admin', 'Admin', 'Principle']);
+        return $user->hasRole(['Super Admin', 'Admin', 'Principal']);
     }
 }
