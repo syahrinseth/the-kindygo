@@ -26,6 +26,8 @@ use Filament\Forms\Components\SpatieMediaLibraryFileUpload;
 use Filament\Tables\Filters\SelectFilter;
 use Filament\Tables\Filters\Filter;
 use Illuminate\Database\Eloquent\SoftDeletingScope;
+use Illuminate\Support\Collection;
+use Filament\Notifications\Notification;
 
 class PaymentResource extends Resource
 {
@@ -56,15 +58,49 @@ class PaymentResource extends Resource
 
     public static function getEloquentQuery(): Builder
     {
-        $query = parent::getEloquentQuery();
+        $query = parent::getEloquentQuery()
+            ->with(['tenant', 'centre', 'user', 'invoices']);
         
-        // Apply tenant filtering
         $user = Auth::user();
-        if ($user && $user->current_tenant_id) {
-            $query->where('tenant_id', $user->current_tenant_id);
+        if (!$user || !$user->current_tenant_id) {
+            return $query->whereRaw('1 = 0'); // Return empty result if no user or tenant
+        }
+
+        // Apply tenant filtering first
+        $query->where('tenant_id', $user->current_tenant_id);
+
+        // Apply role-based filtering
+        if ($user->hasRole('Super Admin') || $user->hasRole('Admin')) {
+            // Super Admin and Admin can view all payments in their tenant
+            return $query;
         }
         
-        return $query;
+        if ($user->hasRole('Principal')) {
+            // Principal can only view payments for their centres or payments without a specific centre
+            $userCentreIds = $user->centres()
+                ->where('centres.tenant_id', $user->current_tenant_id)
+                ->pluck('centres.id');
+            
+            return $query->where(function ($q) use ($userCentreIds) {
+                $q->whereNull('centre_id')
+                  ->orWhereIn('centre_id', $userCentreIds);
+            });
+        }
+        
+        if ($user->hasRole('Parent')) {
+            // Parents can only view payments directly related to them
+            return $query->where(function ($q) use ($user) {
+                // Direct payments where user_id matches
+                $q->where('user_id', $user->id)
+                  // Or payments related to their children through invoices
+                  ->orWhereHas('invoices', function ($invoiceQuery) use ($user) {
+                      $invoiceQuery->where('user_id', $user->id);
+                  });
+            });
+        }
+        
+        // For other roles (Teacher, etc.), return empty result
+        return $query->whereRaw('1 = 0');
     }
 
     public static function canViewAny(): bool
@@ -294,6 +330,14 @@ class PaymentResource extends Resource
                 Tables\Actions\ViewAction::make()
                     ->visible(fn (Payment $record) => Auth::user()->can('view', $record)),
                 
+                Tables\Actions\Action::make('download_receipt')
+                    ->label('Download Receipt')
+                    ->icon('heroicon-o-document-arrow-down')
+                    ->color('success')
+                    ->url(fn (Payment $record): string => route('payment.download-receipt', $record))
+                    ->openUrlInNewTab()
+                    ->visible(fn (Payment $record) => Auth::user()->can('view', $record) && $record->status === PaymentStatus::PAID),
+                
                 Tables\Actions\EditAction::make()
                     ->visible(fn (Payment $record) => Auth::user()->can('update', $record)),
                 
@@ -304,6 +348,29 @@ class PaymentResource extends Resource
                 Tables\Actions\BulkActionGroup::make([
                     Tables\Actions\DeleteBulkAction::make()
                         ->visible(fn () => Auth::user()->can('deleteAny', Payment::class)),
+                    
+                    Tables\Actions\BulkAction::make('download_first_receipt')
+                        ->label('Download Receipt')
+                        ->icon('heroicon-o-document-arrow-down')
+                        ->color('success')
+                        ->action(function (Collection $records) {
+                            $paidRecord = $records->filter(fn (Payment $record) => $record->status === PaymentStatus::PAID)->first();
+                            
+                            if (!$paidRecord) {
+                                Notification::make()
+                                    ->title('No paid payments selected')
+                                    ->body('Only paid payments can have receipts downloaded.')
+                                    ->warning()
+                                    ->send();
+                                return;
+                            }
+                            
+                            return redirect()->route('payment.download-receipt', $paidRecord);
+                        })
+                        ->requiresConfirmation()
+                        ->modalHeading('Download Payment Receipt')
+                        ->modalDescription('This will download a PDF receipt for the first selected paid payment.')
+                        ->visible(fn () => Auth::user()->can('viewAny', Payment::class)),
                 ]),
             ]);
     }

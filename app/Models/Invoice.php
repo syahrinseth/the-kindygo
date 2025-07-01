@@ -184,18 +184,20 @@ class Invoice extends Model
      */
     private function getNextSequentialNumber(string $year): int
     {
-        $lastInvoice = static::where('tenant_id', $this->tenant_id)
+        $lastInvoice = static::withoutGlobalScope(TenantScope::class)
+            ->where('tenant_id', $this->tenant_id)
             ->where('centre_id', $this->centre_id)
             ->whereYear('date', $year)
             ->orderBy('created_at', 'desc')
             ->first();
-            
+
         if (!$lastInvoice) {
             return 1;
         }
         
         // Extract number from the last invoice using the new format #{CODE}/{YEAR}/{NUMBER}
-        preg_match('/\#[A-Z0-9]+\/\d{4}\/(\d+)$/', $lastInvoice->number, $matches);
+        preg_match('/[A-Z0-9]+\/\d{4}\/(\d+)$/', $lastInvoice->number, $matches);
+        
         $lastNumber = isset($matches[1]) ? (int)$matches[1] : 0;
         
         return $lastNumber + 1;
@@ -339,7 +341,25 @@ class Invoice extends Model
         }
         
         // Filter by current tenant
-        return $query->where('tenant_id', $user->current_tenant_id);
+        $query->where('tenant_id', $user->current_tenant_id);
+        
+        // Additional restrictions based on user role
+        if ($user->roles && $user->roles->contains('name', 'Parent')) {
+            // Parents can only see their own invoices
+            $query->where('user_id', $user->id);
+        } elseif ($user->roles && $user->roles->contains('name', 'Principal')) {
+            // Principals can see invoices from centres they're associated with
+            $centreIds = $user->centres()->pluck('id');
+            if ($centreIds->isNotEmpty()) {
+                $query->whereIn('centre_id', $centreIds);
+            } else {
+                // If principal has no centres, return empty result
+                $query->whereRaw('1 = 0');
+            }
+        }
+        // Super Admin, Admin, and other roles can see all invoices within their tenant
+        
+        return $query;
     }
 
     /**

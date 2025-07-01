@@ -29,6 +29,7 @@ class Payment extends Model implements HasMedia
         'gateway',
         'reference_no',
         'gateway_payment_id',
+        'gateway_payment_data',
         'status',
         'amount',
         'description',
@@ -45,6 +46,7 @@ class Payment extends Model implements HasMedia
         'status' => PaymentStatus::class,
         'amount' => 'integer',
         'paid_at' => 'datetime',
+        'gateway_payment_data' => 'array',
     ];
 
     protected static function booted()
@@ -100,7 +102,7 @@ class Payment extends Model implements HasMedia
     /**
      * Register media conversions for the payment model.
      */
-    public function registerMediaConversions(Media $media = null): void
+    public function registerMediaConversions(?Media $media = null): void
     {
         $this->addMediaConversion('thumb')
               ->width(300)
@@ -118,5 +120,139 @@ class Payment extends Model implements HasMedia
     public function centre()
     {
         return $this->belongsTo(Centre::class);
+    }
+
+    /**
+     * Get CHIP payment data if this is a CHIP payment
+     *
+     * @return array|null
+     */
+    public function getChipData(): ?array
+    {
+        if ($this->gateway !== Gateway::CHIP) {
+            return null;
+        }
+
+        return $this->gateway_payment_data;
+    }
+
+    /**
+     * Get nested CHIP data from gateway_payment_data['chip_data']
+     *
+     * @return array|null
+     */
+    public function getNestedChipData(): ?array
+    {
+        if ($this->gateway !== Gateway::CHIP) {
+            return null;
+        }
+
+        $gatewayData = $this->gateway_payment_data;
+        if (!is_array($gatewayData)) {
+            return null;
+        }
+
+        return $gatewayData['chip_data'] ?? null;
+    }
+
+    /**
+     * Get specific CHIP payment information with chip_data fallback
+     *
+     * @param string $key
+     * @param mixed $default
+     * @return mixed
+     */
+    public function getChipInfo(string $key, $default = null)
+    {
+        $gatewayData = $this->getChipData();
+        
+        if (!$gatewayData || !is_array($gatewayData)) {
+            return $default;
+        }
+
+        // Try nested chip_data first, then fallback to root level
+        $nestedValue = data_get($gatewayData, "chip_data.{$key}");
+        if ($nestedValue !== null) {
+            return $nestedValue;
+        }
+
+        // Fallback to root level for legacy data
+        return data_get($gatewayData, $key, $default);
+    }
+
+    /**
+     * Check if this is a CHIP payment
+     *
+     * @return bool
+     */
+    public function isChipPayment(): bool
+    {
+        return $this->gateway === Gateway::CHIP;
+    }
+
+    /**
+     * Get CHIP payment status from gateway data
+     *
+     * @return string|null
+     */
+    public function getChipStatus(): ?string
+    {
+        return $this->getChipInfo('status');
+    }
+
+    /**
+     * Get CHIP payment method from gateway data
+     *
+     * @return string|null
+     */
+    public function getChipPaymentMethod(): ?string
+    {
+        return $this->getChipInfo('payment_method');
+    }
+
+    /**
+     * Get CHIP client email from gateway data
+     *
+     * @return string|null
+     */
+    public function getChipClientEmail(): ?string
+    {
+        return $this->getChipInfo('client_email');
+    }
+
+    /**
+     * Get CHIP transaction ID from gateway data
+     *
+     * @return string|null
+     */
+    public function getChipTransactionId(): ?string
+    {
+        $transactionId = $this->getChipInfo('transaction_id');
+        if ($transactionId) {
+            return $transactionId;
+        }
+        
+        // Try fpx_transaction_id as fallback
+        return $this->getChipInfo('fpx_transaction_id');
+    }
+
+    /**
+     * Get CHIP bank name from gateway data
+     *
+     * @return string|null
+     */
+    public function getChipBankName(): ?string
+    {
+        return $this->getChipInfo('bank_name');
+    }
+
+    /**
+     * Get CHIP reference from gateway data
+     *
+     * @return string|null
+     */
+    public function getChipReference(): ?string
+    {
+        return $this->getChipInfo('reference');
     }
 }

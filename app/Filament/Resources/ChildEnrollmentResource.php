@@ -11,6 +11,7 @@ use App\Models\Centre;
 use App\Enums\ChildEnrollmentStatus;
 use App\Enums\ChildEnrollmentBilledEvery;
 use App\Enums\ChildEnrollmentType;
+use App\Policies\ChildEnrollmentPolicy;
 use Filament\Forms;
 use Filament\Forms\Form;
 use Filament\Resources\Resource;
@@ -20,6 +21,7 @@ use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\SoftDeletingScope;
 use Filament\Tables\Filters\SelectFilter;
 use Filament\Support\Enums\FontWeight;
+use Illuminate\Support\Facades\Auth;
 
 class ChildEnrollmentResource extends Resource
 {
@@ -36,6 +38,8 @@ class ChildEnrollmentResource extends Resource
     protected static ?string $navigationGroup = 'Child Management';
     
     protected static ?int $navigationSort = 2;
+    
+    protected static string $policy = ChildEnrollmentPolicy::class;
 
     public static function form(Form $form): Form
     {
@@ -149,7 +153,7 @@ class ChildEnrollmentResource extends Resource
                                     })
                                     // Include products with no centre associations (available for all centres)
                                     ->orWhereDoesntHave('centres');
-                                })->pluck('name', 'id')->toArray();
+                                })->active()->pluck('name', 'id')->toArray();
                             })
                             ->placeholder(function (callable $get) {
                                 $centreId = $get('centre_id');
@@ -201,11 +205,61 @@ class ChildEnrollmentResource extends Resource
                             ->options(ChildEnrollmentType::options())
                             ->default(ChildEnrollmentType::FULL_TIME->value)
                             ->required()
+                            ->live()
+                            ->afterStateUpdated(function (callable $set, $state) {
+                                // Reset billed_every when type changes
+                                $oneTimeOnlyTypes = [
+                                    ChildEnrollmentType::TRIAL->value,
+                                    ChildEnrollmentType::SUMMER_PROGRAM->value,
+                                    ChildEnrollmentType::AFTER_SCHOOL->value,
+                                    ChildEnrollmentType::HOLIDAY_PROGRAM->value,
+                                ];
+                                
+                                if (in_array($state, $oneTimeOnlyTypes)) {
+                                    $set('billed_every', ChildEnrollmentBilledEvery::ONE_TIME->value);
+                                } else {
+                                    $set('billed_every', ChildEnrollmentBilledEvery::MONTHLY->value);
+                                }
+                            })
                             ->columnSpan(1),
                             
                         Forms\Components\Select::make('billed_every')
-                            ->options(ChildEnrollmentBilledEvery::options())
-                            ->default(ChildEnrollmentBilledEvery::MONTHLY->value)
+                            ->options(function (callable $get) {
+                                $type = $get('type');
+                                
+                                // Types that should only show ONE_TIME option
+                                $oneTimeOnlyTypes = [
+                                    ChildEnrollmentType::TRIAL->value,
+                                    ChildEnrollmentType::SUMMER_PROGRAM->value,
+                                    ChildEnrollmentType::AFTER_SCHOOL->value,
+                                    ChildEnrollmentType::HOLIDAY_PROGRAM->value,
+                                ];
+                                
+                                if (in_array($type, $oneTimeOnlyTypes)) {
+                                    return [
+                                        ChildEnrollmentBilledEvery::ONE_TIME->value => 'One Time'
+                                    ];
+                                }
+                                
+                                return ChildEnrollmentBilledEvery::options();
+                            })
+                            ->default(function (callable $get) {
+                                $type = $get('type');
+                                
+                                // Types that should default to ONE_TIME
+                                $oneTimeOnlyTypes = [
+                                    ChildEnrollmentType::TRIAL->value,
+                                    ChildEnrollmentType::SUMMER_PROGRAM->value,
+                                    ChildEnrollmentType::AFTER_SCHOOL->value,
+                                    ChildEnrollmentType::HOLIDAY_PROGRAM->value,
+                                ];
+                                
+                                if (in_array($type, $oneTimeOnlyTypes)) {
+                                    return ChildEnrollmentBilledEvery::ONE_TIME->value;
+                                }
+                                
+                                return ChildEnrollmentBilledEvery::MONTHLY->value;
+                            })
                             ->required()
                             ->columnSpan(1),
                     ])
@@ -335,13 +389,17 @@ class ChildEnrollmentResource extends Resource
                     ->toggle(),
             ])
             ->actions([
-                Tables\Actions\ViewAction::make(),
-                Tables\Actions\EditAction::make(),
-                Tables\Actions\DeleteAction::make(),
+                Tables\Actions\ViewAction::make()
+                    ->visible(fn (ChildEnrollment $record): bool => Auth::user()->can('view', $record)),
+                Tables\Actions\EditAction::make()
+                    ->visible(fn (ChildEnrollment $record): bool => Auth::user()->can('update', $record)),
+                Tables\Actions\DeleteAction::make()
+                    ->visible(fn (ChildEnrollment $record): bool => Auth::user()->can('delete', $record)),
             ])
             ->bulkActions([
                 Tables\Actions\BulkActionGroup::make([
-                    Tables\Actions\DeleteBulkAction::make(),
+                    Tables\Actions\DeleteBulkAction::make()
+                        ->visible(fn (): bool => Auth::user()->can('delete', [Auth::user(), ChildEnrollment::class])),
                 ]),
             ])
             ->defaultSort('created_at', 'desc');
@@ -366,11 +424,52 @@ class ChildEnrollmentResource extends Resource
     
     public static function getNavigationBadge(): ?string
     {
-        return static::getModel()::active()->count();
+        return static::getEloquentQuery()->active()->count();
     }
     
     public static function getNavigationBadgeColor(): string|array|null
     {
         return 'success';
+    }
+    
+    public static function getEloquentQuery(): Builder
+    {
+        $query = parent::getEloquentQuery();
+        $user = Auth::user();
+        
+        if (!$user) {
+            return $query->whereRaw('1 = 0'); // Return empty result if no user
+        }
+        
+        // Super Admin can see all enrollments
+        if ($user->hasRole('Super Admin')) {
+            return $query;
+        }
+        
+        // Admin can see all enrollments in their tenant
+        if ($user->hasRole('Admin')) {
+            return $query->where('tenant_id', $user->current_tenant_id);
+        }
+        
+        // Principal and Teacher can see enrollments for centres they have access to
+        if ($user->hasAnyRole(['Principal', 'Teacher'])) {
+            $userCentreIds = $user->centres()
+                ->where('centres.tenant_id', $user->current_tenant_id)
+                ->pluck('centres.id');
+                
+            return $query->where('tenant_id', $user->current_tenant_id)
+                        ->whereIn('centre_id', $userCentreIds);
+        }
+        
+        // Parents can see enrollments for their children only
+        if ($user->hasRole('Parent')) {
+            $childIds = $user->children()->pluck('children.id');
+            
+            return $query->where('tenant_id', $user->current_tenant_id)
+                        ->whereIn('child_id', $childIds);
+        }
+        
+        // Default: no access
+        return $query->whereRaw('1 = 0');
     }
 }

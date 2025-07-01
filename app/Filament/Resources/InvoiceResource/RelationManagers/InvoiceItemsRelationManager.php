@@ -165,7 +165,15 @@ class InvoiceItemsRelationManager extends RelationManager
                             ->searchable(['first_name', 'last_name'])
                             ->preload()
                             ->helperText('Link this item to a specific child if applicable'),
-                    ]),
+
+                        Forms\Components\DatePicker::make('effective_date')
+                            ->label('Effective Date')
+                            ->default(now())
+                            ->required()
+                            ->helperText('The date when this item becomes effective for accounting purposes')
+                            ->native(false),
+                    ])
+                    ->columns(2),
             ]);
     }
 

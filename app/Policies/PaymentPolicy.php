@@ -54,12 +54,23 @@ class PaymentPolicy
     }
 
     /**
+     * Determine whether the user can make a payment.
+     */
+    public function makePayment(User $user): bool
+    {
+        // Super Admin, Admin, Principal, Parent, and Teacher can make payments
+        return $user->hasAnyRole(['Super Admin', 'Admin', 'Principal', 'Parent', 'Teacher']);
+    }
+
+    /**
      * Determine whether the user can create payments.
      */
     public function create(User $user): bool
     {
-        // Super Admin, Admin, and Principal can create payments
-        return $user->hasAnyRole(['Super Admin', 'Admin', 'Principal']);
+        // Super Admin, Admin, Principal, Parent, and Teacher can create payments
+        // But additional checks are done in the MakePaymentAction for specific invoices
+        return $user->hasAnyRole(['Super Admin', 'Admin', 'Principal', 'Parent', 'Teacher']) && 
+               $user->current_tenant_id !== null;
     }
 
     /**
@@ -124,5 +135,31 @@ class PaymentPolicy
         // Only Super Admin can permanently delete payments
         return $user->hasRole('Super Admin') && 
                $payment->tenant_id === $user->current_tenant_id;
+    }
+
+    /**
+     * Determine whether the user can use bank transfer gateway.
+     */
+    public function useBankTransferGateway(User $user): bool
+    {
+        // Only Super Admin, Admin, and Principal can use bank transfer
+        return $user->hasAnyRole(['Super Admin', 'Admin', 'Principal']);
+    }
+
+    /**
+     * Get available payment gateways for the user.
+     */
+    public function getAvailableGateways(User $user): array
+    {
+        $gateways = [
+            \App\Enums\Gateway::CHIP->value => 'CHIP',
+        ];
+        
+        // Add bank transfer option only for authorized roles
+        if ($this->useBankTransferGateway($user)) {
+            $gateways[\App\Enums\Gateway::BANK_TRANSFER->value] = 'Bank Transfer';
+        }
+        
+        return $gateways;
     }
 }

@@ -1,0 +1,30 @@
+<?php
+
+namespace App\Filament\Resources\InvoiceResource\Actions;
+
+use App\Models\Invoice;
+use Filament\Actions\Action as HeaderAction;
+use Filament\Tables\Actions\Action;
+
+class DownloadInvoicePdfAction
+{
+    public static function make(): Action
+    {
+        return Action::make('download_pdf')
+            ->label('Download PDF')
+            ->icon('heroicon-o-document-arrow-down')
+            ->color('success')
+            ->url(fn (Invoice $record) => route('invoice.download-pdf', $record))
+            ->openUrlInNewTab();
+    }
+
+    public static function makeHeaderAction(): HeaderAction
+    {
+        return HeaderAction::make('download_pdf')
+            ->label('Download PDF')
+            ->icon('heroicon-o-document-arrow-down')
+            ->color('success')
+            ->url(fn (Invoice $record) => route('invoice.download-pdf', $record))
+            ->openUrlInNewTab();
+    }
+}

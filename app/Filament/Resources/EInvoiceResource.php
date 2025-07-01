@@ -8,10 +8,12 @@ use App\Models\Invoice;
 use Filament\Forms\Form;
 use Filament\Tables\Table;
 use App\Enums\InvoiceStatus;
+use App\Policies\EInvoicePolicy;
 use Filament\Resources\Resource;
 use Illuminate\Database\Eloquent\Model;
 use Filament\Notifications\Notification;
 use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Support\Facades\Auth;
 use App\Filament\Resources\EInvoiceResource\Pages;
 
 class EInvoiceResource extends Resource
@@ -30,10 +32,49 @@ class EInvoiceResource extends Resource
 
     protected static ?int $navigationSort = 3;
 
+    /**
+     * Get the policy class for e-invoice authorization.
+     */
+    public static function getPolicy(): ?string
+    {
+        return \App\Policies\EInvoicePolicy::class;
+    }
+
+    /**
+     * Determine if the user can view any e-invoices.
+     */
+    public static function canViewAny(): bool
+    {
+        $policy = new EInvoicePolicy();
+        return $policy->viewAny(Auth::user());
+    }
+
+    /**
+     * Determine if the user can create e-invoices.
+     */
+    public static function canCreate(): bool
+    {
+        $policy = new EInvoicePolicy();
+        return $policy->create(Auth::user());
+    }
+
+    /**
+     * Check if the user should see this resource in navigation.
+     */
+    public static function shouldRegisterNavigation(): bool
+    {
+        return static::canViewAny();
+    }
+
+    /**
+     * Apply e-invoice specific query scoping.
+     */
     public static function getEloquentQuery(): Builder
     {
         return parent::getEloquentQuery()
             ->with(['tenant', 'centre', 'user'])
+            // Apply the same tenant/role filtering as invoices but for e-invoice context
+            ->forCurrentUser()
             ->orderBy('created_at', 'desc');
     }
 
@@ -186,13 +227,17 @@ class EInvoiceResource extends Resource
                     ->query(fn (Builder $query) => $query->whereNull('einvoice_uuid')),
             ])
             ->actions([
-                Tables\Actions\ViewAction::make(),
+                Tables\Actions\ViewAction::make()
+                    ->visible(fn (Model $record) => (new EInvoicePolicy())->view(Auth::user(), $record)),
                 
                 Tables\Actions\Action::make('submit_einvoice')
                     ->label('Submit to E-Invoice')
                     ->icon('heroicon-o-paper-airplane')
                     ->color('success')
-                    ->visible(fn (Model $record) => !$record->isEInvoiceSubmitted())
+                    ->visible(fn (Model $record) => 
+                        !$record->isEInvoiceSubmitted() && 
+                        (new EInvoicePolicy())->submit(Auth::user(), $record)
+                    )
                     ->requiresConfirmation()
                     ->modalHeading('Submit Invoice to LHDN E-Invoice System')
                     ->modalDescription('This will submit the invoice to the LHDN e-Invoice system. This action cannot be undone.')
@@ -218,7 +263,10 @@ class EInvoiceResource extends Resource
                     ->label('Refresh Status')
                     ->icon('heroicon-o-arrow-path')
                     ->color('info')
-                    ->visible(fn (Model $record) => $record->isEInvoiceSubmitted())
+                    ->visible(fn (Model $record) => 
+                        $record->isEInvoiceSubmitted() &&
+                        (new EInvoicePolicy())->view(Auth::user(), $record)
+                    )
                     ->action(function (Model $record) {
                         try {
                             $record->refreshEInvoiceStatus();
@@ -241,7 +289,10 @@ class EInvoiceResource extends Resource
                     ->label('View Validation')
                     ->icon('heroicon-o-eye')
                     ->color('info')
-                    ->visible(fn (Model $record) => !empty($record->getEInvoiceValidationUrl()))
+                    ->visible(fn (Model $record) => 
+                        !empty($record->getEInvoiceValidationUrl()) &&
+                        (new EInvoicePolicy())->viewValidation(Auth::user(), $record)
+                    )
                     ->url(fn (Model $record) => $record->getEInvoiceValidationUrl())
                     ->openUrlInNewTab(),
                 
@@ -249,7 +300,11 @@ class EInvoiceResource extends Resource
                     ->label('Cancel E-Invoice')
                     ->icon('heroicon-o-x-mark')
                     ->color('danger')
-                    ->visible(fn (Model $record) => $record->isEInvoiceSubmitted() && $record->einvoice_status !== 'cancelled')
+                    ->visible(fn (Model $record) => 
+                        $record->isEInvoiceSubmitted() && 
+                        $record->einvoice_status !== 'cancelled' &&
+                        (new EInvoicePolicy())->cancel(Auth::user(), $record)
+                    )
                     ->requiresConfirmation()
                     ->modalHeading('Cancel E-Invoice')
                     ->form([
@@ -282,6 +337,7 @@ class EInvoiceResource extends Resource
                     ->label('Submit to E-Invoice')
                     ->icon('heroicon-o-paper-airplane')
                     ->color('success')
+                    ->visible(fn () => (new EInvoicePolicy())->bulkSubmit(Auth::user()))
                     ->requiresConfirmation()
                     ->modalHeading('Submit Multiple Invoices to E-Invoice')
                     ->modalDescription('This will submit all selected invoices to the LHDN e-Invoice system.')
