@@ -17,7 +17,7 @@ class Kernel extends ConsoleKernel
         
         // Generate recurring invoices daily at 2 AM
         $schedule->command('invoices:generate-recurring')
-                 ->dailyAt('08:00')
+                 ->dailyAt('02:00')
                  ->withoutOverlapping()
                  ->runInBackground()
                  ->emailOutputOnFailure(config('mail.admin_email'));

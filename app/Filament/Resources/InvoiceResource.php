@@ -7,6 +7,8 @@ use App\Filament\Resources\InvoiceResource\Actions\MarkAsPaidAction;
 use App\Filament\Resources\InvoiceResource\Actions\MakePaymentAction;
 use App\Filament\Resources\InvoiceResource\Actions\ExportInvoicesAction;
 use App\Filament\Resources\InvoiceResource\Actions\DownloadInvoicePdfAction;
+use App\Filament\Resources\InvoiceResource\Actions\SendNotificationAction;
+use App\Filament\Resources\InvoiceResource\Actions\SendBulkNotificationAction;
 use App\Models\Invoice;
 use App\Models\Centre;
 use App\Models\User;
@@ -256,6 +258,8 @@ class InvoiceResource extends Resource
                 
                 DownloadInvoicePdfAction::make(),
                 
+                SendNotificationAction::make(),
+                
                 MakePaymentAction::make(),
                 
                 MarkAsPaidAction::make(),
@@ -268,6 +272,7 @@ class InvoiceResource extends Resource
             ])
             ->bulkActions([
                 Tables\Actions\BulkActionGroup::make([
+                    SendBulkNotificationAction::make(),
                     ExportInvoicesAction::make(),
                     Tables\Actions\DeleteBulkAction::make()
                         ->visible(fn () => Auth::user()->can('deleteAny', Invoice::class)),

@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Http\Controllers\Controller;
 use App\Enums\InvoiceStatus;
 use App\Enums\PaymentStatus;
 use App\Models\Payment;
