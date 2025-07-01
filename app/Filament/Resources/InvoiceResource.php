@@ -105,6 +105,7 @@ class InvoiceResource extends Resource
                         Grid::make(2)
                             ->schema([
                                 DateTimePicker::make('date')
+                                    ->label('Billing Month')
                                     ->required()
                                     ->native(false)
                                     ->displayFormat('M d, Y')
@@ -189,7 +190,8 @@ class InvoiceResource extends Resource
                     ->sortable(),
                     
                 Tables\Columns\TextColumn::make('date')
-                    ->date('M d, Y')
+                    ->label('Billing Month')
+                    ->date('M, Y')
                     ->sortable(),
                     
                 Tables\Columns\TextColumn::make('due_at')
@@ -221,6 +223,9 @@ class InvoiceResource extends Resource
                 Tables\Columns\TextColumn::make('total')
                     ->money('MYR', 100)
                     ->sortable(),
+
+                Tables\Columns\TextColumn::make('created_at')
+                    ->date()
             ])
             ->filters([
                 SelectFilter::make('status')

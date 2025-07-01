@@ -41,7 +41,8 @@ class InvoicesRelationManager extends RelationManager
                     ->sortable(),
                     
                 Tables\Columns\TextColumn::make('date')
-                    ->date('M d, Y')
+                    ->label('Billing Month')
+                    ->date('M, Y')
                     ->sortable(),
                     
                 Tables\Columns\TextColumn::make('due_at')
@@ -61,7 +62,7 @@ class InvoicesRelationManager extends RelationManager
                     ->sortable(),
                     
                 Tables\Columns\TextColumn::make('total')
-                    ->money('USD')
+                    ->money('MYR', 100)
                     ->sortable(),
             ])
             ->filters([
@@ -112,8 +113,8 @@ class InvoicesRelationManager extends RelationManager
                                     }),
                                     
                                 Infolists\Components\TextEntry::make('date')
-                                    ->label('Invoice Date')
-                                    ->date('M d, Y'),
+                                    ->label('Billing Month')
+                                    ->date('M, Y'),
                                     
                                 Infolists\Components\TextEntry::make('due_at')
                                     ->label('Due Date')

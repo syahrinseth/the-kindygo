@@ -50,6 +50,7 @@ class ViewInvoice extends ViewRecord
                                 ]),
                                 Group::make([
                                     TextEntry::make('date')
+                                        ->label('Billing Month')
                                         ->date('M d, Y'),
                                     TextEntry::make('due_at')
                                         ->date('M d, Y'),
