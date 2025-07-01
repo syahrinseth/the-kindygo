@@ -27,6 +27,8 @@ class Kernel extends ConsoleKernel
                  ->weeklyOn(1, '03:00') // Monday at 3 AM
                  ->withoutOverlapping()
                  ->runInBackground();
+
+        Schedule::command('telescope:prune --hours=4320')->daily();
     }
 
     /**
