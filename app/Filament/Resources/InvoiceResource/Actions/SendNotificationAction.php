@@ -90,7 +90,36 @@ class SendNotificationAction
                     'sent_at' => now(),
                 ]);
 
+            } catch (\Symfony\Component\Mailer\Exception\TransportException $e) {
+                // Handle mailer configuration issues specifically
+                \Illuminate\Support\Facades\Log::error('Mailer configuration error while sending invoice notification', [
+                    'invoice_id' => $record->id,
+                    'error' => $e->getMessage(),
+                    'suggestion' => 'Check mailer configuration and credentials',
+                ]);
+
+                Notification::make()
+                    ->title('Email configuration error')
+                    ->body('Email service is not properly configured. Please contact the system administrator.')
+                    ->danger()
+                    ->send();
+                    
+            } catch (\Illuminate\Mail\MailManager $e) {
+                // Handle Laravel mail manager issues
+                \Illuminate\Support\Facades\Log::error('Mail manager error while sending invoice notification', [
+                    'invoice_id' => $record->id,
+                    'error' => $e->getMessage(),
+                    'suggestion' => 'Check MAIL_MAILER configuration',
+                ]);
+
+                Notification::make()
+                    ->title('Email service error')
+                    ->body('Email service configuration issue. Please contact the system administrator.')
+                    ->danger()
+                    ->send();
+                    
             } catch (\Exception $e) {
+                // Handle any other exceptions
                 \Illuminate\Support\Facades\Log::error('Failed to send invoice notification', [
                     'invoice_id' => $record->id,
                     'error' => $e->getMessage(),
@@ -99,7 +128,7 @@ class SendNotificationAction
 
                 Notification::make()
                     ->title('Failed to send notification')
-                    ->body('An error occurred while sending the notification. Please try again.')
+                    ->body('An error occurred while sending the notification. Please try again or contact support.')
                     ->danger()
                     ->send();
             }
