@@ -176,14 +176,21 @@ class UserResource extends Resource
                     ->toggle(),
             ])
             ->actions([
-                Tables\Actions\ViewAction::make()
-                    ->visible(fn (User $record) => Auth::user()->can('view', $record)),
-                
-                Tables\Actions\EditAction::make()
-                    ->visible(fn (User $record) => Auth::user()->can('update', $record)),
-                
-                Tables\Actions\DeleteAction::make()
-                    ->visible(fn (User $record) => Auth::user()->can('delete', $record)),
+                Tables\Actions\ActionGroup::make([
+                    Tables\Actions\ViewAction::make()
+                        ->visible(fn (User $record) => Auth::user()->can('view', $record)),
+                    
+                    Tables\Actions\EditAction::make()
+                        ->visible(fn (User $record) => Auth::user()->can('update', $record)),
+                    
+                    Tables\Actions\DeleteAction::make()
+                        ->visible(fn (User $record) => Auth::user()->can('delete', $record)),
+                ])
+                    ->label('Actions')
+                    ->icon('heroicon-m-ellipsis-vertical')
+                    ->size('sm')
+                    ->color('gray')
+                    ->button(),
             ])
             ->headerActions([
                 InviteUserToTenantAction::make()

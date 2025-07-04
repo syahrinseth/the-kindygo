@@ -4,6 +4,7 @@ namespace Database\Factories;
 
 use App\Enums\ProductType;
 use App\Enums\ProductStatus;
+use App\Enums\ProductPriority;
 use Illuminate\Database\Eloquent\Factories\Factory;
 
 /**
@@ -20,7 +21,7 @@ class ProductFactory extends Factory
     {
         $types = ProductType::cases();
         $statuses = ProductStatus::cases();
-        $priorities = ['high', 'medium', 'low'];
+        $priorities = ProductPriority::cases();
         
         $serviceNames = [
             'Monthly Childcare Fee',
@@ -40,7 +41,7 @@ class ProductFactory extends Factory
             'name' => $this->faker->randomElement($serviceNames),
             'status' => $this->faker->randomElement($statuses)->value,
             'type' => $this->faker->randomElement($types)->value,
-            'priority' => $this->faker->randomElement($priorities),
+            'priority' => $this->faker->randomElement($priorities)->value,
         ];
     }
 }

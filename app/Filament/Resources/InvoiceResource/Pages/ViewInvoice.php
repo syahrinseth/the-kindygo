@@ -6,6 +6,7 @@ use App\Enums\Gateway;
 use App\Filament\Resources\InvoiceResource;
 use App\Filament\Resources\InvoiceResource\Actions\MakePaymentAction;
 use App\Filament\Resources\InvoiceResource\Actions\DownloadInvoicePdfAction;
+use App\Filament\Resources\InvoiceResource\Actions\SubmitToEInvoiceAction;
 use App\Models\Invoice;
 use Filament\Actions;
 use Filament\Forms;
@@ -60,7 +61,7 @@ class ViewInvoice extends ViewRecord
                             ->schema([
                                 Group::make([
                                     TextEntry::make('user.name')
-                                        ->label('Client'),
+                                        ->label('Parent'),
                                 ]),
                                 Group::make([
                                     TextEntry::make('centre.name')
@@ -98,6 +99,55 @@ class ViewInvoice extends ViewRecord
                                         ->formatStateUsing(fn ($state, Invoice $record) => $record->getRemainingBalance() / 100),
                                 ]),
                             ]),
+                    ]),
+
+                Section::make('E-Invoice Information')
+                    ->visible(fn (Invoice $record) => $record->einvoice_uuid)
+                    ->schema([
+                        Grid::make(2)
+                            ->schema([
+                                Group::make([
+                                    TextEntry::make('einvoice_uuid')
+                                        ->label('E-Invoice UUID')
+                                        ->copyable(),
+                                    TextEntry::make('einvoice_status')
+                                        ->label('E-Invoice Status')
+                                        ->badge()
+                                        ->color(fn (?string $state): string => match ($state) {
+                                            'submitted' => 'success',
+                                            'processing' => 'warning',
+                                            'valid' => 'success',
+                                            'invalid' => 'danger',
+                                            null => 'gray',
+                                            default => 'gray',
+                                        })
+                                        ->formatStateUsing(fn (?string $state): string => match ($state) {
+                                            'submitted' => 'Submitted',
+                                            'processing' => 'Processing',
+                                            'valid' => 'Valid',
+                                            'invalid' => 'Invalid',
+                                            null => 'Not Submitted',
+                                            default => ucfirst($state ?? 'Not Submitted'),
+                                        }),
+                                ]),
+                                Group::make([
+                                    TextEntry::make('einvoice_submission_id')
+                                        ->label('Submission ID')
+                                        ->copyable()
+                                        ->placeholder('Not available'),
+                                    TextEntry::make('einvoice_submitted_at')
+                                        ->label('Submitted At')
+                                        ->dateTime('M d, Y H:i')
+                                        ->placeholder('Not submitted'),
+                                ]),
+                            ]),
+                        TextEntry::make('einvoice_validation_url')
+                            ->label('Validation URL')
+                            ->url(fn (?string $state): ?string => $state)
+                            ->openUrlInNewTab()
+                            ->copyable()
+                            ->columnSpanFull()
+                            ->placeholder('Not available'),
                     ]),
 
                 Section::make('Payment History')
@@ -393,6 +443,8 @@ class ViewInvoice extends ViewRecord
     {
         return [
             DownloadInvoicePdfAction::makeHeaderAction(),
+            
+            SubmitToEInvoiceAction::makeHeaderAction(),
             
             MakePaymentAction::makeHeaderAction(),
             

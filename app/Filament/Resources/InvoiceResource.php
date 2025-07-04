@@ -9,10 +9,13 @@ use App\Filament\Resources\InvoiceResource\Actions\ExportInvoicesAction;
 use App\Filament\Resources\InvoiceResource\Actions\DownloadInvoicePdfAction;
 use App\Filament\Resources\InvoiceResource\Actions\SendNotificationAction;
 use App\Filament\Resources\InvoiceResource\Actions\SendBulkNotificationAction;
+use App\Filament\Resources\InvoiceResource\Actions\SubmitToEInvoiceAction;
+use App\Filament\Resources\InvoiceResource\Actions\SubmitBulkToEInvoiceAction;
 use App\Models\Invoice;
 use App\Models\Centre;
 use App\Models\User;
 use App\Enums\InvoiceStatus;
+use App\Enums\PaymentStatus;
 use Filament\Forms;
 use Filament\Forms\Form;
 use Filament\Resources\Resource;
@@ -61,7 +64,16 @@ class InvoiceResource extends Resource
         $query = parent::getEloquentQuery();
         
         // Apply the forCurrentUser scope for multi-tenant filtering
-        return $query->forCurrentUser();
+        return $query->forCurrentUser()->with([
+            'user', 
+            'centre',
+            'payments' => function ($query) {
+                $query->where('status', PaymentStatus::PAID);
+            },
+            'user.children' => function ($query) {
+                $query->with('centres');
+            }
+        ]);
     }
 
     public static function canViewAny(): bool
@@ -145,7 +157,7 @@ class InvoiceResource extends Resource
                                     ->native(false),
                                     
                                 Select::make('user_id')
-                                    ->label('User')
+                                    ->label('Parent')
                                     ->options(function () {
                                         $user = Auth::user();
                                         if (!$user->current_tenant_id) {
@@ -163,6 +175,46 @@ class InvoiceResource extends Resource
                             ]),
                     ]),
                     
+                Section::make('E-Invoice Information')
+                    ->schema([
+                        Grid::make(2)
+                            ->schema([
+                                TextInput::make('einvoice_uuid')
+                                    ->label('E-Invoice UUID')
+                                    ->disabled()
+                                    ->visible(fn ($livewire) => $livewire instanceof \Filament\Resources\Pages\EditRecord),
+                                    
+                                TextInput::make('einvoice_status')
+                                    ->label('E-Invoice Status')
+                                    ->disabled()
+                                    ->visible(fn ($livewire) => $livewire instanceof \Filament\Resources\Pages\EditRecord),
+                            ]),
+                            
+                        Grid::make(2)
+                            ->schema([
+                                TextInput::make('einvoice_submission_id')
+                                    ->label('Submission ID')
+                                    ->disabled()
+                                    ->visible(fn ($livewire) => $livewire instanceof \Filament\Resources\Pages\EditRecord),
+                                    
+                                DateTimePicker::make('einvoice_submitted_at')
+                                    ->label('Submitted At')
+                                    ->disabled()
+                                    ->visible(fn ($livewire) => $livewire instanceof \Filament\Resources\Pages\EditRecord)
+                                    ->displayFormat('M d, Y H:i'),
+                            ]),
+                            
+                        TextInput::make('einvoice_validation_url')
+                            ->label('Validation URL')
+                            ->disabled()
+                            ->visible(fn ($livewire) => $livewire instanceof \Filament\Resources\Pages\EditRecord)
+                            ->url()
+                            ->columnSpanFull(),
+                    ])
+                    ->visible(fn ($record) => $record && $record->einvoice_uuid)
+                    ->collapsible()
+                    ->collapsed(),
+                    
                 Forms\Components\Hidden::make('tenant_id')
                     ->default(function () {
                         return Auth::user()->current_tenant_id;
@@ -177,26 +229,30 @@ class InvoiceResource extends Resource
             ->columns([
                 Tables\Columns\TextColumn::make('number')
                     ->searchable()
-                    ->sortable(),
+                    ->sortable()
+                    ->description(fn (Invoice $record): string => $record->centre->name ?? 'No centre assigned'),
                     
                 Tables\Columns\TextColumn::make('user.name')
-                    ->label('User')
+                    ->label('Parent')
                     ->searchable()
-                    ->sortable(),
-                    
-                Tables\Columns\TextColumn::make('centre.name')
-                    ->label('Centre')
-                    ->searchable()
-                    ->sortable(),
+                    ->sortable()
+                    ->description(function (Invoice $record): ?string {
+                        // Filter pre-loaded children by the invoice's centre
+                        $children = $record->user->children->filter(function ($child) use ($record) {
+                            return $child->centres->contains('id', $record->centre_id);
+                        });
+                        
+                        if ($children->isEmpty()) {
+                            return null;
+                        }
+                        return $children->pluck('full_name')->join(', ');
+                    }),
                     
                 Tables\Columns\TextColumn::make('date')
                     ->label('Billing Month')
                     ->date('M, Y')
-                    ->sortable(),
-                    
-                Tables\Columns\TextColumn::make('due_at')
-                    ->date('M d, Y')
-                    ->sortable(),
+                    ->sortable()
+                    ->description(fn (Invoice $record): string => 'Due: ' . $record->due_at->format('M d, Y')),
                     
                 Tables\Columns\TextColumn::make('status')
                     ->badge()
@@ -208,6 +264,29 @@ class InvoiceResource extends Resource
                         InvoiceStatus::CANCELLED => 'gray',
                     })
                     ->searchable()
+                    ->sortable(),
+                    
+                Tables\Columns\TextColumn::make('einvoice_status')
+                    ->label('E-Invoice')
+                    ->badge()
+                    ->color(function (?string $state): string {
+                        return match ($state) {
+                            'submitted' => 'success',
+                            'processing' => 'warning',
+                            'valid' => 'success',
+                            'invalid' => 'danger',
+                            default => 'gray',
+                        };
+                    })
+                    ->formatStateUsing(function (?string $state): string {
+                        return match ($state) {
+                            'submitted' => 'Submitted',
+                            'processing' => 'Processing',
+                            'valid' => 'Valid',
+                            'invalid' => 'Invalid',
+                            default => 'Not Submitted',
+                        };
+                    })
                     ->sortable(),
                     
                 Tables\Columns\TextColumn::make('total_amount')
@@ -223,6 +302,10 @@ class InvoiceResource extends Resource
                 Tables\Columns\TextColumn::make('total')
                     ->money('MYR', 100)
                     ->sortable(),
+                    
+                Tables\Columns\TextColumn::make('balance')
+                    ->money('MYR', 100)
+                    ->sortable(),
 
                 Tables\Columns\TextColumn::make('created_at')
                     ->date()
@@ -231,6 +314,27 @@ class InvoiceResource extends Resource
                 SelectFilter::make('status')
                     ->options(collect(InvoiceStatus::cases())->pluck('value', 'value')->toArray())
                     ->multiple(),
+                    
+                SelectFilter::make('einvoice_status')
+                    ->label('E-Invoice Status')
+                    ->options([
+                        'submitted' => 'Submitted',
+                        'processing' => 'Processing',
+                        'valid' => 'Valid',
+                        'invalid' => 'Invalid',
+                        'not_submitted' => 'Not Submitted',
+                    ])
+                    ->query(function (Builder $query, array $data): Builder {
+                        if (! $data['value']) {
+                            return $query;
+                        }
+                        
+                        if ($data['value'] === 'not_submitted') {
+                            return $query->whereNull('einvoice_status');
+                        }
+                        
+                        return $query->where('einvoice_status', $data['value']);
+                    }),
                     
                 Filter::make('overdue')
                     ->query(fn (Builder $query): Builder => $query->overdue()),
@@ -258,25 +362,35 @@ class InvoiceResource extends Resource
                     }),
             ])
             ->actions([
-                Tables\Actions\ViewAction::make()
-                    ->visible(fn (Invoice $record) => Auth::user()->can('view', $record)),
-                
-                DownloadInvoicePdfAction::make(),
-                
-                SendNotificationAction::make(),
-                
-                MakePaymentAction::make(),
-                
-                MarkAsPaidAction::make(),
-                
-                Tables\Actions\EditAction::make()
-                    ->visible(fn (Invoice $record) => Auth::user()->can('update', $record)),
-                
-                Tables\Actions\DeleteAction::make()
-                    ->visible(fn (Invoice $record) => Auth::user()->can('delete', $record)),
+                Tables\Actions\ActionGroup::make([
+                    Tables\Actions\ViewAction::make()
+                        ->visible(fn (Invoice $record) => Auth::user()->can('view', $record)),
+                    
+                    DownloadInvoicePdfAction::make(),
+                    
+                    SubmitToEInvoiceAction::make(),
+                    
+                    SendNotificationAction::make(),
+                    
+                    MakePaymentAction::make(),
+                    
+                    MarkAsPaidAction::make(),
+                    
+                    Tables\Actions\EditAction::make()
+                        ->visible(fn (Invoice $record) => Auth::user()->can('update', $record)),
+                    
+                    Tables\Actions\DeleteAction::make()
+                        ->visible(fn (Invoice $record) => Auth::user()->can('delete', $record)),
+                ])
+                    ->label('Actions')
+                    ->icon('heroicon-m-ellipsis-vertical')
+                    ->size('sm')
+                    ->color('gray')
+                    ->button(),
             ])
             ->bulkActions([
                 Tables\Actions\BulkActionGroup::make([
+                    SubmitBulkToEInvoiceAction::make(),
                     SendBulkNotificationAction::make(),
                     ExportInvoicesAction::make(),
                     Tables\Actions\DeleteBulkAction::make()

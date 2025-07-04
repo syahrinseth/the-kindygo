@@ -8,6 +8,8 @@ enum ProductType: string
     case FEE = 'fee';
     case PRODUCT = 'product';
     case SUBSCRIPTION = 'subscription';
+    case PROGRAMME = 'programme';
+    case ANNUAL_FEE = 'annual_fee';
 
     /**
      * Get all values as an array.
@@ -31,6 +33,8 @@ enum ProductType: string
             self::FEE => 'Fee',
             self::PRODUCT => 'Product',
             self::SUBSCRIPTION => 'Subscription',
+            self::PROGRAMME => 'Programme',
+            self::ANNUAL_FEE => 'Annual Fee',
         };
     }
 
@@ -46,6 +50,8 @@ enum ProductType: string
             self::FEE => 'Administrative or processing fees',
             self::PRODUCT => 'Physical or digital products',
             self::SUBSCRIPTION => 'Recurring subscription services',
+            self::PROGRAMME => 'Educational or structured programmes',
+            self::ANNUAL_FEE => 'Yearly fees charged annually',
         };
     }
 }

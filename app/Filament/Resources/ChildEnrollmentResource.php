@@ -210,9 +210,9 @@ class ChildEnrollmentResource extends Resource
                                 // Reset billed_every when type changes
                                 $oneTimeOnlyTypes = [
                                     ChildEnrollmentType::TRIAL->value,
-                                    ChildEnrollmentType::SUMMER_PROGRAM->value,
-                                    ChildEnrollmentType::AFTER_SCHOOL->value,
-                                    ChildEnrollmentType::HOLIDAY_PROGRAM->value,
+                                    // ChildEnrollmentType::SUMMER_PROGRAM->value,
+                                    // ChildEnrollmentType::AFTER_SCHOOL->value,
+                                    // ChildEnrollmentType::HOLIDAY_PROGRAM->value,
                                 ];
                                 
                                 if (in_array($state, $oneTimeOnlyTypes)) {
@@ -230,9 +230,9 @@ class ChildEnrollmentResource extends Resource
                                 // Types that should only show ONE_TIME option
                                 $oneTimeOnlyTypes = [
                                     ChildEnrollmentType::TRIAL->value,
-                                    ChildEnrollmentType::SUMMER_PROGRAM->value,
-                                    ChildEnrollmentType::AFTER_SCHOOL->value,
-                                    ChildEnrollmentType::HOLIDAY_PROGRAM->value,
+                                    // ChildEnrollmentType::SUMMER_PROGRAM->value,
+                                    // ChildEnrollmentType::AFTER_SCHOOL->value,
+                                    // ChildEnrollmentType::HOLIDAY_PROGRAM->value,
                                 ];
                                 
                                 if (in_array($type, $oneTimeOnlyTypes)) {
@@ -265,7 +265,7 @@ class ChildEnrollmentResource extends Resource
                     ])
                     ->columns(2),
                     
-                Forms\Components\Section::make('Schedule')
+                Forms\Components\Section::make('Duration')
                     ->schema([
                         Forms\Components\DateTimePicker::make('date_start')
                             ->label('Start Date')
@@ -309,6 +309,7 @@ class ChildEnrollmentResource extends Resource
                     ->color(fn ($state): string => match ($state) {
                         'active' => 'success',
                         'pending' => 'warning',
+                        'draft' => 'gray',
                         'inactive' => 'gray',
                         'completed' => 'info',
                         'cancelled' => 'danger',
@@ -389,12 +390,19 @@ class ChildEnrollmentResource extends Resource
                     ->toggle(),
             ])
             ->actions([
-                Tables\Actions\ViewAction::make()
-                    ->visible(fn (ChildEnrollment $record): bool => Auth::user()->can('view', $record)),
-                Tables\Actions\EditAction::make()
-                    ->visible(fn (ChildEnrollment $record): bool => Auth::user()->can('update', $record)),
-                Tables\Actions\DeleteAction::make()
-                    ->visible(fn (ChildEnrollment $record): bool => Auth::user()->can('delete', $record)),
+                Tables\Actions\ActionGroup::make([
+                    Tables\Actions\ViewAction::make()
+                        ->visible(fn (ChildEnrollment $record): bool => Auth::user()->can('view', $record)),
+                    Tables\Actions\EditAction::make()
+                        ->visible(fn (ChildEnrollment $record): bool => Auth::user()->can('update', $record)),
+                    Tables\Actions\DeleteAction::make()
+                        ->visible(fn (ChildEnrollment $record): bool => Auth::user()->can('delete', $record)),
+                ])
+                    ->label('Actions')
+                    ->icon('heroicon-m-ellipsis-vertical')
+                    ->size('sm')
+                    ->color('gray')
+                    ->button(),
             ])
             ->bulkActions([
                 Tables\Actions\BulkActionGroup::make([

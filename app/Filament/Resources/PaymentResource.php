@@ -327,22 +327,29 @@ class PaymentResource extends Resource
                     }),
             ])
             ->actions([
-                Tables\Actions\ViewAction::make()
-                    ->visible(fn (Payment $record) => Auth::user()->can('view', $record)),
-                
-                Tables\Actions\Action::make('download_receipt')
-                    ->label('Download Receipt')
-                    ->icon('heroicon-o-document-arrow-down')
-                    ->color('success')
-                    ->url(fn (Payment $record): string => route('payment.download-receipt', $record))
-                    ->openUrlInNewTab()
-                    ->visible(fn (Payment $record) => Auth::user()->can('view', $record) && $record->status === PaymentStatus::PAID),
-                
-                Tables\Actions\EditAction::make()
-                    ->visible(fn (Payment $record) => Auth::user()->can('update', $record)),
-                
-                Tables\Actions\DeleteAction::make()
-                    ->visible(fn (Payment $record) => Auth::user()->can('delete', $record)),
+                Tables\Actions\ActionGroup::make([
+                    Tables\Actions\ViewAction::make()
+                        ->visible(fn (Payment $record) => Auth::user()->can('view', $record)),
+                    
+                    Tables\Actions\Action::make('download_receipt')
+                        ->label('Download Receipt')
+                        ->icon('heroicon-o-document-arrow-down')
+                        ->color('success')
+                        ->url(fn (Payment $record): string => route('payment.download-receipt', $record))
+                        ->openUrlInNewTab()
+                        ->visible(fn (Payment $record) => Auth::user()->can('view', $record) && $record->status === PaymentStatus::PAID),
+                    
+                    Tables\Actions\EditAction::make()
+                        ->visible(fn (Payment $record) => Auth::user()->can('update', $record)),
+                    
+                    Tables\Actions\DeleteAction::make()
+                        ->visible(fn (Payment $record) => Auth::user()->can('delete', $record)),
+                ])
+                    ->label('Actions')
+                    ->icon('heroicon-m-ellipsis-vertical')
+                    ->size('sm')
+                    ->color('gray')
+                    ->button(),
             ])
             ->bulkActions([
                 Tables\Actions\BulkActionGroup::make([

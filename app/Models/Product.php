@@ -4,6 +4,7 @@ namespace App\Models;
 
 use App\Enums\ProductStatus;
 use App\Enums\ProductType;
+use App\Enums\ProductPriority;
 use App\Models\Scopes\TenantScope;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -37,6 +38,7 @@ class Product extends Model
     protected $casts = [
         'status' => ProductStatus::class,
         'type' => ProductType::class,
+        'priority' => ProductPriority::class,
     ];
 
     /**
@@ -127,10 +129,10 @@ class Product extends Model
      * Scope a query to filter by priority.
      *
      * @param  \Illuminate\Database\Eloquent\Builder  $query
-     * @param  string  $priority
+     * @param  ProductPriority|int  $priority
      * @return \Illuminate\Database\Eloquent\Builder
      */
-    public function scopeByPriority($query, $priority)
+    public function scopeByPriority($query, ProductPriority|int $priority)
     {
         return $query->where('priority', $priority);
     }
@@ -236,5 +238,47 @@ class Product extends Model
     public function scopeInactive($query)
     {
         return $query->where('status', ProductStatus::INACTIVE);
+    }
+
+    /**
+     * Scope a query to filter by high priority (Critical and High).
+     *
+     * @param  \Illuminate\Database\Eloquent\Builder  $query
+     * @return \Illuminate\Database\Eloquent\Builder
+     */
+    public function scopeHighPriority($query)
+    {
+        return $query->whereIn('priority', [ProductPriority::CRITICAL->value, ProductPriority::HIGH->value]);
+    }
+
+    /**
+     * Scope a query to filter by critical priority only.
+     *
+     * @param  \Illuminate\Database\Eloquent\Builder  $query
+     * @return \Illuminate\Database\Eloquent\Builder
+     */
+    public function scopeCriticalPriority($query)
+    {
+        return $query->where('priority', ProductPriority::CRITICAL->value);
+    }
+
+    /**
+     * Check if the product has high priority (Critical or High).
+     *
+     * @return bool
+     */
+    public function isHighPriority(): bool
+    {
+        return in_array($this->priority, [ProductPriority::CRITICAL, ProductPriority::HIGH]);
+    }
+
+    /**
+     * Check if the product has critical priority.
+     *
+     * @return bool
+     */
+    public function isCriticalPriority(): bool
+    {
+        return $this->priority === ProductPriority::CRITICAL;
     }
 }

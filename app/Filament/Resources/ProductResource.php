@@ -4,6 +4,7 @@ namespace App\Filament\Resources;
 
 use App\Enums\ProductStatus;
 use App\Enums\ProductType;
+use App\Enums\ProductPriority;
 use App\Filament\Resources\ProductResource\Pages;
 use App\Filament\Resources\ProductResource\RelationManagers;
 use App\Models\Product;
@@ -65,12 +66,8 @@ class ProductResource extends Resource
 
                         Forms\Components\Select::make('priority')
                             ->required()
-                            ->options([
-                                'high' => 'High',
-                                'medium' => 'Medium',
-                                'low' => 'Low',
-                            ])
-                            ->default('medium')
+                            ->options(ProductPriority::getOptions())
+                            ->default(ProductPriority::MEDIUM->value)
                             ->native(false),
                     ])
                     ->columns(3),
@@ -139,17 +136,16 @@ class ProductResource extends Resource
                         ProductType::PRODUCT => 'secondary',
                         ProductType::FEE => 'info',
                         ProductType::SUBSCRIPTION => 'warning',
+                        ProductType::PROGRAMME => 'success',
+                        ProductType::ANNUAL_FEE => 'danger',
                     })
                     ->formatStateUsing(fn (ProductType $state): string => $state->getDisplayName())
                     ->sortable(),
 
                 Tables\Columns\TextColumn::make('priority')
                     ->badge()
-                    ->colors([
-                        'danger' => 'high',
-                        'warning' => 'medium',
-                        'success' => 'low',
-                    ])
+                    ->color(fn (ProductPriority $state): string => $state->getBadgeColor())
+                    ->formatStateUsing(fn (ProductPriority $state): string => $state->getDisplayName())
                     ->sortable(),
 
                 Tables\Columns\TextColumn::make('centres.name')
@@ -188,11 +184,7 @@ class ProductResource extends Resource
                     ->options(collect(ProductType::cases())->mapWithKeys(fn($case) => [$case->value => $case->getDisplayName()])),
 
                 Tables\Filters\SelectFilter::make('priority')
-                    ->options([
-                        'high' => 'High',
-                        'medium' => 'Medium',
-                        'low' => 'Low',
-                    ]),
+                    ->options(ProductPriority::getOptions()),
 
                 Tables\Filters\SelectFilter::make('centres')
                     ->relationship('centres', 'name')
@@ -201,12 +193,19 @@ class ProductResource extends Resource
                     ->placeholder('All Centres'),
             ])
             ->actions([
-                Tables\Actions\ViewAction::make()
-                    ->visible(fn (Product $record) => Auth::user()->can('view', $record)),
-                Tables\Actions\EditAction::make()
-                    ->visible(fn (Product $record) => Auth::user()->can('update', $record)),
-                Tables\Actions\DeleteAction::make()
-                    ->visible(fn (Product $record) => Auth::user()->can('delete', $record)),
+                Tables\Actions\ActionGroup::make([
+                    Tables\Actions\ViewAction::make()
+                        ->visible(fn (Product $record) => Auth::user()->can('view', $record)),
+                    Tables\Actions\EditAction::make()
+                        ->visible(fn (Product $record) => Auth::user()->can('update', $record)),
+                    Tables\Actions\DeleteAction::make()
+                        ->visible(fn (Product $record) => Auth::user()->can('delete', $record)),
+                ])
+                    ->label('Actions')
+                    ->icon('heroicon-m-ellipsis-vertical')
+                    ->size('sm')
+                    ->color('gray')
+                    ->button(),
             ])
             ->bulkActions([
                 Tables\Actions\BulkActionGroup::make([

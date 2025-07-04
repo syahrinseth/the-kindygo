@@ -6,6 +6,7 @@ enum ChildEnrollmentStatus: string
 {
     case ACTIVE = 'active';
     case INACTIVE = 'inactive';
+    case DRAFT = 'draft';
     case PENDING = 'pending';
     case COMPLETED = 'completed';
     case CANCELLED = 'cancelled';

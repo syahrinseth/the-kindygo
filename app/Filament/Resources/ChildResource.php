@@ -259,77 +259,84 @@ class ChildResource extends Resource
                     })
             ])
             ->actions([
-                Tables\Actions\ViewAction::make(),
-                Tables\Actions\EditAction::make(),
-                Tables\Actions\Action::make('activate')
-                    ->label('Activate')
-                    ->icon('heroicon-o-check')
-                    ->color('success')
-                    ->visible(function (Child $record): bool {
-                        $user = Auth::user();
-                        if (!$user || !$user->current_tenant_id) {
-                            return false;
-                        }
-                        
-                        $status = $record->getStatusAtTenant($user->current_tenant_id);
-                        return ($status === ChildStatus::NEW || $status === ChildStatus::RETURN) && 
-                               $user->can('changeStatus', $record);
-                    })
-                    ->action(function (Child $record): void {
-                        $user = Auth::user();
-                        if (!$user || !$user->current_tenant_id) {
-                            return;
-                        }
-                        
-                        $record->activateAtTenant($user->current_tenant_id);
-                    }),
-                Tables\Actions\Action::make('return')
-                    ->label('Mark as Returning')
-                    ->icon('heroicon-o-arrow-path')
-                    ->color('warning')
-                    ->visible(function (Child $record): bool {
-                        $user = Auth::user();
-                        if (!$user || !$user->current_tenant_id) {
-                            return false;
-                        }
-                        
-                        $status = $record->getStatusAtTenant($user->current_tenant_id);
-                        return $status === ChildStatus::ALUMNI && 
-                               $user->can('changeStatus', $record);
-                    })
-                    ->action(function (Child $record): void {
-                        $user = Auth::user();
-                        if (!$user || !$user->current_tenant_id) {
-                            return;
-                        }
-                        
-                        $record->markAsReturningAtTenant($user->current_tenant_id);
-                    }),
-                Tables\Actions\Action::make('alumni')
-                    ->label('Mark as Alumni')
-                    ->icon('heroicon-o-academic-cap')
+                Tables\Actions\ActionGroup::make([
+                    Tables\Actions\ViewAction::make(),
+                    Tables\Actions\EditAction::make(),
+                    Tables\Actions\Action::make('activate')
+                        ->label('Activate')
+                        ->icon('heroicon-o-check')
+                        ->color('success')
+                        ->visible(function (Child $record): bool {
+                            $user = Auth::user();
+                            if (!$user || !$user->current_tenant_id) {
+                                return false;
+                            }
+                            
+                            $status = $record->getStatusAtTenant($user->current_tenant_id);
+                            return ($status === ChildStatus::NEW || $status === ChildStatus::RETURN) && 
+                                   $user->can('changeStatus', $record);
+                        })
+                        ->action(function (Child $record): void {
+                            $user = Auth::user();
+                            if (!$user || !$user->current_tenant_id) {
+                                return;
+                            }
+                            
+                            $record->activateAtTenant($user->current_tenant_id);
+                        }),
+                    Tables\Actions\Action::make('return')
+                        ->label('Mark as Returning')
+                        ->icon('heroicon-o-arrow-path')
+                        ->color('warning')
+                        ->visible(function (Child $record): bool {
+                            $user = Auth::user();
+                            if (!$user || !$user->current_tenant_id) {
+                                return false;
+                            }
+                            
+                            $status = $record->getStatusAtTenant($user->current_tenant_id);
+                            return $status === ChildStatus::ALUMNI && 
+                                   $user->can('changeStatus', $record);
+                        })
+                        ->action(function (Child $record): void {
+                            $user = Auth::user();
+                            if (!$user || !$user->current_tenant_id) {
+                                return;
+                            }
+                            
+                            $record->markAsReturningAtTenant($user->current_tenant_id);
+                        }),
+                    Tables\Actions\Action::make('alumni')
+                        ->label('Mark as Alumni')
+                        ->icon('heroicon-o-academic-cap')
+                        ->color('gray')
+                        ->visible(function (Child $record): bool {
+                            $user = Auth::user();
+                            if (!$user || !$user->current_tenant_id) {
+                                return false;
+                            }
+                            
+                            $status = $record->getStatusAtTenant($user->current_tenant_id);
+                            return $status === ChildStatus::ACTIVE && 
+                                   $user->can('changeStatus', $record);
+                        })
+                        ->action(function (Child $record): void {
+                            $user = Auth::user();
+                            if (!$user || !$user->current_tenant_id) {
+                                return;
+                            }
+                            
+                            $record->markAsAlumniAtTenant($user->current_tenant_id);
+                        }),
+                    Tables\Actions\DeleteAction::make(),
+                    Tables\Actions\RestoreAction::make(),
+                    Tables\Actions\ForceDeleteAction::make(),
+                ])
+                    ->label('Actions')
+                    ->icon('heroicon-m-ellipsis-vertical')
+                    ->size('sm')
                     ->color('gray')
-                    ->visible(function (Child $record): bool {
-                        $user = Auth::user();
-                        if (!$user || !$user->current_tenant_id) {
-                            return false;
-                        }
-                        
-                        $status = $record->getStatusAtTenant($user->current_tenant_id);
-                        return $status === ChildStatus::ACTIVE && 
-                               $user->can('changeStatus', $record);
-                    })
-                    ->action(function (Child $record): void {
-                        $user = Auth::user();
-                        if (!$user || !$user->current_tenant_id) {
-                            return;
-                        }
-                        
-                        $record->markAsAlumniAtTenant($user->current_tenant_id);
-                    }),
-                Tables\Actions\DeleteAction::make(),
-                Tables\Actions\RestoreAction::make(),
-                Tables\Actions\ForceDeleteAction::make(),
+                    ->button(),
             ])
             ->bulkActions([
                 Tables\Actions\BulkActionGroup::make([

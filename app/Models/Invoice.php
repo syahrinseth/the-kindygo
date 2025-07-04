@@ -516,6 +516,16 @@ class Invoice extends Model
     }
     
     /**
+     * Get the balance attribute (alias for getRemainingBalance for Filament usage).
+     *
+     * @return int
+     */
+    public function getBalanceAttribute(): int
+    {
+        return $this->getRemainingBalance();
+    }
+    
+    /**
      * Generate a PDF for this invoice.
      *
      * @return string The path to the generated PDF
