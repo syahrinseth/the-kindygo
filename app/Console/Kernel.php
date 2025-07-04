@@ -24,7 +24,7 @@ class Kernel extends ConsoleKernel
                  
         // Optional: Generate one-time invoices weekly (for any missed enrollments)
         $schedule->command('invoices:generate-onetime')
-                 ->weeklyOn(1, '03:00') // Monday at 3 AM
+                 ->dailyAt('03:00') // Monday at 3 AM
                  ->withoutOverlapping()
                  ->runInBackground();
 
