@@ -6,6 +6,7 @@ use App\Enums\InvoiceItemType;
 use App\Enums\InvoiceStatus;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 
 class InvoiceItem extends Model
@@ -122,6 +123,18 @@ class InvoiceItem extends Model
     public function child(): BelongsTo
     {
         return $this->belongsTo(Child::class);
+    }
+
+    /**
+     * Get the child enrollments associated with this invoice item through a pivot table.
+     *
+     * @return \Illuminate\Database\Eloquent\Relations\BelongsToMany
+     */
+    public function childEnrollments(): BelongsToMany
+    {
+        return $this->belongsToMany(ChildEnrollment::class, 'child_enrollment_invoice_item', 'invoice_item_id', 'child_enrollment_id')
+                    ->withPivot(['quantity', 'notes'])
+                    ->withTimestamps();
     }
 
     /**

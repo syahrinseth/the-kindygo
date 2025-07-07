@@ -3,6 +3,7 @@
 namespace App\Filament\Resources\ChildEnrollmentResource\Pages;
 
 use App\Filament\Resources\ChildEnrollmentResource;
+use App\Models\Product;
 use Filament\Actions;
 use Filament\Resources\Pages\ViewRecord;
 use Filament\Infolists;
@@ -63,6 +64,38 @@ class ViewChildEnrollment extends ViewRecord
                             ->boolean()
                             ->getStateUsing(fn ($record): bool => $record->isActive()),
                     ])->columns(2),
+                    
+                Infolists\Components\Section::make('Additional Products')
+                    ->schema([
+                        Infolists\Components\RepeatableEntry::make('additional_products')
+                            ->label('')
+                            ->schema([
+                                Infolists\Components\TextEntry::make('product_id')
+                                    ->label('Product')
+                                    ->formatStateUsing(function ($state): string {
+                                        if (!$state) return 'N/A';
+                                        $product = Product::find($state);
+                                        return $product ? $product->name : 'Product not found';
+                                    }),
+                                Infolists\Components\TextEntry::make('billed_every')
+                                    ->label('Billing Frequency')
+                                    ->formatStateUsing(fn ($state): string => $state ? ucwords(str_replace('_', ' ', $state)) : 'N/A'),
+                                Infolists\Components\TextEntry::make('date_start')
+                                    ->label('Start Date')
+                                    ->formatStateUsing(fn ($state): string => $state ? \Carbon\Carbon::parse($state)->format('M j, Y g:i A') : 'N/A'),
+                                Infolists\Components\TextEntry::make('date_end')
+                                    ->label('End Date')
+                                    ->formatStateUsing(fn ($state): string => $state ? \Carbon\Carbon::parse($state)->format('M j, Y g:i A') : 'Ongoing'),
+                                Infolists\Components\TextEntry::make('notes')
+                                    ->label('Notes')
+                                    ->placeholder('No notes')
+                                    ->columnSpanFull(),
+                            ])
+                            ->columns(2)
+                            ->columnSpanFull()
+                    ])
+                    ->visible(fn ($record): bool => !empty($record->additional_products))
+                    ->collapsible(),
                     
                 Infolists\Components\Section::make('Timestamps')
                     ->schema([

@@ -71,15 +71,36 @@ class GenerateOneTimeInvoicesCommand extends Command
             // Generate the one-time invoices without tenant scope
             $query = ChildEnrollment::active()
                 ->current()
-                ->where('billed_every', \App\Enums\ChildEnrollmentBilledEvery::ONE_TIME)
+                ->where(function ($query) {
+                    // Include enrollments with one-time billing OR enrollments with additional one-time products
+                    $query->where('billed_every', \App\Enums\ChildEnrollmentBilledEvery::ONE_TIME)
+                          ->orWhereNotNull('additional_products');
+                })
                 ->with(['child.users', 'centre', 'product']);
                 
             // Filter by tenant ID if specified
             if ($tenantId) {
                 $query->where('tenant_id', $tenantId);
             }
-                
-            $enrollments = $query->get();
+
+            $enrollments = $query->get()
+                ->filter(function ($enrollment) {
+                    // Keep enrollments that have one-time billing or have additional one-time products
+                    if ($enrollment->billed_every === \App\Enums\ChildEnrollmentBilledEvery::ONE_TIME) {
+                        return true;
+                    }
+                    
+                    // Check if enrollment has additional products with one-time billing
+                    $additionalProducts = $enrollment->additional_products ?? [];
+                    foreach ($additionalProducts as $additionalProduct) {
+                        $billedEvery = $additionalProduct['billed_every'] ?? 'monthly';
+                        if ($billedEvery === \App\Enums\ChildEnrollmentBilledEvery::ONE_TIME->value) {
+                            return true;
+                        }
+                    }
+                    
+                    return false;
+                });
                 
             $results = $this->enrollmentService->generateOneTimeInvoices($enrollments);
             
@@ -106,7 +127,11 @@ class GenerateOneTimeInvoicesCommand extends Command
         // Get one-time enrollments that would be processed without tenant scope
         $query = ChildEnrollment::active()
             ->current()
-            ->where('billed_every', \App\Enums\ChildEnrollmentBilledEvery::ONE_TIME)
+            ->where(function ($query) {
+                // Include enrollments with one-time billing OR enrollments with additional one-time products
+                $query->where('billed_every', \App\Enums\ChildEnrollmentBilledEvery::ONE_TIME)
+                      ->orWhereNotNull('additional_products');
+            })
             ->with(['child.users', 'centre', 'product']);
             
         // Filter by tenant ID if specified
@@ -114,7 +139,24 @@ class GenerateOneTimeInvoicesCommand extends Command
             $query->where('tenant_id', $tenantId);
         }
             
-        $enrollments = $query->get();
+        $enrollments = $query->get()
+            ->filter(function ($enrollment) {
+                // Keep enrollments that have one-time billing or have additional one-time products
+                if ($enrollment->billed_every === \App\Enums\ChildEnrollmentBilledEvery::ONE_TIME) {
+                    return true;
+                }
+                
+                // Check if enrollment has additional products with one-time billing
+                $additionalProducts = $enrollment->additional_products ?? [];
+                foreach ($additionalProducts as $additionalProduct) {
+                    $billedEvery = $additionalProduct['billed_every'] ?? 'monthly';
+                    if ($billedEvery === \App\Enums\ChildEnrollmentBilledEvery::ONE_TIME->value) {
+                        return true;
+                    }
+                }
+                
+                return false;
+            });
         
         if ($tenantId) {
             $this->info("One-time enrollments for tenant {$tenantId} that would be processed: {$enrollments->count()}");
@@ -123,19 +165,49 @@ class GenerateOneTimeInvoicesCommand extends Command
         }
         
         if ($enrollments->count() > 0) {
-            $this->table(
-                ['Child', 'Product', 'Centre', 'Parent', 'Start Date', 'Tenant ID'],
-                $enrollments->map(function ($enrollment) {
-                    $primaryUser = $enrollment->child->users->first();
-                    return [
+            $enrollmentData = [];
+            foreach ($enrollments as $enrollment) {
+                $primaryUser = $enrollment->child->users->first();
+                
+                // Main enrollment if it's one-time
+                if ($enrollment->billed_every === \App\Enums\ChildEnrollmentBilledEvery::ONE_TIME) {
+                    $enrollmentData[] = [
                         $enrollment->child->first_name . ' ' . $enrollment->child->last_name,
                         $enrollment->product->name,
                         $enrollment->centre->name,
                         $primaryUser ? $primaryUser->name : 'No Parent',
                         $enrollment->date_start->toDateString(),
                         $enrollment->tenant_id,
+                        'Main Product (One-time)'
                     ];
-                })->toArray()
+                }
+                
+                // Additional products that are one-time
+                $additionalProducts = $enrollment->additional_products ?? [];
+                foreach ($additionalProducts as $additionalProduct) {
+                    $billedEvery = $additionalProduct['billed_every'] ?? 'monthly';
+                    if ($billedEvery === \App\Enums\ChildEnrollmentBilledEvery::ONE_TIME->value) {
+                        $product = \App\Models\Product::find($additionalProduct['product_id']);
+                        if ($product) {
+                            $enrollmentData[] = [
+                                $enrollment->child->first_name . ' ' . $enrollment->child->last_name,
+                                $product->name,
+                                $enrollment->centre->name,
+                                $primaryUser ? $primaryUser->name : 'No Parent',
+                                isset($additionalProduct['date_start']) ? 
+                                    \Carbon\Carbon::parse($additionalProduct['date_start'])->toDateString() : 
+                                    $enrollment->date_start->toDateString(),
+                                $enrollment->tenant_id,
+                                'Additional Product (One-time)'
+                            ];
+                        }
+                    }
+                }
+            }
+            
+            $this->table(
+                ['Child', 'Product', 'Centre', 'Parent', 'Start Date', 'Tenant ID', 'Type'],
+                $enrollmentData
             );
         }
         

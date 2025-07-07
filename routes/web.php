@@ -44,14 +44,14 @@ Route::middleware('auth')->group(function () {
 // CHIP Payment Routes
 Route::prefix('chip')->name('chip.')->group(function () {
     Route::get('success/{payment}', [ChipPaymentController::class, 'success'])
-        ->name('success')
-        ->middleware('signed');
+        ->name('success');
+        // ->middleware('signed'); // temp disable
     Route::get('failure/{payment}', [ChipPaymentController::class, 'failure'])
-        ->name('failure')
-        ->middleware('signed');
+        ->name('failure');
+        // ->middleware('signed'); // temp disable
     Route::get('cancel/{payment}', [ChipPaymentController::class, 'cancel'])
-        ->name('cancel')
-        ->middleware('signed');
+        ->name('cancel');
+        // ->middleware('signed'); // temp disable
     Route::post('webhook', [ChipPaymentController::class, 'webhook'])->name('webhook');
 });
 

@@ -279,6 +279,92 @@ class ChildEnrollmentResource extends Resource
                             ->columnSpan(1),
                     ])
                     ->columns(2),
+                    
+                Forms\Components\Section::make('Additional Products')
+                    ->schema([
+                        Forms\Components\Repeater::make('additional_products')
+                            ->schema([
+                                Forms\Components\Select::make('product_id')
+                                    ->label('Product')
+                                    ->searchable()
+                                    ->preload()
+                                    ->required()
+                                    ->options(function (callable $get) {
+                                        $centreId = $get('../../centre_id'); // Get centre_id from parent form
+                                        if (!$centreId) {
+                                            return [];
+                                        }
+                                        
+                                        // Get products associated with the selected centre
+                                        // Also include products that have no centres (available for all centres)
+                                        return Product::where(function ($query) use ($centreId) {
+                                            $query->whereHas('centres', function ($centreQuery) use ($centreId) {
+                                                $centreQuery->where('centres.id', $centreId);
+                                            })
+                                            // Include products with no centre associations (available for all centres)
+                                            ->orWhereDoesntHave('centres');
+                                        })->active()->pluck('name', 'id')->toArray();
+                                    })
+                                    ->placeholder(function (callable $get) {
+                                        $centreId = $get('../../centre_id');
+                                        if (!$centreId) {
+                                            return 'Select a centre first';
+                                        }
+                                        return 'Select a product';
+                                    })
+                                    ->disabled(function (callable $get): bool {
+                                        return !$get('../../centre_id');
+                                    })
+                                    ->columnSpan(2),
+                                    
+                                Forms\Components\Select::make('billed_every')
+                                    ->label('Billing Frequency')
+                                    ->options(ChildEnrollmentBilledEvery::options())
+                                    ->default(ChildEnrollmentBilledEvery::MONTHLY->value)
+                                    ->required()
+                                    ->columnSpan(1),
+                                    
+                                Forms\Components\DateTimePicker::make('date_start')
+                                    ->label('Start Date')
+                                    ->default(now())
+                                    ->columnSpan(1),
+                                    
+                                Forms\Components\DateTimePicker::make('date_end')
+                                    ->label('End Date')
+                                    ->nullable()
+                                    ->columnSpan(1),
+                                    
+                                Forms\Components\Textarea::make('notes')
+                                    ->label('Notes')
+                                    ->placeholder('Optional notes for this additional product')
+                                    ->columnSpan(3),
+                            ])
+                            ->columns(3)
+                            ->collapsible()
+                            ->collapsed()
+                            ->addActionLabel('Add Additional Product')
+                            ->reorderableWithButtons()
+                            ->defaultItems(0)
+                            ->itemLabel(function (array $state): ?string {
+                                if (!isset($state['product_id'])) {
+                                    return 'New Additional Product';
+                                }
+                                
+                                $product = Product::find($state['product_id']);
+                                if (!$product) {
+                                    return 'Additional Product';
+                                }
+                                
+                                $billingFreq = isset($state['billed_every']) 
+                                    ? ucwords(str_replace('_', ' ', $state['billed_every'])) 
+                                    : 'Monthly';
+                                    
+                                return "{$product->name} - {$billingFreq}";
+                            })
+                    ])
+                    ->collapsible()
+                    ->collapsed()
+                    ->description('Add additional products to this enrollment with their own billing frequencies'),
             ]);
     }
 
@@ -303,6 +389,46 @@ class ChildEnrollmentResource extends Resource
                     ->searchable()
                     ->sortable()
                     ->weight(FontWeight::Medium),
+                    
+                Tables\Columns\TextColumn::make('additional_products_count')
+                    ->label('Additional Products')
+                    ->getStateUsing(function (ChildEnrollment $record): string {
+                        $additionalProducts = $record->additional_products ?? [];
+                        $count = count($additionalProducts);
+                        
+                        if ($count === 0) {
+                            return 'None';
+                        }
+                        
+                        return $count . ' product' . ($count > 1 ? 's' : '');
+                    })
+                    ->badge()
+                    ->color(function (ChildEnrollment $record): string {
+                        $count = count($record->additional_products ?? []);
+                        return $count > 0 ? 'info' : 'gray';
+                    })
+                    ->tooltip(function (ChildEnrollment $record): ?string {
+                        $additionalProducts = $record->additional_products ?? [];
+                        
+                        if (empty($additionalProducts)) {
+                            return null;
+                        }
+                        
+                        $productNames = [];
+                        foreach ($additionalProducts as $item) {
+                            if (isset($item['product_id'])) {
+                                $product = Product::find($item['product_id']);
+                                if ($product) {
+                                    $billingFreq = isset($item['billed_every']) 
+                                        ? ucwords(str_replace('_', ' ', $item['billed_every'])) 
+                                        : 'Monthly';
+                                    $productNames[] = "{$product->name} ({$billingFreq})";
+                                }
+                            }
+                        }
+                        
+                        return implode(', ', $productNames);
+                    }),
                     
                 Tables\Columns\TextColumn::make('status')
                     ->badge()
@@ -416,7 +542,7 @@ class ChildEnrollmentResource extends Resource
     public static function getRelations(): array
     {
         return [
-            //
+            RelationManagers\InvoiceItemsRelationManager::class,
         ];
     }
 

@@ -321,6 +321,87 @@ class GenerateRecurringInvoicesCommand extends Command
     }
     
     /**
+     * Check if an additional product is due for invoicing on the given date.
+     *
+     * @param array $additionalProduct
+     * @param Carbon $forDate
+     * @param ChildEnrollment $enrollment
+     * @return bool
+     */
+    protected function isAdditionalProductDueForInvoicing(array $additionalProduct, Carbon $forDate, ChildEnrollment $enrollment): bool
+    {
+        // Skip one-time billing additional products
+        $billedEvery = $additionalProduct['billed_every'] ?? 'monthly';
+        if ($billedEvery === \App\Enums\ChildEnrollmentBilledEvery::ONE_TIME->value) {
+            return false;
+        }
+
+        // Get start date for additional product or fall back to enrollment start date
+        $startDate = isset($additionalProduct['date_start']) 
+            ? Carbon::parse($additionalProduct['date_start'])->startOfDay()
+            : $enrollment->date_start->startOfDay();
+        
+        $checkDate = $forDate->copy()->startOfDay();
+
+        // Check if we've passed the start date
+        if ($checkDate->lt($startDate)) {
+            return false;
+        }
+
+        // Check if additional product has ended
+        if (isset($additionalProduct['date_end']) && $additionalProduct['date_end']) {
+            $endDate = Carbon::parse($additionalProduct['date_end'])->startOfDay();
+            if ($checkDate->gt($endDate)) {
+                return false;
+            }
+        }
+        
+        // Calculate if this date matches the billing cycle
+        return $this->matchesAdditionalProductBillingCycle($additionalProduct, $forDate, $startDate);
+    }
+
+    /**
+     * Check if the given date matches the additional product's billing cycle.
+     *
+     * @param array $additionalProduct
+     * @param Carbon $forDate
+     * @param Carbon $startDate
+     * @return bool
+     */
+    protected function matchesAdditionalProductBillingCycle(array $additionalProduct, Carbon $forDate, Carbon $startDate): bool
+    {
+        $billedEvery = $additionalProduct['billed_every'] ?? 'monthly';
+        $checkDate = $forDate->copy()->startOfDay();
+        
+        switch ($billedEvery) {
+            case \App\Enums\ChildEnrollmentBilledEvery::DAILY->value:
+                return true;
+                
+            case \App\Enums\ChildEnrollmentBilledEvery::WEEKLY->value:
+                return $checkDate->dayOfWeek === $startDate->dayOfWeek &&
+                       $checkDate->diffInWeeks($startDate) >= 0;
+                       
+            case \App\Enums\ChildEnrollmentBilledEvery::MONTHLY->value:
+                $targetDay = min($startDate->day, $checkDate->daysInMonth);
+                return $checkDate->day === $targetDay &&
+                       $checkDate->diffInMonths($startDate) >= 0;
+                       
+            case \App\Enums\ChildEnrollmentBilledEvery::QUARTERLY->value:
+                return $checkDate->day === min($startDate->day, $checkDate->daysInMonth) &&
+                       $checkDate->diffInMonths($startDate) % 3 === 0 &&
+                       $checkDate->diffInMonths($startDate) >= 0;
+                       
+            case \App\Enums\ChildEnrollmentBilledEvery::YEARLY->value:
+                return $checkDate->month === $startDate->month &&
+                       $checkDate->day === min($startDate->day, $checkDate->daysInMonth) &&
+                       $checkDate->diffInYears($startDate) >= 0;
+                       
+            default:
+                return false;
+        }
+    }
+    
+    /**
      * Perform a dry run to show what would be processed.
      *
      * @param Carbon $forDate
@@ -356,20 +437,54 @@ class GenerateRecurringInvoicesCommand extends Command
         }
         
         if ($enrollments->count() > 0) {
+            $enrollmentData = [];
+            foreach ($enrollments as $enrollment) {
+                $primaryUser = $enrollment->child?->users?->first();
+                
+                // Main enrollment
+                $enrollmentData[] = [
+                    $enrollment->child->first_name . ' ' . $enrollment->child->last_name,
+                    $enrollment->product->name,
+                    $enrollment->centre->name,
+                    $primaryUser ? $primaryUser->name : 'No Parent',
+                    $enrollment->billed_every->value,
+                    $enrollment->date_start->toDateString(),
+                    $enrollment->tenant_id,
+                    'Main Product'
+                ];
+                
+                // Additional products that would be billed
+                $additionalProducts = $enrollment->additional_products ?? [];
+                foreach ($additionalProducts as $additionalProduct) {
+                    if (!isset($additionalProduct['product_id'])) {
+                        continue;
+                    }
+                    
+                    // Check if this additional product would be billed
+                    if ($this->isAdditionalProductDueForInvoicing($additionalProduct, $forDate, $enrollment)) {
+                        $product = \App\Models\Product::find($additionalProduct['product_id']);
+                        if ($product) {
+                            $billingFreq = $additionalProduct['billed_every'] ?? 'monthly';
+                            $enrollmentData[] = [
+                                $enrollment->child->first_name . ' ' . $enrollment->child->last_name,
+                                $product->name,
+                                $enrollment->centre->name,
+                                $primaryUser ? $primaryUser->name : 'No Parent',
+                                $billingFreq,
+                                isset($additionalProduct['date_start']) ? 
+                                    \Carbon\Carbon::parse($additionalProduct['date_start'])->toDateString() : 
+                                    $enrollment->date_start->toDateString(),
+                                $enrollment->tenant_id,
+                                'Additional Product'
+                            ];
+                        }
+                    }
+                }
+            }
+            
             $this->table(
-                ['Child', 'Product', 'Centre', 'Parent', 'Billing Frequency', 'Start Date', 'Tenant ID'],
-                $enrollments->map(function ($enrollment) {
-                    $primaryUser = $enrollment->child?->users?->first();
-                    return [
-                        $enrollment->child->first_name . ' ' . $enrollment->child->last_name,
-                        $enrollment->product->name,
-                        $enrollment->centre->name,
-                        $primaryUser ? $primaryUser->name : 'No Parent',
-                        $enrollment->billed_every->value,
-                        $enrollment->date_start->toDateString(),
-                        $enrollment->tenant_id,
-                    ];
-                })->toArray()
+                ['Child', 'Product', 'Centre', 'Parent', 'Billing Frequency', 'Start Date', 'Tenant ID', 'Type'],
+                $enrollmentData
             );
         }
         

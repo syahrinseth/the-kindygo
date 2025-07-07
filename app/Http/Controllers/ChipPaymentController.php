@@ -219,10 +219,14 @@ class ChipPaymentController extends Controller
             
             $payment->update($updateData);
 
-            // Update invoice status if payment is successful
+            // Update invoice and invoice items status if payment is successful
             if ($status === PaymentStatus::PAID) {
                 $invoice = $payment->invoices()->first();
                 if ($invoice) {
+                    // Update invoice items paid status
+                    $this->updateInvoiceItemsPaidStatus($invoice, $payment);
+                    
+                    // Recalculate total paid after updating invoice items
                     $totalPaid = $invoice->getTotalPaid();
                     
                     if ($totalPaid >= $invoice->total) {
@@ -230,6 +234,12 @@ class ChipPaymentController extends Controller
                             'status' => InvoiceStatus::PAID,
                         ]);
                     }
+                }
+            } elseif (in_array($status, [PaymentStatus::FAILED, PaymentStatus::CANCELLED])) {
+                // For failed or cancelled payments, ensure invoice items are not marked as paid
+                $invoice = $payment->invoices()->first();
+                if ($invoice) {
+                    $this->updateInvoiceItemsUnpaidStatus($invoice, $payment);
                 }
             }
 
@@ -241,6 +251,135 @@ class ChipPaymentController extends Controller
                 'status' => $status,
                 'error' => $e->getMessage()
             ]);
+        }
+    }
+
+    /**
+     * Update invoice items to reflect paid status when payment is successful
+     */
+    protected function updateInvoiceItemsPaidStatus($invoice, Payment $payment): void
+    {
+        try {
+            $invoiceItems = $invoice->invoiceItems;
+            $paymentAmount = $payment->amount;
+            $remainingPayment = $paymentAmount;
+
+            Log::info('Updating invoice items paid status', [
+                'invoice_id' => $invoice->id,
+                'payment_id' => $payment->id,
+                'payment_amount' => $paymentAmount,
+                'total_items' => $invoiceItems->count()
+            ]);
+
+            foreach ($invoiceItems as $item) {
+                if ($remainingPayment <= 0) {
+                    break;
+                }
+
+                $itemTotal = $item->total;
+                $currentPaidAmount = $item->paid_amount ?? 0;
+                $outstandingAmount = $itemTotal - $currentPaidAmount;
+
+                if ($outstandingAmount > 0) {
+                    $paymentForThisItem = min($remainingPayment, $outstandingAmount);
+                    $newPaidAmount = $currentPaidAmount + $paymentForThisItem;
+                    $newBalanceAmount = max(0, $itemTotal - $newPaidAmount);
+                    $isPaid = $newBalanceAmount == 0;
+
+                    $item->update([
+                        'paid_amount' => $newPaidAmount,
+                        'balance_amount' => $newBalanceAmount,
+                        'paid' => $isPaid,
+                    ]);
+
+                    $remainingPayment -= $paymentForThisItem;
+
+                    Log::info('Updated invoice item payment status', [
+                        'item_id' => $item->id,
+                        'item_total' => $itemTotal,
+                        'previous_paid' => $currentPaidAmount,
+                        'payment_applied' => $paymentForThisItem,
+                        'new_paid_amount' => $newPaidAmount,
+                        'new_balance' => $newBalanceAmount,
+                        'is_paid' => $isPaid
+                    ]);
+                }
+            }
+
+            if ($remainingPayment > 0) {
+                Log::warning('Payment amount exceeds total invoice amount', [
+                    'invoice_id' => $invoice->id,
+                    'payment_id' => $payment->id,
+                    'remaining_payment' => $remainingPayment
+                ]);
+            }
+
+        } catch (\Exception $e) {
+            Log::error('Failed to update invoice items paid status', [
+                'invoice_id' => $invoice->id,
+                'payment_id' => $payment->id,
+                'error' => $e->getMessage()
+            ]);
+            throw $e;
+        }
+    }
+
+    /**
+     * Update invoice items to reflect unpaid status when payment fails or is cancelled
+     */
+    protected function updateInvoiceItemsUnpaidStatus($invoice, Payment $payment): void
+    {
+        try {
+            $invoiceItems = $invoice->invoiceItems;
+            $paymentAmount = $payment->amount;
+
+            Log::info('Reverting invoice items paid status for failed/cancelled payment', [
+                'invoice_id' => $invoice->id,
+                'payment_id' => $payment->id,
+                'payment_amount' => $paymentAmount
+            ]);
+
+            foreach ($invoiceItems as $item) {
+                $itemTotal = $item->total;
+                $currentPaidAmount = $item->paid_amount ?? 0;
+
+                // Only revert if this payment amount was previously applied
+                if ($currentPaidAmount > 0) {
+                    $revertAmount = min($paymentAmount, $currentPaidAmount);
+                    $newPaidAmount = max(0, $currentPaidAmount - $revertAmount);
+                    $newBalanceAmount = $itemTotal - $newPaidAmount;
+                    $isPaid = $newBalanceAmount == 0;
+
+                    $item->update([
+                        'paid_amount' => $newPaidAmount,
+                        'balance_amount' => $newBalanceAmount,
+                        'paid' => $isPaid,
+                    ]);
+
+                    Log::info('Reverted invoice item payment status', [
+                        'item_id' => $item->id,
+                        'item_total' => $itemTotal,
+                        'previous_paid' => $currentPaidAmount,
+                        'reverted_amount' => $revertAmount,
+                        'new_paid_amount' => $newPaidAmount,
+                        'new_balance' => $newBalanceAmount,
+                        'is_paid' => $isPaid
+                    ]);
+
+                    $paymentAmount -= $revertAmount;
+                    if ($paymentAmount <= 0) {
+                        break;
+                    }
+                }
+            }
+
+        } catch (\Exception $e) {
+            Log::error('Failed to revert invoice items paid status', [
+                'invoice_id' => $invoice->id,
+                'payment_id' => $payment->id,
+                'error' => $e->getMessage()
+            ]);
+            throw $e;
         }
     }
 
