@@ -25,12 +25,23 @@ class ViewChildEnrollment extends ViewRecord
                 ->icon('heroicon-o-document-plus')
                 ->color('success')
                 ->action(function () {
-                    $invoiceService = app(ChildEnrollmentInvoiceService::class);
-                    $invoices = $invoiceService->generateInvoicesForEnrollment($this->record);
-                    
+                    $invoiceService = app(\App\Services\ChildEnrollmentInvoiceService::class);
+                    $enrollments = $invoiceService->getRelatedEnrollments($this->record);
+                    if (empty($enrollments)) {
+                        Notification::make()
+                            ->title('No Invoices Needed')
+                            ->body('All enrollments for this parent at this centre already have current invoices.')
+                            ->warning()
+                            ->send();
+                        return;
+                    }
+                    $invoices = $invoiceService->generateInvoicesForEnrollments($enrollments);
+
+                    $childNames = $enrollments->map(fn($e) => $e->child->full_name)->unique()->implode(', ');
+
                     Notification::make()
-                        ->title('Invoice Generated')
-                        ->body("Successfully generated {$invoices->count()} invoice(s).")
+                        ->title('Invoices Generated')
+                        ->body("Successfully generated {$invoices->count()} invoice(s) for: {$childNames}.")
                         ->success()
                         ->send();
                 })

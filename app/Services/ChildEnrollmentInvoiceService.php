@@ -75,14 +75,18 @@ class ChildEnrollmentInvoiceService
         $centreId = $group['centre_id'];
         $tenantId = $group['tenant_id'];
         $enrollments = $group['enrollments'];
+
+        // Get the earliest start date from all enrollments in the group
+        $earliestStartDate = $enrollments->min('date_start');
+        $invoiceDate = $earliestStartDate ? Carbon::parse($earliestStartDate) : now();
         
         // Create invoice for this group
         $invoice = Invoice::create([
             'tenant_id' => $tenantId,
             'centre_id' => $centreId,
             'user_id' => $parent->id,
-            'date' => now(),
-            'due_at' => now()->addDays(30), // 30 days payment terms
+            'date' => $invoiceDate,
+            'due_at' => $invoiceDate->copy()->addDays(30), // 30 days payment terms
             'status' => InvoiceStatus::DRAFT->value,
             'total_items' => 0,
             'total_discounts' => 0,
@@ -336,6 +340,93 @@ class ChildEnrollmentInvoiceService
                     $enrollment->update(['status' => ChildEnrollmentStatus::ACTIVE]);
                 }
             }
+        }
+    }
+
+    public function getRelatedEnrollments(ChildEnrollment $enrollment): Collection|null
+    {
+        // Get parent/guardian user
+        $parent = $enrollment->child->users()->first();
+        if (!$parent) {
+            return null; // No parent found, cannot generate invoices
+        }
+
+        // Find all active enrollments for the same tenant, parent, and centre
+        $groupedEnrollments = ChildEnrollment::where('tenant_id', $enrollment->tenant_id)
+            ->where('centre_id', $enrollment->centre_id)
+            ->where('status', \App\Enums\ChildEnrollmentStatus::ACTIVE)
+            ->whereHas('child.users', function ($query) use ($parent) {
+                $query->where('users.id', $parent->id);
+            })
+            ->get();
+
+        // Filter out enrollments that already have recent invoice items
+        $enrollmentsNeedingInvoice = $groupedEnrollments->filter(function ($enrollment) {
+            // Check if there's already an invoice item for the upcoming billing period
+            $nextBillingDate = $this->getNextBillingPeriodStart($enrollment);
+            // Check if invoice item already exists for this period
+            $existingItem = $enrollment->invoiceItems()
+                ->whereDate('period_start', '>=', $nextBillingDate)
+                ->exists();
+                
+            return !$existingItem;
+        });
+
+        if ($enrollmentsNeedingInvoice->isEmpty()) {
+            return null; // No enrollments need invoicing
+        }
+
+        return $enrollmentsNeedingInvoice;
+    }
+
+    private function getNextBillingPeriodStart(ChildEnrollment $enrollment): Carbon
+    {
+        $startDate = Carbon::parse($enrollment->date_start);
+        $today = now();
+        
+        // If enrollment hasn't started yet, use the start date
+        if ($today->lt($startDate)) {
+            return $startDate;
+        }
+        
+        // Calculate next billing period based on frequency
+        switch ($enrollment->billed_every) {
+            case \App\Enums\ChildEnrollmentBilledEvery::YEARLY:
+                // For yearly billing, find the next year boundary from start date
+                $nextDate = $startDate->copy();
+                while ($nextDate->lte($today)) {
+                    $nextDate->addYear();
+                }
+                return $nextDate->startOfYear();
+
+            case \App\Enums\ChildEnrollmentBilledEvery::QUARTERLY:
+                // For quarterly billing, find the next quarter boundary from start date
+                $nextDate = $startDate->copy();
+                while ($nextDate->lte($today)) {
+                    $nextDate->addMonths(3);
+                }
+                return $nextDate->startOfQuarter();
+
+            case \App\Enums\ChildEnrollmentBilledEvery::MONTHLY:
+                // For monthly billing, find the next month boundary from start date
+                $nextDate = $startDate->copy();
+                while ($nextDate->lte($today)) {
+                    $nextDate->addMonth();
+                }
+                return $nextDate->startOfMonth();
+                
+            case \App\Enums\ChildEnrollmentBilledEvery::WEEKLY:
+                $nextDate = $startDate->copy();
+                while ($nextDate->lte($today)) {
+                    $nextDate->addWeek();
+                }
+                return $nextDate;
+                
+            case \App\Enums\ChildEnrollmentBilledEvery::DAILY:
+                return $today->copy()->addDay();
+                
+            default:
+                return $startDate; // For one-time billing, use start date
         }
     }
 }

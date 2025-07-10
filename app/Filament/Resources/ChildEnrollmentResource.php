@@ -548,11 +548,22 @@ class ChildEnrollmentResource extends Resource
                         ->color('success')
                         ->action(function (ChildEnrollment $record) {
                             $invoiceService = app(\App\Services\ChildEnrollmentInvoiceService::class);
-                            $invoices = $invoiceService->generateInvoicesForEnrollment($record);
-                            
+                            $enrollments = $invoiceService->getRelatedEnrollments($record);
+                            if (empty($enrollments)) {
+                                Notification::make()
+                                    ->title('No Invoices Needed')
+                                    ->body('All enrollments for this parent at this centre already have current invoices.')
+                                    ->warning()
+                                    ->send();
+                                return;
+                            }
+                            $invoices = $invoiceService->generateInvoicesForEnrollments($enrollments);
+
+                            $childNames = $enrollments->map(fn($e) => $e->child->full_name)->unique()->implode(', ');
+
                             Notification::make()
                                 ->title('Invoices Generated')
-                                ->body("Successfully generated {$invoices->count()} invoice(s).")
+                                ->body("Successfully generated {$invoices->count()} invoice(s) for: {$childNames}.")
                                 ->success()
                                 ->send();
                         })
