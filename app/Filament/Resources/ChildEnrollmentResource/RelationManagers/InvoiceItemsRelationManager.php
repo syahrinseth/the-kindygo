@@ -77,18 +77,20 @@ class InvoiceItemsRelationManager extends RelationManager
                     ])
                     ->columns(2),
 
-                Forms\Components\Section::make('Pivot Data')
+                Forms\Components\Section::make('Period Information')
                     ->schema([
-                        Forms\Components\TextInput::make('pivot_quantity')
-                            ->label('Enrollment Quantity')
-                            ->numeric()
-                            ->default(1)
+                        Forms\Components\DatePicker::make('period_start')
+                            ->label('Period Start')
                             ->columnSpan(1),
 
-                        Forms\Components\Textarea::make('pivot_notes')
-                            ->label('Enrollment Notes')
-                            ->placeholder('Notes specific to this enrollment')
+                        Forms\Components\DatePicker::make('period_end')
+                            ->label('Period End')
                             ->columnSpan(1),
+
+                        Forms\Components\Textarea::make('description')
+                            ->label('Description')
+                            ->placeholder('Additional details about this invoice item')
+                            ->columnSpan(2),
                     ])
                     ->columns(2),
             ]);
@@ -103,7 +105,7 @@ class InvoiceItemsRelationManager extends RelationManager
                     ->label('Invoice #')
                     ->url(fn ($record): string => 
                         route('filament.app.resources.invoices.view', [
-                            'tenant' => $record->invoice->tenant_id ?? 'default',
+                            'tenant' => filament()->getTenant()->id ?? 'default',
                             'record' => $record->invoice_id
                         ])
                     )
@@ -156,22 +158,28 @@ class InvoiceItemsRelationManager extends RelationManager
                     ->date()
                     ->sortable(),
 
-                Tables\Columns\TextColumn::make('pivot.notes')
-                    ->label('Enrollment Notes')
+                Tables\Columns\TextColumn::make('period_start')
+                    ->label('Period Start')
+                    ->date()
+                    ->sortable()
+                    ->toggleable(),
+
+                Tables\Columns\TextColumn::make('period_end')
+                    ->label('Period End')
+                    ->date()
+                    ->sortable()
+                    ->toggleable(),
+
+                Tables\Columns\TextColumn::make('description')
+                    ->label('Description')
                     ->limit(30)
                     ->placeholder('-')
                     ->toggleable(isToggledHiddenByDefault: true),
 
-                Tables\Columns\TextColumn::make('invoice_items.created_at')
-                    ->label('Item Created')
+                Tables\Columns\TextColumn::make('created_at')
+                    ->label('Created')
                     ->dateTime()
                     ->sortable()
-                    ->toggleable(isToggledHiddenByDefault: true),
-
-                Tables\Columns\TextColumn::make('pivot.created_at')
-                    ->label('Added to Enrollment')
-                    ->dateTime()
-                    ->sortable(false)
                     ->toggleable(isToggledHiddenByDefault: true),
             ])
             ->filters([
@@ -228,7 +236,7 @@ class InvoiceItemsRelationManager extends RelationManager
                         ->color('primary')
                         ->url(fn ($record): string => 
                             route('filament.app.resources.invoices.view', [
-                                'tenant' => $record->invoice->tenant,
+                                'tenant' => filament()->getTenant(),
                                 'record' => $record->invoice_id
                             ])
                         )
@@ -243,7 +251,7 @@ class InvoiceItemsRelationManager extends RelationManager
             ->bulkActions([
                 // Remove bulk actions for safety
             ])
-            ->defaultSort('child_enrollment_invoice_item.created_at', 'desc')
+            ->defaultSort('created_at', 'desc')
             ->emptyStateHeading('No Invoice Items')
             ->emptyStateDescription('Invoice items will appear here once billing is generated for this enrollment.')
             ->emptyStateIcon('heroicon-o-document-text');

@@ -35,4 +35,16 @@ enum InvoiceStatus: string
             self::CANCELLED => 'Cancelled',
         };
     }
+
+    /**
+     * Get all cases as an array for select inputs.
+     *
+     * @return array<string, string>
+     */
+    public static function options(): array
+    {
+        return collect(self::cases())->mapWithKeys(function ($status) {
+            return [$status->value => $status->label()];
+        })->all();
+    }
 }

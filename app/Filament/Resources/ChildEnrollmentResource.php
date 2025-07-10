@@ -21,6 +21,7 @@ use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\SoftDeletingScope;
 use Filament\Tables\Filters\SelectFilter;
 use Filament\Support\Enums\FontWeight;
+use Filament\Notifications\Notification;
 use Illuminate\Support\Facades\Auth;
 
 class ChildEnrollmentResource extends Resource
@@ -57,6 +58,12 @@ class ChildEnrollmentResource extends Resource
                             ->afterStateUpdated(function (callable $set) {
                                 $set('centre_id', null); // Reset centre when child changes
                             })
+                            ->disabled(fn (string $operation): bool => $operation === 'edit')
+                            ->helperText(fn (string $operation): ?string => 
+                                $operation === 'edit' 
+                                    ? 'Child cannot be changed after enrollment is created. Create a new enrollment if needed.' 
+                                    : null
+                            )
                             ->columnSpan(1),
                             
                         Forms\Components\Select::make('centre_id')
@@ -98,7 +105,11 @@ class ChildEnrollmentResource extends Resource
                                 
                                 return 'Select a centre';
                             })
-                            ->helperText(function (callable $get) {
+                            ->helperText(function (callable $get, string $operation) {
+                                if ($operation === 'edit') {
+                                    return 'Centre cannot be changed after enrollment is created. Create a new enrollment if needed.';
+                                }
+                                
                                 $childId = $get('child_id');
                                 if (!$childId) {
                                     return 'Only centres associated with the selected child will be shown';
@@ -111,7 +122,11 @@ class ChildEnrollmentResource extends Resource
                                 
                                 return 'Only centres associated with the selected child are shown';
                             })
-                            ->disabled(function (callable $get): bool {
+                            ->disabled(function (callable $get, string $operation): bool {
+                                if ($operation === 'edit') {
+                                    return true;
+                                }
+                                
                                 if (!$get('child_id')) {
                                     return true;
                                 }
@@ -162,14 +177,20 @@ class ChildEnrollmentResource extends Resource
                                 }
                                 return 'Select a product';
                             })
-                            ->helperText(function (callable $get) {
+                            ->helperText(function (callable $get, string $operation) {
+                                if ($operation === 'edit') {
+                                    return 'Product cannot be changed after enrollment is created. Create a new enrollment if needed.';
+                                }
+                                
                                 $centreId = $get('centre_id');
                                 if (!$centreId) {
                                     return 'Products will be filtered based on the selected centre';
                                 }
                                 return 'Showing products available for the selected centre and products available for all centres';
                             })
-                            ->disabled(fn (callable $get): bool => !$get('centre_id'))
+                            ->disabled(function (callable $get, string $operation): bool {
+                                return $operation === 'edit' || !$get('centre_id');
+                            })
                             ->rules([
                                 function (callable $get) {
                                     return function (string $attribute, $value, \Closure $fail) use ($get) {
@@ -521,8 +542,24 @@ class ChildEnrollmentResource extends Resource
                         ->visible(fn (ChildEnrollment $record): bool => Auth::user()->can('view', $record)),
                     Tables\Actions\EditAction::make()
                         ->visible(fn (ChildEnrollment $record): bool => Auth::user()->can('update', $record)),
-                    Tables\Actions\DeleteAction::make()
-                        ->visible(fn (ChildEnrollment $record): bool => Auth::user()->can('delete', $record)),
+                    Tables\Actions\Action::make('generate_invoices')
+                        ->label('Generate Invoices')
+                        ->icon('heroicon-o-document-plus')
+                        ->color('success')
+                        ->action(function (ChildEnrollment $record) {
+                            $invoiceService = app(\App\Services\ChildEnrollmentInvoiceService::class);
+                            $invoices = $invoiceService->generateInvoicesForEnrollment($record);
+                            
+                            Notification::make()
+                                ->title('Invoices Generated')
+                                ->body("Successfully generated {$invoices->count()} invoice(s).")
+                                ->success()
+                                ->send();
+                        })
+                        ->requiresConfirmation()
+                        ->visible(fn (ChildEnrollment $record): bool => Auth::user()->can('update', $record)),
+                    // Tables\Actions\DeleteAction::make()
+                    //     ->visible(fn (ChildEnrollment $record): bool => Auth::user()->can('delete', $record)), // temp disabled
                 ])
                     ->label('Actions')
                     ->icon('heroicon-m-ellipsis-vertical')
@@ -532,8 +569,8 @@ class ChildEnrollmentResource extends Resource
             ])
             ->bulkActions([
                 Tables\Actions\BulkActionGroup::make([
-                    Tables\Actions\DeleteBulkAction::make()
-                        ->visible(fn (): bool => Auth::user()->can('delete', [Auth::user(), ChildEnrollment::class])),
+                    // Tables\Actions\DeleteBulkAction::make()
+                    //     ->visible(fn (): bool => Auth::user()->can('delete', [Auth::user(), ChildEnrollment::class])), // temp disabled
                 ]),
             ])
             ->defaultSort('created_at', 'desc');

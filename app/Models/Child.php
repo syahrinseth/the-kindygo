@@ -79,6 +79,16 @@ class Child extends Model implements HasMedia
         return "{$this->first_name} {$this->last_name}";
     }
 
+    /**
+     * Get the name of the child (alias for full_name).
+     *
+     * @return string
+     */
+    public function getNameAttribute(): string
+    {
+        return $this->getFullNameAttribute();
+    }
+
     public function tenants(): BelongsToMany
     {
         return $this->belongsToMany(Tenant::class, 'tenant_child')

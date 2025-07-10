@@ -98,15 +98,25 @@ class ChildEnrollment extends Model
     }
 
     /**
-     * Get the invoice items associated with this enrollment through a pivot table.
+     * Get the invoice items associated with this enrollment.
      *
-     * @return \Illuminate\Database\Eloquent\Relations\BelongsToMany
+     * @return \Illuminate\Database\Eloquent\Relations\HasMany
      */
-    public function invoiceItems(): BelongsToMany
+    public function invoiceItems()
     {
-        return $this->belongsToMany(InvoiceItem::class, 'child_enrollment_invoice_item', 'child_enrollment_id', 'invoice_item_id')
-                    ->withPivot(['quantity', 'notes'])
-                    ->withTimestamps();
+        return $this->hasMany(InvoiceItem::class);
+    }
+
+    /**
+     * Get the invoices that have items for this enrollment.
+     *
+     * @return \Illuminate\Database\Eloquent\Collection
+     */
+    public function getInvoices()
+    {
+        return Invoice::whereIn('id', 
+            $this->invoiceItems()->pluck('invoice_id')
+        )->get();
     }
 
     /**

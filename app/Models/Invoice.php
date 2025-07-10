@@ -251,6 +251,40 @@ class Invoice extends Model
     }
 
     /**
+     * Get the child that owns the invoice.
+     *
+     * @return \Illuminate\Database\Eloquent\Relations\BelongsTo
+     */
+    public function child(): BelongsTo
+    {
+        return $this->belongsTo(Child::class);
+    }
+
+    /**
+     * Get all child enrollments related to this invoice through invoice items.
+     *
+     * @return \Illuminate\Database\Eloquent\Collection
+     */
+    public function getChildEnrollments()
+    {
+        return ChildEnrollment::whereIn('id', 
+            $this->invoiceItems()->whereNotNull('child_enrollment_id')->pluck('child_enrollment_id')
+        )->get();
+    }
+
+    /**
+     * Get all children related to this invoice through invoice items.
+     *
+     * @return \Illuminate\Database\Eloquent\Collection
+     */
+    public function getChildren()
+    {
+        return Child::whereIn('id', 
+            $this->invoiceItems()->whereNotNull('child_id')->pluck('child_id')
+        )->get();
+    }
+
+    /**
      * Check if the invoice is paid.
      *
      * @return bool
@@ -436,6 +470,50 @@ class Invoice extends Model
     public function invoiceItems()
     {
         return $this->hasMany(InvoiceItem::class);
+    }
+
+    /**
+     * Alias for invoiceItems relationship for convenience.
+     *
+     * @return \Illuminate\Database\Eloquent\Relations\HasMany
+     */
+    public function items()
+    {
+        return $this->invoiceItems();
+    }
+
+    /**
+     * Get all child enrollments associated with this invoice via invoice items.
+     *
+     * @return \Illuminate\Database\Eloquent\Relations\HasManyThrough
+     */
+    public function childEnrollments()
+    {
+        return $this->hasManyThrough(
+            ChildEnrollment::class,
+            InvoiceItem::class,
+            'invoice_id',
+            'id',
+            'id',
+            'child_enrollment_id'
+        )->whereNotNull('invoice_items.child_enrollment_id');
+    }
+
+    /**
+     * Get all children associated with this invoice via invoice items.
+     *
+     * @return \Illuminate\Database\Eloquent\Relations\HasManyThrough
+     */
+    public function children()
+    {
+        return $this->hasManyThrough(
+            Child::class,
+            InvoiceItem::class,
+            'invoice_id',
+            'id',
+            'id',
+            'child_id'
+        )->whereNotNull('invoice_items.child_id');
     }
     
     /**

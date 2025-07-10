@@ -22,7 +22,9 @@ class InvoiceItem extends Model
         'invoice_id',
         'product_id',
         'child_id',
+        'child_enrollment_id',
         'name',
+        'description',
         'price',
         'quantity',
         'discount',
@@ -32,6 +34,8 @@ class InvoiceItem extends Model
         'balance_amount',
         'paid',
         'effective_date',
+        'period_start',
+        'period_end',
     ];
 
     /**
@@ -48,6 +52,9 @@ class InvoiceItem extends Model
         'paid_amount' => 'integer',
         'balance_amount' => 'integer',
         'paid' => 'boolean',
+        'effective_date' => 'datetime',
+        'period_start' => 'datetime',
+        'period_end' => 'datetime',
         'effective_date' => 'date',
     ];
 
@@ -123,6 +130,16 @@ class InvoiceItem extends Model
     public function child(): BelongsTo
     {
         return $this->belongsTo(Child::class);
+    }
+
+    /**
+     * Get the child enrollment associated with the invoice item.
+     *
+     * @return \Illuminate\Database\Eloquent\Relations\BelongsTo
+     */
+    public function childEnrollment(): BelongsTo
+    {
+        return $this->belongsTo(ChildEnrollment::class);
     }
 
     /**

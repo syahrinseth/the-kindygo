@@ -4,10 +4,13 @@ namespace App\Filament\Resources\ChildEnrollmentResource\Pages;
 
 use App\Filament\Resources\ChildEnrollmentResource;
 use App\Models\Product;
+use App\Services\ChildEnrollmentInvoiceService;
 use Filament\Actions;
 use Filament\Resources\Pages\ViewRecord;
 use Filament\Infolists;
 use Filament\Infolists\Infolist;
+use Filament\Notifications\Notification;
+use Illuminate\Support\Facades\Auth;
 
 class ViewChildEnrollment extends ViewRecord
 {
@@ -17,7 +20,26 @@ class ViewChildEnrollment extends ViewRecord
     {
         return [
             Actions\EditAction::make(),
-            Actions\DeleteAction::make(),
+            Actions\Action::make('generate_invoices')
+                ->label('Generate Invoice')
+                ->icon('heroicon-o-document-plus')
+                ->color('success')
+                ->action(function () {
+                    $invoiceService = app(ChildEnrollmentInvoiceService::class);
+                    $invoices = $invoiceService->generateInvoicesForEnrollment($this->record);
+                    
+                    Notification::make()
+                        ->title('Invoice Generated')
+                        ->body("Successfully generated {$invoices->count()} invoice(s).")
+                        ->success()
+                        ->send();
+                })
+                ->requiresConfirmation()
+                ->modalHeading('Generate Invoice')
+                ->modalDescription('This will create a new invoice for this enrollment. Are you sure you want to proceed?')
+                ->modalSubmitActionLabel('Generate Invoice')
+                ->visible(fn (): bool => Auth::user()->can('update', $this->record)),
+            // Actions\DeleteAction::make(), // temp disabled
         ];
     }
     
