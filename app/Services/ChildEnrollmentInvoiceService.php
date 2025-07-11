@@ -87,7 +87,7 @@ class ChildEnrollmentInvoiceService
             'user_id' => $parent->id,
             'date' => $invoiceDate,
             'due_at' => $invoiceDate->copy()->addDays(30), // 30 days payment terms
-            'status' => InvoiceStatus::DRAFT->value,
+            'status' => InvoiceStatus::PENDING->value,
             'total_items' => 0,
             'total_discounts' => 0,
             'total_amount' => 0,
@@ -168,12 +168,14 @@ class ChildEnrollmentInvoiceService
         ?string $notes = null
     ): void {
         $currentDate = $dateStart->copy();
-        $endDate = $dateEnd ?? Carbon::now()->addYear(); // Default to 1 year if no end date
+        // Use enrollment end date if provided, otherwise default to 1 year
+        $endDate = $dateEnd ?? Carbon::now()->addYear();
         $invoiceDate = $invoice->date;
         $itemsCreated = 0;
         
         // Create items for billing periods that should be billed now
-        while ($currentDate->lte($endDate) && $itemsCreated < 12) { // Limit to 12 periods max
+        while ($currentDate->lte($endDate) && $itemsCreated < 12) // Limit to 12 periods max
+        {
             $periodEnd = $this->calculatePeriodEnd($currentDate, $billedEvery);
             
             // Ensure period end doesn't exceed enrollment end date
@@ -208,8 +210,8 @@ class ChildEnrollmentInvoiceService
             $currentDate = $this->getNextBillingDate($currentDate, $billedEvery);
         }
         
-        // If no items were created, create at least one for the current period
-        if ($itemsCreated === 0) {
+        // If no items were created and enrollment hasn't ended, create at least one for the current period
+        if ($itemsCreated === 0 && (!$dateEnd || $dateStart->lte($dateEnd))) {
             $periodEnd = $this->calculatePeriodEnd($dateStart, $billedEvery);
             if ($dateEnd && $periodEnd->gt($dateEnd)) {
                 $periodEnd = $dateEnd->copy();
@@ -360,13 +362,22 @@ class ChildEnrollmentInvoiceService
             })
             ->get();
 
-        // Filter out enrollments that already have recent invoice items
+        // Filter out enrollments that have ended or don't need invoicing
         $enrollmentsNeedingInvoice = $groupedEnrollments->filter(function ($enrollment) {
+            // Check if enrollment has ended
+            if ($enrollment->date_end && Carbon::parse($enrollment->date_end)->lt(Carbon::now())) {
+                return false;
+            }
+
             // Check if there's already an invoice item for the upcoming billing period
             $nextBillingDate = $this->getNextBillingPeriodStart($enrollment);
+            if (!$nextBillingDate) {
+                return false;
+            }
+
             // Check if invoice item already exists for this period
             $existingItem = $enrollment->invoiceItems()
-                ->whereDate('period_start', '>=', $nextBillingDate)
+                ->whereDate('period_start', '>=', $nextBillingDate->toDateString())
                 ->exists();
                 
             return !$existingItem;
@@ -379,54 +390,134 @@ class ChildEnrollmentInvoiceService
         return $enrollmentsNeedingInvoice;
     }
 
-    private function getNextBillingPeriodStart(ChildEnrollment $enrollment): Carbon
+    public function getNextBillingPeriodStart(ChildEnrollment $enrollment): ?Carbon
     {
         $startDate = Carbon::parse($enrollment->date_start);
         $today = now();
+        $endDate = $enrollment->date_end ? Carbon::parse($enrollment->date_end) : null;
         
         // If enrollment hasn't started yet, use the start date
         if ($today->lt($startDate)) {
+            // But only if enrollment hasn't ended before it started
+            if ($endDate && $startDate->gt($endDate)) {
+                return null;
+            }
             return $startDate;
+        }
+
+        // For one-time billing, return start date only if within enrollment period
+        if ($enrollment->billed_every === ChildEnrollmentBilledEvery::ONE_TIME) {
+            // Check if already billed
+            $existingItem = $enrollment->invoiceItems()->first();
+            if ($existingItem) {
+                return null;
+            }
+            // Only return start date if enrollment hasn't ended
+            return (!$endDate || $startDate->lte($endDate)) ? $startDate : null;
         }
         
         // Calculate next billing period based on frequency
-        switch ($enrollment->billed_every) {
-            case \App\Enums\ChildEnrollmentBilledEvery::YEARLY:
-                // For yearly billing, find the next year boundary from start date
-                $nextDate = $startDate->copy();
-                while ($nextDate->lte($today)) {
-                    $nextDate->addYear();
-                }
-                return $nextDate->startOfYear();
+        $nextDate = match ($enrollment->billed_every) {
+            ChildEnrollmentBilledEvery::YEARLY => $this->getNextYearlyBillingDate($startDate, $today),
+            ChildEnrollmentBilledEvery::QUARTERLY => $this->getNextQuarterlyBillingDate($startDate, $today),
+            ChildEnrollmentBilledEvery::MONTHLY => $this->getNextMonthlyBillingDate($startDate, $today),
+            ChildEnrollmentBilledEvery::WEEKLY => $this->getNextWeeklyBillingDate($startDate, $today),
+            ChildEnrollmentBilledEvery::DAILY => $today->copy()->addDay(),
+            default => null,
+        };
 
-            case \App\Enums\ChildEnrollmentBilledEvery::QUARTERLY:
-                // For quarterly billing, find the next quarter boundary from start date
-                $nextDate = $startDate->copy();
-                while ($nextDate->lte($today)) {
-                    $nextDate->addMonths(3);
-                }
-                return $nextDate->startOfQuarter();
-
-            case \App\Enums\ChildEnrollmentBilledEvery::MONTHLY:
-                // For monthly billing, find the next month boundary from start date
-                $nextDate = $startDate->copy();
-                while ($nextDate->lte($today)) {
-                    $nextDate->addMonth();
-                }
-                return $nextDate->startOfMonth();
-                
-            case \App\Enums\ChildEnrollmentBilledEvery::WEEKLY:
-                $nextDate = $startDate->copy();
-                while ($nextDate->lte($today)) {
-                    $nextDate->addWeek();
-                }
-                return $nextDate;
-                
-            case \App\Enums\ChildEnrollmentBilledEvery::DAILY:
-                return $today->copy()->addDay();
-                
-            default:
-                return $startDate; // For one-time billing, use start date
+        // Don't return billing dates that are after the enrollment end date
+        if ($nextDate && $endDate && $nextDate->gt($endDate)) {
+            return null;
         }
+        
+        return $nextDate;
+    }
+
+    // Add these new helper methods for consistency
+    private function getNextYearlyBillingDate(Carbon $startDate, Carbon $today): Carbon
+    {
+        $nextDate = $startDate->copy();
+        while ($nextDate->lte($today)) {
+            $nextDate->addYear();
+        }
+        return $nextDate;
+    }
+
+    private function getNextQuarterlyBillingDate(Carbon $startDate, Carbon $today): Carbon
+    {
+        $nextDate = $startDate->copy();
+        while ($nextDate->lte($today)) {
+            $nextDate->addMonths(3);
+        }
+        return $nextDate;
+    }
+
+    private function getNextMonthlyBillingDate(Carbon $startDate, Carbon $today): Carbon
+    {
+        $nextDate = $startDate->copy();
+        while ($nextDate->lte($today)) {
+            $nextDate->addMonth();
+        }
+        return $nextDate;
+    }
+
+    private function getNextWeeklyBillingDate(Carbon $startDate, Carbon $today): Carbon
+    {
+        $nextDate = $startDate->copy();
+        while ($nextDate->lte($today)) {
+            $nextDate->addWeek();
+        }
+        return $nextDate;
+    }
+    
+    /**
+     * Check if an enrollment needs invoicing based on the days-ahead parameter
+     */
+    public function shouldGenerateInvoices(ChildEnrollment $enrollment, int $daysAhead): bool
+    {
+        // Get parent/guardian - skip if no parent found
+        $parent = $enrollment->child->users()->first();
+        if (!$parent) {
+            return false;
+        }
+
+        // Check if enrollment has ended
+        if ($enrollment->date_end && Carbon::parse($enrollment->date_end)->lt(Carbon::now())) {
+            return false;
+        }
+        
+        // Get the next billing period start date
+        $nextBillingPeriodStart = $this->getNextBillingPeriodStart($enrollment);
+        
+        if (!$nextBillingPeriodStart) {
+            return false;
+        }
+
+        // Don't generate invoices for periods that start after the enrollment ends
+        if ($enrollment->date_end && $nextBillingPeriodStart->gt(Carbon::parse($enrollment->date_end))) {
+            return false;
+        }
+        
+        // Check if we should bill this period now (within days ahead)
+        $billUntilDate = Carbon::now()->addDays($daysAhead);
+        $shouldBill = $nextBillingPeriodStart->lte($billUntilDate);
+        
+        if (!$shouldBill) {
+            return false;
+        }
+        
+        // Check if invoice item already exists for this billing period
+        return !$this->hasExistingInvoiceItemForPeriod($enrollment, $nextBillingPeriodStart);
+    }
+
+    /**
+     * Check if an invoice item already exists for a specific billing period
+     */
+    public function hasExistingInvoiceItemForPeriod(ChildEnrollment $enrollment, Carbon $periodStart): bool
+    {
+        return $enrollment->invoiceItems()
+            ->whereDate('period_start', $periodStart->toDateString())
+            ->exists();
     }
 }

@@ -14,7 +14,8 @@ class GenerateScheduledInvoices extends Command
     protected $signature = 'invoices:generate-scheduled
                           {--days-ahead=7 : How many days ahead to generate invoices}
                           {--enrollment-id= : Generate for specific enrollment ID}
-                          {--tenant-id= : Generate for specific tenant ID}';
+                          {--tenant-id= : Generate for specific tenant ID}
+                          {--dry-run : Show what invoices would be generated without creating them}';
 
     protected $description = 'Generate scheduled invoices for child enrollments';
 
@@ -23,10 +24,23 @@ class GenerateScheduledInvoices extends Command
         $daysAhead = (int) $this->option('days-ahead');
         $enrollmentId = $this->option('enrollment-id');
         $tenantId = $this->option('tenant-id');
+        $dryRun = $this->option('dry-run');
+        
+        if ($dryRun) {
+            $this->info('🔍 DRY RUN MODE: No invoices will be created');
+        }
         
         $this->info('Starting invoice generation...');
         
-        $query = ChildEnrollment::where('status', ChildEnrollmentStatus::ACTIVE)
+        // Include enrollments that may not be ACTIVE yet but need to be activated when invoiced
+        $allowedStatuses = [
+            ChildEnrollmentStatus::ACTIVE,
+            ChildEnrollmentStatus::DRAFT,
+            ChildEnrollmentStatus::PENDING,
+            ChildEnrollmentStatus::INACTIVE
+        ];
+        
+        $query = ChildEnrollment::whereIn('status', $allowedStatuses)
             ->with(['child.users', 'centre', 'product']);
         
         if ($enrollmentId) {
@@ -39,9 +53,9 @@ class GenerateScheduledInvoices extends Command
         
         $enrollments = $query->get();
         
-        // Filter enrollments that need invoicing
-        $enrollmentsNeedingInvoices = $enrollments->filter(function ($enrollment) use ($daysAhead) {
-            return $this->shouldGenerateInvoices($enrollment, $daysAhead);
+        // Filter enrollments that need invoicing using service logic
+        $enrollmentsNeedingInvoices = $enrollments->filter(function ($enrollment) use ($daysAhead, $invoiceService) {
+            return $invoiceService->shouldGenerateInvoices($enrollment, $daysAhead);
         });
         
         if ($enrollmentsNeedingInvoices->isEmpty()) {
@@ -50,6 +64,34 @@ class GenerateScheduledInvoices extends Command
         }
         
         $this->info("Found {$enrollmentsNeedingInvoices->count()} enrollment(s) that need invoicing...");
+        
+        if ($dryRun) {
+            $this->info('📋 DRY RUN - Showing what would be generated:');
+            
+            // Show what would be generated without actually creating invoices
+            $groupedEnrollments = $this->groupEnrollmentsByParentAndCentre($enrollmentsNeedingInvoices);
+            $invoiceCount = 0;
+            
+            foreach ($groupedEnrollments as $group) {
+                $invoiceCount++;
+                $parent = $group['parent'];
+                $centre = $group['centre'];
+                $children = $group['enrollments']->map(function ($enrollment) {
+                    return $enrollment->child->full_name;
+                })->join(', ');
+                
+                $this->info("  - Would create Invoice #{$invoiceCount} for {$parent->name} at {$centre->name} (Children: {$children})");
+                
+                // Show billing details for each enrollment
+                foreach ($group['enrollments'] as $enrollment) {
+                    $nextBillingDate = $invoiceService->getNextBillingPeriodStart($enrollment);
+                    $this->line("    • {$enrollment->child->full_name}: {$enrollment->product->name} (Next billing: {$nextBillingDate->format('M j, Y')})");
+                }
+            }
+            
+            $this->info("📊 Total invoices that would be generated: {$invoiceCount}");
+            return 0;
+        }
         
         try {
             $invoices = $invoiceService->generateInvoicesForEnrollments($enrollmentsNeedingInvoices);
@@ -75,44 +117,32 @@ class GenerateScheduledInvoices extends Command
         return 0;
     }
     
-    private function shouldGenerateInvoices(ChildEnrollment $enrollment, int $daysAhead): bool
+    private function groupEnrollmentsByParentAndCentre($enrollments): array
     {
-        // Check if we need to generate invoices based on the next billing date
-        $nextBillingDate = $this->getNextBillingDate($enrollment);
+        $grouped = [];
         
-        if (!$nextBillingDate) {
-            return false;
+        foreach ($enrollments as $enrollment) {
+            // Get the parent/guardian user
+            $parent = $enrollment->child->users()->first();
+            if (!$parent) {
+                continue; // Skip if no parent found
+            }
+            
+            // Group by tenant_id + user_id + centre_id
+            $groupKey = $enrollment->tenant_id . '_' . $parent->id . '_' . $enrollment->centre_id;
+            
+            if (!isset($grouped[$groupKey])) {
+                $grouped[$groupKey] = [
+                    'parent' => $parent,
+                    'centre' => $enrollment->centre,
+                    'tenant_id' => $enrollment->tenant_id,
+                    'enrollments' => collect(),
+                ];
+            }
+            
+            $grouped[$groupKey]['enrollments']->push($enrollment);
         }
         
-        $generateFromDate = Carbon::now()->addDays($daysAhead);
-        
-        return $nextBillingDate->lte($generateFromDate);
-    }
-    
-    private function getNextBillingDate(ChildEnrollment $enrollment): ?Carbon
-    {
-        // Check if enrollment is one-time billing
-        if ($enrollment->billed_every === ChildEnrollmentBilledEvery::ONE_TIME) {
-            // Check if invoice item already exists for this enrollment
-            $existingItem = $enrollment->invoiceItems()->first();
-            return $existingItem ? null : $enrollment->date_start;
-        }
-        
-        // For recurring billing, find the last invoice item and calculate next billing date
-        $lastItem = $enrollment->invoiceItems()->orderBy('period_start', 'desc')->first();
-        
-        if (!$lastItem) {
-            return $enrollment->date_start;
-        }
-        
-        // Calculate next billing date based on billing frequency
-        return match ($enrollment->billed_every) {
-            ChildEnrollmentBilledEvery::DAILY => $lastItem->period_start->addDay(),
-            ChildEnrollmentBilledEvery::WEEKLY => $lastItem->period_start->addWeek(),
-            ChildEnrollmentBilledEvery::MONTHLY => $lastItem->period_start->addMonth(),
-            ChildEnrollmentBilledEvery::QUARTERLY => $lastItem->period_start->addMonths(3),
-            ChildEnrollmentBilledEvery::YEARLY => $lastItem->period_start->addYear(),
-            default => null,
-        };
+        return $grouped;
     }
 }
