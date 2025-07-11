@@ -127,7 +127,7 @@ class InvoiceResource extends Resource
                                     ->required()
                                     ->native(false)
                                     ->displayFormat('M d, Y')
-                                    ->default(now()->addDays(30)),
+                                    ->default(now()->addDays(7)),
                             ]),
                             
                         Grid::make(2)

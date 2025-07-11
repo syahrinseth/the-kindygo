@@ -67,7 +67,7 @@ class CreateTestChipPayment extends Command
                 'user_id' => $user->id,
                 'invoice_number' => 'TEST-' . time(),
                 'date' => now(),
-                'due_at' => now()->addDays(30),
+                'due_at' => now()->addDays(7),
                 'status' => InvoiceStatus::PENDING,
                 'total_amount' => 10000, // RM 100.00
                 'total_discounts' => 0,

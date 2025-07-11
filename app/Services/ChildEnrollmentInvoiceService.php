@@ -86,7 +86,7 @@ class ChildEnrollmentInvoiceService
             'centre_id' => $centreId,
             'user_id' => $parent->id,
             'date' => $invoiceDate,
-            'due_at' => $invoiceDate->copy()->addDays(30), // 30 days payment terms
+            'due_at' => $invoiceDate->copy()->addDays(7), // 7 days payment terms
             'status' => InvoiceStatus::PENDING->value,
             'total_items' => 0,
             'total_discounts' => 0,
