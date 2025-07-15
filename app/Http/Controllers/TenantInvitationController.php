@@ -35,7 +35,7 @@ class TenantInvitationController extends Controller
             }
 
             // New user needs to register
-            return redirect()->route('register', ['redirect' => $invitationUrl])
+            return redirect()->route('tenant.register.form', ['tenantSlug' => $invitation->tenant->slug, 'redirect' => $invitationUrl])
                 ->with('info', 'Please register to accept the invitation.')
                 ->with('invitation_token', $token)
                 ->withInput(['email' => $invitation->email]);

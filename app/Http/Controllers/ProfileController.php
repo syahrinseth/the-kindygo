@@ -38,12 +38,25 @@ class ProfileController extends Controller
             'city' => 'required|string|max:100',
             'postal_code' => 'required|string|max:10',
             'state_code' => 'required|string|max:10',
+            'photo' => 'required|file|image|mimes:jpeg,png,webp|max:5120',
+            'mykad' => 'required|file|mimes:jpeg,png,webp,pdf|max:10240',
+            'immunization_card' => 'required|file|mimes:jpeg,png,webp,pdf|max:10240',
         ], [
             'phone.required' => 'Phone number is required.',
             'address.required' => 'Address is required.',
             'city.required' => 'City is required.',
             'postal_code.required' => 'Postal code is required.',
             'state_code.required' => 'State is required.',
+            'photo.required' => 'Photo is required.',
+            'photo.image' => 'Photo must be an image file.',
+            'photo.mimes' => 'Photo must be in JPEG, PNG, or WebP format.',
+            'photo.max' => 'Photo size must not exceed 5MB.',
+            'mykad.required' => 'MyKad document is required.',
+            'mykad.mimes' => 'MyKad must be in JPEG, PNG, WebP, or PDF format.',
+            'mykad.max' => 'MyKad file size must not exceed 10MB.',
+            'immunization_card.required' => 'Immunization card is required.',
+            'immunization_card.mimes' => 'Immunization card must be in JPEG, PNG, WebP, or PDF format.',
+            'immunization_card.max' => 'Immunization card file size must not exceed 10MB.',
         ]);
         
         // Validate that either NRIC or Passport is provided

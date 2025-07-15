@@ -103,9 +103,9 @@
                             </div>
                             <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
                                 <div class="col-span-1 md:col-span-3">
-                                    <label for="photo" class="block text-sm font-medium text-gray-700 mb-2">Photo</label>
+                                    <label for="photo" class="block text-sm font-medium text-gray-700 mb-2">Photo *</label>
                                     <div class="relative group">
-                                        <input id="photo" name="photo" type="file" accept="image/jpeg,image/png,image/webp" class="sr-only" onchange="showFileName(this, 'photo-label')">
+                                        <input id="photo" name="photo" type="file" accept="image/jpeg,image/png,image/webp" class="sr-only" onchange="showFileName(this, 'photo-label')" required>
                                         <label for="photo" class="flex items-center justify-center w-full h-32 border-2 border-dashed border-blue-400 rounded-lg cursor-pointer bg-blue-50 hover:bg-blue-100 transition group-hover:border-blue-600">
                                             <svg class="w-8 h-8 text-blue-500 mr-2" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4"/></svg>
                                             <span id="photo-label" class="text-blue-700 font-medium">Click to upload photo</span>
@@ -117,9 +117,9 @@
                                     @enderror
                                 </div>
                                 <div class="col-span-1 md:col-span-3">
-                                    <label for="mykad" class="block text-sm font-medium text-gray-700 mb-2">MyKad</label>
+                                    <label for="mykad" class="block text-sm font-medium text-gray-700 mb-2">MyKad *</label>
                                     <div class="relative group">
-                                        <input id="mykad" name="mykad" type="file" accept="image/jpeg,image/png,image/webp,application/pdf" class="sr-only" onchange="showFileName(this, 'mykad-label')">
+                                        <input id="mykad" name="mykad" type="file" accept="image/jpeg,image/png,image/webp,application/pdf" class="sr-only" onchange="showFileName(this, 'mykad-label')" required>
                                         <label for="mykad" class="flex items-center justify-center w-full h-32 border-2 border-dashed border-blue-400 rounded-lg cursor-pointer bg-blue-50 hover:bg-blue-100 transition group-hover:border-blue-600">
                                             <svg class="w-8 h-8 text-blue-500 mr-2" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M7 16V4a1 1 0 011-1h8a1 1 0 011 1v12m-2 4h-4a2 2 0 01-2-2v-2h8v2a2 2 0 01-2 2z"/></svg>
                                             <span id="mykad-label" class="text-blue-700 font-medium">Click to upload MyKad</span>
@@ -131,9 +131,9 @@
                                     @enderror
                                 </div>
                                 <div class="col-span-1 md:col-span-3">
-                                    <label for="immunization_card" class="block text-sm font-medium text-gray-700 mb-2">Immunization Card</label>
+                                    <label for="immunization_card" class="block text-sm font-medium text-gray-700 mb-2">Immunization Card *</label>
                                     <div class="relative group">
-                                        <input id="immunization_card" name="immunization_card" type="file" accept="image/jpeg,image/png,image/webp,application/pdf" class="sr-only" onchange="showFileName(this, 'immunization-label')">
+                                        <input id="immunization_card" name="immunization_card" type="file" accept="image/jpeg,image/png,image/webp,application/pdf" class="sr-only" onchange="showFileName(this, 'immunization-label')" required>
                                         <label for="immunization_card" class="flex items-center justify-center w-full h-32 border-2 border-dashed border-blue-400 rounded-lg cursor-pointer bg-blue-50 hover:bg-blue-100 transition group-hover:border-blue-600">
                                             <svg class="w-8 h-8 text-blue-500 mr-2" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4"/></svg>
                                             <span id="immunization-label" class="text-blue-700 font-medium">Click to upload Immunization Card</span>
