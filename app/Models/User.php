@@ -7,6 +7,10 @@ use App\Models\Centre;
 use App\Models\Child;
 use App\Models\Invoice;
 use App\Models\Tenant;
+use App\Models\UserProfile;
+use App\Models\UserAddress;
+use App\Models\UserOfficeInfo;
+use Filament\Facades\Filament;
 use Filament\Models\Contracts\FilamentUser;
 use Filament\Models\Contracts\HasAvatar;
 use Filament\Models\Contracts\HasDefaultTenant;
@@ -17,6 +21,7 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use Illuminate\Support\Collection;
@@ -46,13 +51,7 @@ class User extends Authenticatable implements FilamentUser, HasDefaultTenant, Ha
         'email',
         'password',
         'current_tenant_id',
-        // E-invoice related fields
-        'nric',
-        'passport',
-        'city',
-        'postal_code',
-        'state_code',
-        'address',
+        'profile_completed',
     ];
 
     /**
@@ -65,6 +64,23 @@ class User extends Authenticatable implements FilamentUser, HasDefaultTenant, Ha
         'remember_token',
     ];
 
+    protected static function boot()
+    {
+        parent::boot();
+
+        static::creating(function ($user) {
+            $tenant = Filament::getTenant();
+            $user->current_tenant_id = $tenant ? $tenant->id : null;
+        });
+
+        static::created(function ($user) {
+            $tenant = Filament::getTenant();
+            if (!empty($tenant)) {
+                $user->tenants()->attach($tenant);
+            }
+        });
+    }
+
     /**
      * Get the attributes that should be cast.
      *
@@ -75,6 +91,7 @@ class User extends Authenticatable implements FilamentUser, HasDefaultTenant, Ha
         return [
             'email_verified_at' => 'datetime',
             'password' => 'hashed',
+            'profile_completed' => 'boolean',
         ];
     }
 
@@ -261,6 +278,30 @@ class User extends Authenticatable implements FilamentUser, HasDefaultTenant, Ha
     }
 
     /**
+     * Get the user's profile.
+     */
+    public function profile(): HasOne
+    {
+        return $this->hasOne(UserProfile::class);
+    }
+
+    /**
+     * Get the user's address.
+     */
+    public function userAddress(): HasOne
+    {
+        return $this->hasOne(UserAddress::class);
+    }
+
+    /**
+     * Get the user's office information.
+     */
+    public function officeInfo(): HasOne
+    {
+        return $this->hasOne(UserOfficeInfo::class);
+    }
+
+    /**
      * Register media collections for the user.
      */
     public function registerMediaCollections(): void
@@ -328,14 +369,8 @@ class User extends Authenticatable implements FilamentUser, HasDefaultTenant, Ha
      */
     public function getEInvoiceSchemeId(): string
     {
-        // For Malaysian individuals, use NRIC if available
-        if (!empty($this->nric)) {
-            return 'NRIC';
-        }
-        
-        // For foreign customers, use passport
-        if (!empty($this->passport)) {
-            return 'PASSPORT';
+        if ($this->profile) {
+            return $this->profile->getEInvoiceSchemeId();
         }
         
         // Default to NRIC for Malaysian customers
@@ -350,17 +385,12 @@ class User extends Authenticatable implements FilamentUser, HasDefaultTenant, Ha
      */
     public function getEInvoiceIdentification(): string
     {
-        // Priority: NRIC > Passport
-        if (!empty($this->nric)) {
-            return $this->nric;
+        if ($this->profile) {
+            return $this->profile->getEInvoiceIdentification();
         }
         
-        if (!empty($this->passport)) {
-            return $this->passport;
-        }
-        
-        // If no identification available, throw exception
-        throw new \Exception("Customer '{$this->name}' must have a valid NRIC or Passport number for e-Invoice submission.");
+        // If no profile available, throw exception
+        throw new \Exception("Customer '{$this->name}' must have a valid profile with NRIC or Passport number for e-Invoice submission.");
     }
     
     /**
@@ -370,10 +400,7 @@ class User extends Authenticatable implements FilamentUser, HasDefaultTenant, Ha
      */
     public function hasCompleteAddress(): bool
     {
-        return !empty($this->address) && 
-               !empty($this->city) && 
-               !empty($this->postal_code) && 
-               !empty($this->state_code);
+        return $this->userAddress && $this->userAddress->isComplete();
     }
     
     /**
@@ -383,42 +410,24 @@ class User extends Authenticatable implements FilamentUser, HasDefaultTenant, Ha
      */
     public function getFormattedAddress(): string
     {
-        $parts = array_filter([
-            $this->address,
-            $this->city,
-            $this->postal_code,
-            $this->getStateName(),
-        ]);
+        if ($this->userAddress) {
+            return $this->userAddress->getFormattedAddress();
+        }
         
-        return implode(', ', $parts);
+        return '';
     }
     
     /**
-     * Get state name from state code.
+     * Get state name from user's address.
      *
      * @return string
      */
     public function getStateName(): string
     {
-        $stateMapping = [
-            '01' => 'Johor',
-            '02' => 'Kedah',
-            '03' => 'Kelantan',
-            '04' => 'Melaka',
-            '05' => 'Negeri Sembilan',
-            '06' => 'Pahang',
-            '07' => 'Pulau Pinang',
-            '08' => 'Perak',
-            '09' => 'Perlis',
-            '10' => 'Selangor',
-            '11' => 'Terengganu',
-            '12' => 'Sabah',
-            '13' => 'Sarawak',
-            '14' => 'Wilayah Persekutuan Kuala Lumpur',
-            '15' => 'Wilayah Persekutuan Labuan',
-            '16' => 'Wilayah Persekutuan Putrajaya',
-        ];
+        if ($this->userAddress) {
+            return $this->userAddress->getStateName();
+        }
         
-        return $stateMapping[$this->state_code] ?? $this->state_code ?? '';
+        return '';
     }
 }

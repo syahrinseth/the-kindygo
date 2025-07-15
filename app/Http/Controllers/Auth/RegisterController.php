@@ -67,4 +67,68 @@ class RegisterController extends Controller
         return redirect()->intended(route('filament.app.tenant'))
             ->with('success', 'Registration successful! Welcome to the platform.');
     }
+    
+    public function showTenantRegistrationForm($tenantSlug)
+    {
+        $tenant = Tenant::where('slug', $tenantSlug)->firstOrFail();
+        // Use withoutGlobalScope to bypass TenantScope since user is not authenticated yet
+        $centres = $tenant->centres()->withoutGlobalScope(\App\Models\Scopes\TenantScope::class)->get();
+        
+        return view('auth.tenant-register', compact('tenant', 'centres'));
+    }
+
+    public function registerToTenant(Request $request, $tenantSlug)
+    {
+        $tenant = Tenant::where('slug', $tenantSlug)->firstOrFail();
+
+        $request->validate([
+            'name' => 'required|string|max:255',
+            'email' => 'required|string|email|max:255|unique:users',
+            'password' => 'required|string|min:8|confirmed',
+            'phone' => 'nullable|string|max:20',
+            'centre_ids' => 'required|array|min:1',
+            'centre_ids.*' => [
+                'required',
+                'integer',
+                function ($attribute, $value, $fail) use ($tenant) {
+                    if (!$tenant->centres()->withoutGlobalScope(\App\Models\Scopes\TenantScope::class)
+                    ->where('id', $value)->exists()) {
+                        $fail('The selected centre does not belong to this tenant.');
+                    }
+                },
+            ],
+        ]);
+
+        // Wrap creation in a transaction
+        $user = DB::transaction(function () use ($request, $tenant) {
+            // Create the user
+            $user = User::create([
+                'name' => $request->name,
+                'email' => $request->email,
+                'password' => Hash::make($request->password),
+                'phone' => $request->phone,
+            ]);
+
+            // Check if Parent role exists, if not create it
+            $parentRole = Role::firstOrCreate(['name' => 'Parent']);
+            
+            // Assign the Parent role to the new user
+            $user->assignRole($parentRole);
+
+            // Attach user to tenant as Parent
+            $tenant->addUser($user);
+
+            // Attach user to selected centres
+            $user->centres()->attach($request->centre_ids);
+
+            return $user;
+        });
+
+        // Log the user in
+        Auth::login($user);
+
+        // Redirect Parent users to profile completion form
+        return redirect()->route('profile.complete')
+            ->with('success', 'Registration successful! Please complete your profile to continue.');
+    }
 }

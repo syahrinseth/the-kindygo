@@ -782,11 +782,11 @@ class Invoice extends Model
                     'Name' => $user->name
                 ],
                 'PostalAddress' => [
-                    'CityName' => $user->city ?? config('einvoice.default_city', 'Kuala Lumpur'),
-                    'PostalZone' => $user->postal_code ?? config('einvoice.default_postal_code', '50000'),
-                    'CountrySubentityCode' => $user->state_code ?? config('einvoice.default_state_code', '14'),
+                    'CityName' => $user->userAddress?->city ?? config('einvoice.default_city', 'Kuala Lumpur'),
+                    'PostalZone' => $user->userAddress?->postal_code ?? config('einvoice.default_postal_code', '50000'),
+                    'CountrySubentityCode' => $user->userAddress?->state_code ?? config('einvoice.default_state_code', '14'),
                     'AddressLine' => [
-                        'Line' => $user->address ?? 'Address not provided'
+                        'Line' => $user->userAddress?->address ?? 'Address not provided'
                     ],
                     'Country' => [
                         'IdentificationCode' => [
@@ -814,7 +814,7 @@ class Invoice extends Model
                 ]
                 // Contact removed due to MyInvois validation issues
                 // 'Contact' => [
-                //     'Telephone' => $user->phone ?? '',
+                //     'Telephone' => $user->profile?->phone ?? '',
                 //     'ElectronicMail' => $user->email ?? ''
                 // ]
             ]

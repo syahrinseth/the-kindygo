@@ -277,8 +277,8 @@
                                                                                     @if($user->email)
                                                                                         Email: {{ $user->email }}<br>
                                                                                     @endif
-                                                                                    @if($user->phone)
-                                                                                        Phone: {{ $user->phone }}
+                                                                                    @if($user->profile?->phone)
+                                                                                        Phone: {{ $user->profile->phone }}
                                                                                     @endif
                                                                                 </address>
                                                                             </fieldset>

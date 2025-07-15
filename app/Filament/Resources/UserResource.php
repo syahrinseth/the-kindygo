@@ -42,7 +42,7 @@ class UserResource extends Resource
 
     public static function getEloquentQuery(): Builder
     {
-        $query = parent::getEloquentQuery();
+        $query = parent::getEloquentQuery()->with(['profile', 'userAddress', 'officeInfo']);
         $user = Auth::user();
 
         // Use policy to determine query scope
@@ -94,17 +94,22 @@ class UserResource extends Resource
                     ->badge()
                     ->searchable()
                     ->sortable(),
-                Tables\Columns\TextColumn::make('nric')
+                Tables\Columns\TextColumn::make('profile.nric')
                     ->label('NRIC')
                     ->searchable()
                     ->toggleable(isToggledHiddenByDefault: true)
                     ->placeholder('Not set'),
-                Tables\Columns\TextColumn::make('passport')
+                Tables\Columns\TextColumn::make('profile.passport')
                     ->label('Passport')
                     ->searchable()
                     ->toggleable(isToggledHiddenByDefault: true)
                     ->placeholder('Not set'),
-                Tables\Columns\TextColumn::make('city')
+                Tables\Columns\TextColumn::make('profile.phone')
+                    ->label('Phone')
+                    ->searchable()
+                    ->toggleable(isToggledHiddenByDefault: true)
+                    ->placeholder('Not set'),
+                Tables\Columns\TextColumn::make('userAddress.city')
                     ->label('City')
                     ->searchable()
                     ->toggleable(isToggledHiddenByDefault: true)
@@ -114,7 +119,8 @@ class UserResource extends Resource
                     ->boolean()
                     ->getStateUsing(function (User $record): bool {
                         return $record->hasCompleteAddress() && 
-                               (!empty($record->nric) || !empty($record->passport));
+                               ($record->profile && 
+                                (!empty($record->profile->nric) || !empty($record->profile->passport)));
                     })
                     ->trueIcon('heroicon-o-check-circle')
                     ->falseIcon('heroicon-o-x-circle')

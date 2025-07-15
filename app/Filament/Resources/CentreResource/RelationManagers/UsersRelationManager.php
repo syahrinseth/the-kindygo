@@ -24,6 +24,7 @@ class UsersRelationManager extends RelationManager
     {
         return $table
             ->recordTitleAttribute('name')
+            ->modifyQueryUsing(fn (Builder $query) => $query->with(['profile', 'userAddress', 'officeInfo']))
             ->columns([
                 Tables\Columns\TextColumn::make('name')
                     ->searchable()
@@ -31,6 +32,11 @@ class UsersRelationManager extends RelationManager
                 Tables\Columns\TextColumn::make('email')
                     ->searchable()
                     ->sortable(),
+                Tables\Columns\TextColumn::make('profile.phone')
+                    ->label('Phone')
+                    ->searchable()
+                    ->toggleable(isToggledHiddenByDefault: true)
+                    ->placeholder('Not set'),
                 Tables\Columns\TextColumn::make('roles.name')
                     ->badge()
                     ->searchable(),

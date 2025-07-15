@@ -25,57 +25,90 @@ class UserForm
                         ->maxLength(255),
                 ])->columns(2),
 
-            Forms\Components\Section::make('User Detail Information')
-                ->description('Personal identification and address information for this user')
+            Forms\Components\Section::make('Personal Information')
+                ->description('Personal identification and contact information')
                 ->schema([
-                    Forms\Components\TextInput::make('nric')
+                    Forms\Components\TextInput::make('profile.nric')
                         ->label('NRIC/IC Number')
                         ->placeholder('e.g., 950101014321')
                         ->helperText('Malaysian NRIC/IC number for individual customers')
                         ->maxLength(12)
-                        ->rules(['nullable', 'digits:12'])
+                        ->rules(['required_without:profile.passport', 'digits:12'])
                         ->reactive()
                         ->afterStateUpdated(function ($state, callable $set) {
                             // Clear passport if NRIC is entered
                             if (filled($state)) {
-                                $set('passport', null);
+                                $set('profile.passport', null);
                             }
                         }),
                     
-                    Forms\Components\TextInput::make('passport')
+                    Forms\Components\TextInput::make('profile.passport')
                         ->label('Passport Number')
                         ->placeholder('e.g., A12345678')
                         ->helperText('Passport number for foreign customers (if no NRIC)')
                         ->maxLength(20)
+                        ->requiredIf('profile.nric', null)
                         ->reactive()
                         ->afterStateUpdated(function ($state, callable $set) {
                             // Clear NRIC if passport is entered
                             if (filled($state)) {
-                                $set('nric', null);
+                                $set('profile.nric', null);
                             }
                         }),
-                        
-                    Forms\Components\Textarea::make('address')
+
+                    Forms\Components\TextInput::make('profile.phone')
+                        ->label('Phone Number')
+                        ->placeholder('e.g., +60123456789')
+                        ->helperText('Primary contact phone number')
+                        ->tel()
+                        ->required()
+                        ->maxLength(20),
+
+                    Forms\Components\TextInput::make('profile.occupation')
+                        ->label('Occupation')
+                        ->placeholder('e.g., Teacher, Engineer, Doctor')
+                        ->required()
+                        ->maxLength(100),
+                ])
+                ->columns(2)
+                ->collapsible()
+                ->collapsed(false),
+
+            Forms\Components\Section::make('Home Address')
+                ->description('Residential address information for e-Invoice')
+                ->schema([
+                    Forms\Components\Textarea::make('userAddress.address')
                         ->label('Address')
                         ->placeholder('e.g., 123 Jalan Test, Taman Example')
                         ->helperText('Full street address for e-Invoice')
+                        ->required()
                         ->rows(2)
                         ->maxLength(500),
+
+                    Forms\Components\Textarea::make('userAddress.address_2')
+                        ->label('Address Line 2')
+                        ->placeholder('e.g., Unit 5-3, Block A')
+                        ->helperText('Additional address information (optional)')
+                        ->rows(1)
+                        ->maxLength(500),
                     
-                    Forms\Components\TextInput::make('city')
+                    Forms\Components\TextInput::make('userAddress.city')
                         ->label('City')
                         ->placeholder('e.g., Kuala Lumpur')
+                        ->required()
                         ->maxLength(100),
                         
-                    Forms\Components\TextInput::make('postal_code')
+                    Forms\Components\TextInput::make('userAddress.postal_code')
                         ->label('Postal Code')
                         ->placeholder('e.g., 50000')
+                        ->required()
                         ->maxLength(10)
-                        ->rules(['nullable', 'regex:/^\d{5}$/']),
+                        ->rules(['required', 'regex:/^\d{5}$/']),
                         
-                    Forms\Components\Select::make('state_code')
+                    Forms\Components\Select::make('userAddress.state_code')
                         ->label('State')
                         ->placeholder('Select state')
+                        ->required()
                         ->options([
                             '01' => 'Johor',
                             '02' => 'Kedah',
@@ -99,6 +132,68 @@ class UserForm
                 ->columns(2)
                 ->collapsible()
                 ->collapsed(false),
+
+            Forms\Components\Section::make('Office Information')
+                ->description('Office contact and address information (optional)')
+                ->schema([
+                    Forms\Components\TextInput::make('officeInfo.office_phone')
+                        ->label('Office Phone Number')
+                        ->placeholder('e.g., +60323456789')
+                        ->helperText('Office contact phone number')
+                        ->tel()
+                        ->maxLength(20),
+
+                    Forms\Components\Textarea::make('officeInfo.office_address')
+                        ->label('Office Address')
+                        ->placeholder('e.g., 456 Jalan Business, Commercial Center')
+                        ->helperText('Office street address')
+                        ->rows(2)
+                        ->maxLength(500),
+
+                    Forms\Components\Textarea::make('officeInfo.office_address_2')
+                        ->label('Office Address Line 2')
+                        ->placeholder('e.g., Suite 10-5, Tower B')
+                        ->helperText('Additional office address information (optional)')
+                        ->rows(1)
+                        ->maxLength(500),
+
+                    Forms\Components\TextInput::make('officeInfo.office_postal_code')
+                        ->label('Office Postal Code')
+                        ->placeholder('e.g., 50000')
+                        ->maxLength(10)
+                        ->rules(['nullable', 'regex:/^\d{5}$/']),
+
+                    Forms\Components\TextInput::make('officeInfo.office_city')
+                        ->label('Office City')
+                        ->placeholder('e.g., Kuala Lumpur')
+                        ->maxLength(100),
+
+                    Forms\Components\Select::make('officeInfo.office_state_code')
+                        ->label('Office State')
+                        ->placeholder('Select office state')
+                        ->options([
+                            '01' => 'Johor',
+                            '02' => 'Kedah',
+                            '03' => 'Kelantan',
+                            '04' => 'Melaka',
+                            '05' => 'Negeri Sembilan',
+                            '06' => 'Pahang',
+                            '07' => 'Pulau Pinang',
+                            '08' => 'Perak',
+                            '09' => 'Perlis',
+                            '10' => 'Selangor',
+                            '11' => 'Terengganu',
+                            '12' => 'Sabah',
+                            '13' => 'Sarawak',
+                            '14' => 'Wilayah Persekutuan Kuala Lumpur',
+                            '15' => 'Wilayah Persekutuan Labuan',
+                            '16' => 'Wilayah Persekutuan Putrajaya',
+                        ])
+                        ->searchable(),
+                ])
+                ->columns(2)
+                ->collapsible()
+                ->collapsed(true),
 
             Forms\Components\Section::make('Documents & Photos')
                 ->schema([

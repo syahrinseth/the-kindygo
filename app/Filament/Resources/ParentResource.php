@@ -48,6 +48,7 @@ class ParentResource extends Resource
     public static function getEloquentQuery(): Builder
     {
         $query = parent::getEloquentQuery()
+            ->with(['profile', 'userAddress', 'officeInfo'])
             ->whereHas('roles', fn (Builder $query) => 
                 $query->where('name', 'Parent')
             );
@@ -81,10 +82,39 @@ class ParentResource extends Resource
                 Tables\Columns\TextColumn::make('email')
                     ->searchable()
                     ->sortable(),
+                Tables\Columns\TextColumn::make('profile.phone')
+                    ->label('Phone')
+                    ->searchable()
+                    ->toggleable(isToggledHiddenByDefault: true)
+                    ->placeholder('Not set'),
+                Tables\Columns\TextColumn::make('profile.nric')
+                    ->label('NRIC')
+                    ->searchable()
+                    ->toggleable(isToggledHiddenByDefault: true)
+                    ->placeholder('Not set'),
+                Tables\Columns\TextColumn::make('userAddress.city')
+                    ->label('City')
+                    ->searchable()
+                    ->toggleable(isToggledHiddenByDefault: true)
+                    ->placeholder('Not set'),
                 Tables\Columns\TextColumn::make('centres.name')
                     ->badge()
                     ->searchable()
                     ->sortable(),
+                Tables\Columns\IconColumn::make('profile_complete')
+                    ->label('Profile Complete')
+                    ->boolean()
+                    ->getStateUsing(function (User $record): bool {
+                        return $record->profile && 
+                               $record->userAddress && 
+                               $record->userAddress->isComplete() &&
+                               (!empty($record->profile->nric) || !empty($record->profile->passport));
+                    })
+                    ->trueIcon('heroicon-o-check-circle')
+                    ->falseIcon('heroicon-o-x-circle')
+                    ->trueColor('success')
+                    ->falseColor('danger')
+                    ->toggleable(),
                 Tables\Columns\TextColumn::make('created_at')
                     ->dateTime()
                     ->sortable()
