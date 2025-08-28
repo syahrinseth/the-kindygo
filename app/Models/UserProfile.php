@@ -19,6 +19,7 @@ class UserProfile extends Model
         'user_id',
         'nric',
         'passport',
+        'tin',
         'phone',
         'occupation',
     ];
@@ -43,16 +44,16 @@ class UserProfile extends Model
         if (!empty($this->nric)) {
             return 'NRIC';
         }
-        
+
         // For foreign customers, use passport
         if (!empty($this->passport)) {
             return 'PASSPORT';
         }
-        
+
         // Default to NRIC for Malaysian customers
         return 'NRIC';
     }
-    
+
     /**
      * Get the identification value for e-invoice.
      *
@@ -65,12 +66,22 @@ class UserProfile extends Model
         if (!empty($this->nric)) {
             return $this->nric;
         }
-        
+
         if (!empty($this->passport)) {
             return $this->passport;
         }
-        
+
         // If no identification available, throw exception
         throw new \Exception("Customer '{$this->user->name}' must have a valid NRIC or Passport number for e-Invoice submission.");
+    }
+
+    public function getEInvoiceTIN(): string
+    {
+        if (!empty($this->tin)) {
+            return $this->tin;
+        }
+
+        // If no TIN available, throw exception
+        throw new \Exception("Customer '{$this->user->name}' must have a valid TIN for e-Invoice submission.");
     }
 }

@@ -5,11 +5,12 @@ namespace App\Models;
 use App\Enums\InvoiceStatus;
 use App\Enums\PaymentStatus;
 use App\Models\Scopes\TenantScope;
-use Illuminate\Database\Eloquent\Builder;
-use Illuminate\Database\Eloquent\Factories\HasFactory;
-use Illuminate\Database\Eloquent\Model;
-use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Database\Eloquent\Model;
+use App\Enums\EInvoiceClassificationCode;
+use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 
 class Invoice extends Model
 {
@@ -63,21 +64,21 @@ class Invoice extends Model
     {
         $date = $this->date ?? now();
         $year = $date->format('Y');
-        
+
         // Get centre code - use the dedicated code field if available, otherwise fallback to name
         $centre = $this->centre ?? Centre::find($this->centre_id);
-        
+
         // Generate preschool-friendly centre code
         $centreCode = $this->generatePreschoolCentreCode($centre);
-        
+
         // Generate sequential number unique to tenant_id, centre_id, and year
         $sequentialNumber = $this->getNextSequentialNumber($year);
         $runningNumber = str_pad($sequentialNumber, 4, '0', STR_PAD_LEFT);
-        
+
         // Format: KG{centre_code}/{year}/{running_number}
         // KG prefix indicates KindyGo/Kindergarten
         $number = "KG{$centreCode}/{$year}/{$runningNumber}";
-        
+
         return $number;
     }
 
@@ -100,7 +101,7 @@ class Invoice extends Model
 
         // Generate code from centre name with preschool context
         $name = $centre->name ?? 'Preschool';
-        
+
         // Common preschool/childcare name patterns
         $preschoolKeywords = [
             'kindergarten' => 'KG',
@@ -128,7 +129,7 @@ class Invoice extends Model
 
         $nameLower = strtolower($name);
         $prefix = 'PS'; // Default to Preschool
-        
+
         // Check for keywords in the name to determine appropriate prefix
         foreach ($preschoolKeywords as $keyword => $code) {
             if (strpos($nameLower, $keyword) !== false) {
@@ -140,7 +141,7 @@ class Invoice extends Model
         // Extract meaningful parts from the name
         $cleanName = preg_replace('/[^A-Za-z0-9\s]/', '', $name);
         $words = explode(' ', $cleanName);
-        
+
         // Try to create a meaningful suffix from the name
         $suffix = '';
         foreach ($words as $word) {
@@ -152,7 +153,7 @@ class Invoice extends Model
                 }
             }
         }
-        
+
         // If we couldn't generate a good suffix, use first letters of each word
         if (strlen($suffix) < 2) {
             $suffix = '';
@@ -165,14 +166,14 @@ class Invoice extends Model
                 }
             }
         }
-        
+
         // Ensure we have at least 2 characters for suffix
         if (strlen($suffix) < 2) {
             $suffix = '01';
         } else {
             $suffix = substr($suffix, 0, 3); // Limit to 3 characters
         }
-        
+
         return $prefix . $suffix;
     }
 
@@ -195,12 +196,12 @@ class Invoice extends Model
         if (!$lastInvoice) {
             return 1;
         }
-        
+
         // Extract number from the last invoice using the new format #{CODE}/{YEAR}/{NUMBER}
         preg_match('/[A-Z0-9]+\/\d{4}\/(\d+)$/', $lastInvoice->number, $matches);
-        
+
         $lastNumber = isset($matches[1]) ? (int)$matches[1] : 0;
-        
+
         return $lastNumber + 1;
     }
 
@@ -267,7 +268,7 @@ class Invoice extends Model
      */
     public function getChildEnrollments()
     {
-        return ChildEnrollment::whereIn('id', 
+        return ChildEnrollment::whereIn('id',
             $this->invoiceItems()->whereNotNull('child_enrollment_id')->pluck('child_enrollment_id')
         )->get();
     }
@@ -279,7 +280,7 @@ class Invoice extends Model
      */
     public function getChildren()
     {
-        return Child::whereIn('id', 
+        return Child::whereIn('id',
             $this->invoiceItems()->whereNotNull('child_id')->pluck('child_id')
         )->get();
     }
@@ -301,7 +302,7 @@ class Invoice extends Model
      */
     public function isOverdue(): bool
     {
-        return $this->status === InvoiceStatus::OVERDUE || 
+        return $this->status === InvoiceStatus::OVERDUE ||
                ($this->status === InvoiceStatus::PENDING && $this->due_at < now());
     }
 
@@ -374,10 +375,10 @@ class Invoice extends Model
         if (!$user || !$user->current_tenant_id) {
             return $query->whereRaw('1 = 0'); // Return empty result if no user or tenant
         }
-        
+
         // Filter by current tenant
         $query->where('tenant_id', $user->current_tenant_id);
-        
+
         // Additional restrictions based on user role
         if ($user->roles && $user->roles->contains('name', 'Parent')) {
             // Parents can only see their own invoices
@@ -393,7 +394,7 @@ class Invoice extends Model
             }
         }
         // Super Admin, Admin, and other roles can see all invoices within their tenant
-        
+
         return $query;
     }
 
@@ -419,13 +420,13 @@ class Invoice extends Model
     protected static function booted()
     {
         static::addGlobalScope(new TenantScope);
-        
+
         // When retrieving an invoice, check if it should be marked as overdue
         static::retrieved(function (Invoice $invoice) {
             $invoice->updateStatusBasedOnDueDate();
         });
     }
-    
+
     /**
      * Format a monetary amount for display.
      *
@@ -438,7 +439,7 @@ class Invoice extends Model
         $formatted = number_format($amount / 100, 2);
         return $includeCurrency ? '$' . $formatted : $formatted;
     }
-    
+
     /**
      * Get the formatted total amount.
      *
@@ -449,7 +450,7 @@ class Invoice extends Model
     {
         return self::formatMoney($this->total, $includeCurrency);
     }
-    
+
     /**
      * Get the payments associated with the invoice.
      *
@@ -515,7 +516,7 @@ class Invoice extends Model
             'child_id'
         )->whereNotNull('invoice_items.child_id');
     }
-    
+
     /**
      * Calculate totals based on invoice items and update the invoice.
      * Discount is now applied per unit and multiplied by quantity.
@@ -525,7 +526,7 @@ class Invoice extends Model
     public function calculateAndUpdateTotals(): void
     {
         $invoiceItems = $this->invoiceItems;
-        
+
         $totalItems = $invoiceItems->count();
         $totalAmount = $invoiceItems->sum(function ($item) {
             return $item->price * $item->quantity;
@@ -534,7 +535,7 @@ class Invoice extends Model
             return $item->discount * $item->quantity; // Discount per unit * quantity
         });
         $total = $invoiceItems->sum('total');
-        
+
         // Update the invoice totals
         $this->update([
             'total_items' => $totalItems,
@@ -543,7 +544,7 @@ class Invoice extends Model
             'total' => $total,
         ]);
     }
-    
+
     /**
      * Recalculate totals from invoice items.
      * Discount is now applied per unit and multiplied by quantity.
@@ -553,7 +554,7 @@ class Invoice extends Model
     public function recalculateTotals(): array
     {
         $invoiceItems = $this->invoiceItems;
-        
+
         $totalItems = $invoiceItems->count();
         $totalAmount = $invoiceItems->sum(function ($item) {
             return $item->price * $item->quantity;
@@ -562,7 +563,7 @@ class Invoice extends Model
             return $item->discount * $item->quantity; // Discount per unit * quantity
         });
         $total = $invoiceItems->sum('total');
-        
+
         return [
             'total_items' => $totalItems,
             'total_amount' => $totalAmount,
@@ -570,7 +571,7 @@ class Invoice extends Model
             'total' => $total,
         ];
     }
-    
+
     /**
      * Get the total amount paid for this invoice (only from 'paid' payments).
      *
@@ -582,7 +583,7 @@ class Invoice extends Model
             ->where('status', PaymentStatus::PAID)
             ->sum('invoice_payment.amount');
     }
-    
+
     /**
      * Get the remaining balance for this invoice.
      *
@@ -592,7 +593,7 @@ class Invoice extends Model
     {
         return $this->total - $this->getTotalPaid();
     }
-    
+
     /**
      * Get the balance attribute (alias for getRemainingBalance for Filament usage).
      *
@@ -602,7 +603,7 @@ class Invoice extends Model
     {
         return $this->getRemainingBalance();
     }
-    
+
     /**
      * Generate a PDF for this invoice.
      *
@@ -612,7 +613,7 @@ class Invoice extends Model
     {
         // This is a placeholder for PDF generation functionality
         // You would integrate with a PDF library like Dompdf, TCPDF, or Snappy
-        
+
         // For now, we'll just return a string indicating the feature is not implemented
         return 'PDF generation not implemented yet';
     }
@@ -629,23 +630,27 @@ class Invoice extends Model
             throw new \Exception('Invoice already submitted to e-Invoice system');
         }
 
+        // Validate that invoice date is not in the future
+        if ($this->date > now()) {
+            throw new \Exception('Invoice date cannot be in the future. Please update the invoice date before submitting to e-Invoice system.');
+        }
+
         // Get tenant's TIN for authentication
         $tenant = $this->tenant;
-        $tenantTin = $tenant->tax_identification_number ?? config('einvoice.supplier_tin');
-        
+
         // Create e-Invoice service with tenant-specific TIN
-        $eInvoiceService = new \App\Services\EInvoiceSDKService($tenantTin);
-        
+        $eInvoiceService = new \App\Services\EInvoiceSDKService($tenant);
+
         // Convert invoice data to e-Invoice format
         $invoiceData = $this->toEInvoiceFormat();
-        
+
         // Submit to LHDN
         try {
             $response = $eInvoiceService->submitInvoice($invoiceData);
         } catch (\Exception $e) {
             throw new \Exception('Failed to submit invoice to e-Invoice system: ' . $e->getMessage());
         }
-        
+
         // Update invoice with e-Invoice details
         $this->update([
             'einvoice_uuid' => $response['uuid'] ?? null,
@@ -654,7 +659,7 @@ class Invoice extends Model
             'einvoice_validation_url' => $response['validationUrl'] ?? null,
             'einvoice_submitted_at' => now(),
         ]);
-        
+
         return $response;
     }
 
@@ -672,6 +677,7 @@ class Invoice extends Model
             'Invoice' => [
                 'ID' => $this->number,
                 'IssueDate' => $this->date->format('Y-m-d'),
+                'IssueTime' => $this->date ? $this->date->format('H:i:s\Z') : now()->format('H:i:s\Z'), // Use creation time or current time in UTC format
                 'DueDate' => $this->due_at->format('Y-m-d'),
                 'InvoiceTypeCode' => [
                     '_' => config('einvoice.invoice_types.standard', '01'),
@@ -708,25 +714,28 @@ class Invoice extends Model
     {
         $centre = $this->centre;
         $tenant = $this->tenant;
-        
+
         return [
             'Party' => [
-                'PartyIdentification' => [
-                    'ID' => [
-                        '_' => $tenant->tax_identification_number ?? config('einvoice.supplier_tin'),
-                        'schemeID' => 'TIN' // Tax Identification Number
-                    ]
+                'IndustryClassificationCode' => [
+                    'ID' => config('einvoice.supplier_business_activity_code', '85100'),
+                    'Description' => config('einvoice.supplier_business_activity_description', 'Child day-care activities')
+                ],
+                'PartyIdentification' => $this->getTenantPartyIdentification($tenant),
+                'PartyName' => [
+                    'Name' => $tenant->name
                 ],
                 'PostalAddress' => [
-                    'CityName' => $tenant->city ?? config('einvoice.supplier_city', 'Kuala Lumpur'),
-                    'PostalZone' => $tenant->postal_code ?? config('einvoice.supplier_postal_code', '50000'),
-                    'CountrySubentityCode' => $tenant->state_code ?? config('einvoice.default_state_code', '14'),
+                    'CityName' => $tenant->city,
+                    'PostalZone' => $tenant->postal_code,
+                    'CountrySubentityCode' => $tenant->state_code,
                     'AddressLine' => [
-                        'Line' => $tenant->address_1 . ($tenant->address_2 ? ', ' . $tenant->address_2 : '')
+                        'Line' => ($tenant->address_1) .
+                                 ($tenant->address_2 ? ', ' . $tenant->address_2 : '')
                     ],
                     'Country' => [
                         'IdentificationCode' => [
-                            '_' => $tenant->country ?? config('einvoice.supplier_country', 'MY'),
+                            '_' => $tenant->country,
                             'listID' => 'ISO3166-1',
                             'listAgencyID' => '6'
                         ]
@@ -734,7 +743,7 @@ class Invoice extends Model
                 ],
                 'PartyTaxScheme' => [
                     'CompanyID' => [
-                        '_' => $tenant->tax_identification_number ?? config('einvoice.supplier_tin'),
+                        '_' => $tenant->tax_identification_number,
                         'schemeID' => 'TIN'
                     ],
                     'TaxScheme' => [
@@ -747,16 +756,15 @@ class Invoice extends Model
                 ],
                 'PartyLegalEntity' => [
                     'RegistrationName' => $tenant->name,
-                    'CompanyID' => [
-                        '_' => $tenant->business_registration_number ?? config('einvoice.supplier_registration_number'),
-                        'schemeID' => 'BRN' // Business Registration Number
-                    ]
+                    // 'CompanyID' => [
+                    //     '_' => $tenant->business_registration_number,
+                    //     'schemeID' => config('einvoice.supplier_registration_number_scheme') // Business Registration Number
+                    // ]
                 ],
-                // Contact removed due to MyInvois validation issues
-                // 'Contact' => [
-                //     'Telephone' => $tenant->phone ?? config('einvoice.supplier_phone'),
-                //     'ElectronicMail' => $tenant->email ?? config('einvoice.supplier_email')
-                // ]
+                'Contact' => [
+                    'Telephone' => $tenant->phone ?? config('einvoice.supplier_phone', '+60123456789'),
+                    'ElectronicMail' => $tenant->email ?? config('einvoice.supplier_email', 'info@kindygo.com')
+                ]
             ]
         ];
     }
@@ -769,13 +777,21 @@ class Invoice extends Model
     private function getCustomerPartyData(): array
     {
         $user = $this->user;
-        
+
         return [
             'Party' => [
                 'PartyIdentification' => [
-                    'ID' => [
-                        '_' => $user->getEInvoiceIdentification(),
-                        'schemeID' => $user->getEInvoiceSchemeId()
+                    [
+                        'ID' => [
+                            '_' => $user->getEInvoiceTIN(),
+                            'schemeID' => 'TIN'
+                        ]
+                    ],
+                    [
+                        'ID' => [
+                            '_' => $user->getEInvoiceIdentification(),
+                            'schemeID' => $user->getEInvoiceSchemeId()
+                        ]
                     ]
                 ],
                 'PartyName' => [
@@ -811,12 +827,11 @@ class Invoice extends Model
                             'schemeAgencyID' => '6'
                         ]
                     ]
+                ],
+                'Contact' => [
+                    'Telephone' => $user->profile?->phone ?? $user->phone ?? '+60123456789',
+                    'ElectronicMail' => $user->email ?? 'noemail@example.com'
                 ]
-                // Contact removed due to MyInvois validation issues
-                // 'Contact' => [
-                //     'Telephone' => $user->profile?->phone ?? '',
-                //     'ElectronicMail' => $user->email ?? ''
-                // ]
             ]
         ];
     }
@@ -843,6 +858,12 @@ class Invoice extends Model
                 ],
                 'Item' => [
                     'Description' => 'Childcare Services - ' . ($this->centre->name ?? 'KindyGo Services'),
+                    'CommodityClassification' => [
+                        'ItemClassificationCode' => [
+                            '_' => EInvoiceClassificationCode::CHILD_CARE_CENTRES_AND_KINDERGARTENS_FEES->value, // Child day-care activities
+                            'listID' => 'CLASS'
+                        ]
+                    ],
                     'ClassifiedTaxCategory' => [
                         'ID' => config('einvoice.tax_categories.exempt', 'E'), // Exempt from tax
                         'TaxScheme' => [
@@ -856,6 +877,12 @@ class Invoice extends Model
                 ],
                 'Price' => [
                     'PriceAmount' => [
+                        '_' => number_format($this->total_amount / 100, 2, '.', ''),
+                        'currencyID' => config('einvoice.default_currency', 'MYR')
+                    ]
+                ],
+                'ItemPriceExtension' => [
+                    'Amount' => [
                         '_' => number_format($this->total_amount / 100, 2, '.', ''),
                         'currencyID' => config('einvoice.default_currency', 'MYR')
                     ]
@@ -892,7 +919,7 @@ class Invoice extends Model
     public function getEInvoiceStatus(): array
     {
         $status = $this->einvoice_status;
-        
+
         $statusMap = [
             'submitted' => 'Submitted to LHDN',
             'valid' => 'Validated by LHDN',
@@ -900,7 +927,7 @@ class Invoice extends Model
             'cancelled' => 'Cancelled',
             'pending' => 'Pending Validation'
         ];
-        
+
         return [
             'status' => $status,
             'description' => $statusMap[$status] ?? 'Unknown Status',
@@ -924,18 +951,17 @@ class Invoice extends Model
 
         // Get tenant's TIN for authentication
         $tenant = $this->tenant;
-        $tenantTin = $tenant->tax_identification_number ?? config('einvoice.supplier_tin');
-        
+
         // Create e-Invoice service with tenant-specific TIN
-        $eInvoiceService = new \App\Services\EInvoiceSDKService($tenantTin);
-        
+        $eInvoiceService = new \App\Services\EInvoiceSDKService($tenant);
+
         $response = $eInvoiceService->cancelDocument($this->einvoice_uuid, $reason);
-        
+
         // Update invoice status
         $this->update([
             'einvoice_status' => 'cancelled'
         ]);
-        
+
         return $response;
     }
 
@@ -953,20 +979,45 @@ class Invoice extends Model
 
         // Get tenant's TIN for authentication
         $tenant = $this->tenant;
-        $tenantTin = $tenant->tax_identification_number ?? config('einvoice.supplier_tin');
-        
+
         // Create e-Invoice service with tenant-specific TIN
-        $eInvoiceService = new \App\Services\EInvoiceSDKService($tenantTin);
-        
+        $eInvoiceService = new \App\Services\EInvoiceSDKService($tenant);
+
         $response = $eInvoiceService->getDocumentStatus($this->einvoice_uuid);
-        
+
         // Update invoice with latest status
         if (isset($response['status'])) {
             $this->update([
                 'einvoice_status' => $response['status']
             ]);
         }
-        
+
         return $response;
+    }
+
+    private function getTenantPartyIdentification(?Tenant $tenant = null) : array
+    {
+        $data = [];
+        $tenant = $tenant ?? $this->tenant;
+
+        if (!empty($tenant->tax_identification_number)) {
+            $data[] = [
+                'ID' => [
+                    '_' => $tenant->tax_identification_number,
+                    'schemeID' => 'TIN'
+                ]
+            ];
+        }
+
+        if (!empty($tenant->business_id_type) && !empty($tenant->business_id_value)) {
+            $data[] = [
+                'ID' => [
+                    '_' => $tenant->business_id_value,
+                    'schemeID' => $tenant->business_id_type
+                ]
+            ];
+        }
+
+        return $data;
     }
 }

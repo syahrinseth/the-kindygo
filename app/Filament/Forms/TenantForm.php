@@ -61,10 +61,6 @@ class TenantForm
                         ->label('Tax Identification Number (TIN)')
                         ->helperText('Required for e-Invoice submission to LHDN')
                         ->maxLength(50),
-                    Forms\Components\TextInput::make('business_registration_number')
-                        ->label('Business Registration Number')
-                        ->helperText('ROC/ROB registration number')
-                        ->maxLength(50),
                     Forms\Components\TextInput::make('business_activity_code')
                         ->label('Business Activity Code')
                         ->helperText('MSIC code (e.g., 85100 for childcare)')
@@ -74,6 +70,43 @@ class TenantForm
                         ->label('Business Activity Description')
                         ->maxLength(255)
                         ->default('Child day-care activities'),
+                    Forms\Components\Group::make([
+                        Forms\Components\Select::make('business_id_type')
+                            ->label('Business ID Type')
+                            ->options([
+                                'NRIC' => 'NRIC (National Registration Identity Card)',
+                                'BRN' => 'BRN (Business Registration Number)',
+                                'PASSPORT' => 'Passport',
+                            ])
+                            ->required()
+                            ->live()
+                            ->helperText('Select the type of business identification'),
+                        Forms\Components\TextInput::make('business_id_value')
+                            ->label('Business ID Value')
+                            ->required()
+                            ->maxLength(50)
+                            ->helperText(function (Forms\Get $get) {
+                                return match ($get('business_id_type')) {
+                                    'NRIC' => 'Enter 12 digits without dashes (e.g., 920728015777)',
+                                    'BRN' => 'Enter your Business Registration Number',
+                                    'PASSPORT' => 'Enter your passport number',
+                                    default => 'Enter the ID value corresponding to the selected ID type',
+                                };
+                            })
+                            ->live()
+                            ->rules(function (Forms\Get $get) {
+                                $rules = ['required', 'max:50'];
+                                
+                                if ($get('business_id_type') === 'NRIC') {
+                                    $rules[] = 'regex:/^[0-9]{12}$/';
+                                }
+                                
+                                return $rules;
+                            })
+                            ->validationMessages([
+                                'regex' => 'NRIC must be exactly 12 digits without dashes (e.g., 920728015777)',
+                            ]),
+                    ])->columns(2),
                     Forms\Components\Select::make('country')
                         ->label('Country')
                         ->options([
@@ -94,6 +127,33 @@ class TenantForm
                 ])
                 ->columns(2)
                 ->collapsible(),
+
+            Forms\Components\Section::make('E-Invoice API Configuration')
+                ->description('MyInvois API credentials for this tenant. Leave empty to use global configuration.')
+                ->schema([
+                    Forms\Components\TextInput::make('einvoice_client_id')
+                        ->label('MyInvois Client ID')
+                        ->helperText('Obtained from MyInvois portal for this tenant')
+                        ->maxLength(255),
+                    Forms\Components\TextInput::make('einvoice_client_secret')
+                        ->label('MyInvois Client Secret')
+                        ->helperText('Obtained from MyInvois portal for this tenant')
+                        ->password()
+                        ->revealable()
+                        ->maxLength(255),
+                    Forms\Components\Select::make('einvoice_environment')
+                        ->label('Environment')
+                        ->options([
+                            'sandbox' => 'Sandbox (Testing)',
+                            'production' => 'Production (Live)',
+                        ])
+                        ->default('sandbox')
+                        ->required()
+                        ->helperText('Use sandbox for testing, production for live transactions'),
+                ])
+                ->columns(2)
+                ->collapsible()
+                ->collapsed(),
         ];
     }
 }

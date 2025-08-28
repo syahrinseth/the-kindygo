@@ -57,12 +57,9 @@ class SubmitBulkToEInvoiceAction extends BulkAction
                         
                         $response = $invoice->submitToEInvoice();
                         
-                        if ($response['success']) {
-                            $successCount++;
-                        } else {
-                            $failedCount++;
-                            $errors[] = "Invoice {$invoice->number}: " . ($response['message'] ?? 'Unknown error');
-                        }
+                        // The submitToEInvoice method returns a response array directly or throws an exception
+                        // If we reach this point, it means the submission was successful
+                        $successCount++;
                     } catch (\Exception $e) {
                         $failedCount++;
                         $errors[] = "Invoice {$invoice->number}: " . $e->getMessage();

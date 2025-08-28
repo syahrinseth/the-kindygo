@@ -45,19 +45,13 @@ class SubmitToEInvoiceAction extends Action
                 try {
                     $response = $record->submitToEInvoice();
                     
-                    if ($response['success']) {
-                        Notification::make()
-                            ->title('E-Invoice submitted successfully')
-                            ->body('Invoice has been submitted to LHDN e-Invoice system.')
-                            ->success()
-                            ->send();
-                    } else {
-                        Notification::make()
-                            ->title('E-Invoice submission failed')
-                            ->body($response['message'] ?? 'An error occurred while submitting the invoice.')
-                            ->danger()
-                            ->send();
-                    }
+                    // The submitToEInvoice method returns a response array directly or throws an exception
+                    // If we reach this point, it means the submission was successful
+                    Notification::make()
+                        ->title('E-Invoice submitted successfully')
+                        ->body('Invoice has been submitted to LHDN e-Invoice system.')
+                        ->success()
+                        ->send();
                 } catch (\Exception $e) {
                     Log::error('E-Invoice submission error', [
                         'invoice_id' => $record->id,
@@ -102,19 +96,13 @@ class SubmitToEInvoiceAction extends Action
                 try {
                     $response = $record->submitToEInvoice();
                     
-                    if ($response['success']) {
-                        Notification::make()
-                            ->title('E-Invoice submitted successfully')
-                            ->body('Invoice has been submitted to LHDN e-Invoice system.')
-                            ->success()
-                            ->send();
-                    } else {
-                        Notification::make()
-                            ->title('E-Invoice submission failed')
-                            ->body($response['message'] ?? 'An error occurred while submitting the invoice.')
-                            ->danger()
-                            ->send();
-                    }
+                    // The submitToEInvoice method returns a response array directly or throws an exception
+                    // If we reach this point, it means the submission was successful
+                    Notification::make()
+                        ->title('E-Invoice submitted successfully')
+                        ->body('Invoice has been submitted to LHDN e-Invoice system.')
+                        ->success()
+                        ->send();
                 } catch (\Exception $e) {
                     Log::error('E-Invoice submission error', [
                         'invoice_id' => $record->id,

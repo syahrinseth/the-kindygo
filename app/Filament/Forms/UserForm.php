@@ -41,7 +41,7 @@ class UserForm
                                 $set('profile.passport', null);
                             }
                         }),
-                    
+
                     Forms\Components\TextInput::make('profile.passport')
                         ->label('Passport Number')
                         ->placeholder('e.g., A12345678')
@@ -69,6 +69,15 @@ class UserForm
                         ->placeholder('e.g., Teacher, Engineer, Doctor')
                         ->required()
                         ->maxLength(100),
+
+                    Forms\Components\TextInput::make('profile.tin')
+                        ->label('TIN (Tax Identification Number)')
+                        ->placeholder('e.g., C12345678901')
+                        ->helperText('Individual TIN for tax purposes (optional)')
+                        ->maxLength(20)
+                        ->rules(['nullable', 'regex:/^[A-Z0-9]{10,20}$/'])
+                        ->suffixIcon('heroicon-m-identification')
+                        ->hint('Format: 10-20 alphanumeric characters'),
                 ])
                 ->columns(2)
                 ->collapsible()
@@ -91,20 +100,20 @@ class UserForm
                         ->helperText('Additional address information (optional)')
                         ->rows(1)
                         ->maxLength(500),
-                    
+
                     Forms\Components\TextInput::make('userAddress.city')
                         ->label('City')
                         ->placeholder('e.g., Kuala Lumpur')
                         ->required()
                         ->maxLength(100),
-                        
+
                     Forms\Components\TextInput::make('userAddress.postal_code')
                         ->label('Postal Code')
                         ->placeholder('e.g., 50000')
                         ->required()
                         ->maxLength(10)
                         ->rules(['required', 'regex:/^\d{5}$/']),
-                        
+
                     Forms\Components\Select::make('userAddress.state_code')
                         ->label('State')
                         ->placeholder('Select state')
@@ -213,7 +222,7 @@ class UserForm
                         ->acceptedFileTypes(['image/jpeg', 'image/png', 'image/webp'])
                         ->maxSize(5120) // 5MB
                         ->helperText('Upload photo. Maximum size: 5MB'),
-                        
+
                     SpatieMediaLibraryFileUpload::make('mykad')
                         ->label('MyKad')
                         ->collection('mykad')
@@ -245,22 +254,22 @@ class UserForm
                         ->options(function () {
                             $user = Auth::user();
                             $allRoles = Role::all();
-                            
+
                             // Super Admin can assign any role
                             if ($user->hasRole('Super Admin')) {
                                 return $allRoles->pluck('name', 'id');
                             }
-                            
+
                             // Admin can assign all roles except Super Admin
                             if ($user->hasRole('Admin')) {
                                 return $allRoles->where('name', '!=', 'Super Admin')->pluck('name', 'id');
                             }
-                            
+
                             // Principal can only assign Teacher and Parent roles
                             if ($user->hasRole('Principal')) {
                                 return $allRoles->whereIn('name', ['Teacher', 'Parent'])->pluck('name', 'id');
                             }
-                            
+
                             // Default fallback
                             return collect();
                         })
@@ -282,26 +291,26 @@ class UserForm
                         })
                 ])
                 ->collapsible(),
-            
+
             Forms\Components\Section::make('Centre Assignments')
                 ->schema([
                     Forms\Components\Select::make('centres')
                         ->multiple()
                         ->relationship('centres', 'name', function ($query) {
                             $user = Auth::user();
-                            
+
                             // Super Admin and Admin can see all centres in tenant
                             if ($user->hasAnyRole(['Super Admin', 'Admin'])) {
                                 return $query;
                             }
-                            
+
                             // Principal can only assign to their centres
                             if ($user->hasRole('Principal')) {
                                 return $query->whereHas('users', function ($q) use ($user) {
                                     $q->where('users.id', $user->id);
                                 });
                             }
-                            
+
                             return $query->whereRaw('1 = 0'); // Empty result
                         })
                         ->preload()
@@ -336,7 +345,7 @@ class UserForm
                         ->confirmed()
                         ->minLength(8)
                         ->maxLength(255)
-                        ->label(fn (string $context): string => 
+                        ->label(fn (string $context): string =>
                             $context === 'edit' ? 'New Password' : 'Password'
                         ),
                     Forms\Components\TextInput::make('password_confirmation')
@@ -344,7 +353,7 @@ class UserForm
                         ->required(fn (string $context): bool => $context === 'create')
                         ->minLength(8)
                         ->maxLength(255)
-                        ->label(fn (string $context): string => 
+                        ->label(fn (string $context): string =>
                             $context === 'edit' ? 'Confirm New Password' : 'Confirm Password'
                         )
                         ->dehydrated(false),

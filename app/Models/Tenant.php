@@ -36,11 +36,16 @@ class Tenant extends Model
         'state',
         // Business Information for e-Invoice
         'tax_identification_number',
-        'business_registration_number',
         'business_activity_code',
         'business_activity_description',
+        'business_id_type',
+        'business_id_value',
         'country',
         'state_code',
+        // E-Invoice API Credentials
+        'einvoice_client_id',
+        'einvoice_client_secret',
+        'einvoice_environment',
     ];
 
     /**
@@ -115,7 +120,7 @@ class Tenant extends Model
     {
         return $this->hasMany(Invoice::class);
     }
-    
+
     /**
      * Get the child enrollments belonging to the tenant.
      */
@@ -123,7 +128,7 @@ class Tenant extends Model
     {
         return $this->hasMany(ChildEnrollment::class);
     }
-    
+
     /**
      * Get the active child enrollments belonging to the tenant.
      */
@@ -131,7 +136,7 @@ class Tenant extends Model
     {
         return $this->hasMany(ChildEnrollment::class)->active();
     }
-    
+
     /**
      * Get the current child enrollments belonging to the tenant.
      */
@@ -139,7 +144,7 @@ class Tenant extends Model
     {
         return $this->hasMany(ChildEnrollment::class)->current();
     }
-    
+
     /**
      * Get the tenant's pending invitations.
      */
@@ -147,7 +152,7 @@ class Tenant extends Model
     {
         return $this->hasMany(TenantInvitation::class);
     }
-    
+
     /**
      * Get the children belonging to the tenant.
      */
@@ -158,7 +163,7 @@ class Tenant extends Model
             ->withTimestamps()
             ->using(TenantChild::class);
     }
-    
+
     /**
      * Add a child to this tenant with a specific status.
      *
@@ -169,14 +174,14 @@ class Tenant extends Model
     public function addChild($child, ChildStatus $status = ChildStatus::NEW): void
     {
         $childId = $child instanceof Child ? $child->id : $child;
-        
+
         if (!$this->hasChild($childId)) {
             $this->children()->attach($childId, [
                 'status' => $status,
             ]);
         }
     }
-    
+
     /**
      * Remove a child from this tenant.
      *
@@ -186,10 +191,10 @@ class Tenant extends Model
     public function removeChild($child): void
     {
         $childId = $child instanceof Child ? $child->id : $child;
-        
+
         $this->children()->detach($childId);
     }
-    
+
     /**
      * Check if a child belongs to this tenant.
      *
@@ -199,10 +204,10 @@ class Tenant extends Model
     public function hasChild($child): bool
     {
         $childId = $child instanceof Child ? $child->id : $child;
-        
+
         return $this->children()->where('child_id', $childId)->exists();
     }
-    
+
     /**
      * Get the status of a child at this tenant.
      *
@@ -212,12 +217,12 @@ class Tenant extends Model
     public function getChildStatus($child): ?ChildStatus
     {
         $childId = $child instanceof Child ? $child->id : $child;
-        
+
         $pivotData = $this->children()->where('child_id', $childId)->first()?->pivot;
-        
+
         return $pivotData ? $pivotData->status : null;
     }
-    
+
     /**
      * Update the status of a child at this tenant.
      *
@@ -228,14 +233,14 @@ class Tenant extends Model
     public function updateChildStatus($child, ChildStatus $status): bool
     {
         $childId = $child instanceof Child ? $child->id : $child;
-        
+
         $updated = $this->children()->updateExistingPivot($childId, [
             'status' => $status,
         ]);
-        
+
         return $updated > 0;
     }
-    
+
     /**
      * Get children with a specific status at this tenant.
      *
@@ -248,7 +253,7 @@ class Tenant extends Model
             ->wherePivot('status', $status)
             ->get();
     }
-    
+
     /**
      * Get new children at this tenant.
      *
@@ -258,7 +263,7 @@ class Tenant extends Model
     {
         return $this->getChildrenByStatus(ChildStatus::NEW);
     }
-    
+
     /**
      * Get active children at this tenant.
      *
@@ -268,7 +273,7 @@ class Tenant extends Model
     {
         return $this->getChildrenByStatus(ChildStatus::ACTIVE);
     }
-    
+
     /**
      * Get returning children at this tenant.
      *
@@ -278,7 +283,7 @@ class Tenant extends Model
     {
         return $this->getChildrenByStatus(ChildStatus::RETURN);
     }
-    
+
     /**
      * Get alumni children at this tenant.
      *
@@ -310,5 +315,58 @@ class Tenant extends Model
     public function products(): HasMany
     {
         return $this->hasMany(Product::class);
+    }
+
+    /**
+     * Get the e-Invoice client ID for this tenant.
+     * Falls back to global config if not set.
+     *
+     * @return string|null
+     */
+    public function getEInvoiceClientId(): ?string
+    {
+        return $this->einvoice_client_id ?? config('einvoice.client_id');
+    }
+
+    /**
+     * Get the e-Invoice client secret for this tenant.
+     * Falls back to global config if not set.
+     *
+     * @return string|null
+     */
+    public function getEInvoiceClientSecret(): ?string
+    {
+        return $this->einvoice_client_secret ?? config('einvoice.client_secret');
+    }
+
+    /**
+     * Get the e-Invoice environment for this tenant.
+     * Falls back to global config if not set.
+     *
+     * @return string
+     */
+    public function getEInvoiceEnvironment(): string
+    {
+        return $this->einvoice_environment ?? config('einvoice.environment', 'sandbox');
+    }
+
+    /**
+     * Check if tenant has e-Invoice credentials configured.
+     *
+     * @return bool
+     */
+    public function hasEInvoiceCredentials(): bool
+    {
+        return !empty($this->einvoice_client_id) && !empty($this->einvoice_client_secret);
+    }
+
+    /**
+     * Check if tenant is using production e-Invoice environment.
+     *
+     * @return bool
+     */
+    public function isEInvoiceProduction(): bool
+    {
+        return $this->getEInvoiceEnvironment() === 'production';
     }
 }

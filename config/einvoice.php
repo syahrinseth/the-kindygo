@@ -9,6 +9,10 @@ return [
     | Configuration for Malaysia's LHDN e-Invoice system integration.
     | Make sure to set these values in your .env file.
     |
+    | NOTE: These are global fallback values. Individual tenants can have
+    | their own client_id and client_secret configured in the database.
+    | Tenant-specific credentials will take precedence over these values.
+    |
     */
 
     'base_url' => env('EINVOICE_BASE_URL', 'https://api.myinvois.hasil.gov.my'),
@@ -111,13 +115,15 @@ return [
     
     'supplier_postal_code' => env('EINVOICE_SUPPLIER_POSTAL_CODE', '50000'),
     
-    'supplier_country' => env('EINVOICE_SUPPLIER_COUNTRY', 'MY'),
+    'supplier_country' => env('EINVOICE_SUPPLIER_COUNTRY', 'MYS'),
     
     'supplier_email' => env('EINVOICE_SUPPLIER_EMAIL', 'info@yourcompany.com'),
     
     'supplier_phone' => env('EINVOICE_SUPPLIER_PHONE', '+60123456789'),
     
     'supplier_registration_number' => env('EINVOICE_SUPPLIER_REGISTRATION_NUMBER'),
+
+    'supplier_registration_number_scheme' => env('EINVOICE_SUPPLIER_REGISTRATION_NUMBER_SCHEME', 'BRN'), // Business Registration Number
     
     'supplier_business_activity_code' => env('EINVOICE_SUPPLIER_BUSINESS_ACTIVITY_CODE', '85100'), // Child day-care activities
     

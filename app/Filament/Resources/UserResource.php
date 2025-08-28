@@ -104,6 +104,17 @@ class UserResource extends Resource
                     ->searchable()
                     ->toggleable(isToggledHiddenByDefault: true)
                     ->placeholder('Not set'),
+                Tables\Columns\TextColumn::make('profile.tin')
+                    ->label('TIN')
+                    ->searchable()
+                    ->toggleable(isToggledHiddenByDefault: true)
+                    ->placeholder('Not set')
+                    ->formatStateUsing(function (?string $state): string {
+                        return $state ? '***' . substr($state, -4) : 'Not set';
+                    })
+                    ->tooltip(function (?string $state): string {
+                        return $state ? 'TIN: ' . $state : 'TIN not provided';
+                    }),
                 Tables\Columns\TextColumn::make('profile.phone')
                     ->label('Phone')
                     ->searchable()
@@ -118,27 +129,18 @@ class UserResource extends Resource
                     ->label('E-Invoice Ready')
                     ->boolean()
                     ->getStateUsing(function (User $record): bool {
-                        return $record->hasCompleteAddress() && 
-                               ($record->profile && 
-                                (!empty($record->profile->nric) || !empty($record->profile->passport)));
+                        return $record->eInvoiceReady();
                     })
                     ->trueIcon('heroicon-o-check-circle')
                     ->falseIcon('heroicon-o-x-circle')
                     ->trueColor('success')
                     ->falseColor('danger')
                     ->tooltip(function (User $record): string {
-                        if ($record->hasCompleteAddress() && (!empty($record->nric) || !empty($record->passport))) {
+                        if ($record->eInvoiceReady()) {
                             return 'Customer has complete e-Invoice information';
                         }
-                        
-                        $missing = [];
-                        if (empty($record->nric) && empty($record->passport)) {
-                            $missing[] = 'NRIC or Passport';
-                        }
-                        if (!$record->hasCompleteAddress()) {
-                            $missing[] = 'Complete address';
-                        }
-                        
+
+                        $missing = $record->getEInvoiceMissingRequirements();
                         return 'Missing: ' . implode(', ', $missing);
                     })
                     ->toggleable(),
@@ -162,22 +164,26 @@ class UserResource extends Resource
                     ->preload(),
                 Tables\Filters\Filter::make('einvoice_ready')
                     ->label('E-Invoice Ready')
-                    ->query(fn (Builder $query): Builder => 
-                        $query->where(function ($q) {
-                            $q->whereNotNull('nric')
-                              ->orWhereNotNull('passport');
-                        })
-                        ->whereNotNull('address')
-                        ->whereNotNull('city')
-                        ->whereNotNull('postal_code')
-                        ->whereNotNull('state_code')
+                    ->query(fn (Builder $query): Builder =>
+                        $query->eInvoiceReady()
                     )
                     ->toggle(),
                 Tables\Filters\Filter::make('missing_identification')
                     ->label('Missing ID (NRIC/Passport)')
-                    ->query(fn (Builder $query): Builder => 
-                        $query->whereNull('nric')
-                              ->whereNull('passport')
+                    ->query(fn (Builder $query): Builder =>
+                        $query->missingIdentification()
+                    )
+                    ->toggle(),
+                Tables\Filters\Filter::make('missing_tin')
+                    ->label('Missing TIN')
+                    ->query(fn (Builder $query): Builder =>
+                        $query->missingTin()
+                    )
+                    ->toggle(),
+                Tables\Filters\Filter::make('missing_address')
+                    ->label('Missing Complete Address')
+                    ->query(fn (Builder $query): Builder =>
+                        $query->missingCompleteAddress()
                     )
                     ->toggle(),
             ])
@@ -185,10 +191,10 @@ class UserResource extends Resource
                 Tables\Actions\ActionGroup::make([
                     Tables\Actions\ViewAction::make()
                         ->visible(fn (User $record) => Auth::user()->can('view', $record)),
-                    
+
                     Tables\Actions\EditAction::make()
                         ->visible(fn (User $record) => Auth::user()->can('update', $record)),
-                    
+
                     Tables\Actions\DeleteAction::make()
                         ->visible(fn (User $record) => Auth::user()->can('delete', $record)),
                 ])

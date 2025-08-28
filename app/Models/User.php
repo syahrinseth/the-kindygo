@@ -7,15 +7,16 @@ use App\Models\Centre;
 use App\Models\Child;
 use App\Models\Invoice;
 use App\Models\Tenant;
-use App\Models\UserProfile;
 use App\Models\UserAddress;
 use App\Models\UserOfficeInfo;
+use App\Models\UserProfile;
 use Filament\Facades\Filament;
 use Filament\Models\Contracts\FilamentUser;
 use Filament\Models\Contracts\HasAvatar;
 use Filament\Models\Contracts\HasDefaultTenant;
 use Filament\Models\Contracts\HasTenants;
 use Filament\Panel;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -346,7 +347,7 @@ class User extends Authenticatable implements FilamentUser, HasDefaultTenant, Ha
     public function getFilamentAvatarUrl(): ?string
     {
         $media = $this->getFirstMedia('photo');
-        
+
         if (!$media) {
             return null;
         }
@@ -360,7 +361,7 @@ class User extends Authenticatable implements FilamentUser, HasDefaultTenant, Ha
     }
 
     // E-Invoice Helper Methods
-    
+
     /**
      * Get the appropriate identification scheme for e-invoice.
      * Returns 'TIN', 'NRIC', or 'PASSPORT' based on available data.
@@ -372,11 +373,11 @@ class User extends Authenticatable implements FilamentUser, HasDefaultTenant, Ha
         if ($this->profile) {
             return $this->profile->getEInvoiceSchemeId();
         }
-        
+
         // Default to NRIC for Malaysian customers
         return 'NRIC';
     }
-    
+
     /**
      * Get the identification value for e-invoice.
      *
@@ -388,13 +389,23 @@ class User extends Authenticatable implements FilamentUser, HasDefaultTenant, Ha
         if ($this->profile) {
             return $this->profile->getEInvoiceIdentification();
         }
-        
+
         // If no profile available, throw exception
         throw new \Exception("Customer '{$this->name}' must have a valid profile with NRIC or Passport number for e-Invoice submission.");
     }
-    
-    /**
-     * Check if user has complete address information for e-invoice.
+
+    public function getEInvoiceTIN(): string
+    {
+        if ($this->profile) {
+            return $this->profile->getEInvoiceTIN();
+        }
+
+        // If no profile available, throw exception
+        throw new \Exception("Customer '{$this->name}' must have a valid profile with TIN for e-Invoice submission.");
+    }
+
+        /**
+     * Check if the user has complete address information for e-invoice.
      *
      * @return bool
      */
@@ -402,7 +413,65 @@ class User extends Authenticatable implements FilamentUser, HasDefaultTenant, Ha
     {
         return $this->userAddress && $this->userAddress->isComplete();
     }
-    
+
+    /**
+     * Check if the user has valid identification (NRIC or Passport).
+     *
+     * @return bool
+     */
+    public function hasValidIdentification(): bool
+    {
+        return $this->profile &&
+               (!empty($this->profile->nric) || !empty($this->profile->passport));
+    }
+
+    /**
+     * Check if the user has a valid TIN.
+     *
+     * @return bool
+     */
+    public function hasValidTin(): bool
+    {
+        return $this->profile && !empty($this->profile->tin);
+    }
+
+    /**
+     * Check if the user is ready for e-invoice generation.
+     * Requires: complete address, valid identification (NRIC/Passport), and TIN.
+     *
+     * @return bool
+     */
+    public function eInvoiceReady(): bool
+    {
+        return $this->hasCompleteAddress() &&
+               $this->hasValidIdentification() &&
+               $this->hasValidTin();
+    }
+
+    /**
+     * Get a list of missing e-invoice requirements.
+     *
+     * @return array
+     */
+    public function getEInvoiceMissingRequirements(): array
+    {
+        $missing = [];
+
+        if (!$this->hasValidIdentification()) {
+            $missing[] = 'NRIC or Passport';
+        }
+
+        if (!$this->hasValidTin()) {
+            $missing[] = 'TIN (Tax ID)';
+        }
+
+        if (!$this->hasCompleteAddress()) {
+            $missing[] = 'Complete address';
+        }
+
+        return $missing;
+    }
+
     /**
      * Get formatted address for e-invoice display.
      *
@@ -413,10 +482,10 @@ class User extends Authenticatable implements FilamentUser, HasDefaultTenant, Ha
         if ($this->userAddress) {
             return $this->userAddress->getFormattedAddress();
         }
-        
+
         return '';
     }
-    
+
     /**
      * Get state name from user's address.
      *
@@ -427,7 +496,76 @@ class User extends Authenticatable implements FilamentUser, HasDefaultTenant, Ha
         if ($this->userAddress) {
             return $this->userAddress->getStateName();
         }
-        
+
         return '';
+    }
+
+    public function scopeEInvoiceReady(Builder $query): Builder
+    {
+        return $query->whereHas('userAddress', function (Builder $addressQuery) {
+                // Check if address is complete
+                $addressQuery->whereNotNull('address')
+                           ->whereNotNull('city')
+                           ->whereNotNull('postal_code')
+                           ->whereNotNull('state_code');
+            })
+            ->whereHas('profile', function (Builder $profileQuery) {
+                // Check if profile has TIN and identification
+                $profileQuery->whereNotNull('tin')
+                           ->where('tin', '!=', '')
+                           ->where(function (Builder $idQuery) {
+                               $idQuery->where(function (Builder $nricQuery) {
+                                   $nricQuery->whereNotNull('nric')->where('nric', '!=', '');
+                               })
+                               ->orWhere(function (Builder $passportQuery) {
+                                   $passportQuery->whereNotNull('passport')->where('passport', '!=', '');
+                               });
+                           });
+            });
+    }
+
+    /**
+     * Scope to get users missing identification (NRIC or Passport).
+     */
+    public function scopeMissingIdentification(Builder $query): Builder
+    {
+        return $query->whereDoesntHave('profile')
+            ->orWhereHas('profile', function (Builder $q) {
+                $q->where(function (Builder $idQuery) {
+                    $idQuery->whereNull('nric')->orWhere('nric', '');
+                })
+                ->where(function (Builder $passportQuery) {
+                    $passportQuery->whereNull('passport')->orWhere('passport', '');
+                });
+            });
+    }
+
+    /**
+     * Scope to get users missing TIN.
+     */
+    public function scopeMissingTin(Builder $query): Builder
+    {
+        return $query->whereDoesntHave('profile')
+            ->orWhereHas('profile', function (Builder $q) {
+                $q->whereNull('tin')->orWhere('tin', '');
+            });
+    }
+
+    /**
+     * Scope to get users missing complete address.
+     */
+    public function scopeMissingCompleteAddress(Builder $query): Builder
+    {
+        return $query->whereDoesntHave('userAddress')
+            ->orWhereHas('userAddress', function (Builder $q) {
+                $q->whereNull('address')
+                  ->orWhere('address', '')
+                  ->orWhereNull('city')
+                  ->orWhere('city', '')
+                  ->orWhereNull('postal_code')
+                  ->orWhere('postal_code', '')
+                  ->orWhereNull('state_code')
+                  ->orWhere('state_code', '');
+            });
     }
 }
