@@ -189,7 +189,7 @@ php artisan db:seed
 
 ## Project Structure
 
-```
+```bash
 ├── app/
 │   ├── Enums/              # Application enumerations
 │   ├── Filament/           # Filament admin panel resources
