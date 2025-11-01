@@ -59,8 +59,8 @@ return [
 
     'storage' => [
         'database' => [
-            'connection' => env('DB_CONNECTION', 'mysql'),
-            'chunk' => 1000,
+            'connection' => env('TELESCOPE_DB_CONNECTION', 'telescope'),
+            'chunk' => (int) env('TELESCOPE_DB_CHUNK', 1000),
         ],
     ],
 
@@ -95,7 +95,7 @@ return [
     'middleware' => [
         'web',
         Authorize::class,
-        'auth'
+        'auth',
     ],
 
     /*

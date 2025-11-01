@@ -6,5 +6,6 @@ return [
     App\Providers\BladeComponentServiceProvider::class,
     App\Providers\CurrentCentreDisplayServiceProvider::class,
     App\Providers\Filament\AppPanelProvider::class,
+    App\Providers\HorizonServiceProvider::class,
     App\Providers\TelescopeServiceProvider::class,
 ];
