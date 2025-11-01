@@ -21,6 +21,15 @@ return new class extends Migration
     {
         $schema = Schema::connection($this->getConnection());
 
+        // If the telescope tables already exist on the configured connection,
+        // skip this migration. Telescope is often configured to use a separate
+        // sqlite database, so running migrations against the default connection
+        // can try to recreate tables that are already present on the telescope
+        // connection.
+        if ($schema->hasTable('telescope_entries')) {
+            return;
+        }
+
         $schema->create('telescope_entries', function (Blueprint $table) {
             $table->bigIncrements('sequence');
             $table->uuid('uuid');
