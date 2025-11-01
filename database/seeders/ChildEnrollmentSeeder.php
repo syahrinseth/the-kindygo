@@ -6,14 +6,14 @@ use App\Models\Child;
 use App\Models\Product;
 use App\Models\Tenant;
 use App\Models\Centre;
-use App\Models\ChildEnrollment;
-use App\Enums\ChildEnrollmentStatus;
-use App\Enums\ChildEnrollmentBilledEvery;
-use App\Enums\ChildEnrollmentType;
+use App\Models\ChildEnrolment;
+use App\Enums\ChildEnrolmentStatus;
+use App\Enums\ChildEnrolmentBilledEvery;
+use App\Enums\ChildEnrolmentType;
 use Illuminate\Database\Console\Seeds\WithoutModelEvents;
 use Illuminate\Database\Seeder;
 
-class ChildEnrollmentSeeder extends Seeder
+class ChildEnrolmentSeeder extends Seeder
 {
     /**
      * Run the database seeds.
@@ -31,27 +31,27 @@ class ChildEnrollmentSeeder extends Seeder
             return;
         }
 
-        // Create sample enrollments
+        // Create sample enrolments
         foreach ($tenants as $tenant) {
             foreach ($centres as $centre) {
                 foreach ($children->random(3) as $child) {
                     foreach ($products->random(2) as $product) {
-                        ChildEnrollment::create([
+                        ChildEnrolment::create([
                             'tenant_id' => $tenant->id,
                             'centre_id' => $centre->id,
                             'child_id' => $child->id,
                             'product_id' => $product->id,
-                            'status' => fake()->randomElement(ChildEnrollmentStatus::cases()),
-                            'billed_every' => fake()->randomElement(ChildEnrollmentBilledEvery::cases()),
+                            'status' => fake()->randomElement(ChildEnrolmentStatus::cases()),
+                            'billed_every' => fake()->randomElement(ChildEnrolmentBilledEvery::cases()),
                             'date_start' => fake()->dateTimeBetween('-6 months', 'now'),
                             'date_end' => fake()->optional(0.7)->dateTimeBetween('now', '+1 year'),
-                            'type' => fake()->randomElement(ChildEnrollmentType::cases()),
+                            'type' => fake()->randomElement(ChildEnrolmentType::cases()),
                         ]);
                     }
                 }
             }
         }
 
-        $this->command->info('Child enrollments created successfully!');
+        $this->command->info('Child enrolments created successfully!');
     }
 }

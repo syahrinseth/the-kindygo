@@ -263,15 +263,15 @@ class Invoice extends Model
     }
 
     /**
-     * Get all child enrollments related to this invoice through invoice items.
+     * Get all child enrolments related to this invoice through invoice items.
      *
      * @return \Illuminate\Database\Eloquent\Collection
      */
-    public function getChildEnrollments()
+    public function getChildEnrolments()
     {
-        return ChildEnrollment::whereIn(
+        return ChildEnrolment::whereIn(
             'id',
-            $this->invoiceItems()->whereNotNull('child_enrollment_id')->pluck('child_enrollment_id')
+            $this->invoiceItems()->whereNotNull('child_enrolment_id')->pluck('child_enrolment_id')
         )->get();
     }
 
@@ -486,20 +486,20 @@ class Invoice extends Model
     }
 
     /**
-     * Get all child enrollments associated with this invoice via invoice items.
+     * Get all child enrolments associated with this invoice via invoice items.
      *
      * @return \Illuminate\Database\Eloquent\Relations\HasManyThrough
      */
-    public function childEnrollments()
+    public function childEnrolments()
     {
         return $this->hasManyThrough(
-            ChildEnrollment::class,
+            ChildEnrolment::class,
             InvoiceItem::class,
             'invoice_id',
             'id',
             'id',
-            'child_enrollment_id'
-        )->whereNotNull('invoice_items.child_enrollment_id');
+            'child_enrolment_id'
+        )->whereNotNull('invoice_items.child_enrolment_id');
     }
 
     /**

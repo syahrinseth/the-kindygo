@@ -11,7 +11,7 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::table('child_enrollments', function (Blueprint $table) {
+        Schema::table('child_enrolments', function (Blueprint $table) {
             $table->foreignId('tenant_id')->after('id')->constrained('tenants')->onDelete('cascade');
             $table->index(['tenant_id', 'status']);
         });
@@ -22,7 +22,7 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::table('child_enrollments', function (Blueprint $table) {
+        Schema::table('child_enrolments', function (Blueprint $table) {
             $table->dropForeign(['tenant_id']);
             $table->dropIndex(['tenant_id', 'status']);
             $table->dropColumn('tenant_id');

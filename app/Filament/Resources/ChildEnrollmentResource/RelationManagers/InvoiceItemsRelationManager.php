@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Filament\Resources\ChildEnrollmentResource\RelationManagers;
+namespace App\Filament\Resources\ChildEnrolmentResource\RelationManagers;
 
 use Filament\Forms;
 use Filament\Forms\Form;
@@ -103,7 +103,8 @@ class InvoiceItemsRelationManager extends RelationManager
             ->columns([
                 Tables\Columns\TextColumn::make('invoice.number')
                     ->label('Invoice #')
-                    ->url(fn ($record): string => 
+                    ->url(
+                        fn($record): string =>
                         route('filament.app.resources.invoices.view', [
                             'tenant' => filament()->getTenant()->id ?? 'default',
                             'record' => $record->invoice_id
@@ -150,7 +151,7 @@ class InvoiceItemsRelationManager extends RelationManager
                 Tables\Columns\TextColumn::make('balance_amount')
                     ->label('Balance')
                     ->money('MYR', 100)
-                    ->color(fn ($state): string => $state > 0 ? 'warning' : 'success')
+                    ->color(fn($state): string => $state > 0 ? 'warning' : 'success')
                     ->sortable(),
 
                 Tables\Columns\TextColumn::make('effective_date')
@@ -207,11 +208,11 @@ class InvoiceItemsRelationManager extends RelationManager
                         return $query
                             ->when(
                                 $data['from'],
-                                fn (Builder $query, $date): Builder => $query->whereDate('effective_date', '>=', $date),
+                                fn(Builder $query, $date): Builder => $query->whereDate('effective_date', '>=', $date),
                             )
                             ->when(
                                 $data['until'],
-                                fn (Builder $query, $date): Builder => $query->whereDate('effective_date', '<=', $date),
+                                fn(Builder $query, $date): Builder => $query->whereDate('effective_date', '<=', $date),
                             );
                     })
                     ->indicateUsing(function (array $data): array {
@@ -234,7 +235,8 @@ class InvoiceItemsRelationManager extends RelationManager
                         ->label('View Invoice')
                         ->icon('heroicon-o-document-text')
                         ->color('primary')
-                        ->url(fn ($record): string => 
+                        ->url(
+                            fn($record): string =>
                             route('filament.app.resources.invoices.view', [
                                 'tenant' => filament()->getTenant(),
                                 'record' => $record->invoice_id
@@ -242,18 +244,18 @@ class InvoiceItemsRelationManager extends RelationManager
                         )
                         ->openUrlInNewTab(),
                 ])
-                ->label('Actions')
-                ->icon('heroicon-m-ellipsis-vertical')
-                ->size('sm')
-                ->color('gray')
-                ->button(),
+                    ->label('Actions')
+                    ->icon('heroicon-m-ellipsis-vertical')
+                    ->size('sm')
+                    ->color('gray')
+                    ->button(),
             ])
             ->bulkActions([
                 // Remove bulk actions for safety
             ])
             ->defaultSort('created_at', 'desc')
             ->emptyStateHeading('No Invoice Items')
-            ->emptyStateDescription('Invoice items will appear here once billing is generated for this enrollment.')
+            ->emptyStateDescription('Invoice items will appear here once billing is generated for this enrolment.')
             ->emptyStateIcon('heroicon-o-document-text');
     }
 

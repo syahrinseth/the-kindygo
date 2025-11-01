@@ -2,7 +2,7 @@
 
 namespace App\Enums;
 
-enum ChildEnrollmentBilledEvery: string
+enum ChildEnrolmentBilledEvery: string
 {
     case DAILY = 'daily';
     case WEEKLY = 'weekly';

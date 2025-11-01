@@ -63,7 +63,7 @@ class Centre extends Model
     public function tenant(): BelongsTo
     {
         return $this->belongsTo(Tenant::class);
-    }   
+    }
 
     public function campus(): BelongsTo
     {
@@ -86,31 +86,31 @@ class Centre extends Model
     {
         return $this->hasMany(Invoice::class);
     }
-    
+
     /**
-     * Get the child enrollments belonging to the centre.
+     * Get the child enrolments belonging to the centre.
      */
-    public function childEnrollments(): HasMany
+    public function childEnrolments(): HasMany
     {
-        return $this->hasMany(ChildEnrollment::class);
+        return $this->hasMany(ChildEnrolment::class);
     }
-    
+
     /**
-     * Get the active child enrollments belonging to the centre.
+     * Get the active child enrolments belonging to the centre.
      */
-    public function activeChildEnrollments(): HasMany
+    public function activeChildEnrolments(): HasMany
     {
-        return $this->hasMany(ChildEnrollment::class)->active();
+        return $this->hasMany(ChildEnrolment::class)->active();
     }
-    
+
     /**
-     * Get the current child enrollments belonging to the centre.
+     * Get the current child enrolments belonging to the centre.
      */
-    public function currentChildEnrollments(): HasMany
+    public function currentChildEnrolments(): HasMany
     {
-        return $this->hasMany(ChildEnrollment::class)->current();
+        return $this->hasMany(ChildEnrolment::class)->current();
     }
-    
+
     /**
      * Get the children associated with this centre.
      *
@@ -122,7 +122,7 @@ class Centre extends Model
             ->using(CentreChild::class)
             ->withTimestamps();
     }
-    
+
     /**
      * Add a child to this centre.
      *
@@ -132,12 +132,12 @@ class Centre extends Model
     public function addChild($child): void
     {
         $childId = $child instanceof Child ? $child->id : $child;
-        
+
         if (!$this->children()->where('child_id', $childId)->exists()) {
             $this->children()->attach($childId);
         }
     }
-    
+
     /**
      * Remove a child from this centre.
      *
@@ -147,10 +147,10 @@ class Centre extends Model
     public function removeChild($child): void
     {
         $childId = $child instanceof Child ? $child->id : $child;
-        
+
         $this->children()->detach($childId);
     }
-    
+
     /**
      * Check if a specific child is in this centre.
      *
@@ -160,7 +160,7 @@ class Centre extends Model
     public function hasChild($child): bool
     {
         $childId = $child instanceof Child ? $child->id : $child;
-        
+
         return $this->children()->where('child_id', $childId)->exists();
     }
 
@@ -178,7 +178,7 @@ class Centre extends Model
     public function prices(): BelongsToMany
     {
         return $this->belongsToMany(ProductPrice::class, 'price_centre', 'centre_id', 'product_price_id')
-                    ->withTimestamps();
+            ->withTimestamps();
     }
 
     /**
@@ -209,7 +209,7 @@ class Centre extends Model
             $this->postal_code ? $this->postal_code . ' ' . $this->city : $this->city,
             $this->state
         ])->filter()->implode(', ');
-        
+
         // If centre address is empty, use tenant address as fallback
         if (empty($centreAddress) && $this->tenant) {
             $centreAddress = collect([
@@ -219,7 +219,7 @@ class Centre extends Model
                 $this->tenant->state
             ])->filter()->implode(', ');
         }
-        
+
         return !empty($centreAddress) ? $centreAddress : null;
     }
 }

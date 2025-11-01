@@ -2,7 +2,7 @@
 
 namespace App\Enums;
 
-enum ChildEnrollmentStatus: string
+enum ChildEnrolmentStatus: string
 {
     case ACTIVE = 'active';
     case INACTIVE = 'inactive';

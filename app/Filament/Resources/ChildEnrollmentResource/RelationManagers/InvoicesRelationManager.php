@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Filament\Resources\ChildEnrollmentResource\RelationManagers;
+namespace App\Filament\Resources\ChildEnrolmentResource\RelationManagers;
 
 use Filament\Forms;
 use Filament\Forms\Form;
@@ -83,7 +83,7 @@ class InvoicesRelationManager extends RelationManager
 
                 Tables\Columns\TextColumn::make('status')
                     ->badge()
-                    ->color(fn (string $state): string => match ($state) {
+                    ->color(fn(string $state): string => match ($state) {
                         'draft' => 'gray',
                         'pending' => 'warning',
                         'paid' => 'success',
@@ -91,7 +91,7 @@ class InvoicesRelationManager extends RelationManager
                         'cancelled' => 'gray',
                         default => 'gray',
                     })
-                    ->formatStateUsing(fn ($state): string => ucfirst($state))
+                    ->formatStateUsing(fn($state): string => ucfirst($state))
                     ->sortable(),
 
                 Tables\Columns\TextColumn::make('date')
@@ -129,13 +129,13 @@ class InvoicesRelationManager extends RelationManager
                         }
                     })
                     ->badge()
-                    ->color(fn (string $state): string => match ($state) {
+                    ->color(fn(string $state): string => match ($state) {
                         'paid' => 'success',
                         'partial' => 'warning',
                         'unpaid' => 'danger',
                         default => 'gray',
                     })
-                    ->formatStateUsing(fn ($state): string => ucfirst($state)),
+                    ->formatStateUsing(fn($state): string => ucfirst($state)),
 
                 Tables\Columns\TextColumn::make('created_at')
                     ->label('Created')

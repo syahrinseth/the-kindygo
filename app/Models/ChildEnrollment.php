@@ -2,16 +2,16 @@
 
 namespace App\Models;
 
-use App\Enums\ChildEnrollmentStatus;
-use App\Enums\ChildEnrollmentBilledEvery;
-use App\Enums\ChildEnrollmentType;
+use App\Enums\ChildEnrolmentStatus;
+use App\Enums\ChildEnrolmentBilledEvery;
+use App\Enums\ChildEnrolmentType;
 use App\Models\Scopes\TenantScope;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 
-class ChildEnrollment extends Model
+class ChildEnrolment extends Model
 {
     use HasFactory;
 
@@ -49,16 +49,16 @@ class ChildEnrollment extends Model
      * @var array<string, string>
      */
     protected $casts = [
-        'status' => ChildEnrollmentStatus::class,
-        'billed_every' => ChildEnrollmentBilledEvery::class,
-        'type' => ChildEnrollmentType::class,
+        'status' => ChildEnrolmentStatus::class,
+        'billed_every' => ChildEnrolmentBilledEvery::class,
+        'type' => ChildEnrolmentType::class,
         'date_start' => 'datetime',
         'date_end' => 'datetime',
         'additional_products' => 'array',
     ];
 
     /**
-     * Get the tenant that owns the enrollment.
+     * Get the tenant that owns the enrolment.
      *
      * @return \Illuminate\Database\Eloquent\Relations\BelongsTo
      */
@@ -68,7 +68,7 @@ class ChildEnrollment extends Model
     }
 
     /**
-     * Get the centre associated with the enrollment.
+     * Get the centre associated with the enrolment.
      *
      * @return \Illuminate\Database\Eloquent\Relations\BelongsTo
      */
@@ -78,7 +78,7 @@ class ChildEnrollment extends Model
     }
 
     /**
-     * Get the child that owns the enrollment.
+     * Get the child that owns the enrolment.
      *
      * @return \Illuminate\Database\Eloquent\Relations\BelongsTo
      */
@@ -88,7 +88,7 @@ class ChildEnrollment extends Model
     }
 
     /**
-     * Get the product associated with the enrollment.
+     * Get the product associated with the enrolment.
      *
      * @return \Illuminate\Database\Eloquent\Relations\BelongsTo
      */
@@ -98,7 +98,7 @@ class ChildEnrollment extends Model
     }
 
     /**
-     * Get the invoice items associated with this enrollment.
+     * Get the invoice items associated with this enrolment.
      *
      * @return \Illuminate\Database\Eloquent\Relations\HasMany
      */
@@ -108,31 +108,32 @@ class ChildEnrollment extends Model
     }
 
     /**
-     * Get the invoices that have items for this enrollment.
+     * Get the invoices that have items for this enrolment.
      *
      * @return \Illuminate\Database\Eloquent\Collection
      */
     public function getInvoices()
     {
-        return Invoice::whereIn('id', 
+        return Invoice::whereIn(
+            'id',
             $this->invoiceItems()->pluck('invoice_id')
         )->get();
     }
 
     /**
-     * Scope a query to only include active enrollments.
+     * Scope a query to only include active enrolments.
      *
      * @param  \Illuminate\Database\Eloquent\Builder  $query
      * @return \Illuminate\Database\Eloquent\Builder
      */
     public function scopeActive($query)
     {
-        return $query->where('status', ChildEnrollmentStatus::ACTIVE);
+        return $query->where('status', ChildEnrolmentStatus::ACTIVE);
     }
 
     /**
-     * Scope a query to only include current enrollments (active and not expired).
-     * This includes enrollments that:
+     * Scope a query to only include current enrolments (active and not expired).
+     * This includes enrolments that:
      * - Have status = 'active'
      * - Have already started (date_start <= now)
      * - Have not ended yet (date_end is null OR date_end >= now)
@@ -142,73 +143,73 @@ class ChildEnrollment extends Model
      */
     public function scopeCurrent($query)
     {
-        return $query->where('status', ChildEnrollmentStatus::ACTIVE)
-                    ->where('date_start', '<=', now())
-                    ->where(function ($query) {
-                        $query->whereNull('date_end')
-                              ->orWhere('date_end', '>=', now());
-                    });
+        return $query->where('status', ChildEnrolmentStatus::ACTIVE)
+            ->where('date_start', '<=', now())
+            ->where(function ($query) {
+                $query->whereNull('date_end')
+                    ->orWhere('date_end', '>=', now());
+            });
     }
 
     /**
-     * Scope a query to include active enrollments that haven't ended yet.
-     * This includes enrollments that may have future start dates.
+     * Scope a query to include active enrolments that haven't ended yet.
+     * This includes enrolments that may have future start dates.
      *
      * @param  \Illuminate\Database\Eloquent\Builder  $query
      * @return \Illuminate\Database\Eloquent\Builder
      */
     public function scopeNotEnded($query)
     {
-        return $query->where('status', ChildEnrollmentStatus::ACTIVE)
-                    ->where(function ($query) {
-                        $query->whereNull('date_end')
-                              ->orWhere('date_end', '>=', now());
-                    });
+        return $query->where('status', ChildEnrolmentStatus::ACTIVE)
+            ->where(function ($query) {
+                $query->whereNull('date_end')
+                    ->orWhere('date_end', '>=', now());
+            });
     }
 
     /**
-     * Scope a query to include enrollments that are running today.
-     * This includes enrollments where today is between start and end dates.
+     * Scope a query to include enrolments that are running today.
+     * This includes enrolments where today is between start and end dates.
      *
      * @param  \Illuminate\Database\Eloquent\Builder  $query
      * @return \Illuminate\Database\Eloquent\Builder
      */
     public function scopeRunningToday($query)
     {
-        return $query->where('status', ChildEnrollmentStatus::ACTIVE)
-                    ->where('date_start', '<=', now())
-                    ->where(function ($query) {
-                        $query->whereNull('date_end')
-                              ->orWhere('date_end', '>=', now()->startOfDay());
-                    });
+        return $query->where('status', ChildEnrolmentStatus::ACTIVE)
+            ->where('date_start', '<=', now())
+            ->where(function ($query) {
+                $query->whereNull('date_end')
+                    ->orWhere('date_end', '>=', now()->startOfDay());
+            });
     }
 
     /**
-     * Scope a query to filter by enrollment type.
+     * Scope a query to filter by enrolment type.
      *
      * @param  \Illuminate\Database\Eloquent\Builder  $query
-     * @param  ChildEnrollmentType  $type
+     * @param  ChildEnrolmentType  $type
      * @return \Illuminate\Database\Eloquent\Builder
      */
-    public function scopeByType($query, ChildEnrollmentType $type)
+    public function scopeByType($query, ChildEnrolmentType $type)
     {
         return $query->where('type', $type);
     }
 
     /**
-     * Check if the enrollment is currently active.
+     * Check if the enrolment is currently active.
      *
      * @return bool
      */
     public function isActive(): bool
     {
-        return $this->status === ChildEnrollmentStatus::ACTIVE 
-               && $this->date_start <= now() 
-               && (is_null($this->date_end) || $this->date_end >= now());
+        return $this->status === ChildEnrolmentStatus::ACTIVE
+            && $this->date_start <= now()
+            && (is_null($this->date_end) || $this->date_end >= now());
     }
 
     /**
-     * Check if the enrollment has expired.
+     * Check if the enrolment has expired.
      *
      * @return bool
      */

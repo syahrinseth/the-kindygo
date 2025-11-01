@@ -6,15 +6,15 @@ use App\Models\Child;
 use App\Models\Product;
 use App\Models\Tenant;
 use App\Models\Centre;
-use App\Enums\ChildEnrollmentStatus;
-use App\Enums\ChildEnrollmentBilledEvery;
-use App\Enums\ChildEnrollmentType;
+use App\Enums\ChildEnrolmentStatus;
+use App\Enums\ChildEnrolmentBilledEvery;
+use App\Enums\ChildEnrolmentType;
 use Illuminate\Database\Eloquent\Factories\Factory;
 
 /**
- * @extends \Illuminate\Database\Eloquent\Factories\Factory<\App\Models\ChildEnrollment>
+ * @extends \Illuminate\Database\Eloquent\Factories\Factory<\App\Models\ChildEnrolment>
  */
-class ChildEnrollmentFactory extends Factory
+class ChildEnrolmentFactory extends Factory
 {
     /**
      * Define the model's default state.
@@ -31,61 +31,61 @@ class ChildEnrollmentFactory extends Factory
             'centre_id' => Centre::factory(),
             'child_id' => Child::factory(),
             'product_id' => Product::factory(),
-            'status' => $this->faker->randomElement(ChildEnrollmentStatus::cases()),
-            'billed_every' => $this->faker->randomElement(ChildEnrollmentBilledEvery::cases()),
+            'status' => $this->faker->randomElement(ChildEnrolmentStatus::cases()),
+            'billed_every' => $this->faker->randomElement(ChildEnrolmentBilledEvery::cases()),
             'date_start' => $startDate,
             'date_end' => $endDate,
-            'type' => $this->faker->randomElement(ChildEnrollmentType::cases()),
+            'type' => $this->faker->randomElement(ChildEnrolmentType::cases()),
         ];
     }
 
     /**
-     * Indicate that the enrollment is active.
+     * Indicate that the enrolment is active.
      */
     public function active(): static
     {
-        return $this->state(fn (array $attributes) => [
-            'status' => ChildEnrollmentStatus::ACTIVE,
+        return $this->state(fn(array $attributes) => [
+            'status' => ChildEnrolmentStatus::ACTIVE,
         ]);
     }
 
     /**
-     * Indicate that the enrollment is inactive.
+     * Indicate that the enrolment is inactive.
      */
     public function inactive(): static
     {
-        return $this->state(fn (array $attributes) => [
-            'status' => ChildEnrollmentStatus::INACTIVE,
+        return $this->state(fn(array $attributes) => [
+            'status' => ChildEnrolmentStatus::INACTIVE,
         ]);
     }
 
     /**
-     * Indicate that the enrollment is for full-time care.
+     * Indicate that the enrolment is for full-time care.
      */
     public function fullTime(): static
     {
-        return $this->state(fn (array $attributes) => [
-            'type' => ChildEnrollmentType::FULL_TIME,
+        return $this->state(fn(array $attributes) => [
+            'type' => ChildEnrolmentType::FULL_TIME,
         ]);
     }
 
     /**
-     * Indicate that the enrollment is for part-time care.
+     * Indicate that the enrolment is for part-time care.
      */
     public function partTime(): static
     {
-        return $this->state(fn (array $attributes) => [
-            'type' => ChildEnrollmentType::PART_TIME,
+        return $this->state(fn(array $attributes) => [
+            'type' => ChildEnrolmentType::PART_TIME,
         ]);
     }
 
     /**
-     * Indicate that the enrollment is billed monthly.
+     * Indicate that the enrolment is billed monthly.
      */
     public function monthly(): static
     {
-        return $this->state(fn (array $attributes) => [
-            'billed_every' => ChildEnrollmentBilledEvery::MONTHLY,
+        return $this->state(fn(array $attributes) => [
+            'billed_every' => ChildEnrolmentBilledEvery::MONTHLY,
         ]);
     }
 }

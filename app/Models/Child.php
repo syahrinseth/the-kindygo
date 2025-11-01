@@ -17,7 +17,7 @@ use Spatie\MediaLibrary\MediaCollections\MediaCollection;
 class Child extends Model implements HasMedia
 {
     use HasFactory, SoftDeletes, InteractsWithMedia;
-    
+
     /**
      * The "booted" method of the model.
      *
@@ -27,14 +27,14 @@ class Child extends Model implements HasMedia
     {
         static::addGlobalScope(new BelongsToManyTenantScope);
     }
-    
+
     /**
      * The table associated with the model.
      *
      * @var string
      */
     protected $table = 'children';
-    
+
     /**
      * The attributes that are mass assignable.
      *
@@ -58,7 +58,7 @@ class Child extends Model implements HasMedia
         'family_clinic',
         'family_clinic_phone'
     ];
-    
+
     /**
      * The attributes that should be cast.
      *
@@ -68,7 +68,7 @@ class Child extends Model implements HasMedia
         'date_of_birth' => 'date',
         'position_of_child' => 'integer'
     ];
-    
+
     /**
      * Get the full name of the child.
      *
@@ -96,7 +96,7 @@ class Child extends Model implements HasMedia
             ->withTimestamps()
             ->using(TenantChild::class);
     }
-    
+
     /**
      * Get the status of this child at a specific tenant.
      *
@@ -106,12 +106,12 @@ class Child extends Model implements HasMedia
     public function getStatusAtTenant($tenant): ?ChildStatus
     {
         $tenantId = $tenant instanceof Tenant ? $tenant->id : $tenant;
-        
+
         $pivotData = $this->tenants()->where('tenant_id', $tenantId)->first()?->pivot;
-        
+
         return $pivotData ? $pivotData->status : null;
     }
-    
+
     /**
      * Update the status of this child at a specific tenant.
      *
@@ -122,14 +122,14 @@ class Child extends Model implements HasMedia
     public function updateStatusAtTenant($tenant, ChildStatus $status): bool
     {
         $tenantId = $tenant instanceof Tenant ? $tenant->id : $tenant;
-        
+
         $updated = $this->tenants()->updateExistingPivot($tenantId, [
             'status' => $status,
         ]);
-        
+
         return $updated > 0;
     }
-    
+
     /**
      * Activate this child at a specific tenant.
      *
@@ -140,7 +140,7 @@ class Child extends Model implements HasMedia
     {
         return $this->updateStatusAtTenant($tenant, ChildStatus::ACTIVE);
     }
-    
+
     /**
      * Mark this child as returning at a specific tenant.
      *
@@ -151,7 +151,7 @@ class Child extends Model implements HasMedia
     {
         return $this->updateStatusAtTenant($tenant, ChildStatus::RETURN);
     }
-    
+
     /**
      * Mark this child as alumni at a specific tenant.
      *
@@ -162,7 +162,7 @@ class Child extends Model implements HasMedia
     {
         return $this->updateStatusAtTenant($tenant, ChildStatus::ALUMNI);
     }
-    
+
     /**
      * Associate this child with a tenant, setting the initial status.
      *
@@ -173,14 +173,14 @@ class Child extends Model implements HasMedia
     public function addToTenant($tenant, ChildStatus $status = ChildStatus::NEW): void
     {
         $tenantId = $tenant instanceof Tenant ? $tenant->id : $tenant;
-        
+
         if (!$this->tenants()->where('tenant_id', $tenantId)->exists()) {
             $this->tenants()->attach($tenantId, [
                 'status' => $status,
             ]);
         }
     }
-    
+
     /**
      * Remove this child from a tenant.
      *
@@ -190,10 +190,10 @@ class Child extends Model implements HasMedia
     public function removeFromTenant($tenant): void
     {
         $tenantId = $tenant instanceof Tenant ? $tenant->id : $tenant;
-        
+
         $this->tenants()->detach($tenantId);
     }
-    
+
     /**
      * Get the users associated with this child.
      *
@@ -206,7 +206,7 @@ class Child extends Model implements HasMedia
             ->using(ChildUser::class)
             ->withTimestamps();
     }
-    
+
     /**
      * Get the centres associated with this child.
      *
@@ -230,35 +230,35 @@ class Child extends Model implements HasMedia
     }
 
     /**
-     * Get the enrollments associated with this child.
+     * Get the enrolments associated with this child.
      *
      * @return \Illuminate\Database\Eloquent\Relations\HasMany
      */
-    public function enrollments(): HasMany
+    public function enrolments(): HasMany
     {
-        return $this->hasMany(ChildEnrollment::class);
+        return $this->hasMany(ChildEnrolment::class);
     }
 
     /**
-     * Get the active enrollments for this child.
+     * Get the active enrolments for this child.
      *
      * @return \Illuminate\Database\Eloquent\Relations\HasMany
      */
-    public function activeEnrollments(): HasMany
+    public function activeEnrolments(): HasMany
     {
-        return $this->hasMany(ChildEnrollment::class)->active();
+        return $this->hasMany(ChildEnrolment::class)->active();
     }
 
     /**
-     * Get the current enrollments for this child.
+     * Get the current enrolments for this child.
      *
      * @return \Illuminate\Database\Eloquent\Relations\HasMany
      */
-    public function currentEnrollments(): HasMany
+    public function currentEnrolments(): HasMany
     {
-        return $this->hasMany(ChildEnrollment::class)->current();
+        return $this->hasMany(ChildEnrolment::class)->current();
     }
-    
+
     /**
      * Add this child to a centre.
      *
@@ -268,12 +268,12 @@ class Child extends Model implements HasMedia
     public function addToCentre($centre): void
     {
         $centreId = $centre instanceof Centre ? $centre->id : $centre;
-        
+
         if (!$this->centres()->where('centre_id', $centreId)->exists()) {
             $this->centres()->attach($centreId);
         }
     }
-    
+
     /**
      * Remove this child from a centre.
      *
@@ -283,10 +283,10 @@ class Child extends Model implements HasMedia
     public function removeFromCentre($centre): void
     {
         $centreId = $centre instanceof Centre ? $centre->id : $centre;
-        
+
         $this->centres()->detach($centreId);
     }
-    
+
     /**
      * Check if this child is associated with a specific centre.
      *
@@ -296,10 +296,10 @@ class Child extends Model implements HasMedia
     public function isInCentre($centre): bool
     {
         $centreId = $centre instanceof Centre ? $centre->id : $centre;
-        
+
         return $this->centres()->where('centre_id', $centreId)->exists();
     }
-    
+
     /**
      * Register media collections for the child.
      */
@@ -309,18 +309,18 @@ class Child extends Model implements HasMedia
             ->acceptsMimeTypes(['image/jpeg', 'image/png', 'image/webp'])
             ->singleFile()
             ->useDisk('private');
-            
+
         $this->addMediaCollection('birth_certificate')
             ->acceptsMimeTypes(['image/jpeg', 'image/png', 'image/webp', 'application/pdf'])
             ->singleFile()
             ->useDisk('private');
-            
+
         $this->addMediaCollection('immunization_card')
             ->acceptsMimeTypes(['image/jpeg', 'image/png', 'image/webp', 'application/pdf'])
             ->singleFile()
             ->useDisk('private');
     }
-    
+
     /**
      * Register media conversions for the child.
      */
@@ -331,7 +331,7 @@ class Child extends Model implements HasMedia
             ->height(300)
             ->sharpen(10)
             ->performOnCollections('photo');
-            
+
         $this->addMediaConversion('preview')
             ->width(800)
             ->height(600)

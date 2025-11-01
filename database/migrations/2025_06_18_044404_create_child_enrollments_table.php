@@ -11,7 +11,7 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('child_enrollments', function (Blueprint $table) {
+        Schema::create('child_enrolments', function (Blueprint $table) {
             $table->id();
             $table->foreignId('child_id')->constrained('children')->onDelete('cascade');
             $table->foreignId('product_id')->constrained('products')->onDelete('cascade');
@@ -21,7 +21,7 @@ return new class extends Migration
             $table->datetime('date_end')->nullable();
             $table->string('type')->default('full_time');
             $table->timestamps();
-            
+
             // Add indexes for better performance
             $table->index(['child_id', 'status']);
             $table->index(['product_id', 'status']);
@@ -34,6 +34,6 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::dropIfExists('child_enrollments');
+        Schema::dropIfExists('child_enrolments');
     }
 };

@@ -1,14 +1,14 @@
 <?php
 
-namespace App\Filament\Resources\ChildEnrollmentResource\Pages;
+namespace App\Filament\Resources\ChildEnrolmentResource\Pages;
 
-use App\Filament\Resources\ChildEnrollmentResource;
+use App\Filament\Resources\ChildEnrolmentResource;
 use Filament\Actions;
 use Filament\Resources\Pages\EditRecord;
 
-class EditChildEnrollment extends EditRecord
+class EditChildEnrolment extends EditRecord
 {
-    protected static string $resource = ChildEnrollmentResource::class;
+    protected static string $resource = ChildEnrolmentResource::class;
 
     protected function getHeaderActions(): array
     {

@@ -72,33 +72,33 @@ class Product extends Model
     }
 
     /**
-     * Get the child enrollments for this product.
+     * Get the child enrolments for this product.
      *
      * @return \Illuminate\Database\Eloquent\Relations\HasMany
      */
-    public function enrollments(): HasMany
+    public function enrolments(): HasMany
     {
-        return $this->hasMany(ChildEnrollment::class);
+        return $this->hasMany(ChildEnrolment::class);
     }
 
     /**
-     * Get the active child enrollments for this product.
+     * Get the active child enrolments for this product.
      *
      * @return \Illuminate\Database\Eloquent\Relations\HasMany
      */
-    public function activeEnrollments(): HasMany
+    public function activeEnrolments(): HasMany
     {
-        return $this->hasMany(ChildEnrollment::class)->active();
+        return $this->hasMany(ChildEnrolment::class)->active();
     }
 
     /**
-     * Get the current child enrollments for this product.
+     * Get the current child enrolments for this product.
      *
      * @return \Illuminate\Database\Eloquent\Relations\HasMany
      */
-    public function currentEnrollments(): HasMany
+    public function currentEnrolments(): HasMany
     {
-        return $this->hasMany(ChildEnrollment::class)->current();
+        return $this->hasMany(ChildEnrolment::class)->current();
     }
 
     /**
@@ -161,8 +161,8 @@ class Product extends Model
     public function currentPrice()
     {
         return $this->hasOne(ProductPrice::class)
-                    ->current()
-                    ->orderBy('start_date', 'desc');
+            ->current()
+            ->orderBy('start_date', 'desc');
     }
 
     /**
@@ -174,10 +174,10 @@ class Product extends Model
     public function currentPriceForCentre($centreId = null)
     {
         return $this->prices()
-                    ->with('centres')
-                    ->activeForCentre($centreId)
-                    ->orderBy('start_date', 'desc')
-                    ->first();
+            ->with('centres')
+            ->activeForCentre($centreId)
+            ->orderBy('start_date', 'desc')
+            ->first();
     }
 
     /**
@@ -201,10 +201,10 @@ class Product extends Model
     public function getPriceForCentre($date = null, $centreId = null)
     {
         return $this->prices()
-                    ->with('centres')
-                    ->activeForCentre($centreId, $date)
-                    ->orderBy('start_date', 'desc')
-                    ->first();
+            ->with('centres')
+            ->activeForCentre($centreId, $date)
+            ->orderBy('start_date', 'desc')
+            ->first();
     }
 
     /**

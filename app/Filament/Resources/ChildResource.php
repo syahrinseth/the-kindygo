@@ -24,40 +24,40 @@ class ChildResource extends Resource
     protected static ?string $model = Child::class;
 
     protected static ?string $navigationIcon = 'heroicon-o-academic-cap';
-    
+
     protected static ?string $navigationLabel = 'Children';
-    
+
     protected static ?string $navigationGroup = 'Child Management';
-    
+
     protected static ?int $navigationSort = 1;
 
     protected static ?string $tenantOwnershipRelationshipName = 'tenants';
-    
+
     public static function canViewAny(): bool
     {
         return Auth::user()->can('viewAny', Child::class);
     }
-    
+
     public static function canView(Model $record): bool
     {
         return Auth::user()->can('view', $record);
     }
-    
+
     public static function canCreate(): bool
     {
         return Auth::user()->can('create', Child::class);
     }
-    
+
     public static function canEdit(Model $record): bool
     {
         return Auth::user()->can('update', $record);
     }
-    
+
     public static function canDelete(Model $record): bool
     {
         return Auth::user()->can('delete', $record);
     }
-    
+
     public static function canDeleteAny(): bool
     {
         return Auth::user()->can('deleteAny', Child::class);
@@ -72,13 +72,13 @@ class ChildResource extends Resource
         if ($user->hasRole('Parent')) {
             $query->whereHas('users', fn($q) => $q->where('users.id', $user->id));
         }
-        
+
         // If user is Teacher or Principal, restrict to children in their centres
         if ($user->hasAnyRole(['Teacher', 'Principal'])) {
             $userCentreIds = $user->centres()
                 ->where('centres.tenant_id', $user->current_tenant_id)
                 ->pluck('centres.id');
-                
+
             if ($userCentreIds->isNotEmpty()) {
                 $query->whereHas('centres', fn($q) => $q->whereIn('centres.id', $userCentreIds));
             } else {
@@ -119,7 +119,7 @@ class ChildResource extends Resource
                     ->sortable(),
                 Tables\Columns\TextColumn::make('gender')
                     ->badge()
-                    ->color(fn (string $state): string => match ($state) {
+                    ->color(fn(string $state): string => match ($state) {
                         'male' => 'info',
                         'female' => 'pink',
                         default => 'gray',
@@ -135,7 +135,7 @@ class ChildResource extends Resource
                         if (!$user || !$user->current_tenant_id) {
                             return 'Unknown';
                         }
-                        
+
                         $status = $record->getStatusAtTenant($user->current_tenant_id);
                         return $status ? ucfirst($status->value) : 'Unknown';
                     })
@@ -145,7 +145,7 @@ class ChildResource extends Resource
                             if (!$user || !$user->current_tenant_id) {
                                 return false;
                             }
-                            
+
                             $status = $record->getStatusAtTenant($user->current_tenant_id);
                             return $status === ChildStatus::NEW;
                         },
@@ -154,7 +154,7 @@ class ChildResource extends Resource
                             if (!$user || !$user->current_tenant_id) {
                                 return false;
                             }
-                            
+
                             $status = $record->getStatusAtTenant($user->current_tenant_id);
                             return $status === ChildStatus::ACTIVE;
                         },
@@ -163,7 +163,7 @@ class ChildResource extends Resource
                             if (!$user || !$user->current_tenant_id) {
                                 return false;
                             }
-                            
+
                             $status = $record->getStatusAtTenant($user->current_tenant_id);
                             return $status === ChildStatus::RETURN;
                         },
@@ -172,7 +172,7 @@ class ChildResource extends Resource
                             if (!$user || !$user->current_tenant_id) {
                                 return false;
                             }
-                            
+
                             $status = $record->getStatusAtTenant($user->current_tenant_id);
                             return $status === ChildStatus::ALUMNI;
                         },
@@ -193,15 +193,15 @@ class ChildResource extends Resource
                         if (empty($data['value'])) {
                             return $query;
                         }
-                        
+
                         $user = Auth::user();
                         if (!$user || !$user->current_tenant_id) {
                             return $query;
                         }
-                        
+
                         return $query->whereHas('tenants', function (Builder $subQuery) use ($data, $user) {
                             $subQuery->where('tenant_id', $user->current_tenant_id)
-                                     ->where('status', $data['value']);
+                                ->where('status', $data['value']);
                         });
                     }),
                 Tables\Filters\SelectFilter::make('gender')
@@ -213,11 +213,11 @@ class ChildResource extends Resource
                     ->label('Centre')
                     ->options(function () {
                         $user = Auth::user();
-                        
+
                         if (!$user || !$user->current_tenant_id) {
                             return [];
                         }
-                        
+
                         // Get centres based on user role and permissions
                         if ($user->hasAnyRole(['Super Admin', 'Admin'])) {
                             // Super Admin and Admin can see all centres in their tenant
@@ -229,14 +229,14 @@ class ChildResource extends Resource
                                 ->where('centres.tenant_id', $user->current_tenant_id)
                                 ->pluck('name', 'id');
                         }
-                        
+
                         return [];
                     })
                     ->query(function (Builder $query, array $data): Builder {
                         if (empty($data['value'])) {
                             return $query;
                         }
-                        
+
                         return $query->whereHas('centres', function (Builder $subQuery) use ($data) {
                             $subQuery->where('centres.id', $data['value']);
                         });
@@ -250,11 +250,11 @@ class ChildResource extends Resource
                         return $query
                             ->when(
                                 $data['birth_from'],
-                                fn (Builder $query, $date): Builder => $query->whereDate('date_of_birth', '>=', $date),
+                                fn(Builder $query, $date): Builder => $query->whereDate('date_of_birth', '>=', $date),
                             )
                             ->when(
                                 $data['birth_until'],
-                                fn (Builder $query, $date): Builder => $query->whereDate('date_of_birth', '<=', $date),
+                                fn(Builder $query, $date): Builder => $query->whereDate('date_of_birth', '<=', $date),
                             );
                     })
             ])
@@ -271,17 +271,17 @@ class ChildResource extends Resource
                             if (!$user || !$user->current_tenant_id) {
                                 return false;
                             }
-                            
+
                             $status = $record->getStatusAtTenant($user->current_tenant_id);
-                            return ($status === ChildStatus::NEW || $status === ChildStatus::RETURN) && 
-                                   $user->can('changeStatus', $record);
+                            return ($status === ChildStatus::NEW || $status === ChildStatus::RETURN) &&
+                                $user->can('changeStatus', $record);
                         })
                         ->action(function (Child $record): void {
                             $user = Auth::user();
                             if (!$user || !$user->current_tenant_id) {
                                 return;
                             }
-                            
+
                             $record->activateAtTenant($user->current_tenant_id);
                         }),
                     Tables\Actions\Action::make('return')
@@ -293,17 +293,17 @@ class ChildResource extends Resource
                             if (!$user || !$user->current_tenant_id) {
                                 return false;
                             }
-                            
+
                             $status = $record->getStatusAtTenant($user->current_tenant_id);
-                            return $status === ChildStatus::ALUMNI && 
-                                   $user->can('changeStatus', $record);
+                            return $status === ChildStatus::ALUMNI &&
+                                $user->can('changeStatus', $record);
                         })
                         ->action(function (Child $record): void {
                             $user = Auth::user();
                             if (!$user || !$user->current_tenant_id) {
                                 return;
                             }
-                            
+
                             $record->markAsReturningAtTenant($user->current_tenant_id);
                         }),
                     Tables\Actions\Action::make('alumni')
@@ -315,17 +315,17 @@ class ChildResource extends Resource
                             if (!$user || !$user->current_tenant_id) {
                                 return false;
                             }
-                            
+
                             $status = $record->getStatusAtTenant($user->current_tenant_id);
-                            return $status === ChildStatus::ACTIVE && 
-                                   $user->can('changeStatus', $record);
+                            return $status === ChildStatus::ACTIVE &&
+                                $user->can('changeStatus', $record);
                         })
                         ->action(function (Child $record): void {
                             $user = Auth::user();
                             if (!$user || !$user->current_tenant_id) {
                                 return;
                             }
-                            
+
                             $record->markAsAlumniAtTenant($user->current_tenant_id);
                         }),
                     Tables\Actions\DeleteAction::make(),
@@ -351,7 +351,7 @@ class ChildResource extends Resource
     {
         return [
             RelationManagers\CentresRelationManager::class,
-            RelationManagers\EnrollmentsRelationManager::class,
+            RelationManagers\EnrolmentsRelationManager::class,
             // RelationManagers\UsersRelationManager::class,
         ];
     }

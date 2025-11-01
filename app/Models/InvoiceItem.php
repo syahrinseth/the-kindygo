@@ -22,7 +22,7 @@ class InvoiceItem extends Model
         'invoice_id',
         'product_id',
         'child_id',
-        'child_enrollment_id',
+        'child_enrolment_id',
         'name',
         'description',
         'price',
@@ -70,7 +70,7 @@ class InvoiceItem extends Model
             $invoiceItem->calculateTotal();
             $invoiceItem->calculateBalance();
         });
-        
+
         // Update invoice totals after creating an item
         static::created(function ($invoiceItem) {
             if ($invoiceItem->invoice_id) {
@@ -80,7 +80,7 @@ class InvoiceItem extends Model
                 }
             }
         });
-        
+
         // Update invoice totals after updating an item
         static::updated(function ($invoiceItem) {
             if ($invoiceItem->invoice_id) {
@@ -90,7 +90,7 @@ class InvoiceItem extends Model
                 }
             }
         });
-        
+
         // Update invoice totals after deleting an item
         static::deleted(function ($invoiceItem) {
             if ($invoiceItem->invoice_id) {
@@ -133,25 +133,25 @@ class InvoiceItem extends Model
     }
 
     /**
-     * Get the child enrollment associated with the invoice item.
+     * Get the child enrolment associated with the invoice item.
      *
      * @return \Illuminate\Database\Eloquent\Relations\BelongsTo
      */
-    public function childEnrollment(): BelongsTo
+    public function childEnrolment(): BelongsTo
     {
-        return $this->belongsTo(ChildEnrollment::class);
+        return $this->belongsTo(ChildEnrolment::class);
     }
 
     /**
-     * Get the child enrollments associated with this invoice item through a pivot table.
+     * Get the child enrolments associated with this invoice item through a pivot table.
      *
      * @return \Illuminate\Database\Eloquent\Relations\BelongsToMany
      */
-    public function childEnrollments(): BelongsToMany
+    public function childEnrolments(): BelongsToMany
     {
-        return $this->belongsToMany(ChildEnrollment::class, 'child_enrollment_invoice_item', 'invoice_item_id', 'child_enrollment_id')
-                    ->withPivot(['quantity', 'notes'])
-                    ->withTimestamps();
+        return $this->belongsToMany(ChildEnrolment::class, 'child_enrolment_invoice_item', 'invoice_item_id', 'child_enrolment_id')
+            ->withPivot(['quantity', 'notes'])
+            ->withTimestamps();
     }
 
     /**
@@ -188,11 +188,11 @@ class InvoiceItem extends Model
         if ($this->paid) {
             return 'Paid';
         }
-        
+
         if ($this->paid_amount > 0) {
             return 'Partially Paid';
         }
-        
+
         return 'Unpaid';
     }
 
@@ -428,7 +428,7 @@ class InvoiceItem extends Model
         if ($type instanceof InvoiceItemType) {
             return $query->where('type', $type->value);
         }
-        
+
         return $query->where('type', $type);
     }
 
@@ -521,7 +521,7 @@ class InvoiceItem extends Model
         }
 
         $invoiceStatus = $this->invoice->status;
-        
+
         if ($invoiceStatus === InvoiceStatus::PAID->value) {
             // If invoice is paid in full, mark all items as paid
             $this->paid_amount = $this->total;

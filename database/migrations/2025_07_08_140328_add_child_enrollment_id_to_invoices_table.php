@@ -12,8 +12,8 @@ return new class extends Migration
     public function up(): void
     {
         Schema::table('invoices', function (Blueprint $table) {
-            $table->foreignId('child_enrollment_id')->nullable()->after('user_id')->constrained('child_enrollments')->onDelete('cascade');
-            $table->foreignId('child_id')->nullable()->after('child_enrollment_id')->constrained()->onDelete('cascade');
+            $table->foreignId('child_enrolment_id')->nullable()->after('user_id')->constrained('child_enrolments')->onDelete('cascade');
+            $table->foreignId('child_id')->nullable()->after('child_enrolment_id')->constrained()->onDelete('cascade');
         });
     }
 
@@ -23,8 +23,8 @@ return new class extends Migration
     public function down(): void
     {
         Schema::table('invoices', function (Blueprint $table) {
-            $table->dropForeign(['child_enrollment_id']);
-            $table->dropColumn('child_enrollment_id');
+            $table->dropForeign(['child_enrolment_id']);
+            $table->dropColumn('child_enrolment_id');
             $table->dropForeign(['child_id']);
             $table->dropColumn('child_id');
         });

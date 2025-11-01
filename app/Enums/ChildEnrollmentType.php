@@ -2,7 +2,7 @@
 
 namespace App\Enums;
 
-enum ChildEnrollmentType: string
+enum ChildEnrolmentType: string
 {
     case FULL_TIME = 'full_time';
     case PART_TIME = 'part_time';

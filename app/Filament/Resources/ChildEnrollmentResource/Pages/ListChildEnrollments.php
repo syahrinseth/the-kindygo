@@ -1,40 +1,40 @@
 <?php
 
-namespace App\Filament\Resources\ChildEnrollmentResource\Pages;
+namespace App\Filament\Resources\ChildEnrolmentResource\Pages;
 
-use App\Filament\Resources\ChildEnrollmentResource;
-use App\Models\ChildEnrollment;
-use App\Enums\ChildEnrollmentStatus;
+use App\Filament\Resources\ChildEnrolmentResource;
+use App\Models\ChildEnrolment;
+use App\Enums\ChildEnrolmentStatus;
 use Filament\Actions;
 use Filament\Resources\Pages\ListRecords;
 use Filament\Resources\Components\Tab;
 use Illuminate\Database\Eloquent\Builder;
 
-class ListChildEnrollments extends ListRecords
+class ListChildEnrolments extends ListRecords
 {
-    protected static string $resource = ChildEnrollmentResource::class;
+    protected static string $resource = ChildEnrolmentResource::class;
 
     protected function getHeaderActions(): array
     {
         return [
             Actions\CreateAction::make()
-                ->label('New Enrollment'),
+                ->label('New Enrolment'),
         ];
     }
-    
+
     public function getTabs(): array
     {
         return [
-            'all' => Tab::make('All Enrollments'),
+            'all' => Tab::make('All Enrolments'),
             'active' => Tab::make('Active')
-                ->modifyQueryUsing(fn (Builder $query) => $query->where('status', ChildEnrollmentStatus::ACTIVE))
-                ->badge(ChildEnrollment::where('status', ChildEnrollmentStatus::ACTIVE)->count()),
+                ->modifyQueryUsing(fn(Builder $query) => $query->where('status', ChildEnrolmentStatus::ACTIVE))
+                ->badge(ChildEnrolment::where('status', ChildEnrolmentStatus::ACTIVE)->count()),
             'pending' => Tab::make('Pending')
-                ->modifyQueryUsing(fn (Builder $query) => $query->where('status', ChildEnrollmentStatus::PENDING))
-                ->badge(ChildEnrollment::where('status', ChildEnrollmentStatus::PENDING)->count()),
+                ->modifyQueryUsing(fn(Builder $query) => $query->where('status', ChildEnrolmentStatus::PENDING))
+                ->badge(ChildEnrolment::where('status', ChildEnrolmentStatus::PENDING)->count()),
             'current' => Tab::make('Current')
-                ->modifyQueryUsing(fn (Builder $query) => $query->current())
-                ->badge(ChildEnrollment::current()->count()),
+                ->modifyQueryUsing(fn(Builder $query) => $query->current())
+                ->badge(ChildEnrolment::current()->count()),
         ];
     }
 }

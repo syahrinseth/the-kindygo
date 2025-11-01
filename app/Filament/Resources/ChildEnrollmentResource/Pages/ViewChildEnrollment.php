@@ -1,10 +1,10 @@
 <?php
 
-namespace App\Filament\Resources\ChildEnrollmentResource\Pages;
+namespace App\Filament\Resources\ChildEnrolmentResource\Pages;
 
-use App\Filament\Resources\ChildEnrollmentResource;
+use App\Filament\Resources\ChildEnrolmentResource;
 use App\Models\Product;
-use App\Services\ChildEnrollmentInvoiceService;
+use App\Services\ChildEnrolmentInvoiceService;
 use Filament\Actions;
 use Filament\Resources\Pages\ViewRecord;
 use Filament\Infolists;
@@ -12,9 +12,9 @@ use Filament\Infolists\Infolist;
 use Filament\Notifications\Notification;
 use Illuminate\Support\Facades\Auth;
 
-class ViewChildEnrollment extends ViewRecord
+class ViewChildEnrolment extends ViewRecord
 {
-    protected static string $resource = ChildEnrollmentResource::class;
+    protected static string $resource = ChildEnrolmentResource::class;
 
     protected function getHeaderActions(): array
     {
@@ -25,19 +25,19 @@ class ViewChildEnrollment extends ViewRecord
                 ->icon('heroicon-o-document-plus')
                 ->color('success')
                 ->action(function () {
-                    $invoiceService = app(\App\Services\ChildEnrollmentInvoiceService::class);
-                    $enrollments = $invoiceService->getRelatedEnrollments($this->record);
-                    if (empty($enrollments)) {
+                    $invoiceService = app(\App\Services\ChildEnrolmentInvoiceService::class);
+                    $enrolments = $invoiceService->getRelatedEnrolments($this->record);
+                    if (empty($enrolments)) {
                         Notification::make()
                             ->title('No Invoices Needed')
-                            ->body('All enrollments for this parent at this centre already have current invoices.')
+                            ->body('All enrolments for this parent at this centre already have current invoices.')
                             ->warning()
                             ->send();
                         return;
                     }
-                    $invoices = $invoiceService->generateInvoicesForEnrollments($enrollments);
+                    $invoices = $invoiceService->generateInvoicesForEnrolments($enrolments);
 
-                    $childNames = $enrollments->map(fn($e) => $e->child->full_name)->unique()->implode(', ');
+                    $childNames = $enrolments->map(fn($e) => $e->child->full_name)->unique()->implode(', ');
 
                     Notification::make()
                         ->title('Invoices Generated')
@@ -47,18 +47,18 @@ class ViewChildEnrollment extends ViewRecord
                 })
                 ->requiresConfirmation()
                 ->modalHeading('Generate Invoice')
-                ->modalDescription('This will create a new invoice for this enrollment. Are you sure you want to proceed?')
+                ->modalDescription('This will create a new invoice for this enrolment. Are you sure you want to proceed?')
                 ->modalSubmitActionLabel('Generate Invoice')
-                ->visible(fn (): bool => Auth::user()->can('update', $this->record)),
+                ->visible(fn(): bool => Auth::user()->can('update', $this->record)),
             // Actions\DeleteAction::make(), // temp disabled
         ];
     }
-    
+
     public function infolist(Infolist $infolist): Infolist
     {
         return $infolist
             ->schema([
-                Infolists\Components\Section::make('Enrollment Information')
+                Infolists\Components\Section::make('Enrolment Information')
                     ->schema([
                         Infolists\Components\TextEntry::make('child.full_name')
                             ->label('Child'),
@@ -68,7 +68,7 @@ class ViewChildEnrollment extends ViewRecord
                             ->label('Product'),
                         Infolists\Components\TextEntry::make('status')
                             ->badge()
-                            ->color(fn ($state): string => match ($state) {
+                            ->color(fn($state): string => match ($state) {
                                 'active' => 'success',
                                 'pending' => 'warning',
                                 'inactive' => 'gray',
@@ -77,9 +77,9 @@ class ViewChildEnrollment extends ViewRecord
                                 default => 'gray',
                             }),
                         Infolists\Components\TextEntry::make('type')
-                            ->formatStateUsing(fn ($state): string => ucwords(str_replace('_', ' ', $state->value))),
+                            ->formatStateUsing(fn($state): string => ucwords(str_replace('_', ' ', $state->value))),
                     ])->columns(2),
-                    
+
                 Infolists\Components\Section::make('Schedule & Billing')
                     ->schema([
                         Infolists\Components\TextEntry::make('date_start')
@@ -91,13 +91,13 @@ class ViewChildEnrollment extends ViewRecord
                             ->placeholder('Ongoing'),
                         Infolists\Components\TextEntry::make('billed_every')
                             ->label('Billing Frequency')
-                            ->formatStateUsing(fn ($state): string => ucwords(str_replace('_', ' ', $state->value))),
+                            ->formatStateUsing(fn($state): string => ucwords(str_replace('_', ' ', $state->value))),
                         Infolists\Components\IconEntry::make('is_active')
                             ->label('Currently Active')
                             ->boolean()
-                            ->getStateUsing(fn ($record): bool => $record->isActive()),
+                            ->getStateUsing(fn($record): bool => $record->isActive()),
                     ])->columns(2),
-                    
+
                 Infolists\Components\Section::make('Additional Products')
                     ->schema([
                         Infolists\Components\RepeatableEntry::make('additional_products')
@@ -112,13 +112,13 @@ class ViewChildEnrollment extends ViewRecord
                                     }),
                                 Infolists\Components\TextEntry::make('billed_every')
                                     ->label('Billing Frequency')
-                                    ->formatStateUsing(fn ($state): string => $state ? ucwords(str_replace('_', ' ', $state)) : 'N/A'),
+                                    ->formatStateUsing(fn($state): string => $state ? ucwords(str_replace('_', ' ', $state)) : 'N/A'),
                                 Infolists\Components\TextEntry::make('date_start')
                                     ->label('Start Date')
-                                    ->formatStateUsing(fn ($state): string => $state ? \Carbon\Carbon::parse($state)->format('M j, Y g:i A') : 'N/A'),
+                                    ->formatStateUsing(fn($state): string => $state ? \Carbon\Carbon::parse($state)->format('M j, Y g:i A') : 'N/A'),
                                 Infolists\Components\TextEntry::make('date_end')
                                     ->label('End Date')
-                                    ->formatStateUsing(fn ($state): string => $state ? \Carbon\Carbon::parse($state)->format('M j, Y g:i A') : 'Ongoing'),
+                                    ->formatStateUsing(fn($state): string => $state ? \Carbon\Carbon::parse($state)->format('M j, Y g:i A') : 'Ongoing'),
                                 Infolists\Components\TextEntry::make('notes')
                                     ->label('Notes')
                                     ->placeholder('No notes')
@@ -127,9 +127,9 @@ class ViewChildEnrollment extends ViewRecord
                             ->columns(2)
                             ->columnSpanFull()
                     ])
-                    ->visible(fn ($record): bool => !empty($record->additional_products))
+                    ->visible(fn($record): bool => !empty($record->additional_products))
                     ->collapsible(),
-                    
+
                 Infolists\Components\Section::make('Timestamps')
                     ->schema([
                         Infolists\Components\TextEntry::make('created_at')

@@ -4,9 +4,9 @@ namespace App\Filament\Resources\ChildResource\RelationManagers;
 
 use App\Models\Centre;
 use App\Models\Product;
-use App\Enums\ChildEnrollmentStatus;
-use App\Enums\ChildEnrollmentBilledEvery;
-use App\Enums\ChildEnrollmentType;
+use App\Enums\ChildEnrolmentStatus;
+use App\Enums\ChildEnrolmentBilledEvery;
+use App\Enums\ChildEnrolmentType;
 use Filament\Forms;
 use Filament\Forms\Form;
 use Filament\Resources\RelationManagers\RelationManager;
@@ -18,19 +18,19 @@ use Illuminate\Database\Eloquent\SoftDeletingScope;
 use Illuminate\Support\Facades\Auth;
 use Filament\Support\Enums\FontWeight;
 
-class EnrollmentsRelationManager extends RelationManager
+class EnrolmentsRelationManager extends RelationManager
 {
-    protected static string $relationship = 'enrollments';
+    protected static string $relationship = 'enrolments';
 
     protected static ?string $recordTitleAttribute = 'id';
 
-    protected static ?string $title = 'Enrollments';
+    protected static ?string $title = 'Enrolments';
 
     public function form(Form $form): Form
     {
         return $form
             ->schema([
-                Forms\Components\Section::make('Enrollment Details')
+                Forms\Components\Section::make('Enrolment Details')
                     ->schema([
                         Forms\Components\Select::make('centre_id')
                             ->label('Centre')
@@ -49,7 +49,7 @@ class EnrollmentsRelationManager extends RelationManager
                             ->placeholder('Select a centre')
                             ->helperText('Only centres associated with this child are shown')
                             ->columnSpan(1),
-                            
+
                         Forms\Components\Select::make('product_id')
                             ->label('Product')
                             ->searchable()
@@ -60,50 +60,50 @@ class EnrollmentsRelationManager extends RelationManager
                                 if (!$centreId) {
                                     return [];
                                 }
-                                
+
                                 // Get products associated with the selected centre
                                 // Also include products that have no centres (available for all centres)
                                 return Product::where(function ($query) use ($centreId) {
                                     $query->whereHas('centres', function ($centreQuery) use ($centreId) {
                                         $centreQuery->where('centres.id', $centreId);
                                     })
-                                    // Include products with no centre associations (available for all centres)
-                                    ->orWhereDoesntHave('centres');
+                                        // Include products with no centre associations (available for all centres)
+                                        ->orWhereDoesntHave('centres');
                                 })->pluck('name', 'id')->toArray();
                             })
                             ->placeholder('Select a centre first')
-                            ->disabled(fn (callable $get): bool => !$get('centre_id'))
+                            ->disabled(fn(callable $get): bool => !$get('centre_id'))
                             ->columnSpan(1),
-                            
+
                         Forms\Components\Select::make('status')
-                            ->options(ChildEnrollmentStatus::options())
-                            ->default(ChildEnrollmentStatus::PENDING->value)
+                            ->options(ChildEnrolmentStatus::options())
+                            ->default(ChildEnrolmentStatus::PENDING->value)
                             ->required()
                             ->columnSpan(1),
-                            
+
                         Forms\Components\Select::make('type')
-                            ->options(ChildEnrollmentType::options())
-                            ->default(ChildEnrollmentType::FULL_TIME->value)
+                            ->options(ChildEnrolmentType::options())
+                            ->default(ChildEnrolmentType::FULL_TIME->value)
                             ->required()
                             ->columnSpan(1),
                     ])
                     ->columns(2),
-                    
+
                 Forms\Components\Section::make('Billing & Schedule')
                     ->schema([
                         Forms\Components\Select::make('billed_every')
                             ->label('Billing Frequency')
-                            ->options(ChildEnrollmentBilledEvery::options())
-                            ->default(ChildEnrollmentBilledEvery::MONTHLY->value)
+                            ->options(ChildEnrolmentBilledEvery::options())
+                            ->default(ChildEnrolmentBilledEvery::MONTHLY->value)
                             ->required()
                             ->columnSpan(1),
-                            
+
                         Forms\Components\DateTimePicker::make('date_start')
                             ->label('Start Date')
                             ->required()
                             ->default(now())
                             ->columnSpan(1),
-                            
+
                         Forms\Components\DateTimePicker::make('date_end')
                             ->label('End Date')
                             ->nullable()
@@ -123,16 +123,16 @@ class EnrollmentsRelationManager extends RelationManager
                     ->searchable()
                     ->sortable()
                     ->weight(FontWeight::Medium),
-                    
+
                 Tables\Columns\TextColumn::make('product.name')
                     ->label('Product')
                     ->searchable()
                     ->sortable()
                     ->weight(FontWeight::Medium),
-                    
+
                 Tables\Columns\TextColumn::make('status')
                     ->badge()
-                    ->color(fn ($state): string => match ($state) {
+                    ->color(fn($state): string => match ($state) {
                         'active' => 'success',
                         'pending' => 'warning',
                         'inactive' => 'gray',
@@ -140,35 +140,35 @@ class EnrollmentsRelationManager extends RelationManager
                         'cancelled' => 'danger',
                         default => 'gray',
                     })
-                    ->formatStateUsing(fn ($state): string => ucfirst($state->value))
+                    ->formatStateUsing(fn($state): string => ucfirst($state->value))
                     ->sortable(),
-                    
+
                 Tables\Columns\TextColumn::make('type')
                     ->badge()
                     ->color('gray')
-                    ->formatStateUsing(fn ($state): string => ucwords(str_replace('_', ' ', $state->value)))
+                    ->formatStateUsing(fn($state): string => ucwords(str_replace('_', ' ', $state->value)))
                     ->sortable(),
-                    
+
                 Tables\Columns\TextColumn::make('billed_every')
                     ->label('Billing')
-                    ->formatStateUsing(fn ($state): string => ucwords(str_replace('_', ' ', $state->value)))
+                    ->formatStateUsing(fn($state): string => ucwords(str_replace('_', ' ', $state->value)))
                     ->sortable(),
-                    
+
                 Tables\Columns\TextColumn::make('date_start')
                     ->label('Start Date')
                     ->date()
                     ->sortable(),
-                    
+
                 Tables\Columns\TextColumn::make('date_end')
                     ->label('End Date')
                     ->date()
                     ->placeholder('Ongoing')
                     ->sortable(),
-                    
+
                 Tables\Columns\IconColumn::make('is_active')
                     ->label('Active')
                     ->boolean()
-                    ->getStateUsing(fn ($record): bool => $record->isActive())
+                    ->getStateUsing(fn($record): bool => $record->isActive())
                     ->trueIcon('heroicon-o-check-circle')
                     ->falseIcon('heroicon-o-x-circle')
                     ->trueColor('success')
@@ -178,21 +178,21 @@ class EnrollmentsRelationManager extends RelationManager
                 SelectFilter::make('centre_id')
                     ->label('Centre')
                     ->relationship('centre', 'name'),
-                    
+
                 SelectFilter::make('status')
-                    ->options(ChildEnrollmentStatus::options()),
-                    
+                    ->options(ChildEnrolmentStatus::options()),
+
                 SelectFilter::make('type')
-                    ->options(ChildEnrollmentType::options()),
-                    
+                    ->options(ChildEnrolmentType::options()),
+
                 Tables\Filters\Filter::make('active_only')
                     ->label('Active Only')
-                    ->query(fn (Builder $query): Builder => $query->where('status', ChildEnrollmentStatus::ACTIVE))
+                    ->query(fn(Builder $query): Builder => $query->where('status', ChildEnrolmentStatus::ACTIVE))
                     ->toggle(),
-                    
+
                 Tables\Filters\Filter::make('current_only')
                     ->label('Current Only')
-                    ->query(fn (Builder $query): Builder => $query->current())
+                    ->query(fn(Builder $query): Builder => $query->current())
                     ->toggle(),
             ])
             ->headerActions([

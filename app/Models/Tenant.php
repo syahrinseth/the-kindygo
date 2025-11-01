@@ -122,27 +122,27 @@ class Tenant extends Model
     }
 
     /**
-     * Get the child enrollments belonging to the tenant.
+     * Get the child enrolments belonging to the tenant.
      */
-    public function childEnrollments(): HasMany
+    public function childEnrolments(): HasMany
     {
-        return $this->hasMany(ChildEnrollment::class);
+        return $this->hasMany(ChildEnrolment::class);
     }
 
     /**
-     * Get the active child enrollments belonging to the tenant.
+     * Get the active child enrolments belonging to the tenant.
      */
-    public function activeChildEnrollments(): HasMany
+    public function activeChildEnrolments(): HasMany
     {
-        return $this->hasMany(ChildEnrollment::class)->active();
+        return $this->hasMany(ChildEnrolment::class)->active();
     }
 
     /**
-     * Get the current child enrollments belonging to the tenant.
+     * Get the current child enrolments belonging to the tenant.
      */
-    public function currentChildEnrollments(): HasMany
+    public function currentChildEnrolments(): HasMany
     {
-        return $this->hasMany(ChildEnrollment::class)->current();
+        return $this->hasMany(ChildEnrolment::class)->current();
     }
 
     /**

@@ -1,25 +1,25 @@
 <?php
 
-namespace App\Filament\Resources\ChildEnrollmentResource\Pages;
+namespace App\Filament\Resources\ChildEnrolmentResource\Pages;
 
-use App\Enums\ChildEnrollmentStatus;
-use App\Filament\Resources\ChildEnrollmentResource;
-use App\Services\ChildEnrollmentInvoiceService;
+use App\Enums\ChildEnrolmentStatus;
+use App\Filament\Resources\ChildEnrolmentResource;
+use App\Services\ChildEnrolmentInvoiceService;
 use Filament\Actions;
 use Filament\Notifications\Notification;
 use Filament\Resources\Pages\CreateRecord;
 use Illuminate\Support\Facades\Auth;
 
-class CreateChildEnrollment extends CreateRecord
+class CreateChildEnrolment extends CreateRecord
 {
-    protected static string $resource = ChildEnrollmentResource::class;
-    
+    protected static string $resource = ChildEnrolmentResource::class;
+
     protected function mutateFormDataBeforeCreate(array $data): array
     {
         // Automatically set the tenant_id based on the current user
         $user = Auth::user();
         $data['tenant_id'] = $user->current_tenant_id;
-        
+
         // Only auto-set centre_id if it's not already provided and user has a current centre
         if (empty($data['centre_id'])) {
             $currentCentre = $user->tenants()
@@ -27,31 +27,31 @@ class CreateChildEnrollment extends CreateRecord
                 ->first()
                 ?->pivot
                 ?->current_centre_id;
-                
+
             if ($currentCentre) {
                 $data['centre_id'] = $currentCentre;
             }
         }
-        
+
         return $data;
     }
-    
+
     protected function getRedirectUrl(): string
     {
         return $this->getResource()::getUrl('index');
     }
-    
+
     protected function afterCreate(): void
     {
-        if ($this->record->status === ChildEnrollmentStatus::ACTIVE) {
-            $invoiceService = app(ChildEnrollmentInvoiceService::class);
+        if ($this->record->status === ChildEnrolmentStatus::ACTIVE) {
+            $invoiceService = app(ChildEnrolmentInvoiceService::class);
             try {
-                $invoices = $invoiceService->generateInvoicesForEnrollment($this->record);
-                
+                $invoices = $invoiceService->generateInvoicesForEnrolment($this->record);
+
                 if ($invoices->count() > 0) {
                     Notification::make()
                         ->title('Invoices Generated')
-                        ->body("Successfully generated {$invoices->count()} invoice(s) for this enrollment.")
+                        ->body("Successfully generated {$invoices->count()} invoice(s) for this enrolment.")
                         ->success()
                         ->send();
                 }
