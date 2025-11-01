@@ -11,6 +11,7 @@ use App\Enums\EInvoiceClassificationCode;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Support\Facades\Auth;
 
 class Invoice extends Model
 {
@@ -268,7 +269,8 @@ class Invoice extends Model
      */
     public function getChildEnrollments()
     {
-        return ChildEnrollment::whereIn('id',
+        return ChildEnrollment::whereIn(
+            'id',
             $this->invoiceItems()->whereNotNull('child_enrollment_id')->pluck('child_enrollment_id')
         )->get();
     }
@@ -280,7 +282,8 @@ class Invoice extends Model
      */
     public function getChildren()
     {
-        return Child::whereIn('id',
+        return Child::whereIn(
+            'id',
             $this->invoiceItems()->whereNotNull('child_id')->pluck('child_id')
         )->get();
     }
@@ -303,7 +306,7 @@ class Invoice extends Model
     public function isOverdue(): bool
     {
         return $this->status === InvoiceStatus::OVERDUE ||
-               ($this->status === InvoiceStatus::PENDING && $this->due_at < now());
+            ($this->status === InvoiceStatus::PENDING && $this->due_at < now());
     }
 
     /**
@@ -340,10 +343,10 @@ class Invoice extends Model
     {
         return $query->where(function ($query) {
             $query->where('status', InvoiceStatus::OVERDUE)
-                  ->orWhere(function ($query) {
-                      $query->where('status', InvoiceStatus::PENDING)
-                            ->where('due_at', '<', now());
-                  });
+                ->orWhere(function ($query) {
+                    $query->where('status', InvoiceStatus::PENDING)
+                        ->where('due_at', '<', now());
+                });
         });
     }
 
@@ -366,11 +369,10 @@ class Invoice extends Model
      * @param  \App\Models\User|null  $user
      * @return \Illuminate\Database\Eloquent\Builder
      */
-    public function scopeForCurrentUser($query, $user = null)
+    public function scopeForCurrentUser($query)
     {
-        if (!$user) {
-            $user = \Illuminate\Support\Facades\Auth::user();
-        }
+        $user = Auth::user();
+
 
         if (!$user || !$user->current_tenant_id) {
             return $query->whereRaw('1 = 0'); // Return empty result if no user or tenant
@@ -731,7 +733,7 @@ class Invoice extends Model
                     'CountrySubentityCode' => $tenant->state_code,
                     'AddressLine' => [
                         'Line' => ($tenant->address_1) .
-                                 ($tenant->address_2 ? ', ' . $tenant->address_2 : '')
+                            ($tenant->address_2 ? ', ' . $tenant->address_2 : '')
                     ],
                     'Country' => [
                         'IdentificationCode' => [
@@ -995,7 +997,7 @@ class Invoice extends Model
         return $response;
     }
 
-    private function getTenantPartyIdentification(?Tenant $tenant = null) : array
+    private function getTenantPartyIdentification(?Tenant $tenant = null): array
     {
         $data = [];
         $tenant = $tenant ?? $this->tenant;
