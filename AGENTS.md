@@ -1,4 +1,143 @@
 <laravel-boost-guidelines>
+=== .ai/feature-domain rules ===
+
+# Feature Domains
+
+- Always create an API for each new feature or route introduces
+- Implement versioning for API
+- Only create new API version if told to do so or updated in this document.
+- Starts with v1 or V1 and proper prefixing.
+- All spellings are based ok Malaysian English, which based on British English.
+
+## Feature Structure
+
+- Controller
+- Route
+- Model
+- Action Class
+- Service Class
+- Filament v3 required files and structures
+
+## Project inventory (generated)
+
+Below are the current models and Filament pages found in the codebase. This is intended as a living list — add or edit entries as features are added.
+
+### Models (app/Models)
+
+- app/Models/Campus.php
+- app/Models/Centre.php
+- app/Models/CentreChild.php
+- app/Models/Child.php
+- app/Models/ChildEnrolment.php
+- app/Models/ChildUser.php
+- app/Models/Invoice.php
+- app/Models/InvoiceItem.php
+- app/Models/InvoiceItemsLedger.php
+- app/Models/Payment.php
+- app/Models/Product.php
+- app/Models/ProductPrice.php
+- app/Models/Scopes/ (folder containing model scopes)
+- app/Models/Tenant.php
+- app/Models/TenantChild.php
+- app/Models/TenantInvitation.php
+- app/Models/TenantUser.php
+- app/Models/User.php
+- app/Models/UserAddress.php
+- app/Models/UserOfficeInfo.php
+- app/Models/UserProfile.php
+
+If you want, I can expand this to include the primary attributes, casts, relationships, and any custom query scopes for each model.
+
+### Filament top-level Pages (app/Filament/Pages)
+
+- app/Filament/Pages/FinanceDashboard.php
+- app/Filament/Pages/EditProfile.php
+- app/Filament/Pages/Tenancy/EditTenantProfilePage.php
+- app/Filament/Pages/Tenancy/RegisterTenancyPage.php
+
+### Filament Resource Pages (app/Filament/Resources/*/Pages)
+
+Grouped by resource directory (resource name -> pages):
+
+- CentreResource
+  - app/Filament/Resources/CentreResource/Pages/ListCentres.php
+  - app/Filament/Resources/CentreResource/Pages/EditCentre.php
+  - app/Filament/Resources/CentreResource/Pages/CreateCentre.php
+
+- ChildResource
+  - app/Filament/Resources/ChildResource/Pages/ListChildren.php
+  - app/Filament/Resources/ChildResource/Pages/CreateChild.php
+  - app/Filament/Resources/ChildResource/Pages/EditChild.php
+  - app/Filament/Resources/ChildResource/Pages/ViewChild.php
+
+- ChildEnrolmentResource
+  - app/Filament/Resources/ChildEnrolmentResource/Pages/ListChildEnrolments.php
+  - app/Filament/Resources/ChildEnrolmentResource/Pages/CreateChildEnrolment.php
+  - app/Filament/Resources/ChildEnrolmentResource/Pages/EditChildEnrolment.php
+  - app/Filament/Resources/ChildEnrolmentResource/Pages/ViewChildEnrolment.php
+
+- PaymentResource
+  - app/Filament/Resources/PaymentResource/Pages/ListPayments.php
+  - app/Filament/Resources/PaymentResource/Pages/CreatePayment.php
+  - app/Filament/Resources/PaymentResource/Pages/EditPayment.php
+  - app/Filament/Resources/PaymentResource/Pages/ViewPayment.php
+
+- InvoiceItemsLedgerResource
+  - app/Filament/Resources/InvoiceItemsLedgerResource/Pages/ListInvoiceItemsLedgers.php
+  - app/Filament/Resources/InvoiceItemsLedgerResource/Pages/CreateInvoiceItemsLedger.php
+  - app/Filament/Resources/InvoiceItemsLedgerResource/Pages/EditInvoiceItemsLedger.php
+  - app/Filament/Resources/InvoiceItemsLedgerResource/Pages/ViewInvoiceItemsLedger.php
+
+- UserResource
+  - app/Filament/Resources/UserResource/Pages/ListUsers.php
+  - app/Filament/Resources/UserResource/Pages/CreateUser.php
+  - app/Filament/Resources/UserResource/Pages/EditUser.php
+
+- ProductResource
+  - app/Filament/Resources/ProductResource/Pages/ListProducts.php
+  - app/Filament/Resources/ProductResource/Pages/CreateProduct.php
+  - app/Filament/Resources/ProductResource/Pages/EditProduct.php
+
+- ParentResource
+  - app/Filament/Resources/ParentResource/Pages/ListParents.php
+  - app/Filament/Resources/ParentResource/Pages/CreateParent.php
+  - app/Filament/Resources/ParentResource/Pages/EditParent.php
+
+- InvoiceResource
+  - app/Filament/Resources/InvoiceResource/Pages/ListInvoices.php
+  - app/Filament/Resources/InvoiceResource/Pages/CreateInvoice.php
+  - app/Filament/Resources/InvoiceResource/Pages/EditInvoice.php
+  - app/Filament/Resources/InvoiceResource/Pages/ViewInvoice.php
+
+### Notes
+
+- This inventory was generated from scanning `app/Models` and `app/Filament` directories. It intentionally lists files and their relative paths so you can quickly map features to code.
+- Next steps I can take on request:
+  - Expand each model with its attributes, casts, relationships and common methods.
+  - Add a short feature-to-model mapping (e.g., Invoicing -> Invoice, InvoiceItem, Payment).
+  - Generate a visual feature map (Markdown or simple diagram) linking pages/resources to models and controllers.
+
+Feel free to tell me which of the next steps you'd like and I'll update this document further.
+
+
+=== .ai/markdown rules ===
+
+# Markdown Format and Guidelines
+
+- Please, use the right formating and structure when preparing or updating markdown files.
+- Follow proper content structure for markdown linting, such as start with heading 1.
+
+
+=== .ai/tests rules ===
+
+# Tests Directive
+
+- Always create tests for each feature, and group them by domain
+- Always prepare test for Feature, API and Browser
+- Use mocking for any external request
+- Always prepare any migration to support both SQLite and MariaDB/MySQL syntax so during test we can use SQLite in memory.
+
+
 === foundation rules ===
 
 # Laravel Boost Guidelines
@@ -8,7 +147,7 @@ The Laravel Boost guidelines are specifically curated by Laravel maintainers for
 ## Foundational Context
 This application is a Laravel application and its main Laravel ecosystems package & versions are below. You are an expert with them all. Ensure you abide by these specific packages & versions.
 
-- php - 8.3.27
+- php - 8.3.28
 - filament/filament (FILAMENT) - v3
 - laravel/framework (LARAVEL) - v12
 - laravel/horizon (HORIZON) - v5
@@ -122,102 +261,12 @@ protected function isAccessible(User $user, ?string $path = null): bool
 - You must not run any commands to make the site available via HTTP(s). It is _always_ available through Laravel Herd.
 
 
-=== filament/core rules ===
+=== tests rules ===
 
-## Filament
-- Filament is used by this application, check how and where to follow existing application conventions.
-- Filament is a Server-Driven UI (SDUI) framework for Laravel. It allows developers to define user interfaces in PHP using structured configuration objects. It is built on top of Livewire, Alpine.js, and Tailwind CSS.
-- You can use the `search-docs` tool to get information from the official Filament documentation when needed. This is very useful for Artisan command arguments, specific code examples, testing functionality, relationship management, and ensuring you're following idiomatic practices.
-- Utilize static `make()` methods for consistent component initialization.
+## Test Enforcement
 
-### Artisan
-- You must use the Filament specific Artisan commands to create new files or components for Filament. You can find these with the `list-artisan-commands` tool, or with `php artisan` and the `--help` option.
-- Inspect the required options, always pass `--no-interaction`, and valid arguments for other options when applicable.
-
-### Filament's Core Features
-- Actions: Handle doing something within the application, often with a button or link. Actions encapsulate the UI, the interactive modal window, and the logic that should be executed when the modal window is submitted. They can be used anywhere in the UI and are commonly used to perform one-time actions like deleting a record, sending an email, or updating data in the database based on modal form input.
-- Forms: Dynamic forms rendered within other features, such as resources, action modals, table filters, and more.
-- Infolists: Read-only lists of data.
-- Notifications: Flash notifications displayed to users within the application.
-- Panels: The top-level container in Filament that can include all other features like pages, resources, forms, tables, notifications, actions, infolists, and widgets.
-- Resources: Static classes that are used to build CRUD interfaces for Eloquent models. Typically live in `app/Filament/Resources`.
-- Schemas: Represent components that define the structure and behavior of the UI, such as forms, tables, or lists.
-- Tables: Interactive tables with filtering, sorting, pagination, and more.
-- Widgets: Small component included within dashboards, often used for displaying data in charts, tables, or as a stat.
-
-### Relationships
-- Determine if you can use the `relationship()` method on form components when you need `options` for a select, checkbox, repeater, or when building a `Fieldset`:
-
-<code-snippet name="Relationship example for Form Select" lang="php">
-Forms\Components\Select::make('user_id')
-    ->label('Author')
-    ->relationship('author')
-    ->required(),
-</code-snippet>
-
-
-## Testing
-- It's important to test Filament functionality for user satisfaction.
-- Ensure that you are authenticated to access the application within the test.
-- Filament uses Livewire, so start assertions with `livewire()` or `Livewire::test()`.
-
-### Example Tests
-
-<code-snippet name="Filament Table Test" lang="php">
-    livewire(ListUsers::class)
-        ->assertCanSeeTableRecords($users)
-        ->searchTable($users->first()->name)
-        ->assertCanSeeTableRecords($users->take(1))
-        ->assertCanNotSeeTableRecords($users->skip(1))
-        ->searchTable($users->last()->email)
-        ->assertCanSeeTableRecords($users->take(-1))
-        ->assertCanNotSeeTableRecords($users->take($users->count() - 1));
-</code-snippet>
-
-<code-snippet name="Filament Create Resource Test" lang="php">
-    livewire(CreateUser::class)
-        ->fillForm([
-            'name' => 'Howdy',
-            'email' => 'howdy@example.com',
-        ])
-        ->call('create')
-        ->assertNotified()
-        ->assertRedirect();
-
-    assertDatabaseHas(User::class, [
-        'name' => 'Howdy',
-        'email' => 'howdy@example.com',
-    ]);
-</code-snippet>
-
-<code-snippet name="Testing Multiple Panels (setup())" lang="php">
-    use Filament\Facades\Filament;
-
-    Filament::setCurrentPanel('app');
-</code-snippet>
-
-<code-snippet name="Calling an Action in a Test" lang="php">
-    livewire(EditInvoice::class, [
-        'invoice' => $invoice,
-    ])->callAction('send');
-
-    expect($invoice->refresh())->isSent()->toBeTrue();
-</code-snippet>
-
-
-=== filament/v3 rules ===
-
-## Filament 3
-
-## Version 3 Changes To Focus On
-- Resources are located in `app/Filament/Resources/` directory.
-- Resource pages (List, Create, Edit) are auto-generated within the resource's directory - e.g., `app/Filament/Resources/PostResource/Pages/`.
-- Forms use the `Forms\Components` namespace for form fields.
-- Tables use the `Tables\Columns` namespace for table columns.
-- A new `Filament\Forms\Components\RichEditor` component is available.
-- Form and table schemas now use fluent method chaining.
-- Added `php artisan filament:optimize` command for production optimization.
-- Requires implementing `FilamentUser` contract for production access control.
+- Every change must be programmatically tested. Write a new test or update an existing test, then run the affected tests to make sure they pass.
+- Run the minimum number of tests needed to ensure code quality and speed. Use `php artisan test` with a specific filename or filter.
 
 
 === laravel/core rules ===
@@ -225,7 +274,7 @@ Forms\Components\Select::make('user_id')
 ## Do Things the Laravel Way
 
 - Use `php artisan make:` commands to create new files (i.e. migrations, controllers, models, etc.). You can list available Artisan commands using the `list-artisan-commands` tool.
-- If you're creating a generic PHP class, use `artisan make:class`.
+- If you're creating a generic PHP class, use `php artisan make:class`.
 - Pass `--no-interaction` to all Artisan commands to ensure they work without user input. You should also pass the correct `--options` to ensure correct behavior.
 
 ### Database
@@ -260,7 +309,7 @@ Forms\Components\Select::make('user_id')
 ### Testing
 - When creating models for tests, use the factories for the models. Check if the factory has custom states that can be used before manually setting up the model.
 - Faker: Use methods such as `$this->faker->word()` or `fake()->randomDigit()`. Follow existing conventions whether to use `$this->faker` or `fake()`.
-- When creating tests, make use of `php artisan make:test [options] <name>` to create a feature test, and pass `--unit` to create a unit test. Most tests should be feature tests.
+- When creating tests, make use of `php artisan make:test [options] {name}` to create a feature test, and pass `--unit` to create a unit test. Most tests should be feature tests.
 
 ### Vite Error
 - If you receive an "Illuminate\Foundation\ViteException: Unable to locate file in Vite manifest" error, you can run `npm run build` or ask the user to run `npm run dev` or `composer run dev`.
@@ -382,12 +431,11 @@ document.addEventListener('livewire:init', function () {
 === pest/core rules ===
 
 ## Pest
-
 ### Testing
 - If you need to verify a feature is working, write or update a Unit / Feature test.
 
 ### Pest Tests
-- All tests must be written using Pest. Use `php artisan make:test --pest <name>`.
+- All tests must be written using Pest. Use `php artisan make:test --pest {name}`.
 - You must not remove any tests or test files from the tests directory without approval. These are not temporary or helper files - these are core to the application.
 - Tests should test all of the happy paths, failure paths, and weird paths.
 - Tests live in the `tests/Feature` and `tests/Unit` directories.
@@ -509,6 +557,13 @@ $pages->assertNoJavascriptErrors()->assertNoConsoleLogs();
 
 - Always use Tailwind CSS v4 - do not use the deprecated utilities.
 - `corePlugins` is not supported in Tailwind v4.
+- In Tailwind v4, configuration is CSS-first using the `@theme` directive — no separate `tailwind.config.js` file is needed.
+<code-snippet name="Extending Theme in CSS" lang="css">
+@theme {
+  --color-brand: oklch(0.72 0.11 178);
+}
+</code-snippet>
+
 - In Tailwind v4, you import Tailwind using a regular CSS `@import` statement, not using the `@tailwind` directives used in v3:
 
 <code-snippet name="Tailwind v4 Import Tailwind Diff" lang="diff">
@@ -536,49 +591,4 @@ $pages->assertNoJavascriptErrors()->assertNoConsoleLogs();
 | overflow-ellipsis | text-ellipsis |
 | decoration-slice | box-decoration-slice |
 | decoration-clone | box-decoration-clone |
-
-
-=== tests rules ===
-
-## Test Enforcement
-
-- Every change must be programmatically tested. Write a new test or update an existing test, then run the affected tests to make sure they pass.
-- Run the minimum number of tests needed to ensure code quality and speed. Use `php artisan test` with a specific filename or filter.
-
-
-=== .ai/feature-domain rules ===
-
-# Feature Domains
-
-- Always create an API for each new feature or route introduces
-- Implement versioning for API
-- Only create new API version if told to do so or updated in this document.
-- Starts with v1 or V1 and proper prefixing.
-
-## Feature Structure
-
-- Controller
-- Route
-- Model
-- Action Class
-- Service Class
-- Filament v3 required files and structures
-
-
-=== .ai/markdown rules ===
-
-# Markdown Format and Guidelines
-
-- Please, use the right formating and structure when preparing or updating markdown files.
-- Follow proper content structure for markdown linting, such as start with heading 1.
-
-
-=== .ai/tests rules ===
-
-# Tests Directive
-
-- Always create tests for each feature, and group them by domain
-- Always prepare test for Feature, API and Browser
-- Use mocking for any external request
-- Always prepare any migration to support both SQLite and MariaDB/MySQL syntax so during test we can use SQLite in memory.
 </laravel-boost-guidelines>
