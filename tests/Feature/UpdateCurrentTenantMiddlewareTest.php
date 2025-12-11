@@ -3,12 +3,14 @@
 use App\Models\Tenant;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
-use Illuminate\Support\Str;
 
 uses(RefreshDatabase::class);
 
 test('user current tenant id is updated when accessing tenant route', function () {
+    /** @var Tests\TestCase $this */
+
     // Create a user
+    /** @var User $user */
     $user = User::factory()->create([
         'current_tenant_id' => null,
     ]);
@@ -35,7 +37,10 @@ test('user current tenant id is updated when accessing tenant route', function (
 });
 
 test('user current tenant id is updated when switching between tenants', function () {
+    /** @var Tests\TestCase $this */
+
     // Create a user
+    /** @var User $user */
     $user = User::factory()->create();
 
     // Create two tenants manually
@@ -46,7 +51,7 @@ test('user current tenant id is updated when switching between tenants', functio
         'personal_tenant' => false,
         'email' => 'one@example.com',
     ]);
-    
+
     $tenant2 = Tenant::create([
         'user_id' => $user->id,
         'name' => 'Company Two',
@@ -71,6 +76,8 @@ test('user current tenant id is updated when switching between tenants', functio
 });
 
 test('middleware does not run for unauthenticated users', function () {
+    /** @var Tests\TestCase $this */
+
     // Create a tenant manually
     $tenant = Tenant::create([
         'name' => 'Test Company',
@@ -83,5 +90,5 @@ test('middleware does not run for unauthenticated users', function () {
     $response = $this->get("/app/{$tenant->slug}");
 
     // Should redirect to login (no error should occur)
-    $response->assertRedirect('http://kindygo-app.test/login');
+    $response->assertRedirect('/login');
 });
