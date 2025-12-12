@@ -4,7 +4,7 @@ namespace App\Filament\Resources\Invoices\Pages;
 
 use Filament\Actions\CreateAction;
 use App\Models\Invoice;
-use App\Filament\Resources\Invoices\InvoiceResource;
+use App\Filament\Resources\Invoices\Invoices\InvoiceResource;
 use Filament\Actions;
 use Filament\Resources\Pages\ListRecords;
 use Illuminate\Support\Facades\Auth;

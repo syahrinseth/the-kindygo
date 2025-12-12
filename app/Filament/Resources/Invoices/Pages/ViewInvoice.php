@@ -8,7 +8,7 @@ use Filament\Schemas\Components\Group;
 use Exception;
 use Filament\Actions\EditAction;
 use App\Enums\Gateway;
-use App\Filament\Resources\Invoices\InvoiceResource;
+use App\Filament\Resources\Invoices\Invoices\InvoiceResource;
 use App\Filament\Resources\Invoices\Actions\MakePaymentAction;
 use App\Filament\Resources\Invoices\Actions\DownloadInvoicePdfAction;
 use App\Filament\Resources\Invoices\Actions\SubmitToEInvoiceAction;

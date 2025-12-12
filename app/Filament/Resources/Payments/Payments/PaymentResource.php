@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Filament\Resources\Payments;
+namespace App\Filament\Resources\Payments\Payments;
 
 use Filament\Schemas\Components\Section;
 use Filament\Schemas\Components\Grid;

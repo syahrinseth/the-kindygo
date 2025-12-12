@@ -4,7 +4,7 @@ namespace App\Filament\Resources\Parents\Pages;
 
 use Filament\Actions\DeleteAction;
 use Illuminate\Database\Eloquent\Model;
-use App\Filament\Resources\Parents\ParentResource;
+use App\Filament\Resources\Parents\Parents\ParentResource;
 use App\Models\UserProfile;
 use App\Models\UserAddress;
 use App\Models\UserOfficeInfo;

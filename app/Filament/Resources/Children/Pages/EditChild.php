@@ -4,7 +4,7 @@ namespace App\Filament\Resources\Children\Pages;
 
 use Filament\Actions\DeleteAction;
 use App\Enums\ChildStatus;
-use App\Filament\Resources\Children\ChildResource;
+use App\Filament\Resources\Children\Children\ChildResource;
 use Filament\Actions;
 use Filament\Resources\Pages\EditRecord;
 use Illuminate\Support\Facades\Auth;

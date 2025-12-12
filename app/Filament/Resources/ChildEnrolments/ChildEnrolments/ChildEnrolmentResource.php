@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Filament\Resources\ChildEnrolments;
+namespace App\Filament\Resources\ChildEnrolments\ChildEnrolments;
 
 use Filament\Schemas\Components\Section;
 use Filament\Forms\Components\Select;

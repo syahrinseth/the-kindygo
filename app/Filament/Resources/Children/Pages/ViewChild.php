@@ -3,7 +3,7 @@
 namespace App\Filament\Resources\Children\Pages;
 
 use App\Enums\ChildStatus;
-use App\Filament\Resources\Children\ChildResource;
+use App\Filament\Resources\Children\Children\ChildResource;
 use Filament\Actions;
 use Filament\Resources\Pages\ViewRecord;
 use Illuminate\Support\Facades\Auth;

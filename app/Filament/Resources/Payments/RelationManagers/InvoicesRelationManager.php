@@ -6,7 +6,7 @@ use Filament\Forms\Components\Select;
 use Filament\Forms\Components\TextInput;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Actions\Action;
-use App\Filament\Resources\Invoices\InvoiceResource;
+use App\Filament\Resources\Invoices\Invoices\InvoiceResource;
 use App\Models\Invoice;
 use Filament\Forms;
 use Filament\Actions;

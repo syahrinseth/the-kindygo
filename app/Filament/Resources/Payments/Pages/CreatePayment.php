@@ -2,7 +2,7 @@
 
 namespace App\Filament\Resources\Payments\Pages;
 
-use App\Filament\Resources\Payments\PaymentResource;
+use App\Filament\Resources\Payments\Payments\PaymentResource;
 use Filament\Resources\Pages\CreateRecord;
 use Illuminate\Support\Facades\Auth;
 use App\Enums\PaymentStatus;

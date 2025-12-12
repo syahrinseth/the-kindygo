@@ -11,7 +11,7 @@ use Filament\Actions\BulkActionGroup;
 use Filament\Actions\DetachBulkAction;
 use App\Enums\ChildStatus;
 use App\Filament\Forms\ChildForm;
-use App\Filament\Resources\Children\ChildResource;
+use App\Filament\Resources\Children\Children\ChildResource;
 use App\Models\Child;
 use Filament\Actions;
 use Filament\Forms;

@@ -8,7 +8,7 @@ use Filament\Schemas\Components\Group;
 use Exception;
 use Filament\Actions\Action;
 use Filament\Actions\EditAction;
-use App\Filament\Resources\Payments\PaymentResource;
+use App\Filament\Resources\Payments\Payments\PaymentResource;
 use Filament\Actions;
 use Filament\Infolists\Components\TextEntry;
 use Filament\Infolists\Components\SpatieMediaLibraryImageEntry;

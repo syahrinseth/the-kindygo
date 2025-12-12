@@ -3,7 +3,7 @@
 namespace App\Filament\Resources\InvoiceItemsLedgers\Pages;
 
 use Filament\Actions\Action;
-use App\Filament\Resources\InvoiceItemsLedgers\InvoiceItemsLedgerResource;
+use App\Filament\Resources\InvoiceItemsLedgers\InvoiceItemsLedgers\InvoiceItemsLedgerResource;
 use Filament\Actions;
 use Filament\Resources\Pages\ViewRecord;
 

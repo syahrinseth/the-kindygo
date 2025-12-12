@@ -2,7 +2,7 @@
 
 namespace App\Filament\Resources\Invoices\Pages;
 
-use App\Filament\Resources\Invoices\InvoiceResource;
+use App\Filament\Resources\Invoices\Invoices\InvoiceResource;
 use Filament\Resources\Pages\CreateRecord;
 use Illuminate\Support\Facades\Auth;
 use App\Enums\InvoiceStatus;

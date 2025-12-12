@@ -4,7 +4,7 @@ namespace App\Filament\Resources\ChildEnrolments\Pages;
 
 use Exception;
 use App\Enums\ChildEnrolmentStatus;
-use App\Filament\Resources\ChildEnrolments\ChildEnrolmentResource;
+use App\Filament\Resources\ChildEnrolments\ChildEnrolments\ChildEnrolmentResource;
 use App\Services\ChildEnrolmentInvoiceService;
 use Filament\Actions;
 use Filament\Notifications\Notification;

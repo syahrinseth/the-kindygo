@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Filament\Resources\Children;
+namespace App\Filament\Resources\Children\Children;
 
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Filters\SelectFilter;

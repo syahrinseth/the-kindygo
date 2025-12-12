@@ -4,7 +4,7 @@ namespace App\Filament\Resources\Payments\Pages;
 
 use Filament\Actions\CreateAction;
 use App\Models\Payment;
-use App\Filament\Resources\Payments\PaymentResource;
+use App\Filament\Resources\Payments\Payments\PaymentResource;
 use Filament\Actions;
 use Filament\Resources\Pages\ListRecords;
 use Illuminate\Support\Facades\Auth;

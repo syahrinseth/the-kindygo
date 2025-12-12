@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Filament\Resources\Users;
+namespace App\Filament\Resources\Users\Users;
 
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Columns\IconColumn;

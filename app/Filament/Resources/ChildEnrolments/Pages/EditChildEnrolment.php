@@ -2,7 +2,7 @@
 
 namespace App\Filament\Resources\ChildEnrolments\Pages;
 
-use App\Filament\Resources\ChildEnrolments\ChildEnrolmentResource;
+use App\Filament\Resources\ChildEnrolments\ChildEnrolments\ChildEnrolmentResource;
 use Filament\Actions;
 use Filament\Resources\Pages\EditRecord;
 

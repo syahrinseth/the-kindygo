@@ -4,7 +4,7 @@ namespace App\Filament\Resources\Payments\Pages;
 
 use Filament\Actions\ViewAction;
 use Filament\Actions\DeleteAction;
-use App\Filament\Resources\Payments\PaymentResource;
+use App\Filament\Resources\Payments\Payments\PaymentResource;
 use Filament\Actions;
 use Filament\Resources\Pages\EditRecord;
 use Illuminate\Support\Facades\Auth;

@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Filament\Resources\Centres;
+namespace App\Filament\Resources\Centres\Centres;
 
 use Filament\Schemas\Components\Section;
 use Filament\Schemas\Components\Grid;

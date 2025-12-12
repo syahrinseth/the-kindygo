@@ -3,7 +3,7 @@
 namespace App\Filament\Resources\Users\Pages;
 
 use Illuminate\Database\Eloquent\Model;
-use App\Filament\Resources\Users\UserResource;
+use App\Filament\Resources\Users\Users\UserResource;
 use App\Models\UserProfile;
 use App\Models\UserAddress;
 use App\Models\UserOfficeInfo;

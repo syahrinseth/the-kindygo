@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Filament\Resources\Invoices;
+namespace App\Filament\Resources\Invoices\Invoices;
 
 use Filament\Schemas\Components\Section;
 use Filament\Resources\Pages\EditRecord;

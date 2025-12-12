@@ -3,7 +3,7 @@
 namespace App\Filament\Resources\Parents\Pages;
 
 use Filament\Actions\CreateAction;
-use App\Filament\Resources\Parents\ParentResource;
+use App\Filament\Resources\Parents\Parents\ParentResource;
 use Filament\Actions;
 use Filament\Resources\Pages\ListRecords;
 use Illuminate\Support\Facades\Auth;

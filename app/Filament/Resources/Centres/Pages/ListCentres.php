@@ -3,7 +3,7 @@
 namespace App\Filament\Resources\Centres\Pages;
 
 use Filament\Actions\CreateAction;
-use App\Filament\Resources\Centres\CentreResource;
+use App\Filament\Resources\Centres\Centres\CentreResource;
 use Filament\Actions;
 use Filament\Resources\Pages\ListRecords;
 

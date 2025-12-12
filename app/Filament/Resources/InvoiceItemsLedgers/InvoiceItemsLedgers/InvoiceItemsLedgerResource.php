@@ -1,8 +1,8 @@
 <?php
 
-namespace App\Filament\Resources\InvoiceItemsLedgers;
+namespace App\Filament\Resources\InvoiceItemsLedgers\InvoiceItemsLedgers;
 
-use App\Filament\Resources\InvoiceItemsLedgers\InvoiceItemsLedgerResource;
+use App\Filament\Resources\InvoiceItemsLedgers\InvoiceItemsLedgers\InvoiceItemsLedgerResource;
 use Filament\Forms\Components\TextInput;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\Toggle;

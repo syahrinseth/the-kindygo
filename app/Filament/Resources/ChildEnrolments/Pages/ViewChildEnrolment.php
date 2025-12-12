@@ -9,7 +9,7 @@ use Filament\Infolists\Components\TextEntry;
 use Filament\Infolists\Components\IconEntry;
 use Filament\Infolists\Components\RepeatableEntry;
 use Carbon\Carbon;
-use App\Filament\Resources\ChildEnrolments\ChildEnrolmentResource;
+use App\Filament\Resources\ChildEnrolments\ChildEnrolments\ChildEnrolmentResource;
 use App\Models\Product;
 use App\Services\ChildEnrolmentInvoiceService;
 use Filament\Actions;

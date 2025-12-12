@@ -3,7 +3,7 @@
 namespace App\Filament\Resources\Invoices\Pages;
 
 use Filament\Actions\DeleteAction;
-use App\Filament\Resources\Invoices\InvoiceResource;
+use App\Filament\Resources\Invoices\Invoices\InvoiceResource;
 use App\Enums\InvoiceStatus;
 use Filament\Actions;
 use Filament\Resources\Pages\EditRecord;
