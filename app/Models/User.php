@@ -3,15 +3,8 @@
 namespace App\Models;
 
 // use Illuminate\Contracts\Auth\MustVerifyEmail;
-use Exception;
 use Database\Factories\UserFactory;
-use App\Models\Centre;
-use App\Models\Child;
-use App\Models\Invoice;
-use App\Models\Tenant;
-use App\Models\UserAddress;
-use App\Models\UserOfficeInfo;
-use App\Models\UserProfile;
+use Exception;
 use Filament\Facades\Filament;
 use Filament\Models\Contracts\FilamentUser;
 use Filament\Models\Contracts\HasAvatar;
@@ -34,10 +27,10 @@ use Spatie\MediaLibrary\InteractsWithMedia;
 use Spatie\MediaLibrary\MediaCollections\Models\Media;
 use Spatie\Permission\Traits\HasRoles;
 
-class User extends Authenticatable implements FilamentUser, HasDefaultTenant, HasTenants, HasMedia, HasAvatar
+class User extends Authenticatable implements FilamentUser, HasAvatar, HasDefaultTenant, HasMedia, HasTenants
 {
     /** @use HasFactory<UserFactory> */
-    use HasFactory, Notifiable, HasRoles, InteractsWithMedia;
+    use HasFactory, HasRoles, InteractsWithMedia, Notifiable;
 
     public function canAccessPanel(Panel $panel): bool
     {
@@ -78,7 +71,7 @@ class User extends Authenticatable implements FilamentUser, HasDefaultTenant, Ha
 
         static::created(function ($user) {
             $tenant = Filament::getTenant();
-            if (!empty($tenant)) {
+            if (! empty($tenant)) {
                 $user->tenants()->attach($tenant);
             }
         });
@@ -179,7 +172,7 @@ class User extends Authenticatable implements FilamentUser, HasDefaultTenant, Ha
      */
     public function currentCentre()
     {
-        if (!$this->current_tenant_id) {
+        if (! $this->current_tenant_id) {
             // Return an empty BelongsTo relationship when no current tenant
             return $this->belongsTo(Centre::class, 'non_existent_column');
         }
@@ -196,11 +189,12 @@ class User extends Authenticatable implements FilamentUser, HasDefaultTenant, Ha
     }
 
     /**
+     * TODO: verify if this is still needed
      * Helper method to get current centre directly
      */
     public function getCurrentCentre(): ?Centre
     {
-        if (!$this->current_tenant_id) {
+        if (! $this->current_tenant_id) {
             return null;
         }
 
@@ -210,7 +204,7 @@ class User extends Authenticatable implements FilamentUser, HasDefaultTenant, Ha
             ->where('tenant_id', $this->current_tenant_id)
             ->first();
 
-        if (!$tenantUser || !$tenantUser->current_centre_id) {
+        if (! $tenantUser || ! $tenantUser->current_centre_id) {
             return null;
         }
 
@@ -222,14 +216,14 @@ class User extends Authenticatable implements FilamentUser, HasDefaultTenant, Ha
      */
     public function getCentresForCurrentTenant(): Collection
     {
-        if (!$this->current_tenant_id) {
+        if (! $this->current_tenant_id) {
             return collect();
         }
 
         // Use the scope from Centre model for better reusability
         return Centre::whereHas('users', function ($query) {
-                $query->where('users.id', $this->id);
-            })
+            $query->where('users.id', $this->id);
+        })
             ->get();
     }
 
@@ -238,7 +232,7 @@ class User extends Authenticatable implements FilamentUser, HasDefaultTenant, Ha
      */
     public function setCurrentCentre(?Centre $centre): void
     {
-        if (!$this->current_tenant_id) {
+        if (! $this->current_tenant_id) {
             return;
         }
 
@@ -269,8 +263,6 @@ class User extends Authenticatable implements FilamentUser, HasDefaultTenant, Ha
 
     /**
      * Get the children associated with this user.
-     *
-     * @return BelongsToMany
      */
     public function children(): BelongsToMany
     {
@@ -328,7 +320,7 @@ class User extends Authenticatable implements FilamentUser, HasDefaultTenant, Ha
     /**
      * Register media conversions for the user.
      */
-    public function registerMediaConversions(Media $media = null): void
+    public function registerMediaConversions(?Media $media = null): void
     {
         $this->addMediaConversion('thumb')
             ->width(300)
@@ -350,7 +342,7 @@ class User extends Authenticatable implements FilamentUser, HasDefaultTenant, Ha
     {
         $media = $this->getFirstMedia('photo');
 
-        if (!$media) {
+        if (! $media) {
             return null;
         }
 
@@ -367,8 +359,6 @@ class User extends Authenticatable implements FilamentUser, HasDefaultTenant, Ha
     /**
      * Get the appropriate identification scheme for e-invoice.
      * Returns 'TIN', 'NRIC', or 'PASSPORT' based on available data.
-     *
-     * @return string
      */
     public function getEInvoiceSchemeId(): string
     {
@@ -383,7 +373,6 @@ class User extends Authenticatable implements FilamentUser, HasDefaultTenant, Ha
     /**
      * Get the identification value for e-invoice.
      *
-     * @return string
      * @throws Exception if no valid identification is available
      */
     public function getEInvoiceIdentification(): string
@@ -406,10 +395,8 @@ class User extends Authenticatable implements FilamentUser, HasDefaultTenant, Ha
         throw new Exception("Customer '{$this->name}' must have a valid profile with TIN for e-Invoice submission.");
     }
 
-        /**
+    /**
      * Check if the user has complete address information for e-invoice.
-     *
-     * @return bool
      */
     public function hasCompleteAddress(): bool
     {
@@ -418,30 +405,24 @@ class User extends Authenticatable implements FilamentUser, HasDefaultTenant, Ha
 
     /**
      * Check if the user has valid identification (NRIC or Passport).
-     *
-     * @return bool
      */
     public function hasValidIdentification(): bool
     {
         return $this->profile &&
-               (!empty($this->profile->nric) || !empty($this->profile->passport));
+               (! empty($this->profile->nric) || ! empty($this->profile->passport));
     }
 
     /**
      * Check if the user has a valid TIN.
-     *
-     * @return bool
      */
     public function hasValidTin(): bool
     {
-        return $this->profile && !empty($this->profile->tin);
+        return $this->profile && ! empty($this->profile->tin);
     }
 
     /**
      * Check if the user is ready for e-invoice generation.
      * Requires: complete address, valid identification (NRIC/Passport), and TIN.
-     *
-     * @return bool
      */
     public function eInvoiceReady(): bool
     {
@@ -452,22 +433,20 @@ class User extends Authenticatable implements FilamentUser, HasDefaultTenant, Ha
 
     /**
      * Get a list of missing e-invoice requirements.
-     *
-     * @return array
      */
     public function getEInvoiceMissingRequirements(): array
     {
         $missing = [];
 
-        if (!$this->hasValidIdentification()) {
+        if (! $this->hasValidIdentification()) {
             $missing[] = 'NRIC or Passport';
         }
 
-        if (!$this->hasValidTin()) {
+        if (! $this->hasValidTin()) {
             $missing[] = 'TIN (Tax ID)';
         }
 
-        if (!$this->hasCompleteAddress()) {
+        if (! $this->hasCompleteAddress()) {
             $missing[] = 'Complete address';
         }
 
@@ -476,8 +455,6 @@ class User extends Authenticatable implements FilamentUser, HasDefaultTenant, Ha
 
     /**
      * Get formatted address for e-invoice display.
-     *
-     * @return string
      */
     public function getFormattedAddress(): string
     {
@@ -490,8 +467,6 @@ class User extends Authenticatable implements FilamentUser, HasDefaultTenant, Ha
 
     /**
      * Get state name from user's address.
-     *
-     * @return string
      */
     public function getStateName(): string
     {
@@ -505,24 +480,24 @@ class User extends Authenticatable implements FilamentUser, HasDefaultTenant, Ha
     public function scopeEInvoiceReady(Builder $query): Builder
     {
         return $query->whereHas('userAddress', function (Builder $addressQuery) {
-                // Check if address is complete
-                $addressQuery->whereNotNull('address')
-                           ->whereNotNull('city')
-                           ->whereNotNull('postal_code')
-                           ->whereNotNull('state_code');
-            })
+            // Check if address is complete
+            $addressQuery->whereNotNull('address')
+                ->whereNotNull('city')
+                ->whereNotNull('postal_code')
+                ->whereNotNull('state_code');
+        })
             ->whereHas('profile', function (Builder $profileQuery) {
                 // Check if profile has TIN and identification
                 $profileQuery->whereNotNull('tin')
-                           ->where('tin', '!=', '')
-                           ->where(function (Builder $idQuery) {
-                               $idQuery->where(function (Builder $nricQuery) {
-                                   $nricQuery->whereNotNull('nric')->where('nric', '!=', '');
-                               })
-                               ->orWhere(function (Builder $passportQuery) {
-                                   $passportQuery->whereNotNull('passport')->where('passport', '!=', '');
-                               });
-                           });
+                    ->where('tin', '!=', '')
+                    ->where(function (Builder $idQuery) {
+                        $idQuery->where(function (Builder $nricQuery) {
+                            $nricQuery->whereNotNull('nric')->where('nric', '!=', '');
+                        })
+                            ->orWhere(function (Builder $passportQuery) {
+                                $passportQuery->whereNotNull('passport')->where('passport', '!=', '');
+                            });
+                    });
             });
     }
 
@@ -536,9 +511,9 @@ class User extends Authenticatable implements FilamentUser, HasDefaultTenant, Ha
                 $q->where(function (Builder $idQuery) {
                     $idQuery->whereNull('nric')->orWhere('nric', '');
                 })
-                ->where(function (Builder $passportQuery) {
-                    $passportQuery->whereNull('passport')->orWhere('passport', '');
-                });
+                    ->where(function (Builder $passportQuery) {
+                        $passportQuery->whereNull('passport')->orWhere('passport', '');
+                    });
             });
     }
 
@@ -561,13 +536,13 @@ class User extends Authenticatable implements FilamentUser, HasDefaultTenant, Ha
         return $query->whereDoesntHave('userAddress')
             ->orWhereHas('userAddress', function (Builder $q) {
                 $q->whereNull('address')
-                  ->orWhere('address', '')
-                  ->orWhereNull('city')
-                  ->orWhere('city', '')
-                  ->orWhereNull('postal_code')
-                  ->orWhere('postal_code', '')
-                  ->orWhereNull('state_code')
-                  ->orWhere('state_code', '');
+                    ->orWhere('address', '')
+                    ->orWhereNull('city')
+                    ->orWhere('city', '')
+                    ->orWhereNull('postal_code')
+                    ->orWhere('postal_code', '')
+                    ->orWhereNull('state_code')
+                    ->orWhere('state_code', '');
             });
     }
 }

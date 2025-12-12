@@ -11,11 +11,11 @@ use Illuminate\Support\Facades\Auth;
 
 class FinanceDashboard extends Page
 {
-    protected static string | \BackedEnum | null $navigationIcon = 'heroicon-o-presentation-chart-bar';
+    protected static string|\BackedEnum|null $navigationIcon = 'heroicon-o-presentation-chart-bar';
 
     protected string $view = 'filament.pages.finance-dashboard';
 
-    protected static string | \UnitEnum | null $navigationGroup = 'Finance';
+    protected static string|\UnitEnum|null $navigationGroup = 'Finance';
 
     protected static ?string $navigationLabel = 'Finance Dashboard';
 
@@ -26,13 +26,13 @@ class FinanceDashboard extends Page
     public static function shouldRegisterNavigation(): bool
     {
         // Use the dedicated policy instead of checking invoice access
-        return Auth::user()->can('viewFinanceDashboard', static::class);
+        return Auth::user()->can('viewFinanceDashboard');
     }
 
     public static function canAccess(): bool
     {
         // Add an additional layer of protection at the page level
-        return Auth::user()->can('viewFinanceDashboard', static::class);
+        return Auth::user()->can('viewFinanceDashboard');
     }
 
     protected function getHeaderWidgets(): array
@@ -50,26 +50,26 @@ class FinanceDashboard extends Page
         $widgets = [];
 
         // Only include widgets the user has permission to view
-        if (Auth::user()->can('viewFinancialStats', static::class)) {
+        if (Auth::user()->can('viewFinancialStats')) {
             // $widgets[] = InvoiceStats::class;
         }
 
-        if (Auth::user()->can('viewInvoiceAnalytics', static::class)) {
+        if (Auth::user()->can('viewInvoiceAnalytics')) {
             $widgets[] = InvoiceChart::class;
         }
 
-        if (Auth::user()->can('viewUpcomingPayments', static::class)) {
+        if (Auth::user()->can('viewUpcomingPayments')) {
             // $widgets[] = UpcomingPaymentsWidget::class;
         }
 
-        if (Auth::user()->can('viewInvoiceList', static::class)) {
+        if (Auth::user()->can('viewInvoiceList')) {
             // $widgets[] = InvoiceListWidget::class;
         }
 
         return $widgets;
     }
 
-    public function getWidgetsColumns(): int | string | array
+    public function getWidgetsColumns(): int|string|array
     {
         return 1;
     }

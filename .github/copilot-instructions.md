@@ -775,7 +775,7 @@ $pages->assertNoJavascriptErrors()->assertNoConsoleLogs();
 | placeholder-opacity-* | placeholder-black/* |
 | flex-shrink-* | shrink-* |
 | flex-grow-* | grow-* |
-| text-ellipsis | text-ellipsis |
-| box-decoration-slice | box-decoration-slice |
-| box-decoration-clone | box-decoration-clone |
+| overflow-ellipsis | text-ellipsis |
+| decoration-slice | box-decoration-slice |
+| decoration-clone | box-decoration-clone |
 </laravel-boost-guidelines>

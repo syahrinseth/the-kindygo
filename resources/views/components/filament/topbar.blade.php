@@ -59,12 +59,6 @@
             <div class="ml-4">
                 <x-filament::current-centre-display />
             </div>
-
-            @if (filament()->hasTenancy() && filament()->hasTenantMenu())
-                <div class="ms-4">
-                    <x-filament-panels::tenant-menu />
-                </div>
-            @endif
         </div>
 
         {{-- Tenant menu moved next to logo for better discoverability --}}
