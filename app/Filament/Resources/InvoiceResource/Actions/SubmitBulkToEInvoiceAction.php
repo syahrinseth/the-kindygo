@@ -2,9 +2,10 @@
 
 namespace App\Filament\Resources\InvoiceResource\Actions;
 
+use Exception;
 use App\Enums\InvoiceStatus;
 use App\Models\Invoice;
-use Filament\Tables\Actions\BulkAction;
+use Filament\Actions\BulkAction;
 use Filament\Notifications\Notification;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Support\Facades\Auth;
@@ -60,7 +61,7 @@ class SubmitBulkToEInvoiceAction extends BulkAction
                         // The submitToEInvoice method returns a response array directly or throws an exception
                         // If we reach this point, it means the submission was successful
                         $successCount++;
-                    } catch (\Exception $e) {
+                    } catch (Exception $e) {
                         $failedCount++;
                         $errors[] = "Invoice {$invoice->number}: " . $e->getMessage();
                         

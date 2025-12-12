@@ -2,12 +2,17 @@
 
 namespace App\Filament\Resources\InvoiceResource\Actions;
 
+use Closure;
+use Illuminate\Support\Facades\Log;
+use Symfony\Component\Mailer\Exception\TransportException;
+use Illuminate\Mail\MailManager;
+use Exception;
 use App\Enums\InvoiceStatus;
 use App\Models\Invoice;
 use App\Notifications\InvoicePendingNotification;
 use App\Notifications\InvoiceOverdueNotification;
 use Filament\Notifications\Notification;
-use Filament\Tables\Actions\Action;
+use Filament\Actions\Action;
 use Illuminate\Support\Facades\Auth;
 
 class SendNotificationAction
@@ -50,7 +55,7 @@ class SendNotificationAction
     /**
      * Get the action callback
      */
-    protected static function getActionCallback(): \Closure
+    protected static function getActionCallback(): Closure
     {
         return function (Invoice $record) {
             try {
@@ -80,7 +85,7 @@ class SendNotificationAction
                 }
 
                 // Log the notification sending
-                \Illuminate\Support\Facades\Log::info('Invoice notification sent', [
+                Log::info('Invoice notification sent', [
                     'invoice_id' => $record->id,
                     'invoice_number' => $record->number,
                     'user_id' => $record->user->id,
@@ -90,9 +95,9 @@ class SendNotificationAction
                     'sent_at' => now(),
                 ]);
 
-            } catch (\Symfony\Component\Mailer\Exception\TransportException $e) {
+            } catch (TransportException $e) {
                 // Handle mailer configuration issues specifically
-                \Illuminate\Support\Facades\Log::error('Mailer configuration error while sending invoice notification', [
+                Log::error('Mailer configuration error while sending invoice notification', [
                     'invoice_id' => $record->id,
                     'error' => $e->getMessage(),
                     'suggestion' => 'Check mailer configuration and credentials',
@@ -104,9 +109,9 @@ class SendNotificationAction
                     ->danger()
                     ->send();
                     
-            } catch (\Illuminate\Mail\MailManager $e) {
+            } catch (MailManager $e) {
                 // Handle Laravel mail manager issues
-                \Illuminate\Support\Facades\Log::error('Mail manager error while sending invoice notification', [
+                Log::error('Mail manager error while sending invoice notification', [
                     'invoice_id' => $record->id,
                     'error' => $e->getMessage(),
                     'suggestion' => 'Check MAIL_MAILER configuration',
@@ -118,9 +123,9 @@ class SendNotificationAction
                     ->danger()
                     ->send();
                     
-            } catch (\Exception $e) {
+            } catch (Exception $e) {
                 // Handle any other exceptions
-                \Illuminate\Support\Facades\Log::error('Failed to send invoice notification', [
+                Log::error('Failed to send invoice notification', [
                     'invoice_id' => $record->id,
                     'error' => $e->getMessage(),
                     'trace' => $e->getTraceAsString()

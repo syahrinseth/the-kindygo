@@ -2,6 +2,7 @@
 
 namespace App\Filament\Resources\ParentResource\Pages;
 
+use Illuminate\Database\Eloquent\Model;
 use App\Filament\Resources\ParentResource;
 use App\Models\UserProfile;
 use App\Models\UserAddress;
@@ -25,7 +26,7 @@ class CreateParent extends CreateRecord
         return $data;
     }
 
-    protected function handleRecordCreation(array $data): \Illuminate\Database\Eloquent\Model
+    protected function handleRecordCreation(array $data): Model
     {
         // Extract related model data
         $profileData = $data['profile'] ?? [];

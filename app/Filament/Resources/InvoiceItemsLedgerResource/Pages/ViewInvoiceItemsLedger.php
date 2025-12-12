@@ -2,6 +2,7 @@
 
 namespace App\Filament\Resources\InvoiceItemsLedgerResource\Pages;
 
+use Filament\Actions\Action;
 use App\Filament\Resources\InvoiceItemsLedgerResource;
 use Filament\Actions;
 use Filament\Resources\Pages\ViewRecord;
@@ -14,7 +15,7 @@ class ViewInvoiceItemsLedger extends ViewRecord
     {
         return [
             // Remove edit action for ledger view - it's read-only
-            Actions\Action::make('back')
+            Action::make('back')
                 ->label('Back to Ledger')
                 ->url(static::getResource()::getUrl('index'))
                 ->color('gray')

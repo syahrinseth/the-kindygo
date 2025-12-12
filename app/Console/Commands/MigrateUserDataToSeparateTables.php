@@ -2,6 +2,7 @@
 
 namespace App\Console\Commands;
 
+use Exception;
 use App\Models\User;
 use App\Models\UserProfile;
 use App\Models\UserAddress;
@@ -80,7 +81,7 @@ class MigrateUserDataToSeparateTables extends Command
 
                 $migratedCount++;
 
-            } catch (\Exception $e) {
+            } catch (Exception $e) {
                 $this->error("Failed to migrate user {$user->id}: " . $e->getMessage());
             }
         }

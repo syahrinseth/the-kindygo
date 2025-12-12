@@ -2,6 +2,7 @@
 
 namespace App\Policies;
 
+use App\Enums\ProductStatus;
 use App\Models\Product;
 use App\Models\User;
 use Illuminate\Auth\Access\Response;
@@ -91,7 +92,7 @@ class ProductPolicy
     public function delete(User $user, Product $product): bool
     {
         // Only draft or inactive products can be deleted
-        if (!in_array($product->status, [\App\Enums\ProductStatus::DRAFT, \App\Enums\ProductStatus::INACTIVE])) {
+        if (!in_array($product->status, [ProductStatus::DRAFT, ProductStatus::INACTIVE])) {
             return false;
         }
         

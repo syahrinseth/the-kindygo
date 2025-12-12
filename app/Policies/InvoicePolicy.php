@@ -2,6 +2,7 @@
 
 namespace App\Policies;
 
+use App\Enums\InvoiceStatus;
 use App\Models\Invoice;
 use App\Models\User;
 use Illuminate\Auth\Access\Response;
@@ -77,7 +78,7 @@ class InvoicePolicy
         if ($user->hasRole('Principal')) {
             return $invoice->tenant_id === $user->current_tenant_id && 
                    $user->centres()->where('centres.id', $invoice->centre_id)->exists() &&
-                   $invoice->status === \App\Enums\InvoiceStatus::DRAFT;
+                   $invoice->status === InvoiceStatus::DRAFT;
         }
         
         return false;
@@ -89,7 +90,7 @@ class InvoicePolicy
     public function delete(User $user, Invoice $invoice): bool
     {
         // Only draft invoices can be deleted
-        if ($invoice->status !== \App\Enums\InvoiceStatus::DRAFT) {
+        if ($invoice->status !== InvoiceStatus::DRAFT) {
             return false;
         }
         

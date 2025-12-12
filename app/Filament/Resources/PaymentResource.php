@@ -2,6 +2,26 @@
 
 namespace App\Filament\Resources;
 
+use Filament\Schemas\Components\Section;
+use Filament\Schemas\Components\Grid;
+use Filament\Resources\Pages\EditRecord;
+use Filament\Schemas\Components\Utilities\Get;
+use Filament\Forms\Components\Hidden;
+use Filament\Tables\Columns\TextColumn;
+use Filament\Forms\Components\DatePicker;
+use Filament\Actions\ActionGroup;
+use Filament\Actions\ViewAction;
+use Filament\Actions\Action;
+use Filament\Actions\EditAction;
+use Filament\Actions\DeleteAction;
+use Filament\Actions\BulkActionGroup;
+use Filament\Actions\DeleteBulkAction;
+use Filament\Actions\BulkAction;
+use App\Filament\Resources\PaymentResource\RelationManagers\InvoicesRelationManager;
+use App\Filament\Resources\PaymentResource\Pages\ListPayments;
+use App\Filament\Resources\PaymentResource\Pages\CreatePayment;
+use App\Filament\Resources\PaymentResource\Pages\ViewPayment;
+use App\Filament\Resources\PaymentResource\Pages\EditPayment;
 use App\Filament\Resources\PaymentResource\Pages;
 use App\Models\Payment;
 use App\Models\Centre;
@@ -9,15 +29,13 @@ use App\Models\User;
 use App\Models\Invoice;
 use App\Enums\PaymentStatus;
 use App\Enums\Gateway;
+use Filament\Actions;
 use Filament\Forms;
-use Filament\Forms\Form;
 use Filament\Resources\Resource;
 use Filament\Tables;
 use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Facades\Auth;
-use Filament\Forms\Components\Section;
-use Filament\Forms\Components\Grid;
 use Filament\Forms\Components\TextInput;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\DateTimePicker;
@@ -28,14 +46,17 @@ use Filament\Tables\Filters\Filter;
 use Illuminate\Database\Eloquent\SoftDeletingScope;
 use Illuminate\Support\Collection;
 use Filament\Notifications\Notification;
+use BackedEnum;
+use UnitEnum;
+use Filament\Schemas\Schema;
 
 class PaymentResource extends Resource
 {
     protected static ?string $model = Payment::class;
 
-    protected static ?string $navigationIcon = 'heroicon-o-credit-card';
+    protected static string | \BackedEnum | null $navigationIcon = 'heroicon-o-credit-card';
     
-    protected static ?string $navigationGroup = 'Finance';
+    protected static string | \UnitEnum | null $navigationGroup = 'Finance';
     
     protected static ?int $navigationSort = 20;
 
@@ -44,7 +65,7 @@ class PaymentResource extends Resource
         return static::getEloquentQuery()->where('status', PaymentStatus::PENDING)->count();
     }
     
-    public static function getNavigationBadgeColor(): ?string
+    public static function getNavigationBadgeColor(): string|array|null
     {
         return static::getEloquentQuery()->where('status', PaymentStatus::FAILED)->count() > 0
             ? 'danger'
@@ -118,10 +139,10 @@ class PaymentResource extends Resource
         return Auth::user()->can('viewAny', Payment::class);
     }
 
-    public static function form(Form $form): Form
+    public static function form(Schema $schema): Schema
     {
-        return $form
-            ->schema([
+        return $schema
+            ->components([
                 Section::make('Payment Details')
                     ->schema([
                         Grid::make(2)
@@ -131,7 +152,7 @@ class PaymentResource extends Resource
                                     ->required()
                                     ->native(false)
                                     ->default(Gateway::BANK_TRANSFER->value)
-                                    ->disabled(fn ($livewire) => $livewire instanceof \Filament\Resources\Pages\EditRecord)
+                                    ->disabled(fn ($livewire) => $livewire instanceof EditRecord)
                                     ->live(),
                                     
                                 Select::make('status')
@@ -139,7 +160,7 @@ class PaymentResource extends Resource
                                     ->required()
                                     ->native(false)
                                     ->default(PaymentStatus::PENDING->value)
-                                    ->disabled(fn (Forms\Get $get) => $get('gateway') === Gateway::CHIP->value),
+                                    ->disabled(fn (Get $get) => $get('gateway') === Gateway::CHIP->value),
                             ]),
                             
                         Grid::make(2)
@@ -148,13 +169,13 @@ class PaymentResource extends Resource
                                     ->label('Reference Number')
                                     ->required()
                                     ->maxLength(255)
-                                    ->disabled(fn (Forms\Get $get) => $get('gateway') === Gateway::CHIP->value),
+                                    ->disabled(fn (Get $get) => $get('gateway') === Gateway::CHIP->value),
                                     
                                 TextInput::make('gateway_payment_id')
                                     ->label('Gateway Payment ID')
                                     ->maxLength(255)
                                     ->helperText('Payment ID from the payment gateway')
-                                    ->disabled(fn ($livewire) => $livewire instanceof \Filament\Resources\Pages\EditRecord),
+                                    ->disabled(fn ($livewire) => $livewire instanceof EditRecord),
                             ]),
                             
                         Grid::make(2)
@@ -165,7 +186,7 @@ class PaymentResource extends Resource
                                     ->numeric()
                                     ->suffix('cents')
                                     ->helperText('Enter amount in cents (e.g., 10000 for RM100.00)')
-                                    ->disabled(fn (Forms\Get $get) => $get('gateway') === Gateway::CHIP->value),
+                                    ->disabled(fn (Get $get) => $get('gateway') === Gateway::CHIP->value),
                                     
                                 DateTimePicker::make('paid_at')
                                     ->label('Payment Date')
@@ -231,7 +252,7 @@ class PaymentResource extends Resource
                             ->helperText('Upload payment receipt or proof (JPEG, PNG, or PDF, max 5MB)'),
                     ]),
                     
-                Forms\Components\Hidden::make('tenant_id')
+                Hidden::make('tenant_id')
                     ->default(function () {
                         return Auth::user()->current_tenant_id;
                     }),
@@ -243,22 +264,22 @@ class PaymentResource extends Resource
         return $table
             ->defaultSort('created_at', 'desc')
             ->columns([
-                Tables\Columns\TextColumn::make('reference_no')
+                TextColumn::make('reference_no')
                     ->label('Reference No.')
                     ->searchable()
                     ->sortable(),
                     
-                Tables\Columns\TextColumn::make('user.name')
+                TextColumn::make('user.name')
                     ->label('User')
                     ->searchable()
                     ->sortable(),
                     
-                Tables\Columns\TextColumn::make('centre.name')
+                TextColumn::make('centre.name')
                     ->label('Centre')
                     ->searchable()
                     ->sortable(),
                     
-                Tables\Columns\TextColumn::make('gateway')
+                TextColumn::make('gateway')
                     ->badge()
                     ->color(fn (Gateway $state): string => match ($state) {
                         Gateway::BANK_TRANSFER => 'blue',
@@ -268,7 +289,7 @@ class PaymentResource extends Resource
                     ->searchable()
                     ->sortable(),
                     
-                Tables\Columns\TextColumn::make('status')
+                TextColumn::make('status')
                     ->badge()
                     ->color(fn (PaymentStatus $state): string => match ($state) {
                         PaymentStatus::PENDING => 'warning',
@@ -280,17 +301,17 @@ class PaymentResource extends Resource
                     ->searchable()
                     ->sortable(),
                     
-                Tables\Columns\TextColumn::make('amount')
+                TextColumn::make('amount')
                     ->label('Amount')
                     ->money('MYR', 100)
                     ->sortable(),
                     
-                Tables\Columns\TextColumn::make('paid_at')
+                TextColumn::make('paid_at')
                     ->label('Payment Date')
                     ->dateTime('M d, Y H:i')
                     ->sortable(),
                     
-                Tables\Columns\TextColumn::make('created_at')
+                TextColumn::make('created_at')
                     ->dateTime('M d, Y H:i')
                     ->sortable()
                     ->toggleable(isToggledHiddenByDefault: true),
@@ -310,9 +331,9 @@ class PaymentResource extends Resource
                     ->preload(),
                 
                 Filter::make('paid_at')
-                    ->form([
-                        Forms\Components\DatePicker::make('paid_from'),
-                        Forms\Components\DatePicker::make('paid_until'),
+                    ->schema([
+                        DatePicker::make('paid_from'),
+                        DatePicker::make('paid_until'),
                     ])
                     ->query(function (Builder $query, array $data): Builder {
                         return $query
@@ -326,12 +347,12 @@ class PaymentResource extends Resource
                             );
                     }),
             ])
-            ->actions([
-                Tables\Actions\ActionGroup::make([
-                    Tables\Actions\ViewAction::make()
+            ->recordActions([
+                ActionGroup::make([
+                    ViewAction::make()
                         ->visible(fn (Payment $record) => Auth::user()->can('view', $record)),
                     
-                    Tables\Actions\Action::make('download_receipt')
+                    Action::make('download_receipt')
                         ->label('Download Receipt')
                         ->icon('heroicon-o-document-arrow-down')
                         ->color('success')
@@ -339,10 +360,10 @@ class PaymentResource extends Resource
                         ->openUrlInNewTab()
                         ->visible(fn (Payment $record) => Auth::user()->can('view', $record) && $record->status === PaymentStatus::PAID),
                     
-                    Tables\Actions\EditAction::make()
+                    EditAction::make()
                         ->visible(fn (Payment $record) => Auth::user()->can('update', $record)),
                     
-                    Tables\Actions\DeleteAction::make()
+                    DeleteAction::make()
                         ->visible(fn (Payment $record) => Auth::user()->can('delete', $record)),
                 ])
                     ->label('Actions')
@@ -351,12 +372,12 @@ class PaymentResource extends Resource
                     ->color('gray')
                     ->button(),
             ])
-            ->bulkActions([
-                Tables\Actions\BulkActionGroup::make([
-                    Tables\Actions\DeleteBulkAction::make()
+            ->toolbarActions([
+                BulkActionGroup::make([
+                    DeleteBulkAction::make()
                         ->visible(fn () => Auth::user()->can('deleteAny', Payment::class)),
                     
-                    Tables\Actions\BulkAction::make('download_first_receipt')
+                    BulkAction::make('download_first_receipt')
                         ->label('Download Receipt')
                         ->icon('heroicon-o-document-arrow-down')
                         ->color('success')
@@ -385,17 +406,17 @@ class PaymentResource extends Resource
     public static function getRelations(): array
     {
         return [
-            \App\Filament\Resources\PaymentResource\RelationManagers\InvoicesRelationManager::class,
+            InvoicesRelationManager::class,
         ];
     }
 
     public static function getPages(): array
     {
         return [
-            'index' => Pages\ListPayments::route('/'),
-            'create' => Pages\CreatePayment::route('/create'),
-            'view' => Pages\ViewPayment::route('/{record}'),
-            'edit' => Pages\EditPayment::route('/{record}/edit'),
+            'index' => ListPayments::route('/'),
+            'create' => CreatePayment::route('/create'),
+            'view' => ViewPayment::route('/{record}'),
+            'edit' => EditPayment::route('/{record}/edit'),
         ];
     }
 }

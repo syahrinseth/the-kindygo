@@ -2,6 +2,11 @@
 
 namespace App\Filament\Forms;
 
+use Filament\Schemas\Components\Section;
+use Filament\Forms\Components\TextInput;
+use Filament\Forms\Components\Select;
+use Filament\Forms\Components\DatePicker;
+use Filament\Forms\Components\Textarea;
 use Filament\Forms;
 use Filament\Forms\Components\SpatieMediaLibraryFileUpload;
 
@@ -10,71 +15,71 @@ class ChildForm
     public static function make(bool $includeAssociatedUsers = true, bool $includeRelationshipType = false): array
     {
         $schema = [
-            Forms\Components\Section::make('Basic Information')
+            Section::make('Basic Information')
                 ->schema([
-                    Forms\Components\TextInput::make('first_name')
+                    TextInput::make('first_name')
                         ->required()
                         ->maxLength(255),
-                    Forms\Components\TextInput::make('last_name')
+                    TextInput::make('last_name')
                         ->required()
                         ->maxLength(255),
-                    Forms\Components\TextInput::make('patronymic')
+                    TextInput::make('patronymic')
                         ->maxLength(255),
-                    Forms\Components\Select::make('gender')
+                    Select::make('gender')
                         ->required()
                         ->options([
                             'male' => 'Male',
                             'female' => 'Female',
                         ]),
-                    Forms\Components\DatePicker::make('date_of_birth')
+                    DatePicker::make('date_of_birth')
                         ->required()
                         ->maxDate(now()),
-                    Forms\Components\TextInput::make('place_of_birth')
+                    TextInput::make('place_of_birth')
                         ->maxLength(255),
                 ])->columns(2),
             
-            Forms\Components\Section::make('Identification')
+            Section::make('Identification')
                 ->schema([
-                    Forms\Components\TextInput::make('mykid_no')
+                    TextInput::make('mykid_no')
                         ->label('MyKid Number')
                         ->maxLength(255),
-                    Forms\Components\TextInput::make('cert_number')
+                    TextInput::make('cert_number')
                         ->label('Certificate Number')
                         ->maxLength(255),
-                    Forms\Components\TextInput::make('position_of_child')
+                    TextInput::make('position_of_child')
                         ->label('Position in Family')
                         ->helperText('E.g. 1st child, 2nd child, etc.')
                         ->numeric()
                         ->minValue(1),
                 ])->columns(3),
             
-            Forms\Components\Section::make('Background')
+            Section::make('Background')
                 ->schema([
-                    Forms\Components\TextInput::make('race')
+                    TextInput::make('race')
                         ->maxLength(255),
-                    Forms\Components\TextInput::make('religion')
+                    TextInput::make('religion')
                         ->maxLength(255),
-                    Forms\Components\TextInput::make('languages')
+                    TextInput::make('languages')
                         ->helperText('Languages spoken by the child, comma separated')
                         ->maxLength(255),
                 ])->columns(3),
             
-            Forms\Components\Section::make('Health Information')
+            Section::make('Health Information')
                 ->schema([
-                    Forms\Components\Textarea::make('allergies')
+                    Textarea::make('allergies')
                         ->maxLength(65535)
                         ->columnSpanFull(),
-                    Forms\Components\Textarea::make('diseases')
+                    Textarea::make('diseases')
                         ->maxLength(65535)
                         ->columnSpanFull(),
-                    Forms\Components\TextInput::make('family_clinic')
+                    TextInput::make('family_clinic')
                         ->maxLength(255),
-                    Forms\Components\TextInput::make('family_clinic_phone')
+                    TextInput::make('family_clinic_phone')
                         ->tel()
                         ->maxLength(255),
                 ])->columns(2),
             
-            Forms\Components\Section::make('Documents & Photos')
+            Section::make('Documents & Photos')
                 ->schema([
                     SpatieMediaLibraryFileUpload::make('photo')
                         ->label('Child Photo')
@@ -118,9 +123,9 @@ class ChildForm
 
         // Add relationship type section if requested (for relation managers)
         if ($includeRelationshipType) {
-            $schema[] = Forms\Components\Section::make('Relationship')
+            $schema[] = Section::make('Relationship')
                 ->schema([
-                    Forms\Components\Select::make('relationship_type')
+                    Select::make('relationship_type')
                         ->label('Relationship')
                         ->options([
                             'parent' => 'Parent',
@@ -135,28 +140,28 @@ class ChildForm
 
         // Add associated users section if requested (for main resource)
         if ($includeAssociatedUsers) {
-            $schema[] = Forms\Components\Section::make('Associated Users')
+            $schema[] = Section::make('Associated Users')
                 ->schema([
-                    Forms\Components\Select::make('users')
+                    Select::make('users')
                         ->label('Parents/Guardians')
                         ->multiple()
                         ->relationship('users', 'name')
                         ->preload()
                         ->searchable()
                         ->createOptionForm([
-                            Forms\Components\TextInput::make('name')
+                            TextInput::make('name')
                                 ->required()
                                 ->maxLength(255),
-                            Forms\Components\TextInput::make('email')
+                            TextInput::make('email')
                                 ->email()
                                 ->required()
                                 ->maxLength(255),
-                            Forms\Components\TextInput::make('password')
+                            TextInput::make('password')
                                 ->password()
                                 ->required()
                                 ->minLength(8)
                                 ->maxLength(255),
-                            Forms\Components\Select::make('relationship_type')
+                            Select::make('relationship_type')
                                 ->label('Relationship')
                                 ->options([
                                     'parent' => 'Parent',
@@ -180,21 +185,21 @@ class ChildForm
     public static function basic(): array
     {
         return [
-            Forms\Components\Section::make('Basic Information')
+            Section::make('Basic Information')
                 ->schema([
-                    Forms\Components\TextInput::make('first_name')
+                    TextInput::make('first_name')
                         ->required()
                         ->maxLength(255),
-                    Forms\Components\TextInput::make('last_name')
+                    TextInput::make('last_name')
                         ->required()
                         ->maxLength(255),
-                    Forms\Components\Select::make('gender')
+                    Select::make('gender')
                         ->required()
                         ->options([
                             'male' => 'Male',
                             'female' => 'Female',
                         ]),
-                    Forms\Components\DatePicker::make('date_of_birth')
+                    DatePicker::make('date_of_birth')
                         ->required()
                         ->maxDate(now()),
                 ])->columns(2),

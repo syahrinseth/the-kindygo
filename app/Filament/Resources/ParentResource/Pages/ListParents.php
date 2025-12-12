@@ -2,6 +2,7 @@
 
 namespace App\Filament\Resources\ParentResource\Pages;
 
+use Filament\Actions\CreateAction;
 use App\Filament\Resources\ParentResource;
 use Filament\Actions;
 use Filament\Resources\Pages\ListRecords;
@@ -14,7 +15,7 @@ class ListParents extends ListRecords
     protected function getHeaderActions(): array
     {
         return [
-            Actions\CreateAction::make()
+            CreateAction::make()
                 ->visible(fn () => Auth::user()->can('create', ParentResource::getModel())),
         ];
     }

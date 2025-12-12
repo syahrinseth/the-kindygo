@@ -2,6 +2,11 @@
 
 namespace App\Filament\Resources\InvoiceResource\Pages;
 
+use Filament\Schemas\Components\Section;
+use Filament\Schemas\Components\Grid;
+use Filament\Schemas\Components\Group;
+use Exception;
+use Filament\Actions\EditAction;
 use App\Enums\Gateway;
 use App\Filament\Resources\InvoiceResource;
 use App\Filament\Resources\InvoiceResource\Actions\MakePaymentAction;
@@ -12,25 +17,22 @@ use Filament\Actions;
 use Filament\Forms;
 use Filament\Forms\Components\FileUpload;
 use Filament\Forms\Components\SpatieMediaLibraryFileUpload;
-use Filament\Infolists\Components\Grid;
-use Filament\Infolists\Components\Group;
 use Filament\Infolists\Components\ImageEntry;
 use Filament\Infolists\Components\SpatieMediaLibraryImageEntry;
 use Filament\Infolists\Components\RepeatableEntry;
-use Filament\Infolists\Components\Section;
 use Filament\Infolists\Components\TextEntry;
-use Filament\Infolists\Infolist;
 use Filament\Resources\Pages\ViewRecord;
 use Illuminate\Support\Facades\Auth;
+use Filament\Schemas\Schema;
 
 class ViewInvoice extends ViewRecord
 {
     protected static string $resource = InvoiceResource::class;
 
-    public function infolist(Infolist $infolist): Infolist
+    public function infolist(Schema $schema): Schema
     {
-        return $infolist
-            ->schema([
+        return $schema
+            ->components([
                 Section::make('Invoice Details')
                     ->schema([
                         Grid::make(2)
@@ -261,7 +263,7 @@ class ViewInvoice extends ViewRecord
                                                                     
                                                                     try {
                                                                         return date('M d, Y H:i', strtotime($createdOn));
-                                                                    } catch (\Exception $e) {
+                                                                    } catch (Exception $e) {
                                                                         return 'Invalid date';
                                                                     }
                                                                 })
@@ -278,7 +280,7 @@ class ViewInvoice extends ViewRecord
                                                                     
                                                                     try {
                                                                         return date('M d, Y H:i', strtotime($updatedOn));
-                                                                    } catch (\Exception $e) {
+                                                                    } catch (Exception $e) {
                                                                         return 'Invalid date';
                                                                     }
                                                                 })
@@ -300,7 +302,7 @@ class ViewInvoice extends ViewRecord
                                                             
                                                             try {
                                                                 return $currency . ' ' . number_format($total / 100, 2);
-                                                            } catch (\Exception $e) {
+                                                            } catch (Exception $e) {
                                                                 return 'Invalid amount';
                                                             }
                                                         })
@@ -377,7 +379,7 @@ class ViewInvoice extends ViewRecord
                                                             
                                                             try {
                                                                 return date('M d, Y H:i', strtotime($data['webhook_received_at']));
-                                                            } catch (\Exception $e) {
+                                                            } catch (Exception $e) {
                                                                 return 'Invalid webhook date';
                                                             }
                                                         })
@@ -401,7 +403,7 @@ class ViewInvoice extends ViewRecord
                                                             
                                                             try {
                                                                 return date('M d, Y H:i', strtotime($data['success_callback_data']['retrieved_at']));
-                                                            } catch (\Exception $e) {
+                                                            } catch (Exception $e) {
                                                                 return 'Invalid callback date';
                                                             }
                                                         })
@@ -448,7 +450,7 @@ class ViewInvoice extends ViewRecord
             
             MakePaymentAction::makeHeaderAction(),
             
-            Actions\EditAction::make()
+            EditAction::make()
                 ->visible(fn (Invoice $record) => Auth::user()->can('update', $record)),
         ];
     }

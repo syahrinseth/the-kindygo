@@ -2,30 +2,46 @@
 
 namespace App\Filament\Resources;
 
+use Filament\Schemas\Components\Section;
+use Filament\Schemas\Components\Grid;
+use Filament\Schemas\Components\Utilities\Set;
+use Filament\Schemas\Components\Utilities\Get;
+use Filament\Tables\Columns\TextColumn;
+use Filament\Tables\Columns\SelectColumn;
+use Filament\Actions\ActionGroup;
+use Filament\Actions\EditAction;
+use Filament\Actions\DeleteAction;
+use Filament\Actions\BulkActionGroup;
+use Filament\Actions\DeleteBulkAction;
+use App\Filament\Resources\CentreResource\RelationManagers\UsersRelationManager;
+use App\Filament\Resources\CentreResource\Pages\ListCentres;
+use App\Filament\Resources\CentreResource\Pages\CreateCentre;
+use App\Filament\Resources\CentreResource\Pages\EditCentre;
 use App\Filament\Resources\CentreResource\Pages;
 use App\Filament\Resources\CentreResource\RelationManagers;
 use App\Filament\Resources\CentreResource\RelationManagers\InvoicesRelationManager;
 use App\Models\Campus;
 use App\Models\Centre;
+use Filament\Actions;
 use Filament\Facades\Filament;
 use Filament\Forms;
-use Filament\Forms\Components\Grid;
 use Filament\Forms\Components\Hidden;
-use Filament\Forms\Components\Section;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\TextInput;
-use Filament\Forms\Form;
 use Filament\Resources\Resource;
 use Filament\Tables;
 use Filament\Tables\Table;
+use Filament\Schemas\Schema;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Facades\Auth;
+use BackedEnum;
+use UnitEnum;
 
 class CentreResource extends Resource
 {
     protected static ?string $model = Centre::class;
 
-    protected static ?string $navigationIcon = 'heroicon-o-building-storefront';
+    protected static string | \BackedEnum | null $navigationIcon = 'heroicon-o-building-storefront';
 
     public static function shouldCheckPolicyExistence(): bool
     {
@@ -52,7 +68,7 @@ class CentreResource extends Resource
         return Auth::user()->can('viewAny', Centre::class);
     }
 
-    protected static ?string $navigationGroup = 'Campus Management';
+    protected static string | \UnitEnum | null $navigationGroup = 'Campus Management';
 
     protected static ?string $modelLabel = 'Centre';
 
@@ -60,10 +76,10 @@ class CentreResource extends Resource
 
     protected static ?int $navigationSort = 2;
 
-    public static function form(Form $form): Form
+    public static function form(Schema $schema): Schema
     {
-        return $form
-            ->schema([
+        return $schema
+            ->components([
                 Section::make('Basic Information')
                     ->schema([
                         Grid::make(2)
@@ -72,7 +88,7 @@ class CentreResource extends Resource
                                     ->required()
                                     ->maxLength(255)
                                     ->live(debounce: 2000) // Wait 2 seconds after typing stops
-                                    ->afterStateUpdated(function (string $state, Forms\Set $set, Forms\Get $get) {
+                                    ->afterStateUpdated(function (string $state, Set $set, Get $get) {
                                         $set('slug', str()->slug($state));
                                         // Auto-generate code from name if not set
                                         $currentCode = $get('code');
@@ -171,41 +187,41 @@ class CentreResource extends Resource
     {
         return $table
             ->columns([
-                Tables\Columns\TextColumn::make('code')
+                TextColumn::make('code')
                     ->label('Code')
                     ->searchable()
                     ->sortable()
                     ->badge()
                     ->color('primary'),
-                Tables\Columns\TextColumn::make('name')
+                TextColumn::make('name')
                     ->searchable()
                     ->sortable(),
-                Tables\Columns\TextColumn::make('campus.name')
+                TextColumn::make('campus.name')
                     ->searchable()
                     ->sortable()
                     ->label('Campus'),
-                Tables\Columns\SelectColumn::make('status')
+                SelectColumn::make('status')
                     ->options([
                         'active' => 'Active',
                         'inactive' => 'Inactive',
                         'pending' => 'Pending',
                     ])
                     ->sortable(),
-                Tables\Columns\TextColumn::make('phone')
+                TextColumn::make('phone')
                     ->searchable(),
-                Tables\Columns\TextColumn::make('email')
+                TextColumn::make('email')
                     ->searchable(),
-                Tables\Columns\TextColumn::make('city')
+                TextColumn::make('city')
                     ->searchable()
                     ->sortable(),
-                Tables\Columns\TextColumn::make('state')
+                TextColumn::make('state')
                     ->searchable()
                     ->sortable(),
-                Tables\Columns\TextColumn::make('created_at')
+                TextColumn::make('created_at')
                     ->dateTime()
                     ->sortable()
                     ->toggleable(isToggledHiddenByDefault: true),
-                Tables\Columns\TextColumn::make('updated_at')
+                TextColumn::make('updated_at')
                     ->dateTime()
                     ->sortable()
                     ->toggleable(isToggledHiddenByDefault: true),
@@ -213,10 +229,10 @@ class CentreResource extends Resource
             ->filters([
                 //
             ])
-            ->actions([
-                Tables\Actions\ActionGroup::make([
-                    Tables\Actions\EditAction::make(),
-                    Tables\Actions\DeleteAction::make(),
+            ->recordActions([
+                ActionGroup::make([
+                    EditAction::make(),
+                    DeleteAction::make(),
                 ])
                     ->label('Actions')
                     ->icon('heroicon-m-ellipsis-vertical')
@@ -224,9 +240,9 @@ class CentreResource extends Resource
                     ->color('gray')
                     ->button(),
             ])
-            ->bulkActions([
-                Tables\Actions\BulkActionGroup::make([
-                    Tables\Actions\DeleteBulkAction::make(),
+            ->toolbarActions([
+                BulkActionGroup::make([
+                    DeleteBulkAction::make(),
                 ]),
             ]);
     }
@@ -234,7 +250,7 @@ class CentreResource extends Resource
     public static function getRelations(): array
     {
         return [
-            RelationManagers\UsersRelationManager::class,
+            UsersRelationManager::class,
             InvoicesRelationManager::class,
         ];
     }
@@ -242,9 +258,9 @@ class CentreResource extends Resource
     public static function getPages(): array
     {
         return [
-            'index' => Pages\ListCentres::route('/'),
-            'create' => Pages\CreateCentre::route('/create'),
-            'edit' => Pages\EditCentre::route('/{record}/edit'),
+            'index' => ListCentres::route('/'),
+            'create' => CreateCentre::route('/create'),
+            'edit' => EditCentre::route('/{record}/edit'),
         ];
     }
 }

@@ -2,6 +2,8 @@
 
 namespace App\Filament\Resources\PaymentResource\Pages;
 
+use Filament\Actions\ViewAction;
+use Filament\Actions\DeleteAction;
 use App\Filament\Resources\PaymentResource;
 use Filament\Actions;
 use Filament\Resources\Pages\EditRecord;
@@ -14,9 +16,9 @@ class EditPayment extends EditRecord
     protected function getHeaderActions(): array
     {
         return [
-            Actions\ViewAction::make()
+            ViewAction::make()
                 ->visible(fn () => Auth::user()->can('view', $this->record)),
-            Actions\DeleteAction::make()
+            DeleteAction::make()
                 ->visible(fn () => Auth::user()->can('delete', $this->record)),
         ];
     }

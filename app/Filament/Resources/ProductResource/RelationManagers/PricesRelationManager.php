@@ -2,14 +2,27 @@
 
 namespace App\Filament\Resources\ProductResource\RelationManagers;
 
+use Filament\Schemas\Components\Section;
+use Filament\Forms\Components\TextInput;
+use Filament\Schemas\Components\Grid;
+use Filament\Forms\Components\DatePicker;
+use Filament\Forms\Components\Select;
+use Filament\Tables\Columns\TextColumn;
+use Filament\Tables\Filters\SelectFilter;
+use Filament\Actions\CreateAction;
+use Filament\Actions\EditAction;
+use Filament\Actions\DeleteAction;
+use Filament\Actions\BulkActionGroup;
+use Filament\Actions\DeleteBulkAction;
 use App\Models\ProductPrice;
 use Filament\Forms;
-use Filament\Forms\Form;
+use Filament\Actions;
 use Filament\Resources\RelationManagers\RelationManager;
 use Filament\Tables;
 use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Facades\Auth;
+use Filament\Schemas\Schema;
 
 class PricesRelationManager extends RelationManager
 {
@@ -21,13 +34,13 @@ class PricesRelationManager extends RelationManager
 
     protected static ?string $modelLabel = 'Price';
 
-    public function form(Form $form): Form
+    public function form(Schema $schema): Schema
     {
-        return $form
-            ->schema([
-                Forms\Components\Section::make('Price Details')
+        return $schema
+            ->components([
+                Section::make('Price Details')
                     ->schema([
-                        Forms\Components\TextInput::make('price')
+                        TextInput::make('price')
                             ->label('Price')
                             ->required()
                             ->numeric()
@@ -35,29 +48,29 @@ class PricesRelationManager extends RelationManager
                             ->step(0.01)
                             ->minValue(0)
                             ->helperText('Enter price in RM (e.g., 100.00)')
-                            ->afterStateHydrated(function (Forms\Components\TextInput $component, $state) {
+                            ->afterStateHydrated(function (TextInput $component, $state) {
                                 // Convert from cents to decimal for display
                                 $component->state($state ? number_format($state / 100, 2, '.', '') : '0.00');
                             })
                             ->dehydrateStateUsing(fn ($state) => (int) ($state * 100)),
                             
-                        Forms\Components\Grid::make(2)
+                        Grid::make(2)
                             ->schema([
-                                Forms\Components\DatePicker::make('start_date')
+                                DatePicker::make('start_date')
                                     ->required()
                                     ->default(now())
                                     ->native(false)
                                     ->displayFormat('M d, Y')
                                     ->helperText('When this price becomes effective'),
                                     
-                                Forms\Components\DatePicker::make('end_date')
+                                DatePicker::make('end_date')
                                     ->native(false)
                                     ->displayFormat('M d, Y')
                                     ->helperText('Leave empty for open-ended pricing')
                                     ->afterOrEqual('start_date'),
                             ]),
                             
-                        Forms\Components\Select::make('centres')
+                        Select::make('centres')
                             ->label('Centres')
                             ->relationship('centres', 'name', function (Builder $query) {
                                 $user = Auth::user();
@@ -92,23 +105,23 @@ class PricesRelationManager extends RelationManager
             ->recordTitleAttribute('price')
             ->defaultSort('start_date', 'desc')
             ->columns([
-                Tables\Columns\TextColumn::make('price')
+                TextColumn::make('price')
                     ->label('Price')
                     ->money('MYR', 100)
                     ->sortable(),
                     
-                Tables\Columns\TextColumn::make('start_date')
+                TextColumn::make('start_date')
                     ->label('Effective From')
                     ->date('M d, Y')
                     ->sortable(),
                     
-                Tables\Columns\TextColumn::make('end_date')
+                TextColumn::make('end_date')
                     ->label('Effective Until')
                     ->date('M d, Y')
                     ->placeholder('Ongoing')
                     ->sortable(),
                     
-                Tables\Columns\TextColumn::make('centres')
+                TextColumn::make('centres')
                     ->label('Centres')
                     ->getStateUsing(function (ProductPrice $record) {
                         if ($record->centres->count() === 0) {
@@ -127,7 +140,7 @@ class PricesRelationManager extends RelationManager
                         return $count === 1 ? '1 centre' : "{$count} centres";
                     }),
                     
-                Tables\Columns\TextColumn::make('scope')
+                TextColumn::make('scope')
                     ->label('Applies To')
                     ->badge()
                     ->getStateUsing(function (ProductPrice $record) {
@@ -137,7 +150,7 @@ class PricesRelationManager extends RelationManager
                     ->sortable(false)
                     ->toggleable(isToggledHiddenByDefault: true),
                     
-                Tables\Columns\TextColumn::make('status')
+                TextColumn::make('status')
                     ->label('Status')
                     ->badge()
                     ->getStateUsing(function (ProductPrice $record) {
@@ -156,14 +169,14 @@ class PricesRelationManager extends RelationManager
                         default => 'gray',
                     }),
                     
-                Tables\Columns\TextColumn::make('created_at')
+                TextColumn::make('created_at')
                     ->label('Created')
                     ->dateTime('M d, Y H:i')
                     ->sortable()
                     ->toggleable(isToggledHiddenByDefault: true),
             ])
             ->filters([
-                Tables\Filters\SelectFilter::make('status')
+                SelectFilter::make('status')
                     ->options([
                         'active' => 'Active',
                         'future' => 'Future',
@@ -179,18 +192,18 @@ class PricesRelationManager extends RelationManager
                     }),
             ])
             ->headerActions([
-                Tables\Actions\CreateAction::make()
+                CreateAction::make()
                     ->visible(fn () => Auth::user()->can('update', $this->getOwnerRecord())),
             ])
-            ->actions([
-                Tables\Actions\EditAction::make()
+            ->recordActions([
+                EditAction::make()
                     ->visible(fn (ProductPrice $record) => Auth::user()->can('update', $this->getOwnerRecord())),
-                Tables\Actions\DeleteAction::make()
+                DeleteAction::make()
                     ->visible(fn (ProductPrice $record) => Auth::user()->can('update', $this->getOwnerRecord())),
             ])
-            ->bulkActions([
-                Tables\Actions\BulkActionGroup::make([
-                    Tables\Actions\DeleteBulkAction::make()
+            ->toolbarActions([
+                BulkActionGroup::make([
+                    DeleteBulkAction::make()
                         ->visible(fn () => Auth::user()->can('update', $this->getOwnerRecord())),
                 ]),
             ]);

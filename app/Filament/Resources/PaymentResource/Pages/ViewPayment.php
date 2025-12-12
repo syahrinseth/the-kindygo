@@ -2,28 +2,31 @@
 
 namespace App\Filament\Resources\PaymentResource\Pages;
 
+use Filament\Schemas\Components\Section;
+use Filament\Schemas\Components\Grid;
+use Filament\Schemas\Components\Group;
+use Exception;
+use Filament\Actions\Action;
+use Filament\Actions\EditAction;
 use App\Filament\Resources\PaymentResource;
 use Filament\Actions;
-use Filament\Infolists\Components\Grid;
-use Filament\Infolists\Components\Group;
-use Filament\Infolists\Components\Section;
 use Filament\Infolists\Components\TextEntry;
 use Filament\Infolists\Components\SpatieMediaLibraryImageEntry;
 use Filament\Infolists\Components\RepeatableEntry;
-use Filament\Infolists\Infolist;
 use Filament\Resources\Pages\ViewRecord;
 use Illuminate\Support\Facades\Auth;
 use App\Enums\PaymentStatus;
 use App\Enums\Gateway;
+use Filament\Schemas\Schema;
 
 class ViewPayment extends ViewRecord
 {
     protected static string $resource = PaymentResource::class;
 
-    public function infolist(Infolist $infolist): Infolist
+    public function infolist(Schema $schema): Schema
     {
-        return $infolist
-            ->schema([
+        return $schema
+            ->components([
                 Section::make('Payment Details')
                     ->schema([
                         Grid::make(2)
@@ -119,7 +122,7 @@ class ViewPayment extends ViewRecord
                                         
                                         try {
                                             return date('M d, Y H:i', strtotime($createdOn));
-                                        } catch (\Exception $e) {
+                                        } catch (Exception $e) {
                                             return 'Invalid date';
                                         }
                                     })
@@ -136,7 +139,7 @@ class ViewPayment extends ViewRecord
                                         
                                         try {
                                             return date('M d, Y H:i', strtotime($updatedOn));
-                                        } catch (\Exception $e) {
+                                        } catch (Exception $e) {
                                             return 'Invalid date';
                                         }
                                     })
@@ -158,7 +161,7 @@ class ViewPayment extends ViewRecord
                                 
                                 try {
                                     return $currency . ' ' . number_format($total / 100, 2);
-                                } catch (\Exception $e) {
+                                } catch (Exception $e) {
                                     return 'Invalid amount';
                                 }
                             })
@@ -235,7 +238,7 @@ class ViewPayment extends ViewRecord
                                 
                                 try {
                                     return date('M d, Y H:i', strtotime($data['webhook_received_at']));
-                                } catch (\Exception $e) {
+                                } catch (Exception $e) {
                                     return 'Invalid webhook date';
                                 }
                             })
@@ -259,7 +262,7 @@ class ViewPayment extends ViewRecord
                                 
                                 try {
                                     return date('M d, Y H:i', strtotime($data['success_callback_data']['retrieved_at']));
-                                } catch (\Exception $e) {
+                                } catch (Exception $e) {
                                     return 'Invalid callback date';
                                 }
                             })
@@ -349,7 +352,7 @@ class ViewPayment extends ViewRecord
     protected function getHeaderActions(): array
     {
         return [
-            Actions\Action::make('download_receipt')
+            Action::make('download_receipt')
                 ->label('Download Receipt')
                 ->icon('heroicon-o-document-arrow-down')
                 ->color('success')
@@ -357,7 +360,7 @@ class ViewPayment extends ViewRecord
                 ->openUrlInNewTab()
                 ->visible(fn () => Auth::user()->can('view', $this->record) && $this->record->status === PaymentStatus::PAID),
                 
-            Actions\EditAction::make()
+            EditAction::make()
                 ->visible(fn () => Auth::user()->can('update', $this->record)),
         ];
     }

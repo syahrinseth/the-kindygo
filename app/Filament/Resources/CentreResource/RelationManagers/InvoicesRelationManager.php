@@ -2,11 +2,19 @@
 
 namespace App\Filament\Resources\CentreResource\RelationManagers;
 
+use App\Models\Invoice;
+use Filament\Tables\Columns\TextColumn;
+use Filament\Tables\Filters\SelectFilter;
+use Filament\Tables\Filters\Filter;
+use Filament\Forms\Components\DatePicker;
+use Filament\Actions\ViewAction;
+use Filament\Schemas\Components\Section;
+use Filament\Infolists\Components\TextEntry;
+use Filament\Infolists\Components\RepeatableEntry;
 use App\Enums\InvoiceStatus;
 use Filament\Forms;
-use Filament\Forms\Form;
 use Filament\Infolists;
-use Filament\Infolists\Infolist;
+use Filament\Actions;
 use Filament\Resources\RelationManagers\RelationManager;
 use Filament\Tables;
 use Filament\Tables\Table;
@@ -23,7 +31,7 @@ class InvoicesRelationManager extends RelationManager
     {
         // Only allow viewing invoices if the user can view the owner record and has appropriate permissions
         return Auth::user()->can('view', $ownerRecord) && 
-               Auth::user()->can('viewAny', \App\Models\Invoice::class);
+               Auth::user()->can('viewAny', Invoice::class);
     }
 
     public function table(Table $table): Table
@@ -31,25 +39,25 @@ class InvoicesRelationManager extends RelationManager
         return $table
             ->recordTitleAttribute('number')
             ->columns([
-                Tables\Columns\TextColumn::make('number')
+                TextColumn::make('number')
                     ->searchable()
                     ->sortable(),
                     
-                Tables\Columns\TextColumn::make('user.name')
+                TextColumn::make('user.name')
                     ->label('User')
                     ->searchable()
                     ->sortable(),
                     
-                Tables\Columns\TextColumn::make('date')
+                TextColumn::make('date')
                     ->label('Billing Month')
                     ->date('M, Y')
                     ->sortable(),
                     
-                Tables\Columns\TextColumn::make('due_at')
+                TextColumn::make('due_at')
                     ->date('M d, Y')
                     ->sortable(),
                     
-                Tables\Columns\TextColumn::make('status')
+                TextColumn::make('status')
                     ->badge()
                     ->color(fn (InvoiceStatus $state): string => match ($state) {
                         InvoiceStatus::DRAFT => 'gray',
@@ -61,22 +69,22 @@ class InvoicesRelationManager extends RelationManager
                     ->searchable()
                     ->sortable(),
                     
-                Tables\Columns\TextColumn::make('total')
+                TextColumn::make('total')
                     ->money('MYR', 100)
                     ->sortable(),
             ])
             ->filters([
-                Tables\Filters\SelectFilter::make('status')
+                SelectFilter::make('status')
                     ->options(collect(InvoiceStatus::cases())->pluck('value', 'value')->toArray())
                     ->multiple(),
                     
-                Tables\Filters\Filter::make('overdue')
+                Filter::make('overdue')
                     ->query(fn (Builder $query): Builder => $query->overdue()),
                     
-                Tables\Filters\Filter::make('date')
-                    ->form([
-                        Forms\Components\DatePicker::make('date_from'),
-                        Forms\Components\DatePicker::make('date_until'),
+                Filter::make('date')
+                    ->schema([
+                        DatePicker::make('date_from'),
+                        DatePicker::make('date_until'),
                     ])
                     ->query(function (Builder $query, array $data): Builder {
                         return $query
@@ -91,18 +99,18 @@ class InvoicesRelationManager extends RelationManager
                     }),
             ])
             ->headerActions([])
-            ->actions([
-                Tables\Actions\ViewAction::make()
+            ->recordActions([
+                ViewAction::make()
                     ->visible(fn ($record) => Auth::user()->can('view', $record))
-                    ->infolist([
-                        Infolists\Components\Section::make('Invoice Details')
+                    ->schema([
+                        Section::make('Invoice Details')
                             ->schema([
-                                Infolists\Components\TextEntry::make('number')
+                                TextEntry::make('number')
                                     ->label('Invoice Number')
                                     ->badge()
                                     ->color('primary'),
                                     
-                                Infolists\Components\TextEntry::make('status')
+                                TextEntry::make('status')
                                     ->badge()
                                     ->color(fn (InvoiceStatus $state): string => match ($state) {
                                         InvoiceStatus::DRAFT => 'gray',
@@ -112,11 +120,11 @@ class InvoicesRelationManager extends RelationManager
                                         InvoiceStatus::CANCELLED => 'gray',
                                     }),
                                     
-                                Infolists\Components\TextEntry::make('date')
+                                TextEntry::make('date')
                                     ->label('Billing Month')
                                     ->date('M, Y'),
                                     
-                                Infolists\Components\TextEntry::make('due_at')
+                                TextEntry::make('due_at')
                                     ->label('Due Date')
                                     ->date('M d, Y')
                                     ->color(function ($record) {
@@ -127,72 +135,72 @@ class InvoicesRelationManager extends RelationManager
                                     }),
                             ])->columns(2),
                             
-                        Infolists\Components\Section::make('Customer Information')
+                        Section::make('Customer Information')
                             ->schema([
-                                Infolists\Components\TextEntry::make('user.name')
+                                TextEntry::make('user.name')
                                     ->label('Customer'),
                                     
-                                Infolists\Components\TextEntry::make('user.email')
+                                TextEntry::make('user.email')
                                     ->label('Email'),
                                     
-                                Infolists\Components\TextEntry::make('centre.name')
+                                TextEntry::make('centre.name')
                                     ->label('Centre'),
                             ])->columns(2),
                             
-                        Infolists\Components\Section::make('Financial Summary')
+                        Section::make('Financial Summary')
                             ->schema([
-                                Infolists\Components\TextEntry::make('total_items')
+                                TextEntry::make('total_items')
                                     ->label('Subtotal')
                                     ->money('MYR'),
                                     
-                                Infolists\Components\TextEntry::make('total_discounts')
+                                TextEntry::make('total_discounts')
                                     ->label('Total Discounts')
                                     ->money('MYR')
                                     ->visible(fn ($record) => $record->total_discounts > 0),
                                     
-                                Infolists\Components\TextEntry::make('total')
+                                TextEntry::make('total')
                                     ->label('Total Amount')
                                     ->money('MYR')
                                     ->weight('bold')
                                     ->size('lg'),
                                     
-                                Infolists\Components\TextEntry::make('totalPaid')
+                                TextEntry::make('totalPaid')
                                     ->label('Amount Paid')
                                     ->money('MYR')
                                     ->state(fn ($record) => $record->getTotalPaid()),
                                     
-                                Infolists\Components\TextEntry::make('remainingBalance')
+                                TextEntry::make('remainingBalance')
                                     ->label('Outstanding Balance')
                                     ->money('MYR')
                                     ->state(fn ($record) => $record->getRemainingBalance())
                                     ->color(fn ($record) => $record->getRemainingBalance() > 0 ? 'warning' : 'success'),
                             ])->columns(2),
                             
-                        Infolists\Components\Section::make('Invoice Items')
+                        Section::make('Invoice Items')
                             ->schema([
-                                Infolists\Components\RepeatableEntry::make('invoiceItems')
+                                RepeatableEntry::make('invoiceItems')
                                     ->label('')
                                     ->schema([
-                                        Infolists\Components\TextEntry::make('name')
+                                        TextEntry::make('name')
                                             ->label('Item'),
                                             
-                                        Infolists\Components\TextEntry::make('child.name')
+                                        TextEntry::make('child.name')
                                             ->label('Child')
                                             ->visible(fn ($state) => $state !== null),
                                             
-                                        Infolists\Components\TextEntry::make('quantity')
+                                        TextEntry::make('quantity')
                                             ->label('Qty'),
                                             
-                                        Infolists\Components\TextEntry::make('price')
+                                        TextEntry::make('price')
                                             ->label('Unit Price')
                                             ->money('MYR'),
                                             
-                                        Infolists\Components\TextEntry::make('discount')
+                                        TextEntry::make('discount')
                                             ->label('Discount')
                                             ->money('MYR')
                                             ->visible(fn ($state) => $state > 0),
                                             
-                                        Infolists\Components\TextEntry::make('total')
+                                        TextEntry::make('total')
                                             ->label('Total')
                                             ->money('MYR')
                                             ->weight('semibold'),
@@ -201,24 +209,24 @@ class InvoicesRelationManager extends RelationManager
                                     ->grid(6),
                             ]),
                             
-                        Infolists\Components\Section::make('E-Invoice Information')
+                        Section::make('E-Invoice Information')
                             ->schema([
-                                Infolists\Components\TextEntry::make('einvoice_status')
+                                TextEntry::make('einvoice_status')
                                     ->label('E-Invoice Status')
                                     ->badge()
                                     ->visible(fn ($record) => $record->einvoice_status !== null),
                                     
-                                Infolists\Components\TextEntry::make('einvoice_uuid')
+                                TextEntry::make('einvoice_uuid')
                                     ->label('E-Invoice UUID')
                                     ->copyable()
                                     ->visible(fn ($record) => $record->einvoice_uuid !== null),
                                     
-                                Infolists\Components\TextEntry::make('einvoice_submitted_at')
+                                TextEntry::make('einvoice_submitted_at')
                                     ->label('Submitted At')
                                     ->dateTime('M d, Y H:i')
                                     ->visible(fn ($record) => $record->einvoice_submitted_at !== null),
                                     
-                                Infolists\Components\TextEntry::make('einvoice_validation_url')
+                                TextEntry::make('einvoice_validation_url')
                                     ->label('Validation URL')
                                     ->url(fn ($record) => $record->einvoice_validation_url)
                                     ->openUrlInNewTab()
@@ -228,6 +236,6 @@ class InvoicesRelationManager extends RelationManager
                             ->visible(fn ($record) => $record->isEInvoiceSubmitted()),
                     ]),
             ])
-            ->bulkActions([]);
+            ->toolbarActions([]);
     }
 }

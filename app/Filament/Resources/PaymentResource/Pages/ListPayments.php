@@ -2,6 +2,8 @@
 
 namespace App\Filament\Resources\PaymentResource\Pages;
 
+use Filament\Actions\CreateAction;
+use App\Models\Payment;
 use App\Filament\Resources\PaymentResource;
 use Filament\Actions;
 use Filament\Resources\Pages\ListRecords;
@@ -14,8 +16,8 @@ class ListPayments extends ListRecords
     protected function getHeaderActions(): array
     {
         return [
-            Actions\CreateAction::make()
-                ->visible(fn () => Auth::user()->can('create', \App\Models\Payment::class)),
+            CreateAction::make()
+                ->visible(fn () => Auth::user()->can('create', Payment::class)),
         ];
     }
 }

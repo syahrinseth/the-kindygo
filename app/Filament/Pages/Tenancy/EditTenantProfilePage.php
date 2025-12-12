@@ -4,8 +4,8 @@ namespace App\Filament\Pages\Tenancy;
 
 use App\Filament\Forms\TenantForm;
 use Filament\Forms\Components\TextInput;
-use Filament\Forms\Form;
 use Filament\Pages\Tenancy\EditTenantProfile;
+use Filament\Schemas\Schema;
 
 
 class EditTenantProfilePage extends EditTenantProfile
@@ -20,9 +20,10 @@ class EditTenantProfilePage extends EditTenantProfile
         return false;
     }
 
-    public function form(Form $form): Form
+    public function form(Schema $schema): Schema
     {
-        return $form
-            ->schema(TenantForm::make())->columns(2);
+        return $schema
+            ->components(TenantForm::make())
+            ->columns(2);
     }
 }

@@ -2,6 +2,23 @@
 
 namespace App\Filament\Resources;
 
+use Filament\Schemas\Components\Section;
+use Filament\Resources\Pages\EditRecord;
+use Filament\Schemas\Components\Grid;
+use Filament\Forms\Components\Hidden;
+use Filament\Tables\Columns\TextColumn;
+use Filament\Forms\Components\DatePicker;
+use Filament\Actions\ActionGroup;
+use Filament\Actions\ViewAction;
+use Filament\Actions\EditAction;
+use Filament\Actions\DeleteAction;
+use Filament\Actions\BulkActionGroup;
+use Filament\Actions\DeleteBulkAction;
+use App\Filament\Resources\InvoiceResource\RelationManagers\InvoiceItemsRelationManager;
+use App\Filament\Resources\InvoiceResource\Pages\ListInvoices;
+use App\Filament\Resources\InvoiceResource\Pages\CreateInvoice;
+use App\Filament\Resources\InvoiceResource\Pages\ViewInvoice;
+use App\Filament\Resources\InvoiceResource\Pages\EditInvoice;
 use App\Filament\Resources\InvoiceResource\Pages;
 use App\Filament\Resources\InvoiceResource\Actions\MarkAsPaidAction;
 use App\Filament\Resources\InvoiceResource\Actions\MakePaymentAction;
@@ -16,15 +33,16 @@ use App\Models\Centre;
 use App\Models\User;
 use App\Enums\InvoiceStatus;
 use App\Enums\PaymentStatus;
+use Filament\Actions;
 use Filament\Forms;
-use Filament\Forms\Form;
 use Filament\Resources\Resource;
 use Filament\Tables;
 use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Facades\Auth;
-use Filament\Forms\Components\Section;
-use Filament\Forms\Components\Grid;
+use BackedEnum;
+use UnitEnum;
+use Filament\Schemas\Schema;
 use Filament\Forms\Components\TextInput;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\DateTimePicker;
@@ -36,9 +54,9 @@ class InvoiceResource extends Resource
 {
     protected static ?string $model = Invoice::class;
 
-    protected static ?string $navigationIcon = 'heroicon-o-document-text';
+    protected static string | \BackedEnum | null $navigationIcon = 'heroicon-o-document-text';
     
-    protected static ?string $navigationGroup = 'Finance';
+    protected static string | \UnitEnum | null $navigationGroup = 'Finance';
     
     protected static ?int $navigationSort = 10;
 
@@ -91,17 +109,17 @@ class InvoiceResource extends Resource
         return Auth::user()->can('viewAny', Invoice::class);
     }
 
-    public static function form(Form $form): Form
+    public static function form(Schema $schema): Schema
     {
-        return $form
-            ->schema([
+        return $schema
+            ->components([
                 Section::make('Invoice Details')
                     ->schema([
                         // Show generated invoice number on edit forms
                         TextInput::make('number')
                             ->label('Invoice Number')
                             ->disabled()
-                            ->visible(fn ($livewire) => $livewire instanceof \Filament\Resources\Pages\EditRecord)
+                            ->visible(fn ($livewire) => $livewire instanceof EditRecord)
                             ->columnSpanFull()
                             ->helperText('Auto-generated in format: #{CENTRE_CODE}/{YEAR}/{NUMBER}'),
                             
@@ -182,12 +200,12 @@ class InvoiceResource extends Resource
                                 TextInput::make('einvoice_uuid')
                                     ->label('E-Invoice UUID')
                                     ->disabled()
-                                    ->visible(fn ($livewire) => $livewire instanceof \Filament\Resources\Pages\EditRecord),
+                                    ->visible(fn ($livewire) => $livewire instanceof EditRecord),
                                     
                                 TextInput::make('einvoice_status')
                                     ->label('E-Invoice Status')
                                     ->disabled()
-                                    ->visible(fn ($livewire) => $livewire instanceof \Filament\Resources\Pages\EditRecord),
+                                    ->visible(fn ($livewire) => $livewire instanceof EditRecord),
                             ]),
                             
                         Grid::make(2)
@@ -195,19 +213,19 @@ class InvoiceResource extends Resource
                                 TextInput::make('einvoice_submission_id')
                                     ->label('Submission ID')
                                     ->disabled()
-                                    ->visible(fn ($livewire) => $livewire instanceof \Filament\Resources\Pages\EditRecord),
+                                    ->visible(fn ($livewire) => $livewire instanceof EditRecord),
                                     
                                 DateTimePicker::make('einvoice_submitted_at')
                                     ->label('Submitted At')
                                     ->disabled()
-                                    ->visible(fn ($livewire) => $livewire instanceof \Filament\Resources\Pages\EditRecord)
+                                    ->visible(fn ($livewire) => $livewire instanceof EditRecord)
                                     ->displayFormat('M d, Y H:i'),
                             ]),
                             
                         TextInput::make('einvoice_validation_url')
                             ->label('Validation URL')
                             ->disabled()
-                            ->visible(fn ($livewire) => $livewire instanceof \Filament\Resources\Pages\EditRecord)
+                            ->visible(fn ($livewire) => $livewire instanceof EditRecord)
                             ->url()
                             ->columnSpanFull(),
                     ])
@@ -215,7 +233,7 @@ class InvoiceResource extends Resource
                     ->collapsible()
                     ->collapsed(),
                     
-                Forms\Components\Hidden::make('tenant_id')
+                Hidden::make('tenant_id')
                     ->default(function () {
                         return Auth::user()->current_tenant_id;
                     }),
@@ -227,12 +245,12 @@ class InvoiceResource extends Resource
         return $table
             ->defaultSort('date', 'desc')
             ->columns([
-                Tables\Columns\TextColumn::make('number')
+                TextColumn::make('number')
                     ->searchable()
                     ->sortable()
                     ->description(fn (Invoice $record): string => $record->centre->name ?? 'No centre assigned'),
                     
-                Tables\Columns\TextColumn::make('user.name')
+                TextColumn::make('user.name')
                     ->label('Parent')
                     ->searchable()
                     ->sortable()
@@ -248,13 +266,13 @@ class InvoiceResource extends Resource
                         return $children->pluck('full_name')->join(', ');
                     }),
                     
-                Tables\Columns\TextColumn::make('date')
+                TextColumn::make('date')
                     ->label('Billing Month')
                     ->date('M, Y')
                     ->sortable()
                     ->description(fn (Invoice $record): string => 'Due: ' . $record->due_at->format('M d, Y')),
                     
-                Tables\Columns\TextColumn::make('status')
+                TextColumn::make('status')
                     ->badge()
                     ->color(fn (InvoiceStatus $state): string => match ($state) {
                         InvoiceStatus::DRAFT => 'gray',
@@ -266,7 +284,7 @@ class InvoiceResource extends Resource
                     ->searchable()
                     ->sortable(),
                     
-                Tables\Columns\TextColumn::make('einvoice_status')
+                TextColumn::make('einvoice_status')
                     ->label('E-Invoice')
                     ->badge()
                     ->color(function (?string $state): string {
@@ -289,25 +307,25 @@ class InvoiceResource extends Resource
                     })
                     ->sortable(),
                     
-                Tables\Columns\TextColumn::make('total_amount')
+                TextColumn::make('total_amount')
                     ->label('Amount')
                     ->money('MYR', 100)
                     ->sortable(),
                     
-                Tables\Columns\TextColumn::make('total_discounts')
+                TextColumn::make('total_discounts')
                     ->label('Discounts')
                     ->money('MYR', 100)
                     ->sortable(),
                     
-                Tables\Columns\TextColumn::make('total')
+                TextColumn::make('total')
                     ->money('MYR', 100)
                     ->sortable(),
                     
-                Tables\Columns\TextColumn::make('balance')
+                TextColumn::make('balance')
                     ->money('MYR', 100)
                     ->sortable(),
 
-                Tables\Columns\TextColumn::make('created_at')
+                TextColumn::make('created_at')
                     ->date()
             ])
             ->filters([
@@ -345,9 +363,9 @@ class InvoiceResource extends Resource
                     ->preload(),
                 
                 Filter::make('created_at')
-                    ->form([
-                        Forms\Components\DatePicker::make('created_from'),
-                        Forms\Components\DatePicker::make('created_until'),
+                    ->schema([
+                        DatePicker::make('created_from'),
+                        DatePicker::make('created_until'),
                     ])
                     ->query(function (Builder $query, array $data): Builder {
                         return $query
@@ -361,9 +379,9 @@ class InvoiceResource extends Resource
                             );
                     }),
             ])
-            ->actions([
-                Tables\Actions\ActionGroup::make([
-                    Tables\Actions\ViewAction::make()
+            ->recordActions([
+                ActionGroup::make([
+                    ViewAction::make()
                         ->visible(fn (Invoice $record) => Auth::user()->can('view', $record)),
                     
                     DownloadInvoicePdfAction::make(),
@@ -376,10 +394,10 @@ class InvoiceResource extends Resource
                     
                     MarkAsPaidAction::make(),
                     
-                    Tables\Actions\EditAction::make()
+                    EditAction::make()
                         ->visible(fn (Invoice $record) => Auth::user()->can('update', $record)),
                     
-                    Tables\Actions\DeleteAction::make()
+                    DeleteAction::make()
                         ->visible(fn (Invoice $record) => Auth::user()->can('delete', $record)),
                 ])
                     ->label('Actions')
@@ -388,12 +406,12 @@ class InvoiceResource extends Resource
                     ->color('gray')
                     ->button(),
             ])
-            ->bulkActions([
-                Tables\Actions\BulkActionGroup::make([
+            ->toolbarActions([
+                BulkActionGroup::make([
                     SubmitBulkToEInvoiceAction::make(),
                     SendBulkNotificationAction::make(),
                     ExportInvoicesAction::make(),
-                    Tables\Actions\DeleteBulkAction::make()
+                    DeleteBulkAction::make()
                         ->visible(fn () => Auth::user()->can('deleteAny', Invoice::class)),
                 ]),
             ]);
@@ -402,17 +420,17 @@ class InvoiceResource extends Resource
     public static function getRelations(): array
     {
         return [
-            \App\Filament\Resources\InvoiceResource\RelationManagers\InvoiceItemsRelationManager::class,
+            InvoiceItemsRelationManager::class,
         ];
     }
 
     public static function getPages(): array
     {
         return [
-            'index' => Pages\ListInvoices::route('/'),
-            'create' => Pages\CreateInvoice::route('/create'),
-            'view' => Pages\ViewInvoice::route('/{record}'),
-            'edit' => Pages\EditInvoice::route('/{record}/edit'),
+            'index' => ListInvoices::route('/'),
+            'create' => CreateInvoice::route('/create'),
+            'view' => ViewInvoice::route('/{record}'),
+            'edit' => EditInvoice::route('/{record}/edit'),
         ];
     }
 }

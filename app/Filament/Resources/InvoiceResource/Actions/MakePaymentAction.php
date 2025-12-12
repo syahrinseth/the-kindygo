@@ -2,6 +2,13 @@
 
 namespace App\Filament\Resources\InvoiceResource\Actions;
 
+use Illuminate\Support\Facades\Auth;
+use Filament\Schemas\Components\Grid;
+use App\Policies\PaymentPolicy;
+use Filament\Schemas\Components\Utilities\Get;
+use Filament\Forms\Components\Textarea;
+use Closure;
+use Exception;
 use App\Enums\Gateway;
 use App\Enums\InvoiceStatus;
 use App\Enums\PaymentStatus;
@@ -12,12 +19,11 @@ use Filament\Actions\Action as FilamentAction;
 use Filament\Forms;
 use Filament\Forms\Components\DateTimePicker;
 use Filament\Forms\Components\FileUpload;
-use Filament\Forms\Components\Grid;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\SpatieMediaLibraryFileUpload;
 use Filament\Forms\Components\TextInput;
 use Filament\Notifications\Notification;
-use Filament\Tables\Actions\Action;
+use Filament\Actions\Action;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
@@ -34,16 +40,16 @@ class MakePaymentAction
     /**
      * Create a table action for making payments
      */
-    public static function make(): Action
+    public static function make(): FilamentAction
     {
-        return Action::make(static::getDefaultName())
+        return FilamentAction::make(static::getDefaultName())
             ->label('Make Payment')
             ->icon('heroicon-o-currency-dollar')
             ->color('success')
-            ->form(static::getFormSchema())
+            ->schema(static::getFormSchema())
             ->action(static::getActionCallback())
             ->visible(function ($record) {
-                $user = \Illuminate\Support\Facades\Auth::user();
+                $user = Auth::user();
 
                 // Don't allow payments for cancelled or draft invoices
                 if ($record->status === InvoiceStatus::CANCELLED || $record->status === InvoiceStatus::DRAFT || $record->status === InvoiceStatus::PAID) {
@@ -67,7 +73,7 @@ class MakePaymentAction
                 }
                 
                 // Check if record is an Invoice instance
-                if (!$record instanceof \App\Models\Invoice) {
+                if (!$record instanceof Invoice) {
                     Log::info('MakePayment Debug: Not an invoice record');
                     return false;
                 }
@@ -116,14 +122,14 @@ class MakePaymentAction
             ->label('Make Payment')
             ->icon('heroicon-o-currency-dollar')
             ->color('success')
-            ->form(static::getFormSchema())
+            ->schema(static::getFormSchema())
             ->action(static::getActionCallback())
             ->visible(function ($livewire) {
-                $user = \Illuminate\Support\Facades\Auth::user();
+                $user = Auth::user();
                 
                 // Get the record from livewire
                 $record = $livewire->record ?? null;
-                if (!$record instanceof \App\Models\Invoice) {
+                if (!$record instanceof Invoice) {
                     Log::info('MakePayment Debug: Not an invoice record');
                     return false;
                 }
@@ -194,8 +200,8 @@ class MakePaymentAction
                     Select::make('gateway')
                         ->label('Payment Gateway')
                         ->options(function () {
-                            $user = \Illuminate\Support\Facades\Auth::user();
-                            $policy = new \App\Policies\PaymentPolicy();
+                            $user = Auth::user();
+                            $policy = new PaymentPolicy();
                             return $policy->getAvailableGateways($user);
                         })
                         ->required()
@@ -204,7 +210,7 @@ class MakePaymentAction
                     TextInput::make('reference_no')
                         ->label('Reference Number')
                         ->required()
-                        ->visible(fn (Forms\Get $get): bool => $get('gateway') === Gateway::BANK_TRANSFER->value),
+                        ->visible(fn (Get $get): bool => $get('gateway') === Gateway::BANK_TRANSFER->value),
                 ]),
 
             FileUpload::make('payment_proof')
@@ -215,8 +221,8 @@ class MakePaymentAction
                 ->acceptedFileTypes(['image/jpeg', 'image/png', 'image/webp'])
                 ->maxSize(5120) // 5MB
                 ->helperText('Upload photo. Maximum size: 5MB')
-                ->required(fn (Forms\Get $get): bool => $get('gateway') === Gateway::BANK_TRANSFER->value)
-                ->visible(fn (Forms\Get $get): bool => $get('gateway') === Gateway::BANK_TRANSFER->value),
+                ->required(fn (Get $get): bool => $get('gateway') === Gateway::BANK_TRANSFER->value)
+                ->visible(fn (Get $get): bool => $get('gateway') === Gateway::BANK_TRANSFER->value),
 
             TextInput::make('amount')
                 ->label('Amount')
@@ -237,9 +243,9 @@ class MakePaymentAction
                 ->default(now())
                 ->displayFormat('M d, Y')
                 ->native(false)
-                ->visible(fn (Forms\Get $get): bool => $get('gateway') === Gateway::BANK_TRANSFER->value),
+                ->visible(fn (Get $get): bool => $get('gateway') === Gateway::BANK_TRANSFER->value),
 
-            Forms\Components\Textarea::make('description')
+            Textarea::make('description')
                 ->label('Description')
                 ->columnSpan('full'),
         ];
@@ -248,15 +254,15 @@ class MakePaymentAction
     /**
      * Get the action callback for the payment action
      */
-    protected static function getActionCallback(): \Closure
+    protected static function getActionCallback(): Closure
     {
         return function (array $data, Invoice $record): void {
             // Validate gateway authorization
-            $user = \Illuminate\Support\Facades\Auth::user();
-            $policy = new \App\Policies\PaymentPolicy();
+            $user = Auth::user();
+            $policy = new PaymentPolicy();
             
             if ($data['gateway'] === Gateway::BANK_TRANSFER->value && !$policy->useBankTransferGateway($user)) {
-                \Filament\Notifications\Notification::make()
+                Notification::make()
                     ->title('Unauthorized Payment Gateway')
                     ->body('You are not authorized to use Bank Transfer gateway.')
                     ->danger()
@@ -369,10 +375,10 @@ class MakePaymentAction
             } else {
                 // Clean up failed payment
                 $payment->delete();
-                throw new \Exception('Failed to create CHIP payment session');
+                throw new Exception('Failed to create CHIP payment session');
             }
 
-        } catch (\Exception $e) {
+        } catch (Exception $e) {
             Notification::make()
                 ->title('Error creating CHIP payment')
                 ->body($e->getMessage())
@@ -436,7 +442,7 @@ class MakePaymentAction
                 ->title('Payment recorded successfully')
                 ->success()
                 ->send();
-        } catch (\Exception $e) {
+        } catch (Exception $e) {
             DB::rollBack();
             Notification::make()
                 ->title('Error recording payment')

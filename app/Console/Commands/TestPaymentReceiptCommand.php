@@ -2,6 +2,7 @@
 
 namespace App\Console\Commands;
 
+use Exception;
 use App\Models\Payment;
 use App\Services\PaymentReceiptPdfService;
 use Illuminate\Console\Command;
@@ -58,7 +59,7 @@ class TestPaymentReceiptCommand extends Command
             
             $this->info("✅ Payment receipt PDF can be generated successfully!");
             
-        } catch (\Exception $e) {
+        } catch (Exception $e) {
             $this->error("❌ Error generating PDF: " . $e->getMessage());
             return Command::FAILURE;
         }

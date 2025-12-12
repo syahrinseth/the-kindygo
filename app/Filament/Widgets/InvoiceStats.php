@@ -2,6 +2,7 @@
 
 namespace App\Filament\Widgets;
 
+use App\Filament\Pages\FinanceDashboard;
 use App\Models\Invoice;
 use App\Enums\InvoiceStatus;
 use Filament\Widgets\StatsOverviewWidget as BaseWidget;
@@ -10,11 +11,11 @@ use Illuminate\Support\Facades\Auth;
 
 class InvoiceStats extends BaseWidget
 {
-    protected static ?string $pollingInterval = '60s';
+    protected ?string $pollingInterval = '60s';
 
     public static function canView(): bool
     {
-        return Auth::user()->can('viewFinancialStats', \App\Filament\Pages\FinanceDashboard::class);
+        return Auth::user()->can('viewFinancialStats', FinanceDashboard::class);
     }
 
     protected function getStats(): array

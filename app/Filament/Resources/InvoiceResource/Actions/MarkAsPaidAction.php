@@ -4,7 +4,7 @@ namespace App\Filament\Resources\InvoiceResource\Actions;
 
 use App\Enums\InvoiceStatus;
 use App\Models\Invoice;
-use Filament\Tables\Actions\Action;
+use Filament\Actions\Action;
 use Filament\Notifications\Notification;
 use Illuminate\Support\Facades\Auth;
 

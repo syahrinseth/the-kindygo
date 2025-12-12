@@ -2,11 +2,25 @@
 
 namespace App\Filament\Resources;
 
+use Filament\Tables\Columns\TextColumn;
+use Filament\Tables\Columns\IconColumn;
+use Filament\Tables\Filters\SelectFilter;
+use Filament\Actions\ActionGroup;
+use Filament\Actions\ViewAction;
+use Filament\Actions\EditAction;
+use Filament\Actions\DeleteAction;
+use Filament\Actions\BulkActionGroup;
+use Filament\Actions\DeleteBulkAction;
+use App\Filament\Resources\ParentResource\RelationManagers\CentresRelationManager;
+use App\Filament\Resources\ParentResource\RelationManagers\ChildrenRelationManager;
+use App\Filament\Resources\ParentResource\Pages\ListParents;
+use App\Filament\Resources\ParentResource\Pages\CreateParent;
+use App\Filament\Resources\ParentResource\Pages\EditParent;
 use App\Filament\Resources\ParentResource\Pages;
 use App\Filament\Resources\ParentResource\RelationManagers;
 use App\Models\User;
+use Filament\Actions;
 use Filament\Forms;
-use Filament\Forms\Form;
 use Illuminate\Support\Facades\Auth;
 use Filament\Resources\Resource;
 use Filament\Tables;
@@ -14,14 +28,17 @@ use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\SoftDeletingScope;
 use App\Filament\Forms\UserForm;
+use BackedEnum;
+use UnitEnum;
+use Filament\Schemas\Schema;
 
 class ParentResource extends Resource
 {
     protected static ?string $model = User::class;
 
-    protected static ?string $navigationIcon = 'heroicon-o-user-group';
+    protected static string | \BackedEnum | null $navigationIcon = 'heroicon-o-user-group';
 
-    protected static ?string $navigationGroup = 'User Management';
+    protected static string | \UnitEnum | null $navigationGroup = 'User Management';
 
     protected static ?string $navigationLabel = 'Parents';
     
@@ -67,41 +84,42 @@ class ParentResource extends Resource
         });
     }
 
-    public static function form(Form $form): Form
+    public static function form(Schema $schema): Schema
     {
-        return $form->schema(UserForm::make());
+        return $schema
+            ->components(UserForm::make());
     }
 
     public static function table(Table $table): Table
     {
         return $table
             ->columns([
-                Tables\Columns\TextColumn::make('name')
+                TextColumn::make('name')
                     ->searchable()
                     ->sortable(),
-                Tables\Columns\TextColumn::make('email')
+                TextColumn::make('email')
                     ->searchable()
                     ->sortable(),
-                Tables\Columns\TextColumn::make('profile.phone')
+                TextColumn::make('profile.phone')
                     ->label('Phone')
                     ->searchable()
                     ->toggleable(isToggledHiddenByDefault: true)
                     ->placeholder('Not set'),
-                Tables\Columns\TextColumn::make('profile.nric')
+                TextColumn::make('profile.nric')
                     ->label('NRIC')
                     ->searchable()
                     ->toggleable(isToggledHiddenByDefault: true)
                     ->placeholder('Not set'),
-                Tables\Columns\TextColumn::make('userAddress.city')
+                TextColumn::make('userAddress.city')
                     ->label('City')
                     ->searchable()
                     ->toggleable(isToggledHiddenByDefault: true)
                     ->placeholder('Not set'),
-                Tables\Columns\TextColumn::make('centres.name')
+                TextColumn::make('centres.name')
                     ->badge()
                     ->searchable()
                     ->sortable(),
-                Tables\Columns\IconColumn::make('profile_complete')
+                IconColumn::make('profile_complete')
                     ->label('Profile Complete')
                     ->boolean()
                     ->getStateUsing(function (User $record): bool {
@@ -115,30 +133,30 @@ class ParentResource extends Resource
                     ->trueColor('success')
                     ->falseColor('danger')
                     ->toggleable(),
-                Tables\Columns\TextColumn::make('created_at')
+                TextColumn::make('created_at')
                     ->dateTime()
                     ->sortable()
                     ->toggleable(isToggledHiddenByDefault: true),
-                Tables\Columns\TextColumn::make('updated_at')
+                TextColumn::make('updated_at')
                     ->dateTime()
                     ->sortable()
                     ->toggleable(isToggledHiddenByDefault: true),
             ])
             ->filters([
-                Tables\Filters\SelectFilter::make('centres')
+                SelectFilter::make('centres')
                     ->relationship('centres', 'name')
                     ->multiple()
                     ->preload(),
             ])
-            ->actions([
-                Tables\Actions\ActionGroup::make([
-                    Tables\Actions\ViewAction::make()
+            ->recordActions([
+                ActionGroup::make([
+                    ViewAction::make()
                         ->visible(fn (User $record) => Auth::user()->can('view', $record)),
                     
-                    Tables\Actions\EditAction::make()
+                    EditAction::make()
                         ->visible(fn (User $record) => Auth::user()->can('update', $record)),
                     
-                    Tables\Actions\DeleteAction::make()
+                    DeleteAction::make()
                         ->visible(fn (User $record) => Auth::user()->can('delete', $record)),
                 ])
                     ->label('Actions')
@@ -147,9 +165,9 @@ class ParentResource extends Resource
                     ->color('gray')
                     ->button(),
             ])
-            ->bulkActions([
-                Tables\Actions\BulkActionGroup::make([
-                    Tables\Actions\DeleteBulkAction::make()
+            ->toolbarActions([
+                BulkActionGroup::make([
+                    DeleteBulkAction::make()
                         ->visible(fn () => Auth::user()->can('deleteAny', User::class)),
                 ]),
             ]);
@@ -158,17 +176,17 @@ class ParentResource extends Resource
     public static function getRelations(): array
     {
         return [
-            RelationManagers\CentresRelationManager::class,
-            RelationManagers\ChildrenRelationManager::class,
+            CentresRelationManager::class,
+            ChildrenRelationManager::class,
         ];
     }
 
     public static function getPages(): array
     {
         return [
-            'index' => Pages\ListParents::route('/'),
-            'create' => Pages\CreateParent::route('/create'),
-            'edit' => Pages\EditParent::route('/{record}/edit'),
+            'index' => ListParents::route('/'),
+            'create' => CreateParent::route('/create'),
+            'edit' => EditParent::route('/{record}/edit'),
         ];
     }
 }

@@ -2,12 +2,13 @@
 
 namespace App\Filament\Resources\ChildEnrolmentResource\Pages;
 
+use Filament\Actions\CreateAction;
+use Filament\Schemas\Components\Tabs\Tab;
 use App\Filament\Resources\ChildEnrolmentResource;
 use App\Models\ChildEnrolment;
 use App\Enums\ChildEnrolmentStatus;
 use Filament\Actions;
 use Filament\Resources\Pages\ListRecords;
-use Filament\Resources\Components\Tab;
 use Illuminate\Database\Eloquent\Builder;
 
 class ListChildEnrolments extends ListRecords
@@ -17,7 +18,7 @@ class ListChildEnrolments extends ListRecords
     protected function getHeaderActions(): array
     {
         return [
-            Actions\CreateAction::make()
+            CreateAction::make()
                 ->label('New Enrolment'),
         ];
     }

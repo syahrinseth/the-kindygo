@@ -2,6 +2,8 @@
 
 namespace App\Models;
 
+use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Database\Eloquent\Relations\HasOne;
 use App\Enums\ProductStatus;
 use App\Enums\ProductType;
 use App\Enums\ProductPriority;
@@ -54,7 +56,7 @@ class Product extends Model
     /**
      * Get the tenant that owns the product.
      *
-     * @return \Illuminate\Database\Eloquent\Relations\BelongsTo
+     * @return BelongsTo
      */
     public function tenant(): BelongsTo
     {
@@ -64,7 +66,7 @@ class Product extends Model
     /**
      * Get the invoice items for this product.
      *
-     * @return \Illuminate\Database\Eloquent\Relations\HasMany
+     * @return HasMany
      */
     public function invoiceItems(): HasMany
     {
@@ -74,7 +76,7 @@ class Product extends Model
     /**
      * Get the child enrolments for this product.
      *
-     * @return \Illuminate\Database\Eloquent\Relations\HasMany
+     * @return HasMany
      */
     public function enrolments(): HasMany
     {
@@ -84,7 +86,7 @@ class Product extends Model
     /**
      * Get the active child enrolments for this product.
      *
-     * @return \Illuminate\Database\Eloquent\Relations\HasMany
+     * @return HasMany
      */
     public function activeEnrolments(): HasMany
     {
@@ -94,7 +96,7 @@ class Product extends Model
     /**
      * Get the current child enrolments for this product.
      *
-     * @return \Illuminate\Database\Eloquent\Relations\HasMany
+     * @return HasMany
      */
     public function currentEnrolments(): HasMany
     {
@@ -104,9 +106,9 @@ class Product extends Model
     /**
      * Scope a query to filter by status.
      *
-     * @param  \Illuminate\Database\Eloquent\Builder  $query
+     * @param Builder $query
      * @param  string  $status
-     * @return \Illuminate\Database\Eloquent\Builder
+     * @return Builder
      */
     public function scopeByStatus($query, $status)
     {
@@ -116,9 +118,9 @@ class Product extends Model
     /**
      * Scope a query to filter by type.
      *
-     * @param  \Illuminate\Database\Eloquent\Builder  $query
+     * @param Builder $query
      * @param  string  $type
-     * @return \Illuminate\Database\Eloquent\Builder
+     * @return Builder
      */
     public function scopeByType($query, $type)
     {
@@ -128,9 +130,9 @@ class Product extends Model
     /**
      * Scope a query to filter by priority.
      *
-     * @param  \Illuminate\Database\Eloquent\Builder  $query
+     * @param Builder $query
      * @param  ProductPriority|int  $priority
-     * @return \Illuminate\Database\Eloquent\Builder
+     * @return Builder
      */
     public function scopeByPriority($query, ProductPriority|int $priority)
     {
@@ -146,7 +148,7 @@ class Product extends Model
     /**
      * Get the prices for this product.
      *
-     * @return \Illuminate\Database\Eloquent\Relations\HasMany
+     * @return HasMany
      */
     public function prices(): HasMany
     {
@@ -156,7 +158,7 @@ class Product extends Model
     /**
      * Get the current active price for this product.
      *
-     * @return \Illuminate\Database\Eloquent\Relations\HasOne
+     * @return HasOne
      */
     public function currentPrice()
     {
@@ -243,8 +245,8 @@ class Product extends Model
     /**
      * Scope a query to filter by high priority (Critical and High).
      *
-     * @param  \Illuminate\Database\Eloquent\Builder  $query
-     * @return \Illuminate\Database\Eloquent\Builder
+     * @param Builder $query
+     * @return Builder
      */
     public function scopeHighPriority($query)
     {
@@ -254,8 +256,8 @@ class Product extends Model
     /**
      * Scope a query to filter by critical priority only.
      *
-     * @param  \Illuminate\Database\Eloquent\Builder  $query
-     * @return \Illuminate\Database\Eloquent\Builder
+     * @param Builder $query
+     * @return Builder
      */
     public function scopeCriticalPriority($query)
     {

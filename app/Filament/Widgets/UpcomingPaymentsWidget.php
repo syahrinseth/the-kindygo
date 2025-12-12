@@ -2,9 +2,10 @@
 
 namespace App\Filament\Widgets;
 
+use App\Filament\Pages\FinanceDashboard;
 use App\Models\Invoice;
 use App\Filament\Resources\InvoiceResource;
-use Filament\Tables\Actions\Action;
+use Filament\Actions\Action;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Table;
 use Filament\Widgets\TableWidget as BaseWidget;
@@ -20,7 +21,7 @@ class UpcomingPaymentsWidget extends BaseWidget
     
     public static function canView(): bool
     {
-        return Auth::user()->can('viewUpcomingPayments', \App\Filament\Pages\FinanceDashboard::class);
+        return Auth::user()->can('viewUpcomingPayments', FinanceDashboard::class);
     }
 
     public function table(Table $table): Table
@@ -62,7 +63,7 @@ class UpcomingPaymentsWidget extends BaseWidget
                         return 'success'; // Normal
                     }),
             ])
-            ->actions([
+            ->recordActions([
                 Action::make('view')
                     ->url(fn (Invoice $record): string => InvoiceResource::getUrl('edit', ['record' => $record]))
                     ->icon('heroicon-o-eye'),

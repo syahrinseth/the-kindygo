@@ -2,6 +2,7 @@
 
 namespace App\Policies;
 
+use App\Models\Invoice;
 use App\Models\User;
 
 class FinanceDashboardPolicy
@@ -50,7 +51,7 @@ class FinanceDashboardPolicy
     public function viewInvoiceList(User $user): bool
     {
         // Delegate to the existing Invoice policy
-        return $user->can('viewAny', \App\Models\Invoice::class);
+        return $user->can('viewAny', Invoice::class);
     }
 
     /**

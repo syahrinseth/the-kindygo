@@ -2,10 +2,17 @@
 
 namespace App\Filament\Resources\CentreResource\RelationManagers;
 
+use Filament\Tables\Columns\TextColumn;
+use Filament\Tables\Filters\SelectFilter;
+use Filament\Actions\AttachAction;
+use Filament\Actions\ViewAction;
+use Filament\Actions\DetachAction;
+use Filament\Actions\BulkActionGroup;
+use Filament\Actions\DetachBulkAction;
 use App\Enums\ChildStatus;
 use App\Filament\Forms\ChildForm;
 use Filament\Forms;
-use Filament\Forms\Form;
+use Filament\Actions;
 use Filament\Resources\RelationManagers\RelationManager;
 use Filament\Tables;
 use Filament\Tables\Table;
@@ -13,14 +20,16 @@ use Filament\Tables\Columns\SpatieMediaLibraryImageColumn;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\SoftDeletingScope;
 use Illuminate\Support\Facades\Auth;
+use Filament\Schemas\Schema;
 
 class ChildrenRelationManager extends RelationManager
 {
     protected static string $relationship = 'children';
 
-    public function form(Form $form): Form
+    public function form(Schema $schema): Schema
     {
-        return $form->schema(ChildForm::make());
+        return $schema
+            ->components(ChildForm::make());
     }
 
     public function table(Table $table): Table
@@ -34,79 +43,79 @@ class ChildrenRelationManager extends RelationManager
                     ->circular()
                     ->defaultImageUrl(url('/images/default-avatar.svg'))
                     ->size(40),
-                Tables\Columns\TextColumn::make('first_name')
+                TextColumn::make('first_name')
                     ->searchable()
                     ->sortable(),
-                Tables\Columns\TextColumn::make('last_name')
+                TextColumn::make('last_name')
                     ->searchable()
                     ->sortable(),
-                Tables\Columns\TextColumn::make('date_of_birth')
+                TextColumn::make('date_of_birth')
                     ->date()
                     ->sortable(),
-                Tables\Columns\TextColumn::make('gender')
+                TextColumn::make('gender')
                     ->badge()
                     ->color(fn (string $state): string => match ($state) {
                         'male' => 'info',
                         'female' => 'pink',
                         default => 'gray',
                     }),
-                Tables\Columns\TextColumn::make('tenant_status')
+                TextColumn::make('tenant_status')
                     ->label('Status')
                     ->badge()
                     ->getStateUsing(function ($record): string {
                         $user = Auth::user();
-                        if (!$user || !$user->current_tenant_id) {
+                        if (! $user || ! $user->current_tenant_id) {
                             return 'Unknown';
                         }
-                        
+
                         $status = $record->getStatusAtTenant($user->current_tenant_id);
                         return $status ? ucfirst($status->value) : 'Unknown';
                     })
                     ->colors([
                         'danger' => function ($record): bool {
                             $user = Auth::user();
-                            if (!$user || !$user->current_tenant_id) {
+                            if (! $user || ! $user->current_tenant_id) {
                                 return false;
                             }
-                            
+
                             $status = $record->getStatusAtTenant($user->current_tenant_id);
                             return $status === ChildStatus::NEW;
                         },
                         'success' => function ($record): bool {
                             $user = Auth::user();
-                            if (!$user || !$user->current_tenant_id) {
+                            if (! $user || ! $user->current_tenant_id) {
                                 return false;
                             }
-                            
+
                             $status = $record->getStatusAtTenant($user->current_tenant_id);
                             return $status === ChildStatus::ACTIVE;
                         },
                         'warning' => function ($record): bool {
                             $user = Auth::user();
-                            if (!$user || !$user->current_tenant_id) {
+                            if (! $user || ! $user->current_tenant_id) {
                                 return false;
                             }
-                            
+
                             $status = $record->getStatusAtTenant($user->current_tenant_id);
                             return $status === ChildStatus::RETURN;
                         },
                         'gray' => function ($record): bool {
                             $user = Auth::user();
-                            if (!$user || !$user->current_tenant_id) {
+                            if (! $user || ! $user->current_tenant_id) {
                                 return false;
                             }
-                            
+
                             $status = $record->getStatusAtTenant($user->current_tenant_id);
                             return $status === ChildStatus::ALUMNI;
                         },
                     ]),
-                Tables\Columns\TextColumn::make('created_at')
+                TextColumn::make('created_at')
                     ->label('Added to Centre')
                     ->dateTime()
                     ->sortable(),
             ])
             ->filters([
-                Tables\Filters\SelectFilter::make('status')
+                SelectFilter::make('status')
                     ->options(ChildStatus::options())
                     ->query(function (Builder $query, array $data): Builder {
                         if (empty($data['value'])) {
@@ -125,7 +134,7 @@ class ChildrenRelationManager extends RelationManager
                     }),
             ])
             ->headerActions([
-                Tables\Actions\AttachAction::make()
+                AttachAction::make()
                     ->preloadRecordSelect()
                     ->recordSelectOptionsQuery(fn (Builder $query) => $query->whereHas('tenants', function (Builder $subQuery) {
                         $user = Auth::user();
@@ -133,15 +142,15 @@ class ChildrenRelationManager extends RelationManager
                     }))
                     ->visible(fn () => Auth::user()->can('create', $this->getOwnerRecord())),
             ])
-            ->actions([
-                Tables\Actions\ViewAction::make()
+            ->recordActions([
+                ViewAction::make()
                     ->url(fn ($record) => route('filament.admin.resources.children.view', $record)),
-                Tables\Actions\DetachAction::make()
+                DetachAction::make()
                     ->visible(fn ($record) => Auth::user()->can('update', $this->getOwnerRecord())),
             ])
-            ->bulkActions([
-                Tables\Actions\BulkActionGroup::make([
-                    Tables\Actions\DetachBulkAction::make()
+            ->toolbarActions([
+                BulkActionGroup::make([
+                    DetachBulkAction::make()
                         ->visible(fn () => Auth::user()->can('update', $this->getOwnerRecord())),
                 ]),
             ]);

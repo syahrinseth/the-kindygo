@@ -4,13 +4,13 @@ namespace App\Filament\Resources\InvoiceResource\Actions;
 
 use App\Models\Invoice;
 use Filament\Actions\Action as HeaderAction;
-use Filament\Tables\Actions\Action;
+use Filament\Actions\Action;
 
 class DownloadInvoicePdfAction
 {
-    public static function make(): Action
+    public static function make(): HeaderAction
     {
-        return Action::make('download_pdf')
+        return HeaderAction::make('download_pdf')
             ->label('Download PDF')
             ->icon('heroicon-o-document-arrow-down')
             ->color('success')

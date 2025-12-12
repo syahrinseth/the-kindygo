@@ -2,6 +2,8 @@
 
 namespace App\Filament\Resources\UserResource\Pages;
 
+use Filament\Actions\DeleteAction;
+use Illuminate\Database\Eloquent\Model;
 use App\Filament\Resources\UserResource;
 use App\Models\UserProfile;
 use App\Models\UserAddress;
@@ -17,7 +19,7 @@ class EditUser extends EditRecord
     protected function getHeaderActions(): array
     {
         return [
-            Actions\DeleteAction::make()
+            DeleteAction::make()
                 ->visible(fn () => Auth::user()->can('delete', $this->record)),
         ];
     }
@@ -42,7 +44,7 @@ class EditUser extends EditRecord
         return $data;
     }
 
-    protected function handleRecordUpdate(\Illuminate\Database\Eloquent\Model $record, array $data): \Illuminate\Database\Eloquent\Model
+    protected function handleRecordUpdate(Model $record, array $data): Model
     {
         // Extract related model data
         $profileData = $data['profile'] ?? [];

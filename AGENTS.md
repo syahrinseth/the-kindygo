@@ -1,5 +1,33 @@
 <laravel-boost-guidelines>
-=== .ai/feature-domain rules ===
+=== .ai/02-javascript rules ===
+
+# Using Bun for JavaScript Development
+
+I recommend using Bun.sh to run and bundle JavaScript code for this project. Bun is a fast all-in-one JavaScript runtime, package manager, and bundler that can significantly improve development speed and efficiency. Here are the steps to get started with Bun:
+
+1. For any task that involves running or bundling JavaScript code, use Bun instead of Node.js or other tools.
+2. Only use npm or yarn if Bun does not support a specific package or feature required for the task.
+
+
+=== .ai/03-tests rules ===
+
+# Tests Directive
+
+- Always create tests for each feature, and group them by domain
+- Always prepare test for Feature, API and Browser
+- Use mocking for any external request
+- Always prepare any migration to support both SQLite and MariaDB/MySQL syntax so during test we can use SQLite in memory.
+
+
+=== .ai/01-markdown rules ===
+
+# Markdown Format and Guidelines
+
+- Please, use the right formating and structure when preparing or updating markdown files.
+- Follow proper content structure for markdown linting, such as start with heading 1.
+
+
+=== .ai/00-feature-domain rules ===
 
 # Feature Domains
 
@@ -16,11 +44,187 @@
 - Model
 - Action Class
 - Service Class
-- Filament v3 required files and structures
+- Filament v4 required files and structures
+- Pest v4 test files and structures
 
-## Project inventory (generated)
+## System Tenancy Structure
 
-Below are the current models and Filament pages found in the codebase. This is intended as a living list — add or edit entries as features are added.
+- 3 main tenancy user types:
+  - System Owner - super admin owner, special access to 
+    - is_super_admin flag on users table
+    - routes:
+      - console.{domain}* route for all system admin
+      - console.{domain}/ for system admin dashboard
+      - console.{domain}/settings for system settings
+      - console.{domain}/reports for system reports
+      - console.{domain}/tenants for tenant management
+      - console.{domain}/users for all user management
+      - console.{domain}/invoices for system invoicing (subscription management for tenants)
+      - console.{domain}/payments for system payment management
+      - console.{domain}/transactions for system transaction history
+      - console.{domain}/finance for system finance dashboard
+      - console.{domain}/products for system product management (subscription plans)
+      - console.{domain}/features for system feature management (enable/disable features per tenant)
+      - console.{domain}/logs for system logs and monitoring
+      - console.{domain}/notifications for system-wide notifications
+    - can access
+      - System Dashboard in Filament
+      - System Settings in Filament
+
+  - Tenant (company) - tenant owner, can have multiple users
+    - routes:
+      - app.{domain}/admin/ route for tenant admin dashboard
+      - app.{domain}/admin/settings for tenant settings
+      - app.{domain}/admin/branches for centre management
+      - app.{domain}/admin/children for child management
+    - is_tenant_owner flag on tenant_users table
+    - can manage tenant settings in Filament
+    - can invite other users to tenant
+    - can has multiple Tenant (Subscribe to multiple companies plan)
+    - can switch between tenants they belong to
+    - cannot:
+      - delete tenant if they are the last owner
+      - leave tenant if they are the last owner
+      - delete their own account if they are the last owner
+    - can access
+      - Tenant Dashboard in Filament
+      - Tenant Settings in Filament
+      - Branches Management in Filament
+      - Child Management in Filament
+      - Enrolment Management in Filament
+      - Invoicing in Filament
+      - Invite Users to Tenant
+      - Payment Management in Filament
+      - Finance Dashboard in Filament
+      - User Management in Filament (Limited to tenant users only, read only for tenant owners)
+      - Product Management in Filament
+
+  - Tenant (staff) - general user under tenant, can have multiple roles
+    - routes:
+      - app.{domain}/admin/ route for tenant admin dashboard
+      - app.{domain}/admin/settings for tenant settings
+      - app.{domain}/admin/branches for centre management
+      - app.{domain}/admin/children for child management
+      - app.{domain}/admin/enrolments for enrolment management
+      - app.{domain}/admin/invoices for invoicing
+      - app.{domain}/admin/payments for payment management
+      - app.{domain}/{tenant:slug}/login for tenant login
+      - app.{domain}/{tenant:slug}/register (alias, registration) for register new parent directly to tenant
+    - can have multiple roles (e.g., Staff, Accountant, Teacher) assigned by tenant owner
+    - can switch between tenants they belong to
+    - permissions based on roles assigned
+    - can access
+      - Tenant Dashboard in Filament
+      - Tenant Settings in Filament (based on role permissions)
+      - Branches Management in Filament (based on role permissions)
+      - Child Management in Filament (based on role permissions)
+      - Enrolment Management in Filament (based on role permissions)
+      - Invoicing in Filament (based on role permissions)
+      - Payment Management in Filament (based on role permissions)
+      - Finance Dashboard in Filament (based on role permissions)
+      - User Management in Filament (based on role permissions)
+      - Product Management in Filament (based on role permissions)
+
+  - Parent - general user under tenant, can have multiple children, belongs to multiple tenants
+    - routes:
+      - app.{domain}/ route for parent dashboard
+      - app.{domain}/profile for profile management
+      - app.{domain}/children/{child_id} for child details
+      - app.{domain}/invoices for viewing invoices
+      - app.{domain}/payments for making payments (support multiple invoices at once)
+      - app.{domain}/transactions for payments history
+      - app.{domain}/{tenant:slug}/login for tenant login
+      - app.{domain}/{tenant:slug}/register (alias, registration) for register new parent directly to tenant
+    - all users are parents by default
+    - can have multiple children enrolled in multiple centres under the tenant
+    - can belong to multiple tenants (e.g., siblings in different companies)
+    - can switch between tenants they belong to
+    - once registered, parent is linked to tenant via TenantUser and TenantChild
+    - add child only once registered
+    - children can linked to multiple tenants via TenantChild
+    - children enrolment managed via ChildEnrolment model
+    - can access
+      - Parent Dashboard in Filament
+      - Edit Profile Page in Filament
+      - View Child Details in Filament
+      - View Invoices in Filament
+      - Make Payments in Filament
+
+### Example Routes Domain Structure
+
+- System Owner (console):
+  - console.kindygo.com/
+  - console.kindygo.com/settings
+  - console.kindygo.com/tenants
+  - console.kindygo.com/users
+  - console.kindygo.com/invoices
+  - console.kindygo.com/payments
+  - console.kindygo.com/transactions
+  - console.kindygo.com/finance
+  - console.kindygo.com/products
+  - console.kindygo.com/features
+  - console.kindygo.com/logs
+  - console.kindygo.com/notifications
+- Tenant Owner/Admin & Staff (app):
+  - app.kindygo.com/admin/
+  - app.kindygo.com/admin/settings
+  - app.kindygo.com/admin/branches
+  - app.kindygo.com/admin/children
+  - app.kindygo.com/admin/enrolments
+  - app.kindygo.com/admin/invoices
+  - app.kindygo.com/admin/payments
+  - app.kindygo.com/admin/finance
+  - app.kindygo.com/admin/users
+  - app.kindygo.com/admin/products
+- Parent (app):
+  - app.kindygo.com/
+  - app.kindygo.com/profile
+  - app.kindygo.com/children/{child_id}
+  - app.kindygo.com/invoices
+  - app.kindygo.com/payments
+  - app.kindygo.com/transactions
+- Public / Guest:
+  - app.kindygo.com/{tenant:slug}/login
+  - app.kindygo.com/{tenant:slug}/register
+  - app.kindygo.com/login - loaded current_tenant_id if any on previous session, else load the first tenant user belongs to
+  - app.kindygo.com/register - list of tenants to register under (select tenant first, redirect to tenant specific register)
+  - app.kindygo.com/password/reset
+  - app.kindygo.com/password/reset/{token}
+  - app.kindygo.com/email/verify
+  - app.kindygo.com/ - redirects to kindygo.com (suggestion: landing page?)
+  - app.kindygo.com/company/register - register new tenant/company
+
+## Media Upload Structure
+
+- All media uploads are stored in the `storage/app/private/tenants/{tenant_uuid}/users/{user_uuid}/` directory structure for multi-tenancy support and privacy.
+- Create signed URLs for accessing private media files to ensure secure access with expiration times.
+- Directory structure breakdown:
+  - `storage/app/private/` - Base directory for private media files.
+  - `tenants/` - Subdirectory to separate media files by tenant.
+  - `{tenant_uuid}/` - Unique identifier for each tenant (company) to isolate their data.
+  - `users/` - Subdirectory to separate media files by user within the tenant.
+  - `{user_uuid}/` - Unique identifier for each user to isolate their personal media files within the tenant.
+- Example: `storage/app/private/tenants/123e4567-e89b-12d3-a456-426614174000/users/987e6543-e21b-12d3-a456-426614174999/profile-picture.jpg`
+- This structure ensures that each tenant's data is isolated and secure, while also organizing files by user for easy retrieval.
+- The `private` directory is used to restrict direct public access to uploaded files, ensuring that only authorized users can access their respective media.
+- When a user uploads a file, the system automatically creates the necessary directories if they do not exist.
+- File naming conventions should avoid using special characters and spaces to ensure compatibility across different file systems.
+- Access to media files should be managed through application logic, ensuring that users can only access files associated with their tenant and user account.
+- When retrieving media files, the application should construct the file path using the tenant's UUID and the user's UUID.
+- tenant_uuid is fetched from the Tenant model based on the current tenant context
+- user_uuid is fetched from the User model based on the authenticated user
+- This structure ensures media files are organized by tenant and user for easy management and retrieval
+- Signed URLs should be generated with appropriate expiration times to balance security and usability and proper caching headers for performance.
+
+## Models structure
+
+- Tenant has uuid columns for usage in
+  - Upload directory structure
+
+- User has uuid columns for usage in
+  - Upload directory structure
+
+- Both Tenant and User models use tenant_id and user_id as primary keys for relationships and foreign keys in other models. The uuid columns are supplementary and not used as primary keys.
 
 ### Models (app/Models)
 
@@ -120,24 +324,6 @@ Grouped by resource directory (resource name -> pages):
 Feel free to tell me which of the next steps you'd like and I'll update this document further.
 
 
-=== .ai/markdown rules ===
-
-# Markdown Format and Guidelines
-
-- Please, use the right formating and structure when preparing or updating markdown files.
-- Follow proper content structure for markdown linting, such as start with heading 1.
-
-
-=== .ai/tests rules ===
-
-# Tests Directive
-
-- Always create tests for each feature, and group them by domain
-- Always prepare test for Feature, API and Browser
-- Use mocking for any external request
-- Always prepare any migration to support both SQLite and MariaDB/MySQL syntax so during test we can use SQLite in memory.
-
-
 === foundation rules ===
 
 # Laravel Boost Guidelines
@@ -148,7 +334,7 @@ The Laravel Boost guidelines are specifically curated by Laravel maintainers for
 This application is a Laravel application and its main Laravel ecosystems package & versions are below. You are an expert with them all. Ensure you abide by these specific packages & versions.
 
 - php - 8.3.28
-- filament/filament (FILAMENT) - v3
+- filament/filament (FILAMENT) - v4
 - laravel/framework (LARAVEL) - v12
 - laravel/horizon (HORIZON) - v5
 - laravel/prompts (PROMPTS) - v0
@@ -160,6 +346,7 @@ This application is a Laravel application and its main Laravel ecosystems packag
 - laravel/sail (SAIL) - v1
 - pestphp/pest (PEST) - v4
 - phpunit/phpunit (PHPUNIT) - v12
+- rector/rector (RECTOR) - v2
 - tailwindcss (TAILWINDCSS) - v4
 
 ## Conventions

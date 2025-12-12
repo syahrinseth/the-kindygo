@@ -2,6 +2,7 @@
 
 namespace App\Console\Commands;
 
+use Exception;
 use App\Models\ChildEnrolment;
 use App\Services\ChildEnrolmentInvoiceService;
 use App\Enums\ChildEnrolmentStatus;
@@ -108,7 +109,7 @@ class GenerateScheduledInvoices extends Command
 
                 $this->info("  - Invoice #{$invoice->number} for {$parent->name} at {$centre->name} (Children: {$childNames})");
             });
-        } catch (\Exception $e) {
+        } catch (Exception $e) {
             $this->error("Failed to generate invoices: " . $e->getMessage());
             return 1;
         }

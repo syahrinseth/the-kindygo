@@ -2,6 +2,7 @@
 
 namespace App\Console\Commands;
 
+use Exception;
 use App\Enums\Gateway;
 use App\Models\Payment;
 use Illuminate\Console\Command;
@@ -112,7 +113,7 @@ class PopulateChipPaymentData extends Command
                     $failed++;
                     $this->error("✗ Failed to retrieve CHIP data for payment ID: {$payment->id}");
                 }
-            } catch (\Exception $e) {
+            } catch (Exception $e) {
                 $failed++;
                 $this->error("✗ Error processing payment ID: {$payment->id} - {$e->getMessage()}");
             }

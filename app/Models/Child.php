@@ -197,7 +197,7 @@ class Child extends Model implements HasMedia
     /**
      * Get the users associated with this child.
      *
-     * @return \Illuminate\Database\Eloquent\Relations\BelongsToMany
+     * @return BelongsToMany
      */
     public function users(): BelongsToMany
     {
@@ -210,7 +210,7 @@ class Child extends Model implements HasMedia
     /**
      * Get the centres associated with this child.
      *
-     * @return \Illuminate\Database\Eloquent\Relations\BelongsToMany
+     * @return BelongsToMany
      */
     public function centres(): BelongsToMany
     {
@@ -222,7 +222,7 @@ class Child extends Model implements HasMedia
     /**
      * Get the invoice items associated with this child.
      *
-     * @return \Illuminate\Database\Eloquent\Relations\HasMany
+     * @return HasMany
      */
     public function invoiceItems()
     {
@@ -232,7 +232,7 @@ class Child extends Model implements HasMedia
     /**
      * Get the enrolments associated with this child.
      *
-     * @return \Illuminate\Database\Eloquent\Relations\HasMany
+     * @return HasMany
      */
     public function enrolments(): HasMany
     {
@@ -242,7 +242,7 @@ class Child extends Model implements HasMedia
     /**
      * Get the active enrolments for this child.
      *
-     * @return \Illuminate\Database\Eloquent\Relations\HasMany
+     * @return HasMany
      */
     public function activeEnrolments(): HasMany
     {
@@ -252,7 +252,7 @@ class Child extends Model implements HasMedia
     /**
      * Get the current enrolments for this child.
      *
-     * @return \Illuminate\Database\Eloquent\Relations\HasMany
+     * @return HasMany
      */
     public function currentEnrolments(): HasMany
     {

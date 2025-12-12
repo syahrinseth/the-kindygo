@@ -2,9 +2,10 @@
 
 namespace App\Filament\Resources\InvoiceResource\Actions;
 
+use Exception;
 use App\Enums\InvoiceStatus;
 use App\Models\Invoice;
-use Filament\Tables\Actions\Action;
+use Filament\Actions\Action;
 use Filament\Notifications\Notification;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Log;
@@ -52,7 +53,7 @@ class SubmitToEInvoiceAction extends Action
                         ->body('Invoice has been submitted to LHDN e-Invoice system.')
                         ->success()
                         ->send();
-                } catch (\Exception $e) {
+                } catch (Exception $e) {
                     Log::error('E-Invoice submission error', [
                         'invoice_id' => $record->id,
                         'error' => $e->getMessage(),
@@ -68,9 +69,9 @@ class SubmitToEInvoiceAction extends Action
             });
     }
 
-    public static function makeHeaderAction(): \Filament\Actions\Action
+    public static function makeHeaderAction(): Action
     {
-        return \Filament\Actions\Action::make('submit_to_einvoice')
+        return Action::make('submit_to_einvoice')
             ->label('Submit to E-Invoice')
             ->color('primary')
             ->icon('heroicon-s-cloud-arrow-up')
@@ -103,7 +104,7 @@ class SubmitToEInvoiceAction extends Action
                         ->body('Invoice has been submitted to LHDN e-Invoice system.')
                         ->success()
                         ->send();
-                } catch (\Exception $e) {
+                } catch (Exception $e) {
                     Log::error('E-Invoice submission error', [
                         'invoice_id' => $record->id,
                         'error' => $e->getMessage(),

@@ -2,6 +2,7 @@
 
 namespace App\Console\Commands;
 
+use Exception;
 use App\Enums\Gateway;
 use App\Enums\InvoiceStatus;
 use App\Enums\PaymentStatus;
@@ -178,7 +179,7 @@ class CreateTestChipPayment extends Command
             $this->info('To clean up, run: php artisan payments:create-test-chip --clean');
 
             return 0;
-        } catch (\Exception $e) {
+        } catch (Exception $e) {
             $this->error('Error creating test data: ' . $e->getMessage());
             return 1;
         }

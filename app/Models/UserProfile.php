@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use Exception;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -58,7 +59,7 @@ class UserProfile extends Model
      * Get the identification value for e-invoice.
      *
      * @return string
-     * @throws \Exception if no valid identification is available
+     * @throws Exception if no valid identification is available
      */
     public function getEInvoiceIdentification(): string
     {
@@ -72,7 +73,7 @@ class UserProfile extends Model
         }
 
         // If no identification available, throw exception
-        throw new \Exception("Customer '{$this->user->name}' must have a valid NRIC or Passport number for e-Invoice submission.");
+        throw new Exception("Customer '{$this->user->name}' must have a valid NRIC or Passport number for e-Invoice submission.");
     }
 
     public function getEInvoiceTIN(): string
@@ -82,6 +83,6 @@ class UserProfile extends Model
         }
 
         // If no TIN available, throw exception
-        throw new \Exception("Customer '{$this->user->name}' must have a valid TIN for e-Invoice submission.");
+        throw new Exception("Customer '{$this->user->name}' must have a valid TIN for e-Invoice submission.");
     }
 }

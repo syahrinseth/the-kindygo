@@ -2,8 +2,19 @@
 
 namespace App\Filament\Resources\ChildEnrolmentResource\RelationManagers;
 
+use Filament\Schemas\Components\Section;
+use Filament\Forms\Components\TextInput;
+use Filament\Forms\Components\Select;
+use Filament\Forms\Components\DateTimePicker;
+use Filament\Tables\Columns\TextColumn;
+use Filament\Tables\Filters\SelectFilter;
+use Filament\Actions\ViewAction;
+use Filament\Actions\EditAction;
+use Filament\Actions\DeleteAction;
+use Filament\Actions\BulkActionGroup;
+use Filament\Actions\DeleteBulkAction;
 use Filament\Forms;
-use Filament\Forms\Form;
+use Filament\Actions;
 use Filament\Resources\RelationManagers\RelationManager;
 use Filament\Tables;
 use Filament\Tables\Table;
@@ -12,6 +23,7 @@ use App\Enums\InvoiceStatus;
 use App\Enums\PaymentStatus;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\SoftDeletingScope;
+use Filament\Schemas\Schema;
 
 class InvoicesRelationManager extends RelationManager
 {
@@ -23,34 +35,34 @@ class InvoicesRelationManager extends RelationManager
 
     protected static ?string $pluralLabel = 'Invoices';
 
-    public function form(Form $form): Form
+    public function form(Schema $schema): Schema
     {
-        return $form
-            ->schema([
-                Forms\Components\Section::make('Invoice Details')
+        return $schema
+            ->components([
+                Section::make('Invoice Details')
                     ->schema([
-                        Forms\Components\TextInput::make('number')
+                        TextInput::make('number')
                             ->label('Invoice Number')
                             ->required()
                             ->maxLength(255)
                             ->columnSpan(1),
 
-                        Forms\Components\Select::make('status')
+                        Select::make('status')
                             ->options(InvoiceStatus::options())
                             ->required()
                             ->columnSpan(1),
 
-                        Forms\Components\DateTimePicker::make('date')
+                        DateTimePicker::make('date')
                             ->label('Invoice Date')
                             ->required()
                             ->columnSpan(1),
 
-                        Forms\Components\DateTimePicker::make('due_at')
+                        DateTimePicker::make('due_at')
                             ->label('Due Date')
                             ->required()
                             ->columnSpan(1),
 
-                        Forms\Components\TextInput::make('total_amount')
+                        TextInput::make('total_amount')
                             ->label('Total Amount')
                             ->numeric()
                             ->prefix('RM')
@@ -58,7 +70,7 @@ class InvoicesRelationManager extends RelationManager
                             ->required()
                             ->columnSpan(1),
 
-                        Forms\Components\TextInput::make('total')
+                        TextInput::make('total')
                             ->label('Total')
                             ->numeric()
                             ->prefix('RM')
@@ -75,13 +87,13 @@ class InvoicesRelationManager extends RelationManager
         return $table
             ->recordTitleAttribute('number')
             ->columns([
-                Tables\Columns\TextColumn::make('number')
+                TextColumn::make('number')
                     ->label('Invoice #')
                     ->searchable()
                     ->sortable()
                     ->weight(FontWeight::Medium),
 
-                Tables\Columns\TextColumn::make('status')
+                TextColumn::make('status')
                     ->badge()
                     ->color(fn(string $state): string => match ($state) {
                         'draft' => 'gray',
@@ -94,28 +106,28 @@ class InvoicesRelationManager extends RelationManager
                     ->formatStateUsing(fn($state): string => ucfirst($state))
                     ->sortable(),
 
-                Tables\Columns\TextColumn::make('date')
+                TextColumn::make('date')
                     ->label('Invoice Date')
                     ->date()
                     ->sortable(),
 
-                Tables\Columns\TextColumn::make('due_at')
+                TextColumn::make('due_at')
                     ->label('Due Date')
                     ->date()
                     ->sortable(),
 
-                Tables\Columns\TextColumn::make('total_amount')
+                TextColumn::make('total_amount')
                     ->label('Amount')
                     ->money('MYR')
                     ->sortable(),
 
-                Tables\Columns\TextColumn::make('total')
+                TextColumn::make('total')
                     ->label('Total')
                     ->money('MYR')
                     ->sortable()
                     ->weight(FontWeight::Medium),
 
-                Tables\Columns\TextColumn::make('payment_status')
+                TextColumn::make('payment_status')
                     ->label('Payment Status')
                     ->getStateUsing(function ($record) {
                         // Calculate payment status based on payments
@@ -137,28 +149,28 @@ class InvoicesRelationManager extends RelationManager
                     })
                     ->formatStateUsing(fn($state): string => ucfirst($state)),
 
-                Tables\Columns\TextColumn::make('created_at')
+                TextColumn::make('created_at')
                     ->label('Created')
                     ->dateTime()
                     ->sortable()
                     ->toggleable(isToggledHiddenByDefault: true),
             ])
             ->filters([
-                Tables\Filters\SelectFilter::make('status')
+                SelectFilter::make('status')
                     ->options(InvoiceStatus::options())
                     ->multiple(),
             ])
             ->headerActions([
-                // Tables\Actions\CreateAction::make(),
+                // Actions\CreateAction::make(),
             ])
-            ->actions([
-                Tables\Actions\ViewAction::make(),
-                Tables\Actions\EditAction::make(),
-                Tables\Actions\DeleteAction::make(),
+            ->recordActions([
+                ViewAction::make(),
+                EditAction::make(),
+                DeleteAction::make(),
             ])
-            ->bulkActions([
-                Tables\Actions\BulkActionGroup::make([
-                    Tables\Actions\DeleteBulkAction::make(),
+            ->toolbarActions([
+                BulkActionGroup::make([
+                    DeleteBulkAction::make(),
                 ]),
             ])
             ->defaultSort('created_at', 'desc');

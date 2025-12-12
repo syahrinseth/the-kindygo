@@ -3,7 +3,7 @@
 namespace App\Filament\Resources\InvoiceResource\Actions;
 
 use App\Models\Invoice;
-use Filament\Tables\Actions\BulkAction;
+use Filament\Actions\BulkAction;
 use Illuminate\Database\Eloquent\Collection;
 use Filament\Support\Facades\FilamentIcon;
 use Illuminate\Support\Facades\Storage;

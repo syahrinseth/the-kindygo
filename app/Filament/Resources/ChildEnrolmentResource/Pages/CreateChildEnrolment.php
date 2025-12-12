@@ -2,6 +2,7 @@
 
 namespace App\Filament\Resources\ChildEnrolmentResource\Pages;
 
+use Exception;
 use App\Enums\ChildEnrolmentStatus;
 use App\Filament\Resources\ChildEnrolmentResource;
 use App\Services\ChildEnrolmentInvoiceService;
@@ -55,7 +56,7 @@ class CreateChildEnrolment extends CreateRecord
                         ->success()
                         ->send();
                 }
-            } catch (\Exception $e) {
+            } catch (Exception $e) {
                 Notification::make()
                     ->title('Invoice Generation Failed')
                     ->body('There was an error generating invoices: ' . $e->getMessage())

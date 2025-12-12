@@ -2,12 +2,15 @@
 
 namespace App\Filament\Resources\InvoiceResource\Actions;
 
+use Exception;
+use Closure;
+use Illuminate\Support\Facades\Log;
 use App\Enums\InvoiceStatus;
 use App\Models\Invoice;
 use App\Notifications\InvoicePendingNotification;
 use App\Notifications\InvoiceOverdueNotification;
 use Filament\Notifications\Notification;
-use Filament\Tables\Actions\BulkAction;
+use Filament\Actions\BulkAction;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Support\Facades\Auth;
 
@@ -39,7 +42,7 @@ class SendBulkNotificationAction
                 // We'll use the 'updateAny' permission which is typically used for bulk operations
                 try {
                     return $user->can('updateAny', Invoice::class);
-                } catch (\Exception $e) {
+                } catch (Exception $e) {
                     // Fallback to role-based check if policy method doesn't exist
                     if (method_exists($user, 'hasAnyRole')) {
                         return $user->hasAnyRole(['Super Admin', 'Admin', 'Principal']);
@@ -53,7 +56,7 @@ class SendBulkNotificationAction
     /**
      * Get the action callback
      */
-    protected static function getActionCallback(): \Closure
+    protected static function getActionCallback(): Closure
     {
         return function (Collection $records) {
             $successCount = 0;
@@ -90,7 +93,7 @@ class SendBulkNotificationAction
                     $successCount++;
 
                     // Log the notification sending
-                    \Illuminate\Support\Facades\Log::info('Bulk invoice notification sent', [
+                    Log::info('Bulk invoice notification sent', [
                         'invoice_id' => $invoice->id,
                         'invoice_number' => $invoice->number,
                         'user_id' => $invoice->user->id,
@@ -100,10 +103,10 @@ class SendBulkNotificationAction
                         'sent_at' => now(),
                     ]);
 
-                } catch (\Exception $e) {
+                } catch (Exception $e) {
                     $errorCount++;
                     
-                    \Illuminate\Support\Facades\Log::error('Failed to send bulk invoice notification', [
+                    Log::error('Failed to send bulk invoice notification', [
                         'invoice_id' => $invoice->id,
                         'error' => $e->getMessage(),
                     ]);

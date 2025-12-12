@@ -2,45 +2,65 @@
 
 namespace App\Filament\Resources;
 
+use Filament\Schemas\Components\Section;
+use Filament\Forms\Components\TextInput;
+use Filament\Forms\Components\Select;
+use Filament\Forms\Components\Hidden;
+use Filament\Tables\Columns\TextColumn;
+use Filament\Tables\Filters\SelectFilter;
+use Filament\Actions\ActionGroup;
+use Filament\Actions\ViewAction;
+use Filament\Actions\EditAction;
+use Filament\Actions\DeleteAction;
+use Filament\Actions\BulkActionGroup;
+use Filament\Actions\DeleteBulkAction;
+use App\Filament\Resources\ProductResource\RelationManagers\InvoiceItemsRelationManager;
+use App\Filament\Resources\ProductResource\RelationManagers\PricesRelationManager;
+use App\Filament\Resources\ProductResource\Pages\ListProducts;
+use App\Filament\Resources\ProductResource\Pages\CreateProduct;
+use App\Filament\Resources\ProductResource\Pages\EditProduct;
 use App\Enums\ProductStatus;
 use App\Enums\ProductType;
 use App\Enums\ProductPriority;
 use App\Filament\Resources\ProductResource\Pages;
 use App\Filament\Resources\ProductResource\RelationManagers;
 use App\Models\Product;
+use Filament\Actions;
 use Filament\Forms;
-use Filament\Forms\Form;
 use Filament\Resources\Resource;
 use Filament\Tables;
 use Filament\Tables\Table;
+use BackedEnum;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\SoftDeletingScope;
 use Illuminate\Support\Facades\Auth;
+use UnitEnum;
+use Filament\Schemas\Schema;
 
 class ProductResource extends Resource
 {
     protected static ?string $model = Product::class;
 
-    protected static ?string $navigationIcon = 'heroicon-o-cube';
+    protected static string | \BackedEnum | null $navigationIcon = 'heroicon-o-cube';
 
-    protected static ?string $navigationGroup = 'Inventory';
+    protected static string | \UnitEnum | null $navigationGroup = 'Inventory';
 
     protected static ?int $navigationSort = 1;
 
-    public static function form(Form $form): Form
+    public static function form(Schema $schema): Schema
     {
-        return $form
-            ->schema([
-                Forms\Components\Section::make('Product Information')
+        return $schema
+            ->components([
+                Section::make('Product Information')
                     ->schema([
-                        Forms\Components\TextInput::make('code')
+                        TextInput::make('code')
                             ->required()
                             ->unique(ignoreRecord: true)
                             ->maxLength(255)
                             ->placeholder('e.g., PROD-001')
                             ->helperText('Unique product code for identification'),
                         
-                        Forms\Components\TextInput::make('name')
+                        TextInput::make('name')
                             ->required()
                             ->maxLength(255)
                             ->placeholder('e.g., Monthly Childcare Fee')
@@ -48,23 +68,23 @@ class ProductResource extends Resource
                     ])
                     ->columns(2),
 
-                Forms\Components\Section::make('Classification')
+                Section::make('Classification')
                     ->schema([
-                        Forms\Components\Select::make('status')
+                        Select::make('status')
                             ->required()
                             ->options(collect(ProductStatus::cases())->mapWithKeys(fn($case) => [$case->value => $case->label()]))
                             ->default(ProductStatus::ACTIVE->value)
                             ->native(false)
                             ->helperText('Current status of the product'),
 
-                        Forms\Components\Select::make('type')
+                        Select::make('type')
                             ->required()
                             ->options(collect(ProductType::cases())->mapWithKeys(fn($case) => [$case->value => $case->getDisplayName()]))
                             ->default(ProductType::SERVICE->value)
                             ->native(false)
                             ->helperText('Type of product or service'),
 
-                        Forms\Components\Select::make('priority')
+                        Select::make('priority')
                             ->required()
                             ->options(ProductPriority::getOptions())
                             ->default(ProductPriority::MEDIUM->value)
@@ -72,18 +92,16 @@ class ProductResource extends Resource
                     ])
                     ->columns(3),
 
-                Forms\Components\Section::make('Assignment')
+                Section::make('Assignment')
                     ->schema([
-                        Forms\Components\Select::make('centres')
+                        Select::make('centres')
                             ->label('Centres')
                             ->relationship('centres', 'name', function (Builder $query) {
                                 $user = Auth::user();
                                 if (!$user->current_tenant_id) {
                                     return $query->whereRaw('1 = 0'); // Return empty query
                                 }
-                                
-                                $query->where('tenant_id', $user->current_tenant_id);
-                                
+
                                 // If Principal, limit to their centres
                                 if ($user->hasRole('Principal')) {
                                     $query->whereHas('users', function (Builder $q) use ($user) {
@@ -100,7 +118,7 @@ class ProductResource extends Resource
                             ->placeholder('Select centres (leave empty for all centres)')
                             ->helperText('Assign this product to specific centres, or leave empty to make it available to all centres'),
                             
-                        Forms\Components\Hidden::make('tenant_id')
+                        Hidden::make('tenant_id')
                             ->default(fn () => Auth::user()?->current_tenant_id),
                     ]),
             ]);
@@ -110,17 +128,17 @@ class ProductResource extends Resource
     {
         return $table
             ->columns([
-                Tables\Columns\TextColumn::make('code')
+                TextColumn::make('code')
                     ->searchable()
                     ->sortable()
                     ->copyable(),
 
-                Tables\Columns\TextColumn::make('name')
+                TextColumn::make('name')
                     ->searchable()
                     ->sortable()
                     ->limit(50),
 
-                Tables\Columns\TextColumn::make('status')
+                TextColumn::make('status')
                     ->badge()
                     ->color(fn (ProductStatus $state): string => match ($state) {
                         ProductStatus::DRAFT => 'gray',
@@ -129,7 +147,7 @@ class ProductResource extends Resource
                     })
                     ->sortable(),
 
-                Tables\Columns\TextColumn::make('type')
+                TextColumn::make('type')
                     ->badge()
                     ->color(fn (ProductType $state): string => match ($state) {
                         ProductType::SERVICE => 'primary',
@@ -142,13 +160,13 @@ class ProductResource extends Resource
                     ->formatStateUsing(fn (ProductType $state): string => $state->getDisplayName())
                     ->sortable(),
 
-                Tables\Columns\TextColumn::make('priority')
+                TextColumn::make('priority')
                     ->badge()
                     ->color(fn (ProductPriority $state): string => $state->getBadgeColor())
                     ->formatStateUsing(fn (ProductPriority $state): string => $state->getDisplayName())
                     ->sortable(),
 
-                Tables\Columns\TextColumn::make('centres.name')
+                TextColumn::make('centres.name')
                     ->label('Centres')
                     ->badge()
                     ->searchable()
@@ -156,7 +174,7 @@ class ProductResource extends Resource
                     ->placeholder('All Centres')
                     ->toggleable(),
 
-                Tables\Columns\TextColumn::make('current_price')
+                TextColumn::make('current_price')
                     ->label('Current Price')
                     ->getStateUsing(function ($record) {
                         $currentPrice = $record->currentPrice;
@@ -166,39 +184,39 @@ class ProductResource extends Resource
                     ->placeholder('No price set')
                     ->sortable(false),
 
-                Tables\Columns\TextColumn::make('created_at')
+                TextColumn::make('created_at')
                     ->dateTime()
                     ->sortable()
                     ->toggleable(isToggledHiddenByDefault: true),
 
-                Tables\Columns\TextColumn::make('updated_at')
+                TextColumn::make('updated_at')
                     ->dateTime()
                     ->sortable()
                     ->toggleable(isToggledHiddenByDefault: true),
             ])
             ->filters([
-                Tables\Filters\SelectFilter::make('status')
+                SelectFilter::make('status')
                     ->options(collect(ProductStatus::cases())->mapWithKeys(fn($case) => [$case->value => $case->label()])),
 
-                Tables\Filters\SelectFilter::make('type')
+                SelectFilter::make('type')
                     ->options(collect(ProductType::cases())->mapWithKeys(fn($case) => [$case->value => $case->getDisplayName()])),
 
-                Tables\Filters\SelectFilter::make('priority')
+                SelectFilter::make('priority')
                     ->options(ProductPriority::getOptions()),
 
-                Tables\Filters\SelectFilter::make('centres')
+                SelectFilter::make('centres')
                     ->relationship('centres', 'name')
                     ->searchable()
                     ->preload()
                     ->placeholder('All Centres'),
             ])
-            ->actions([
-                Tables\Actions\ActionGroup::make([
-                    Tables\Actions\ViewAction::make()
+            ->recordActions([
+                ActionGroup::make([
+                    ViewAction::make()
                         ->visible(fn (Product $record) => Auth::user()->can('view', $record)),
-                    Tables\Actions\EditAction::make()
+                    EditAction::make()
                         ->visible(fn (Product $record) => Auth::user()->can('update', $record)),
-                    Tables\Actions\DeleteAction::make()
+                    DeleteAction::make()
                         ->visible(fn (Product $record) => Auth::user()->can('delete', $record)),
                 ])
                     ->label('Actions')
@@ -207,9 +225,9 @@ class ProductResource extends Resource
                     ->color('gray')
                     ->button(),
             ])
-            ->bulkActions([
-                Tables\Actions\BulkActionGroup::make([
-                    Tables\Actions\DeleteBulkAction::make()
+            ->toolbarActions([
+                BulkActionGroup::make([
+                    DeleteBulkAction::make()
                         ->visible(fn () => Auth::user()->can('deleteAny', Product::class)),
                 ]),
             ])
@@ -219,17 +237,17 @@ class ProductResource extends Resource
     public static function getRelations(): array
     {
         return [
-            RelationManagers\InvoiceItemsRelationManager::class,
-            RelationManagers\PricesRelationManager::class,
+            InvoiceItemsRelationManager::class,
+            PricesRelationManager::class,
         ];
     }
 
     public static function getPages(): array
     {
         return [
-            'index' => Pages\ListProducts::route('/'),
-            'create' => Pages\CreateProduct::route('/create'),
-            'edit' => Pages\EditProduct::route('/{record}/edit'),
+            'index' => ListProducts::route('/'),
+            'create' => CreateProduct::route('/create'),
+            'edit' => EditProduct::route('/{record}/edit'),
         ];
     }
 

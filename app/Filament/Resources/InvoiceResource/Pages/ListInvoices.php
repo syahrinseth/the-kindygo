@@ -2,6 +2,8 @@
 
 namespace App\Filament\Resources\InvoiceResource\Pages;
 
+use Filament\Actions\CreateAction;
+use App\Models\Invoice;
 use App\Filament\Resources\InvoiceResource;
 use Filament\Actions;
 use Filament\Resources\Pages\ListRecords;
@@ -14,8 +16,8 @@ class ListInvoices extends ListRecords
     protected function getHeaderActions(): array
     {
         return [
-            Actions\CreateAction::make()
-                ->visible(fn () => Auth::user()->can('create', \App\Models\Invoice::class)),
+            CreateAction::make()
+                ->visible(fn () => Auth::user()->can('create', Invoice::class)),
         ];
     }
 }

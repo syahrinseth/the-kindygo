@@ -2,6 +2,7 @@
 
 namespace App\Console\Commands;
 
+use Exception;
 use App\Enums\InvoiceStatus;
 use App\Models\Invoice;
 use App\Models\Tenant;
@@ -83,7 +84,7 @@ class MarkOverdueInvoices extends Command
                 
                 $updateCount++;
                 
-            } catch (\Exception $e) {
+            } catch (Exception $e) {
                 $this->error("Failed to update invoice #{$invoice->number}: " . $e->getMessage());
                 
                 Log::error('Failed to mark invoice as overdue', [

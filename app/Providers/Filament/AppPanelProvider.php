@@ -2,6 +2,11 @@
 
 namespace App\Providers\Filament;
 
+use App\Filament\Pages\EditProfile;
+use Filament\Pages\Dashboard;
+use App\Filament\Widgets\InvoiceStats;
+use App\Filament\Widgets\InvoiceChart;
+use App\Http\Middleware\EnsureProfileCompleted;
 use App\Filament\Forms\TenantForm;
 use App\Filament\Pages\Tenancy\EditTenantProfilePage;
 use App\Filament\Pages\Tenancy\RegisterTenancyPage;
@@ -37,18 +42,18 @@ class AppPanelProvider extends PanelProvider
             ->colors([
                 'primary' => Color::Amber,
             ])
-            ->profile(page: \App\Filament\Pages\EditProfile::class, isSimple: true)
+            ->profile(page: EditProfile::class, isSimple: true)
             ->discoverResources(in: app_path('Filament/Resources'), for: 'App\\Filament\\Resources')
             ->discoverPages(in: app_path('Filament/Pages'), for: 'App\\Filament\\Pages')
             ->pages([
                 // \App\Filament\Pages\FinanceDashboard::class,
-                Pages\Dashboard::class,
+                Dashboard::class,
             ])
             // ->discoverWidgets(in: app_path('Filament/Widgets'), for: 'App\\Filament\\Widgets')
             ->widgets([
                 // Widgets\AccountWidget::class,
-                \App\Filament\Widgets\InvoiceStats::class,
-                \App\Filament\Widgets\InvoiceChart::class,
+                InvoiceStats::class,
+                InvoiceChart::class,
             ])
             ->tenant(Tenant::class, slugAttribute: 'slug')
             ->tenantProfile(EditTenantProfilePage::class)
@@ -64,7 +69,7 @@ class AppPanelProvider extends PanelProvider
                 DisableBladeIconComponents::class,
                 DispatchServingFilamentEvent::class,
                 UpdateCurrentTenant::class,
-                \App\Http\Middleware\EnsureProfileCompleted::class,
+                EnsureProfileCompleted::class,
             ])
             ->authMiddleware([
                 Authenticate::class,

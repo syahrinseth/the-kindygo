@@ -2,6 +2,8 @@
 
 namespace App\Policies;
 
+use App\Enums\PaymentStatus;
+use App\Enums\Gateway;
 use App\Models\Payment;
 use App\Models\User;
 use Illuminate\Auth\Access\Response;
@@ -87,7 +89,7 @@ class PaymentPolicy
         if ($user->hasRole('Principal')) {
             return $payment->tenant_id === $user->current_tenant_id && 
                    ($payment->centre_id === null || $user->centres()->where('centres.id', $payment->centre_id)->exists()) &&
-                   $payment->status === \App\Enums\PaymentStatus::PENDING;
+                   $payment->status === PaymentStatus::PENDING;
         }
         
         return false;
@@ -99,7 +101,7 @@ class PaymentPolicy
     public function delete(User $user, Payment $payment): bool
     {
         // Only pending or failed payments can be deleted
-        if (!in_array($payment->status, [\App\Enums\PaymentStatus::PENDING, \App\Enums\PaymentStatus::FAILED])) {
+        if (!in_array($payment->status, [PaymentStatus::PENDING, PaymentStatus::FAILED])) {
             return false;
         }
         
@@ -152,12 +154,12 @@ class PaymentPolicy
     public function getAvailableGateways(User $user): array
     {
         $gateways = [
-            \App\Enums\Gateway::CHIP->value => 'CHIP',
+            Gateway::CHIP->value => 'CHIP',
         ];
         
         // Add bank transfer option only for authorized roles
         if ($this->useBankTransferGateway($user)) {
-            $gateways[\App\Enums\Gateway::BANK_TRANSFER->value] = 'Bank Transfer';
+            $gateways[Gateway::BANK_TRANSFER->value] = 'Bank Transfer';
         }
         
         return $gateways;

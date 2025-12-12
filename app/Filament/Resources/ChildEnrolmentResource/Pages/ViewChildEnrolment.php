@@ -2,14 +2,21 @@
 
 namespace App\Filament\Resources\ChildEnrolmentResource\Pages;
 
+use Filament\Actions\EditAction;
+use Filament\Actions\Action;
+use Filament\Schemas\Components\Section;
+use Filament\Infolists\Components\TextEntry;
+use Filament\Infolists\Components\IconEntry;
+use Filament\Infolists\Components\RepeatableEntry;
+use Carbon\Carbon;
 use App\Filament\Resources\ChildEnrolmentResource;
 use App\Models\Product;
 use App\Services\ChildEnrolmentInvoiceService;
 use Filament\Actions;
 use Filament\Resources\Pages\ViewRecord;
 use Filament\Infolists;
-use Filament\Infolists\Infolist;
 use Filament\Notifications\Notification;
+use Filament\Schemas\Schema;
 use Illuminate\Support\Facades\Auth;
 
 class ViewChildEnrolment extends ViewRecord
@@ -19,13 +26,13 @@ class ViewChildEnrolment extends ViewRecord
     protected function getHeaderActions(): array
     {
         return [
-            Actions\EditAction::make(),
-            Actions\Action::make('generate_invoices')
+            EditAction::make(),
+            Action::make('generate_invoices')
                 ->label('Generate Invoice')
                 ->icon('heroicon-o-document-plus')
                 ->color('success')
                 ->action(function () {
-                    $invoiceService = app(\App\Services\ChildEnrolmentInvoiceService::class);
+                    $invoiceService = app(ChildEnrolmentInvoiceService::class);
                     $enrolments = $invoiceService->getRelatedEnrolments($this->record);
                     if (empty($enrolments)) {
                         Notification::make()
@@ -54,19 +61,19 @@ class ViewChildEnrolment extends ViewRecord
         ];
     }
 
-    public function infolist(Infolist $infolist): Infolist
+    public function infolist(Schema $schema): Schema
     {
-        return $infolist
-            ->schema([
-                Infolists\Components\Section::make('Enrolment Information')
+        return $schema
+            ->components([
+                Section::make('Enrolment Information')
                     ->schema([
-                        Infolists\Components\TextEntry::make('child.full_name')
+                        TextEntry::make('child.full_name')
                             ->label('Child'),
-                        Infolists\Components\TextEntry::make('centre.name')
+                        TextEntry::make('centre.name')
                             ->label('Centre'),
-                        Infolists\Components\TextEntry::make('product.name')
+                        TextEntry::make('product.name')
                             ->label('Product'),
-                        Infolists\Components\TextEntry::make('status')
+                        TextEntry::make('status')
                             ->badge()
                             ->color(fn($state): string => match ($state) {
                                 'active' => 'success',
@@ -76,50 +83,50 @@ class ViewChildEnrolment extends ViewRecord
                                 'cancelled' => 'danger',
                                 default => 'gray',
                             }),
-                        Infolists\Components\TextEntry::make('type')
+                        TextEntry::make('type')
                             ->formatStateUsing(fn($state): string => ucwords(str_replace('_', ' ', $state->value))),
                     ])->columns(2),
 
-                Infolists\Components\Section::make('Schedule & Billing')
+                Section::make('Schedule & Billing')
                     ->schema([
-                        Infolists\Components\TextEntry::make('date_start')
+                        TextEntry::make('date_start')
                             ->label('Start Date')
                             ->dateTime(),
-                        Infolists\Components\TextEntry::make('date_end')
+                        TextEntry::make('date_end')
                             ->label('End Date')
                             ->dateTime()
                             ->placeholder('Ongoing'),
-                        Infolists\Components\TextEntry::make('billed_every')
+                        TextEntry::make('billed_every')
                             ->label('Billing Frequency')
                             ->formatStateUsing(fn($state): string => ucwords(str_replace('_', ' ', $state->value))),
-                        Infolists\Components\IconEntry::make('is_active')
+                        IconEntry::make('is_active')
                             ->label('Currently Active')
                             ->boolean()
                             ->getStateUsing(fn($record): bool => $record->isActive()),
                     ])->columns(2),
 
-                Infolists\Components\Section::make('Additional Products')
+                Section::make('Additional Products')
                     ->schema([
-                        Infolists\Components\RepeatableEntry::make('additional_products')
+                        RepeatableEntry::make('additional_products')
                             ->label('')
                             ->schema([
-                                Infolists\Components\TextEntry::make('product_id')
+                                TextEntry::make('product_id')
                                     ->label('Product')
                                     ->formatStateUsing(function ($state): string {
                                         if (!$state) return 'N/A';
                                         $product = Product::find($state);
                                         return $product ? $product->name : 'Product not found';
                                     }),
-                                Infolists\Components\TextEntry::make('billed_every')
+                                TextEntry::make('billed_every')
                                     ->label('Billing Frequency')
                                     ->formatStateUsing(fn($state): string => $state ? ucwords(str_replace('_', ' ', $state)) : 'N/A'),
-                                Infolists\Components\TextEntry::make('date_start')
+                                TextEntry::make('date_start')
                                     ->label('Start Date')
-                                    ->formatStateUsing(fn($state): string => $state ? \Carbon\Carbon::parse($state)->format('M j, Y g:i A') : 'N/A'),
-                                Infolists\Components\TextEntry::make('date_end')
+                                    ->formatStateUsing(fn($state): string => $state ? Carbon::parse($state)->format('M j, Y g:i A') : 'N/A'),
+                                TextEntry::make('date_end')
                                     ->label('End Date')
-                                    ->formatStateUsing(fn($state): string => $state ? \Carbon\Carbon::parse($state)->format('M j, Y g:i A') : 'Ongoing'),
-                                Infolists\Components\TextEntry::make('notes')
+                                    ->formatStateUsing(fn($state): string => $state ? Carbon::parse($state)->format('M j, Y g:i A') : 'Ongoing'),
+                                TextEntry::make('notes')
                                     ->label('Notes')
                                     ->placeholder('No notes')
                                     ->columnSpanFull(),
@@ -130,11 +137,11 @@ class ViewChildEnrolment extends ViewRecord
                     ->visible(fn($record): bool => !empty($record->additional_products))
                     ->collapsible(),
 
-                Infolists\Components\Section::make('Timestamps')
+                Section::make('Timestamps')
                     ->schema([
-                        Infolists\Components\TextEntry::make('created_at')
+                        TextEntry::make('created_at')
                             ->dateTime(),
-                        Infolists\Components\TextEntry::make('updated_at')
+                        TextEntry::make('updated_at')
                             ->dateTime(),
                     ])->columns(2),
             ]);

@@ -8,7 +8,7 @@ use App\Notifications\TenantInvitation as TenantInvitationNotification;
 use Filament\Facades\Filament;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\TextInput;
-use Filament\Tables\Actions\Action;
+use Filament\Actions\Action;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Notification;
@@ -25,7 +25,7 @@ class InviteUserToTenantAction extends Action
             ->name('invite-to-tenant')
             ->label('Invite User to Company')
             ->icon('heroicon-o-envelope')
-            ->form([
+            ->schema([
                 TextInput::make('email')
                     ->label('Email Address')
                     ->email()

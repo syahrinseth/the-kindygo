@@ -2,12 +2,19 @@
 
 namespace App\Filament\Resources\ParentResource\RelationManagers;
 
+use Filament\Tables\Columns\TextColumn;
+use Filament\Tables\Filters\SelectFilter;
+use Filament\Actions\ViewAction;
+use Filament\Actions\EditAction;
+use Filament\Actions\DetachAction;
+use Filament\Actions\BulkActionGroup;
+use Filament\Actions\DetachBulkAction;
 use App\Enums\ChildStatus;
 use App\Filament\Forms\ChildForm;
 use App\Filament\Resources\ChildResource;
 use App\Models\Child;
+use Filament\Actions;
 use Filament\Forms;
-use Filament\Forms\Form;
 use Filament\Resources\RelationManagers\RelationManager;
 use Filament\Tables;
 use Filament\Tables\Columns\SpatieMediaLibraryImageColumn;
@@ -15,6 +22,7 @@ use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Facades\Auth;
+use Filament\Schemas\Schema;
 
 class ChildrenRelationManager extends RelationManager
 {
@@ -29,10 +37,11 @@ class ChildrenRelationManager extends RelationManager
                Auth::user()->can('viewAny', Child::class);
     }
 
-    public function form(Form $form): Form
+    public function form(Schema $schema): Schema
     {
         // Use the full ChildForm without associated users since we're in parent context
-        return $form->schema(ChildForm::withoutAssociatedUsers());
+        return $schema
+            ->components(ChildForm::withoutAssociatedUsers());
     }
 
     public function table(Table $table): Table
@@ -49,27 +58,27 @@ class ChildrenRelationManager extends RelationManager
                     ->circular()
                     ->defaultImageUrl(url('/images/default-avatar.png'))
                     ->toggleable(),
-                Tables\Columns\TextColumn::make('first_name')
+                TextColumn::make('first_name')
                     ->searchable()
                     ->sortable(),
-                Tables\Columns\TextColumn::make('last_name')
+                TextColumn::make('last_name')
                     ->searchable()
                     ->sortable(),
-                Tables\Columns\TextColumn::make('date_of_birth')
+                TextColumn::make('date_of_birth')
                     ->date('M d, Y')
                     ->sortable(),
-                Tables\Columns\TextColumn::make('gender')
+                TextColumn::make('gender')
                     ->badge()
                     ->color(fn (string $state): string => match ($state) {
                         'male' => 'info',
                         'female' => 'pink',
                         default => 'gray',
                     }),
-                Tables\Columns\TextColumn::make('pivot.relationship_type')
+                TextColumn::make('pivot.relationship_type')
                     ->label('Relationship')
                     ->formatStateUsing(fn (string $state): string => ucfirst($state))
                     ->badge(),
-                Tables\Columns\TextColumn::make('tenant_status')
+                TextColumn::make('tenant_status')
                     ->label('Status')
                     ->badge()
                     ->getStateUsing(function (Child $record): string {
@@ -121,12 +130,12 @@ class ChildrenRelationManager extends RelationManager
                     ]),
             ])
             ->filters([
-                Tables\Filters\SelectFilter::make('gender')
+                SelectFilter::make('gender')
                     ->options([
                         'male' => 'Male',
                         'female' => 'Female',
                     ]),
-                Tables\Filters\SelectFilter::make('relationship_type')
+                SelectFilter::make('relationship_type')
                     ->label('Relationship')
                     ->options([
                         'parent' => 'Parent',
@@ -141,7 +150,7 @@ class ChildrenRelationManager extends RelationManager
                         
                         return $query->wherePivot('relationship_type', $data['value']);
                     }),
-                Tables\Filters\SelectFilter::make('status')
+                SelectFilter::make('status')
                     ->label('Status at Current Tenant')
                     ->options(ChildStatus::options())
                     ->query(function (Builder $query, array $data): Builder {
@@ -160,21 +169,21 @@ class ChildrenRelationManager extends RelationManager
                         });
                     }),
             ])
-            ->actions([
-                Tables\Actions\ViewAction::make()
-                    ->form(fn (Form $form) => $form->schema(ChildForm::withoutAssociatedUsers()))
+            ->recordActions([
+                ViewAction::make()
+                    ->schema(fn (Form $form) => $form->schema(ChildForm::withoutAssociatedUsers()))
                     ->visible(fn (Child $record) => Auth::user()->can('view', $record)),
                     
-                Tables\Actions\EditAction::make()
-                    ->form(fn (Form $form) => $form->schema(ChildForm::withoutAssociatedUsers()))
+                EditAction::make()
+                    ->schema(fn (Form $form) => $form->schema(ChildForm::withoutAssociatedUsers()))
                     ->visible(fn (Child $record) => Auth::user()->can('update', $record)),
                     
-                Tables\Actions\DetachAction::make()
+                DetachAction::make()
                     ->visible(fn (Child $record) => Auth::user()->can('manageParents', $record)),
             ])
-            ->bulkActions([
-                Tables\Actions\BulkActionGroup::make([
-                    Tables\Actions\DetachBulkAction::make()
+            ->toolbarActions([
+                BulkActionGroup::make([
+                    DetachBulkAction::make()
                         ->visible(fn () => Auth::user()->can('deleteAny', Child::class)),
                 ]),
             ]);

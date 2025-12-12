@@ -2,32 +2,55 @@
 
 namespace App\Filament\Resources;
 
+use Filament\Tables\Columns\TextColumn;
+use Filament\Tables\Filters\SelectFilter;
+use Filament\Tables\Filters\Filter;
+use App\Filament\Resources\Forms\Components\DatePicker;
+use Filament\Actions\ActionGroup;
+use Filament\Actions\ViewAction;
+use Filament\Actions\EditAction;
+use Filament\Actions\Action;
+use Filament\Actions\DeleteAction;
+use Filament\Actions\RestoreAction;
+use Filament\Actions\ForceDeleteAction;
+use Filament\Actions\BulkActionGroup;
+use Filament\Actions\DeleteBulkAction;
+use Filament\Actions\RestoreBulkAction;
+use Filament\Actions\ForceDeleteBulkAction;
+use App\Filament\Resources\ChildResource\RelationManagers\CentresRelationManager;
+use App\Filament\Resources\ChildResource\RelationManagers\EnrolmentsRelationManager;
+use App\Filament\Resources\ChildResource\Pages\ListChildren;
+use App\Filament\Resources\ChildResource\Pages\CreateChild;
+use App\Filament\Resources\ChildResource\Pages\ViewChild;
+use App\Filament\Resources\ChildResource\Pages\EditChild;
 use App\Enums\ChildStatus;
 use App\Filament\Forms\ChildForm;
 use App\Filament\Resources\ChildResource\Pages;
 use App\Filament\Resources\ChildResource\RelationManagers;
 use App\Models\Centre;
 use App\Models\Child;
-use Filament\Forms;
-use Filament\Forms\Form;
+use Filament\Actions;
 use Filament\Resources\Resource;
 use Filament\Tables;
 use Filament\Tables\Columns\SpatieMediaLibraryImageColumn;
+use Filament\Schemas\Schema;
 use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletingScope;
 use Illuminate\Support\Facades\Auth;
+use BackedEnum;
+use UnitEnum;
 
 class ChildResource extends Resource
 {
     protected static ?string $model = Child::class;
 
-    protected static ?string $navigationIcon = 'heroicon-o-academic-cap';
+    protected static string | \BackedEnum | null $navigationIcon = 'heroicon-o-academic-cap';
 
     protected static ?string $navigationLabel = 'Children';
 
-    protected static ?string $navigationGroup = 'Child Management';
+    protected static string | \UnitEnum | null $navigationGroup = 'Child Management';
 
     protected static ?int $navigationSort = 1;
 
@@ -90,9 +113,10 @@ class ChildResource extends Resource
         return $query;
     }
 
-    public static function form(Form $form): Form
+    public static function form(Schema $schema): Schema
     {
-        return $form->schema(ChildForm::make());
+        return $schema
+            ->components(ChildForm::make());
     }
 
     public static function table(Table $table): Table
@@ -108,26 +132,26 @@ class ChildResource extends Resource
                     ->circular()
                     ->defaultImageUrl(url('/images/default-avatar.svg'))
                     ->toggleable(),
-                Tables\Columns\TextColumn::make('first_name')
+                TextColumn::make('first_name')
                     ->searchable()
                     ->sortable(),
-                Tables\Columns\TextColumn::make('last_name')
+                TextColumn::make('last_name')
                     ->searchable()
                     ->sortable(),
-                Tables\Columns\TextColumn::make('date_of_birth')
+                TextColumn::make('date_of_birth')
                     ->date()
                     ->sortable(),
-                Tables\Columns\TextColumn::make('gender')
+                TextColumn::make('gender')
                     ->badge()
                     ->color(fn(string $state): string => match ($state) {
                         'male' => 'info',
                         'female' => 'pink',
                         default => 'gray',
                     }),
-                Tables\Columns\TextColumn::make('centres.name')
+                TextColumn::make('centres.name')
                     ->searchable()
                     ->sortable(),
-                Tables\Columns\TextColumn::make('tenant_status')
+                TextColumn::make('tenant_status')
                     ->label('Status')
                     ->badge()
                     ->getStateUsing(function (Child $record): string {
@@ -177,17 +201,17 @@ class ChildResource extends Resource
                             return $status === ChildStatus::ALUMNI;
                         },
                     ]),
-                Tables\Columns\TextColumn::make('created_at')
+                TextColumn::make('created_at')
                     ->dateTime()
                     ->sortable()
                     ->toggleable(isToggledHiddenByDefault: true),
-                Tables\Columns\TextColumn::make('updated_at')
+                TextColumn::make('updated_at')
                     ->dateTime()
                     ->sortable()
                     ->toggleable(isToggledHiddenByDefault: true),
             ])
             ->filters([
-                Tables\Filters\SelectFilter::make('status')
+                SelectFilter::make('status')
                     ->options(ChildStatus::options())
                     ->query(function (Builder $query, array $data): Builder {
                         if (empty($data['value'])) {
@@ -204,12 +228,12 @@ class ChildResource extends Resource
                                 ->where('status', $data['value']);
                         });
                     }),
-                Tables\Filters\SelectFilter::make('gender')
+                SelectFilter::make('gender')
                     ->options([
                         'male' => 'Male',
                         'female' => 'Female',
                     ]),
-                Tables\Filters\SelectFilter::make('centre')
+                SelectFilter::make('centre')
                     ->label('Centre')
                     ->options(function () {
                         $user = Auth::user();
@@ -241,10 +265,10 @@ class ChildResource extends Resource
                             $subQuery->where('centres.id', $data['value']);
                         });
                     }),
-                Tables\Filters\Filter::make('date_of_birth')
-                    ->form([
-                        Forms\Components\DatePicker::make('birth_from'),
-                        Forms\Components\DatePicker::make('birth_until'),
+                Filter::make('date_of_birth')
+                    ->schema([
+                        DatePicker::make('birth_from'),
+                        DatePicker::make('birth_until'),
                     ])
                     ->query(function (Builder $query, array $data): Builder {
                         return $query
@@ -258,11 +282,11 @@ class ChildResource extends Resource
                             );
                     })
             ])
-            ->actions([
-                Tables\Actions\ActionGroup::make([
-                    Tables\Actions\ViewAction::make(),
-                    Tables\Actions\EditAction::make(),
-                    Tables\Actions\Action::make('activate')
+            ->recordActions([
+                ActionGroup::make([
+                    ViewAction::make(),
+                    EditAction::make(),
+                    Action::make('activate')
                         ->label('Activate')
                         ->icon('heroicon-o-check')
                         ->color('success')
@@ -284,7 +308,7 @@ class ChildResource extends Resource
 
                             $record->activateAtTenant($user->current_tenant_id);
                         }),
-                    Tables\Actions\Action::make('return')
+                    Action::make('return')
                         ->label('Mark as Returning')
                         ->icon('heroicon-o-arrow-path')
                         ->color('warning')
@@ -306,7 +330,7 @@ class ChildResource extends Resource
 
                             $record->markAsReturningAtTenant($user->current_tenant_id);
                         }),
-                    Tables\Actions\Action::make('alumni')
+                    Action::make('alumni')
                         ->label('Mark as Alumni')
                         ->icon('heroicon-o-academic-cap')
                         ->color('gray')
@@ -328,9 +352,9 @@ class ChildResource extends Resource
 
                             $record->markAsAlumniAtTenant($user->current_tenant_id);
                         }),
-                    Tables\Actions\DeleteAction::make(),
-                    Tables\Actions\RestoreAction::make(),
-                    Tables\Actions\ForceDeleteAction::make(),
+                    DeleteAction::make(),
+                    RestoreAction::make(),
+                    ForceDeleteAction::make(),
                 ])
                     ->label('Actions')
                     ->icon('heroicon-m-ellipsis-vertical')
@@ -338,11 +362,11 @@ class ChildResource extends Resource
                     ->color('gray')
                     ->button(),
             ])
-            ->bulkActions([
-                Tables\Actions\BulkActionGroup::make([
-                    Tables\Actions\DeleteBulkAction::make(),
-                    Tables\Actions\RestoreBulkAction::make(),
-                    Tables\Actions\ForceDeleteBulkAction::make(),
+            ->toolbarActions([
+                BulkActionGroup::make([
+                    DeleteBulkAction::make(),
+                    RestoreBulkAction::make(),
+                    ForceDeleteBulkAction::make(),
                 ]),
             ]);
     }
@@ -350,8 +374,8 @@ class ChildResource extends Resource
     public static function getRelations(): array
     {
         return [
-            RelationManagers\CentresRelationManager::class,
-            RelationManagers\EnrolmentsRelationManager::class,
+            CentresRelationManager::class,
+            EnrolmentsRelationManager::class,
             // RelationManagers\UsersRelationManager::class,
         ];
     }
@@ -359,10 +383,10 @@ class ChildResource extends Resource
     public static function getPages(): array
     {
         return [
-            'index' => Pages\ListChildren::route('/'),
-            'create' => Pages\CreateChild::route('/create'),
-            'view' => Pages\ViewChild::route('/{record}'),
-            'edit' => Pages\EditChild::route('/{record}/edit'),
+            'index' => ListChildren::route('/'),
+            'create' => CreateChild::route('/create'),
+            'view' => ViewChild::route('/{record}'),
+            'edit' => EditChild::route('/{record}/edit'),
         ];
     }
 }

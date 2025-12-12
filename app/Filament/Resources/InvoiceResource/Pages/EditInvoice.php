@@ -2,6 +2,7 @@
 
 namespace App\Filament\Resources\InvoiceResource\Pages;
 
+use Filament\Actions\DeleteAction;
 use App\Filament\Resources\InvoiceResource;
 use App\Enums\InvoiceStatus;
 use Filament\Actions;
@@ -15,7 +16,7 @@ class EditInvoice extends EditRecord
     protected function getHeaderActions(): array
     {
         return [
-            Actions\DeleteAction::make()
+            DeleteAction::make()
                 ->visible(fn () => Auth::user()->can('delete', $this->record)),
         ];
     }

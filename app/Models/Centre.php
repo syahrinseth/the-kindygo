@@ -114,7 +114,7 @@ class Centre extends Model
     /**
      * Get the children associated with this centre.
      *
-     * @return \Illuminate\Database\Eloquent\Relations\BelongsToMany
+     * @return BelongsToMany
      */
     public function children(): BelongsToMany
     {
@@ -185,8 +185,8 @@ class Centre extends Model
      * Scope a query to only include centres that the authenticated user has access to
      * and that belong to the user's current tenant.
      *
-     * @param  \Illuminate\Database\Eloquent\Builder  $query
-     * @return \Illuminate\Database\Eloquent\Builder
+     * @param Builder $query
+     * @return Builder
      */
     public function scopeForCurrentUser(Builder $query): Builder
     {

@@ -2,6 +2,9 @@
 
 namespace App\Models;
 
+use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Collection;
+use Illuminate\Database\Eloquent\Builder;
 use App\Enums\ChildEnrolmentStatus;
 use App\Enums\ChildEnrolmentBilledEvery;
 use App\Enums\ChildEnrolmentType;
@@ -60,7 +63,7 @@ class ChildEnrolment extends Model
     /**
      * Get the tenant that owns the enrolment.
      *
-     * @return \Illuminate\Database\Eloquent\Relations\BelongsTo
+     * @return BelongsTo
      */
     public function tenant(): BelongsTo
     {
@@ -70,7 +73,7 @@ class ChildEnrolment extends Model
     /**
      * Get the centre associated with the enrolment.
      *
-     * @return \Illuminate\Database\Eloquent\Relations\BelongsTo
+     * @return BelongsTo
      */
     public function centre(): BelongsTo
     {
@@ -80,7 +83,7 @@ class ChildEnrolment extends Model
     /**
      * Get the child that owns the enrolment.
      *
-     * @return \Illuminate\Database\Eloquent\Relations\BelongsTo
+     * @return BelongsTo
      */
     public function child(): BelongsTo
     {
@@ -90,7 +93,7 @@ class ChildEnrolment extends Model
     /**
      * Get the product associated with the enrolment.
      *
-     * @return \Illuminate\Database\Eloquent\Relations\BelongsTo
+     * @return BelongsTo
      */
     public function product(): BelongsTo
     {
@@ -100,7 +103,7 @@ class ChildEnrolment extends Model
     /**
      * Get the invoice items associated with this enrolment.
      *
-     * @return \Illuminate\Database\Eloquent\Relations\HasMany
+     * @return HasMany
      */
     public function invoiceItems()
     {
@@ -110,7 +113,7 @@ class ChildEnrolment extends Model
     /**
      * Get the invoices that have items for this enrolment.
      *
-     * @return \Illuminate\Database\Eloquent\Collection
+     * @return Collection
      */
     public function getInvoices()
     {
@@ -123,8 +126,8 @@ class ChildEnrolment extends Model
     /**
      * Scope a query to only include active enrolments.
      *
-     * @param  \Illuminate\Database\Eloquent\Builder  $query
-     * @return \Illuminate\Database\Eloquent\Builder
+     * @param Builder $query
+     * @return Builder
      */
     public function scopeActive($query)
     {
@@ -138,8 +141,8 @@ class ChildEnrolment extends Model
      * - Have already started (date_start <= now)
      * - Have not ended yet (date_end is null OR date_end >= now)
      *
-     * @param  \Illuminate\Database\Eloquent\Builder  $query
-     * @return \Illuminate\Database\Eloquent\Builder
+     * @param Builder $query
+     * @return Builder
      */
     public function scopeCurrent($query)
     {
@@ -155,8 +158,8 @@ class ChildEnrolment extends Model
      * Scope a query to include active enrolments that haven't ended yet.
      * This includes enrolments that may have future start dates.
      *
-     * @param  \Illuminate\Database\Eloquent\Builder  $query
-     * @return \Illuminate\Database\Eloquent\Builder
+     * @param Builder $query
+     * @return Builder
      */
     public function scopeNotEnded($query)
     {
@@ -171,8 +174,8 @@ class ChildEnrolment extends Model
      * Scope a query to include enrolments that are running today.
      * This includes enrolments where today is between start and end dates.
      *
-     * @param  \Illuminate\Database\Eloquent\Builder  $query
-     * @return \Illuminate\Database\Eloquent\Builder
+     * @param Builder $query
+     * @return Builder
      */
     public function scopeRunningToday($query)
     {
@@ -187,9 +190,9 @@ class ChildEnrolment extends Model
     /**
      * Scope a query to filter by enrolment type.
      *
-     * @param  \Illuminate\Database\Eloquent\Builder  $query
+     * @param Builder $query
      * @param  ChildEnrolmentType  $type
-     * @return \Illuminate\Database\Eloquent\Builder
+     * @return Builder
      */
     public function scopeByType($query, ChildEnrolmentType $type)
     {

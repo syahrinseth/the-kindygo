@@ -2,6 +2,26 @@
 
 namespace App\Filament\Resources;
 
+use Filament\Schemas\Components\Section;
+use Filament\Forms\Components\Select;
+use Closure;
+use Filament\Forms\Components\DateTimePicker;
+use Filament\Forms\Components\Repeater;
+use Filament\Forms\Components\Textarea;
+use Filament\Tables\Columns\TextColumn;
+use Filament\Tables\Columns\IconColumn;
+use Filament\Tables\Filters\Filter;
+use Filament\Actions\ActionGroup;
+use Filament\Actions\ViewAction;
+use Filament\Actions\EditAction;
+use Filament\Actions\Action;
+use App\Services\ChildEnrolmentInvoiceService;
+use Filament\Actions\BulkActionGroup;
+use App\Filament\Resources\ChildEnrolmentResource\RelationManagers\InvoiceItemsRelationManager;
+use App\Filament\Resources\ChildEnrolmentResource\Pages\ListChildEnrolments;
+use App\Filament\Resources\ChildEnrolmentResource\Pages\CreateChildEnrolment;
+use App\Filament\Resources\ChildEnrolmentResource\Pages\ViewChildEnrolment;
+use App\Filament\Resources\ChildEnrolmentResource\Pages\EditChildEnrolment;
 use App\Filament\Resources\ChildEnrolmentResource\Pages;
 use App\Filament\Resources\ChildEnrolmentResource\RelationManagers;
 use App\Models\ChildEnrolment;
@@ -13,22 +33,25 @@ use App\Enums\ChildEnrolmentBilledEvery;
 use App\Enums\ChildEnrolmentType;
 use App\Policies\ChildEnrolmentPolicy;
 use Filament\Forms;
-use Filament\Forms\Form;
+use Filament\Actions;
 use Filament\Resources\Resource;
 use Filament\Tables;
 use Filament\Tables\Table;
+use Filament\Schemas\Schema;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\SoftDeletingScope;
 use Filament\Tables\Filters\SelectFilter;
 use Filament\Support\Enums\FontWeight;
 use Filament\Notifications\Notification;
 use Illuminate\Support\Facades\Auth;
+use BackedEnum;
+use UnitEnum;
 
 class ChildEnrolmentResource extends Resource
 {
     protected static ?string $model = ChildEnrolment::class;
 
-    protected static ?string $navigationIcon = 'heroicon-o-academic-cap';
+    protected static string | \BackedEnum | null $navigationIcon = 'heroicon-o-academic-cap';
 
     protected static ?string $navigationLabel = 'Child Enrolments';
 
@@ -36,19 +59,19 @@ class ChildEnrolmentResource extends Resource
 
     protected static ?string $pluralModelLabel = 'Child Enrolments';
 
-    protected static ?string $navigationGroup = 'Child Management';
+    protected static string | \UnitEnum | null $navigationGroup = 'Child Management';
 
     protected static ?int $navigationSort = 2;
 
     protected static string $policy = ChildEnrolmentPolicy::class;
 
-    public static function form(Form $form): Form
+    public static function form(Schema $schema): Schema
     {
-        return $form
-            ->schema([
-                Forms\Components\Section::make('Enrolment Details')
+        return $schema
+            ->components([
+                Section::make('Enrolment Details')
                     ->schema([
-                        Forms\Components\Select::make('child_id')
+                        Select::make('child_id')
                             ->relationship('child', 'first_name')
                             ->getOptionLabelFromRecordUsing(fn($record) => $record->full_name)
                             ->searchable()
@@ -67,7 +90,7 @@ class ChildEnrolmentResource extends Resource
                             )
                             ->columnSpan(1),
 
-                        Forms\Components\Select::make('centre_id')
+                        Select::make('centre_id')
                             ->label('Centre')
                             ->searchable()
                             ->preload()
@@ -137,7 +160,7 @@ class ChildEnrolmentResource extends Resource
                             })
                             ->rules([
                                 function (callable $get) {
-                                    return function (string $attribute, $value, \Closure $fail) use ($get) {
+                                    return function (string $attribute, $value, Closure $fail) use ($get) {
                                         $childId = $get('child_id');
                                         if ($childId && $value) {
                                             $child = Child::find($childId);
@@ -150,7 +173,7 @@ class ChildEnrolmentResource extends Resource
                             ])
                             ->columnSpan(1),
 
-                        Forms\Components\Select::make('product_id')
+                        Select::make('product_id')
                             ->label('Product')
                             ->searchable()
                             ->preload()
@@ -194,7 +217,7 @@ class ChildEnrolmentResource extends Resource
                             })
                             ->rules([
                                 function (callable $get) {
-                                    return function (string $attribute, $value, \Closure $fail) use ($get) {
+                                    return function (string $attribute, $value, Closure $fail) use ($get) {
                                         $centreId = $get('centre_id');
                                         if ($centreId && $value) {
                                             $product = Product::find($value);
@@ -213,7 +236,7 @@ class ChildEnrolmentResource extends Resource
                             ])
                             ->columnSpan(1),
 
-                        Forms\Components\Select::make('status')
+                        Select::make('status')
                             ->options(ChildEnrolmentStatus::options())
                             ->default(ChildEnrolmentStatus::PENDING->value)
                             ->required()
@@ -221,9 +244,9 @@ class ChildEnrolmentResource extends Resource
                     ])
                     ->columns(2),
 
-                Forms\Components\Section::make('Program Details')
+                Section::make('Program Details')
                     ->schema([
-                        Forms\Components\Select::make('type')
+                        Select::make('type')
                             ->options(ChildEnrolmentType::options())
                             ->default(ChildEnrolmentType::FULL_TIME->value)
                             ->required()
@@ -245,7 +268,7 @@ class ChildEnrolmentResource extends Resource
                             })
                             ->columnSpan(1),
 
-                        Forms\Components\Select::make('billed_every')
+                        Select::make('billed_every')
                             ->options(function (callable $get) {
                                 $type = $get('type');
 
@@ -287,26 +310,26 @@ class ChildEnrolmentResource extends Resource
                     ])
                     ->columns(2),
 
-                Forms\Components\Section::make('Duration')
+                Section::make('Duration')
                     ->schema([
-                        Forms\Components\DateTimePicker::make('date_start')
+                        DateTimePicker::make('date_start')
                             ->label('Start Date')
                             ->required()
                             ->default(now())
                             ->columnSpan(1),
 
-                        Forms\Components\DateTimePicker::make('date_end')
+                        DateTimePicker::make('date_end')
                             ->label('End Date')
                             ->nullable()
                             ->columnSpan(1),
                     ])
                     ->columns(2),
 
-                Forms\Components\Section::make('Additional Products')
+                Section::make('Additional Products')
                     ->schema([
-                        Forms\Components\Repeater::make('additional_products')
+                        Repeater::make('additional_products')
                             ->schema([
-                                Forms\Components\Select::make('product_id')
+                                Select::make('product_id')
                                     ->label('Product')
                                     ->searchable()
                                     ->preload()
@@ -339,24 +362,24 @@ class ChildEnrolmentResource extends Resource
                                     })
                                     ->columnSpan(2),
 
-                                Forms\Components\Select::make('billed_every')
+                                Select::make('billed_every')
                                     ->label('Billing Frequency')
                                     ->options(ChildEnrolmentBilledEvery::options())
                                     ->default(ChildEnrolmentBilledEvery::MONTHLY->value)
                                     ->required()
                                     ->columnSpan(1),
 
-                                Forms\Components\DateTimePicker::make('date_start')
+                                DateTimePicker::make('date_start')
                                     ->label('Start Date')
                                     ->default(now())
                                     ->columnSpan(1),
 
-                                Forms\Components\DateTimePicker::make('date_end')
+                                DateTimePicker::make('date_end')
                                     ->label('End Date')
                                     ->nullable()
                                     ->columnSpan(1),
 
-                                Forms\Components\Textarea::make('notes')
+                                Textarea::make('notes')
                                     ->label('Notes')
                                     ->placeholder('Optional notes for this additional product')
                                     ->columnSpan(3),
@@ -394,25 +417,25 @@ class ChildEnrolmentResource extends Resource
     {
         return $table
             ->columns([
-                Tables\Columns\TextColumn::make('child.full_name')
+                TextColumn::make('child.full_name')
                     ->label('Child')
                     ->searchable(['first_name', 'last_name'])
                     ->sortable()
                     ->weight(FontWeight::Medium),
 
-                Tables\Columns\TextColumn::make('centre.name')
+                TextColumn::make('centre.name')
                     ->label('Centre')
                     ->searchable()
                     ->sortable()
                     ->weight(FontWeight::Medium),
 
-                Tables\Columns\TextColumn::make('product.name')
+                TextColumn::make('product.name')
                     ->label('Product')
                     ->searchable()
                     ->sortable()
                     ->weight(FontWeight::Medium),
 
-                Tables\Columns\TextColumn::make('additional_products_count')
+                TextColumn::make('additional_products_count')
                     ->label('Additional Products')
                     ->getStateUsing(function (ChildEnrolment $record): string {
                         $additionalProducts = $record->additional_products ?? [];
@@ -452,7 +475,7 @@ class ChildEnrolmentResource extends Resource
                         return implode(', ', $productNames);
                     }),
 
-                Tables\Columns\TextColumn::make('status')
+                TextColumn::make('status')
                     ->badge()
                     ->color(fn($state): string => match ($state) {
                         'active' => 'success',
@@ -466,29 +489,29 @@ class ChildEnrolmentResource extends Resource
                     ->formatStateUsing(fn($state): string => ucfirst($state->value))
                     ->sortable(),
 
-                Tables\Columns\TextColumn::make('type')
+                TextColumn::make('type')
                     ->badge()
                     ->color('gray')
                     ->formatStateUsing(fn($state): string => ucwords(str_replace('_', ' ', $state->value)))
                     ->sortable(),
 
-                Tables\Columns\TextColumn::make('billed_every')
+                TextColumn::make('billed_every')
                     ->label('Billing Frequency')
                     ->formatStateUsing(fn($state): string => ucwords(str_replace('_', ' ', $state->value)))
                     ->sortable(),
 
-                Tables\Columns\TextColumn::make('date_start')
+                TextColumn::make('date_start')
                     ->label('Start Date')
                     ->date()
                     ->sortable(),
 
-                Tables\Columns\TextColumn::make('date_end')
+                TextColumn::make('date_end')
                     ->label('End Date')
                     ->date()
                     ->placeholder('Ongoing')
                     ->sortable(),
 
-                Tables\Columns\IconColumn::make('is_active')
+                IconColumn::make('is_active')
                     ->label('Active')
                     ->boolean()
                     ->getStateUsing(fn(ChildEnrolment $record): bool => $record->isActive())
@@ -497,12 +520,12 @@ class ChildEnrolmentResource extends Resource
                     ->trueColor('success')
                     ->falseColor('danger'),
 
-                Tables\Columns\TextColumn::make('created_at')
+                TextColumn::make('created_at')
                     ->dateTime()
                     ->sortable()
                     ->toggleable(isToggledHiddenByDefault: true),
 
-                Tables\Columns\TextColumn::make('updated_at')
+                TextColumn::make('updated_at')
                     ->dateTime()
                     ->sortable()
                     ->toggleable(isToggledHiddenByDefault: true),
@@ -527,28 +550,28 @@ class ChildEnrolmentResource extends Resource
                     ->options(ChildEnrolmentBilledEvery::options())
                     ->multiple(),
 
-                Tables\Filters\Filter::make('active_only')
+                Filter::make('active_only')
                     ->label('Active Enrolments')
                     ->query(fn(Builder $query): Builder => $query->where('status', ChildEnrolmentStatus::ACTIVE))
                     ->toggle(),
 
-                Tables\Filters\Filter::make('current_only')
+                Filter::make('current_only')
                     ->label('Current Enrolments')
                     ->query(fn(Builder $query): Builder => $query->current())
                     ->toggle(),
             ])
-            ->actions([
-                Tables\Actions\ActionGroup::make([
-                    Tables\Actions\ViewAction::make()
+            ->recordActions([
+                ActionGroup::make([
+                    ViewAction::make()
                         ->visible(fn(ChildEnrolment $record): bool => Auth::user()->can('view', $record)),
-                    Tables\Actions\EditAction::make()
+                    EditAction::make()
                         ->visible(fn(ChildEnrolment $record): bool => Auth::user()->can('update', $record)),
-                    Tables\Actions\Action::make('generate_invoices')
+                    Action::make('generate_invoices')
                         ->label('Generate Invoices')
                         ->icon('heroicon-o-document-plus')
                         ->color('success')
                         ->action(function (ChildEnrolment $record) {
-                            $invoiceService = app(\App\Services\ChildEnrolmentInvoiceService::class);
+                            $invoiceService = app(ChildEnrolmentInvoiceService::class);
                             $enrolments = $invoiceService->getRelatedEnrolments($record);
                             if (empty($enrolments)) {
                                 Notification::make()
@@ -570,7 +593,7 @@ class ChildEnrolmentResource extends Resource
                         })
                         ->requiresConfirmation()
                         ->visible(fn(ChildEnrolment $record): bool => Auth::user()->can('update', $record)),
-                    // Tables\Actions\DeleteAction::make()
+                    // Actions\DeleteAction::make()
                     //     ->visible(fn (ChildEnrolment $record): bool => Auth::user()->can('delete', $record)), // temp disabled
                 ])
                     ->label('Actions')
@@ -579,9 +602,9 @@ class ChildEnrolmentResource extends Resource
                     ->color('gray')
                     ->button(),
             ])
-            ->bulkActions([
-                Tables\Actions\BulkActionGroup::make([
-                    // Tables\Actions\DeleteBulkAction::make()
+            ->toolbarActions([
+                BulkActionGroup::make([
+                    // Actions\DeleteBulkAction::make()
                     //     ->visible(fn (): bool => Auth::user()->can('delete', [Auth::user(), ChildEnrolment::class])), // temp disabled
                 ]),
             ])
@@ -591,17 +614,17 @@ class ChildEnrolmentResource extends Resource
     public static function getRelations(): array
     {
         return [
-            RelationManagers\InvoiceItemsRelationManager::class,
+            InvoiceItemsRelationManager::class,
         ];
     }
 
     public static function getPages(): array
     {
         return [
-            'index' => Pages\ListChildEnrolments::route('/'),
-            'create' => Pages\CreateChildEnrolment::route('/create'),
-            'view' => Pages\ViewChildEnrolment::route('/{record}'),
-            'edit' => Pages\EditChildEnrolment::route('/{record}/edit'),
+            'index' => ListChildEnrolments::route('/'),
+            'create' => CreateChildEnrolment::route('/create'),
+            'view' => ViewChildEnrolment::route('/{record}'),
+            'edit' => EditChildEnrolment::route('/{record}/edit'),
         ];
     }
 

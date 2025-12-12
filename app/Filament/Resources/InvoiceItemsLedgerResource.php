@@ -2,6 +2,14 @@
 
 namespace App\Filament\Resources;
 
+use Filament\Forms\Components\TextInput;
+use Filament\Forms\Components\Select;
+use Filament\Forms\Components\Toggle;
+use Filament\Forms\Components\DatePicker;
+use Filament\Actions\ActionGroup;
+use Filament\Actions\ViewAction;
+use App\Filament\Resources\InvoiceItemsLedgerResource\Pages\ListInvoiceItemsLedgers;
+use App\Filament\Resources\InvoiceItemsLedgerResource\Pages\ViewInvoiceItemsLedger;
 use App\Filament\Resources\InvoiceItemsLedgerResource\Pages;
 use App\Filament\Resources\InvoiceItemsLedgerResource\RelationManagers;
 use App\Models\InvoiceItem;
@@ -11,8 +19,8 @@ use App\Policies\InvoiceItemsLedgerPolicy;
 use App\Enums\InvoiceItemType;
 use App\Enums\InvoiceStatus;
 use App\Enums\PaymentStatus;
+use Filament\Actions;
 use Filament\Forms;
-use Filament\Forms\Form;
 use Filament\Resources\Resource;
 use Filament\Tables;
 use Filament\Tables\Table;
@@ -23,6 +31,9 @@ use Filament\Tables\Filters\Filter;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\SoftDeletingScope;
 use Illuminate\Support\Facades\Auth;
+use BackedEnum;
+use UnitEnum;
+use Filament\Schemas\Schema;
 
 class InvoiceItemsLedgerResource extends Resource
 {
@@ -33,7 +44,7 @@ class InvoiceItemsLedgerResource extends Resource
     // Disable tenant ownership relationship for this resource
     protected static ?string $tenantOwnershipRelationshipName = null;
 
-    protected static ?string $navigationIcon = 'heroicon-o-document-text';
+    protected static string | \BackedEnum | null $navigationIcon = 'heroicon-o-document-text';
     
     protected static ?string $navigationLabel = 'Invoice Items Ledger';
     
@@ -41,7 +52,7 @@ class InvoiceItemsLedgerResource extends Resource
     
     protected static ?string $pluralModelLabel = 'Invoice Items Ledger';
     
-    protected static ?string $navigationGroup = 'Financial Management';
+    protected static string | \UnitEnum | null $navigationGroup = 'Financial Management';
     
     protected static ?int $navigationSort = 3;
 
@@ -49,42 +60,42 @@ class InvoiceItemsLedgerResource extends Resource
 
     protected static ?string $tenantRelationshipName = null;
 
-    public static function form(Form $form): Form
+    public static function form(Schema $schema): Schema
     {
-        return $form
-            ->schema([
-                Forms\Components\TextInput::make('name')
+        return $schema
+            ->components([
+                TextInput::make('name')
                     ->label('Item Name')
                     ->disabled(),
                     
-                Forms\Components\Select::make('type')
+                Select::make('type')
                     ->options(InvoiceItemType::options())
                     ->disabled(),
                     
-                Forms\Components\TextInput::make('price')
+                TextInput::make('price')
                     ->label('Unit Price')
                     ->disabled(),
                     
-                Forms\Components\TextInput::make('quantity')
+                TextInput::make('quantity')
                     ->disabled(),
                     
-                Forms\Components\TextInput::make('total')
+                TextInput::make('total')
                     ->label('Total Amount')
                     ->disabled(),
                     
-                Forms\Components\TextInput::make('paid_amount')
+                TextInput::make('paid_amount')
                     ->label('Paid Amount')
                     ->disabled(),
                     
-                Forms\Components\TextInput::make('balance_amount')
+                TextInput::make('balance_amount')
                     ->label('Balance Amount')
                     ->disabled(),
                     
-                Forms\Components\Toggle::make('paid')
+                Toggle::make('paid')
                     ->label('Fully Paid')
                     ->disabled(),
                     
-                Forms\Components\DatePicker::make('effective_date')
+                DatePicker::make('effective_date')
                     ->label('Effective Date')
                     ->disabled(),
             ]);
@@ -285,9 +296,9 @@ class InvoiceItemsLedgerResource extends Resource
                 //     ])->toArray()),
                     
                 Filter::make('effective_date')
-                    ->form([
-                        Forms\Components\DatePicker::make('from'),
-                        Forms\Components\DatePicker::make('until'),
+                    ->schema([
+                        DatePicker::make('from'),
+                        DatePicker::make('until'),
                     ])
                     ->query(function (Builder $query, array $data): Builder {
                         return $query
@@ -301,9 +312,9 @@ class InvoiceItemsLedgerResource extends Resource
                             );
                     }),
             ])
-            ->actions([
-                Tables\Actions\ActionGroup::make([
-                    Tables\Actions\ViewAction::make(),
+            ->recordActions([
+                ActionGroup::make([
+                    ViewAction::make(),
                 ])
                     ->label('Actions')
                     ->icon('heroicon-m-ellipsis-vertical')
@@ -311,7 +322,7 @@ class InvoiceItemsLedgerResource extends Resource
                     ->color('gray')
                     ->button(),
             ])
-            ->bulkActions([
+            ->toolbarActions([
                 // Remove bulk actions for ledger view
             ])
             ->defaultSort('effective_date', 'desc')
@@ -329,8 +340,8 @@ class InvoiceItemsLedgerResource extends Resource
     public static function getPages(): array
     {
         return [
-            'index' => Pages\ListInvoiceItemsLedgers::route('/'),
-            'view' => Pages\ViewInvoiceItemsLedger::route('/{record}'),
+            'index' => ListInvoiceItemsLedgers::route('/'),
+            'view' => ViewInvoiceItemsLedger::route('/{record}'),
         ];
     }
 }

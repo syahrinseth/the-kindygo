@@ -2,6 +2,7 @@
 
 namespace App\Console\Commands;
 
+use Exception;
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Config;
@@ -62,7 +63,7 @@ class TestMailConfiguration extends Command
             
             $this->info("✅ Mail configuration test completed successfully!");
             
-        } catch (\Exception $e) {
+        } catch (Exception $e) {
             $this->error("❌ Mail configuration test failed:");
             $this->error("Error: " . $e->getMessage());
             

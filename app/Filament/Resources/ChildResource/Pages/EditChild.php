@@ -2,6 +2,7 @@
 
 namespace App\Filament\Resources\ChildResource\Pages;
 
+use Filament\Actions\DeleteAction;
 use App\Enums\ChildStatus;
 use App\Filament\Resources\ChildResource;
 use Filament\Actions;
@@ -15,7 +16,7 @@ class EditChild extends EditRecord
     protected function getHeaderActions(): array
     {
         return [
-            Actions\DeleteAction::make(),
+            DeleteAction::make(),
         ];
     }
     

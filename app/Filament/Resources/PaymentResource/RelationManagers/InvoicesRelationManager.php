@@ -2,14 +2,20 @@
 
 namespace App\Filament\Resources\PaymentResource\RelationManagers;
 
+use Filament\Forms\Components\Select;
+use Filament\Forms\Components\TextInput;
+use Filament\Tables\Columns\TextColumn;
+use Filament\Actions\Action;
+use App\Filament\Resources\InvoiceResource;
 use App\Models\Invoice;
 use Filament\Forms;
-use Filament\Forms\Form;
+use Filament\Actions;
 use Filament\Resources\RelationManagers\RelationManager;
 use Filament\Tables;
 use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Facades\Auth;
+use Filament\Schemas\Schema;
 
 class InvoicesRelationManager extends RelationManager
 {
@@ -21,11 +27,11 @@ class InvoicesRelationManager extends RelationManager
 
     protected static ?string $modelLabel = 'Invoice';
 
-    public function form(Form $form): Form
+    public function form(Schema $schema): Schema
     {
-        return $form
-            ->schema([
-                Forms\Components\Select::make('id')
+        return $schema
+            ->components([
+                Select::make('id')
                     ->label('Invoice')
                     ->options(function () {
                         $user = Auth::user();
@@ -43,7 +49,7 @@ class InvoicesRelationManager extends RelationManager
                     ->searchable()
                     ->required(),
                     
-                Forms\Components\TextInput::make('amount')
+                TextInput::make('amount')
                     ->label('Payment Amount')
                     ->required()
                     ->numeric()
@@ -51,7 +57,7 @@ class InvoicesRelationManager extends RelationManager
                     ->step(0.01)
                     ->minValue(0)
                     ->helperText('Amount applied to this invoice')
-                    ->afterStateHydrated(function (Forms\Components\TextInput $component, $state) {
+                    ->afterStateHydrated(function (TextInput $component, $state) {
                         // Convert from cents to decimal for display
                         $component->state($state ? number_format($state / 100, 2, '.', '') : '0.00');
                     })
@@ -64,17 +70,17 @@ class InvoicesRelationManager extends RelationManager
         return $table
             ->recordTitleAttribute('number')
             ->columns([
-                Tables\Columns\TextColumn::make('number')
+                TextColumn::make('number')
                     ->label('Invoice Number')
                     ->searchable()
                     ->sortable(),
                     
-                Tables\Columns\TextColumn::make('user.name')
+                TextColumn::make('user.name')
                     ->label('User')
                     ->searchable()
                     ->sortable(),
                     
-                Tables\Columns\TextColumn::make('status')
+                TextColumn::make('status')
                     ->badge()
                     ->color(fn ($state): string => match ($state->value) {
                         'draft' => 'gray',
@@ -85,19 +91,19 @@ class InvoicesRelationManager extends RelationManager
                         default => 'gray',
                     }),
                     
-                Tables\Columns\TextColumn::make('total')
+                TextColumn::make('total')
                     ->label('Invoice Total')
                     ->money('MYR')
                     ->formatStateUsing(fn ($state) => $state / 100)
                     ->sortable(),
                     
-                Tables\Columns\TextColumn::make('pivot.amount')
+                TextColumn::make('pivot.amount')
                     ->label('Payment Amount')
                     ->money('MYR')
                     ->formatStateUsing(fn ($state) => $state / 100)
                     ->sortable(),
                     
-                Tables\Columns\TextColumn::make('date')
+                TextColumn::make('date')
                     ->label('Invoice Date')
                     ->date('M d, Y')
                     ->sortable(),
@@ -106,14 +112,14 @@ class InvoicesRelationManager extends RelationManager
                 //
             ])
             ->headerActions([])
-            ->actions([
-                Tables\Actions\Action::make('view_invoice')
+            ->recordActions([
+                Action::make('view_invoice')
                     ->label('View Invoice')
                     ->icon('heroicon-m-eye')
-                    ->url(fn (Invoice $record): string => \App\Filament\Resources\InvoiceResource::getUrl('view', ['record' => $record]))
+                    ->url(fn (Invoice $record): string => InvoiceResource::getUrl('view', ['record' => $record]))
                     ->openUrlInNewTab()
                     ->visible(fn (Invoice $record) => Auth::user()->can('view', $record)),
             ])
-            ->bulkActions([]);
+            ->toolbarActions([]);
     }
 }

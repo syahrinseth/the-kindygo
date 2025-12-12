@@ -20,8 +20,8 @@
     ],
     "require": {
         "php": "^8.2",
-        "filament/filament": "^3.3",
-        "filament/spatie-laravel-media-library-plugin": "^3.2",
+        "filament/filament": "^4.0",
+        "filament/spatie-laravel-media-library-plugin": "^4.0",
         "klsheng/myinvois-php-sdk": "^1.0",
         "laravel/framework": "^12.0",
         "laravel/horizon": "^5.38",
@@ -38,6 +38,7 @@
     "require-dev": {
         "barryvdh/laravel-debugbar": "^3.16",
         "fakerphp/faker": "^1.23",
+        "filament/upgrade": "^4.0",
         "laravel/boost": "*",
         "laravel/pail": "^1.2.2",
         "laravel/pint": "^1.13",

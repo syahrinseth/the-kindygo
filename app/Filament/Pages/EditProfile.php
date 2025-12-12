@@ -2,11 +2,12 @@
 
 namespace App\Filament\Pages;
 
-use Filament\Pages\Auth\EditProfile as BaseEditProfile;
+use App\Models\User;
+use Illuminate\Database\Eloquent\Model;
 use App\Filament\Forms\UserForm;
 use Illuminate\Support\Facades\Auth;
 
-class EditProfile extends BaseEditProfile
+class EditProfile extends \Filament\Auth\Pages\EditProfile
 {
     public function getMaxContentWidth(): ?string
     {
@@ -25,7 +26,7 @@ class EditProfile extends BaseEditProfile
         ];
     }
 
-    public function getRecord(): \App\Models\User
+    public function getRecord(): User
     {
         return Auth::user()->load(['profile', 'userAddress', 'officeInfo']);
     }
@@ -33,7 +34,7 @@ class EditProfile extends BaseEditProfile
     protected function fillForm(): void
     {
         $user = $this->getRecord();
-        
+
         $data = [
             'name' => $user->name,
             'email' => $user->email,
@@ -75,7 +76,7 @@ class EditProfile extends BaseEditProfile
         $this->form->fill($data);
     }
 
-    protected function handleRecordUpdate(\Illuminate\Database\Eloquent\Model $record, array $data): \Illuminate\Database\Eloquent\Model
+    protected function handleRecordUpdate(Model $record, array $data): Model
     {
         $user = $record;
         $user->name = $data['name'];

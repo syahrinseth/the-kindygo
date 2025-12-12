@@ -356,7 +356,7 @@ class ChildEnrolmentInvoiceService
         // Find all active enrolments for the same tenant, parent, and centre
         $groupedEnrolments = ChildEnrolment::where('tenant_id', $enrolment->tenant_id)
             ->where('centre_id', $enrolment->centre_id)
-            ->where('status', \App\Enums\ChildEnrolmentStatus::ACTIVE)
+            ->where('status', ChildEnrolmentStatus::ACTIVE)
             ->whereHas('child.users', function ($query) use ($parent) {
                 $query->where('users.id', $parent->id);
             })

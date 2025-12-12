@@ -11,11 +11,11 @@ use Illuminate\Support\Facades\Auth;
 
 class FinanceDashboard extends Page
 {
-    protected static ?string $navigationIcon = 'heroicon-o-presentation-chart-bar';
+    protected static string | \BackedEnum | null $navigationIcon = 'heroicon-o-presentation-chart-bar';
 
-    protected static string $view = 'filament.pages.finance-dashboard';
+    protected string $view = 'filament.pages.finance-dashboard';
 
-    protected static ?string $navigationGroup = 'Finance';
+    protected static string | \UnitEnum | null $navigationGroup = 'Finance';
 
     protected static ?string $navigationLabel = 'Finance Dashboard';
 
@@ -40,7 +40,7 @@ class FinanceDashboard extends Page
         return [];
     }
 
-    public function getHeaderWidgetsColumns(): int | string | array
+    public function getHeaderWidgetsColumns(): int|array
     {
         return 1;
     }
@@ -79,7 +79,7 @@ class FinanceDashboard extends Page
         return [];
     }
 
-    public function getFooterWidgetsColumns(): int | string | array
+    public function getFooterWidgetsColumns(): int|array
     {
         return 1;
     }

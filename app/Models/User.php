@@ -3,6 +3,8 @@
 namespace App\Models;
 
 // use Illuminate\Contracts\Auth\MustVerifyEmail;
+use Exception;
+use Database\Factories\UserFactory;
 use App\Models\Centre;
 use App\Models\Child;
 use App\Models\Invoice;
@@ -34,7 +36,7 @@ use Spatie\Permission\Traits\HasRoles;
 
 class User extends Authenticatable implements FilamentUser, HasDefaultTenant, HasTenants, HasMedia, HasAvatar
 {
-    /** @use HasFactory<\Database\Factories\UserFactory> */
+    /** @use HasFactory<UserFactory> */
     use HasFactory, Notifiable, HasRoles, InteractsWithMedia;
 
     public function canAccessPanel(Panel $panel): bool
@@ -258,7 +260,7 @@ class User extends Authenticatable implements FilamentUser, HasDefaultTenant, Ha
     /**
      * Get the invoices associated with this user.
      *
-     * @return \Illuminate\Database\Eloquent\Relations\HasMany
+     * @return HasMany
      */
     public function invoices()
     {
@@ -268,7 +270,7 @@ class User extends Authenticatable implements FilamentUser, HasDefaultTenant, Ha
     /**
      * Get the children associated with this user.
      *
-     * @return \Illuminate\Database\Eloquent\Relations\BelongsToMany
+     * @return BelongsToMany
      */
     public function children(): BelongsToMany
     {
@@ -382,7 +384,7 @@ class User extends Authenticatable implements FilamentUser, HasDefaultTenant, Ha
      * Get the identification value for e-invoice.
      *
      * @return string
-     * @throws \Exception if no valid identification is available
+     * @throws Exception if no valid identification is available
      */
     public function getEInvoiceIdentification(): string
     {
@@ -391,7 +393,7 @@ class User extends Authenticatable implements FilamentUser, HasDefaultTenant, Ha
         }
 
         // If no profile available, throw exception
-        throw new \Exception("Customer '{$this->name}' must have a valid profile with NRIC or Passport number for e-Invoice submission.");
+        throw new Exception("Customer '{$this->name}' must have a valid profile with NRIC or Passport number for e-Invoice submission.");
     }
 
     public function getEInvoiceTIN(): string
@@ -401,7 +403,7 @@ class User extends Authenticatable implements FilamentUser, HasDefaultTenant, Ha
         }
 
         // If no profile available, throw exception
-        throw new \Exception("Customer '{$this->name}' must have a valid profile with TIN for e-Invoice submission.");
+        throw new Exception("Customer '{$this->name}' must have a valid profile with TIN for e-Invoice submission.");
     }
 
         /**

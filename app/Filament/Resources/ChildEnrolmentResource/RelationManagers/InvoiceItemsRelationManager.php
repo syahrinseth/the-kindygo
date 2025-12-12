@@ -2,14 +2,28 @@
 
 namespace App\Filament\Resources\ChildEnrolmentResource\RelationManagers;
 
+use Filament\Schemas\Components\Section;
+use Filament\Forms\Components\TextInput;
+use Filament\Forms\Components\Select;
+use Filament\Forms\Components\DatePicker;
+use Filament\Forms\Components\Toggle;
+use Filament\Forms\Components\Textarea;
+use Filament\Tables\Columns\TextColumn;
+use Filament\Tables\Columns\IconColumn;
+use Filament\Tables\Filters\SelectFilter;
+use Filament\Tables\Filters\Filter;
+use Carbon\Carbon;
+use Filament\Actions\ActionGroup;
+use Filament\Actions\Action;
 use Filament\Forms;
-use Filament\Forms\Form;
+use Filament\Actions;
 use Filament\Resources\RelationManagers\RelationManager;
 use Filament\Tables;
 use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\SoftDeletingScope;
 use Filament\Support\Enums\FontWeight;
+use Filament\Schemas\Schema;
 
 class InvoiceItemsRelationManager extends RelationManager
 {
@@ -21,26 +35,26 @@ class InvoiceItemsRelationManager extends RelationManager
 
     protected static ?string $pluralLabel = 'Invoice Items';
 
-    public function form(Form $form): Form
+    public function form(Schema $schema): Schema
     {
-        return $form
-            ->schema([
-                Forms\Components\Section::make('Invoice Item Details')
+        return $schema
+            ->components([
+                Section::make('Invoice Item Details')
                     ->schema([
-                        Forms\Components\TextInput::make('name')
+                        TextInput::make('name')
                             ->label('Item Description')
                             ->required()
                             ->maxLength(255)
                             ->columnSpan(2),
 
-                        Forms\Components\Select::make('product_id')
+                        Select::make('product_id')
                             ->label('Product')
                             ->relationship('product', 'name')
                             ->searchable()
                             ->preload()
                             ->columnSpan(1),
 
-                        Forms\Components\TextInput::make('price')
+                        TextInput::make('price')
                             ->label('Price')
                             ->numeric()
                             ->prefix('$')
@@ -48,7 +62,7 @@ class InvoiceItemsRelationManager extends RelationManager
                             ->required()
                             ->columnSpan(1),
 
-                        Forms\Components\TextInput::make('quantity')
+                        TextInput::make('quantity')
                             ->label('Quantity')
                             ->numeric()
                             ->default(1)
@@ -56,7 +70,7 @@ class InvoiceItemsRelationManager extends RelationManager
                             ->required()
                             ->columnSpan(1),
 
-                        Forms\Components\TextInput::make('discount')
+                        TextInput::make('discount')
                             ->label('Discount')
                             ->numeric()
                             ->prefix('$')
@@ -64,30 +78,30 @@ class InvoiceItemsRelationManager extends RelationManager
                             ->default(0)
                             ->columnSpan(1),
 
-                        Forms\Components\DatePicker::make('effective_date')
+                        DatePicker::make('effective_date')
                             ->label('Effective Date')
                             ->default(now())
                             ->required()
                             ->columnSpan(1),
 
-                        Forms\Components\Toggle::make('paid')
+                        Toggle::make('paid')
                             ->label('Paid')
                             ->default(false)
                             ->columnSpan(1),
                     ])
                     ->columns(2),
 
-                Forms\Components\Section::make('Period Information')
+                Section::make('Period Information')
                     ->schema([
-                        Forms\Components\DatePicker::make('period_start')
+                        DatePicker::make('period_start')
                             ->label('Period Start')
                             ->columnSpan(1),
 
-                        Forms\Components\DatePicker::make('period_end')
+                        DatePicker::make('period_end')
                             ->label('Period End')
                             ->columnSpan(1),
 
-                        Forms\Components\Textarea::make('description')
+                        Textarea::make('description')
                             ->label('Description')
                             ->placeholder('Additional details about this invoice item')
                             ->columnSpan(2),
@@ -101,7 +115,7 @@ class InvoiceItemsRelationManager extends RelationManager
         return $table
             ->recordTitleAttribute('name')
             ->columns([
-                Tables\Columns\TextColumn::make('invoice.number')
+                TextColumn::make('invoice.number')
                     ->label('Invoice #')
                     ->url(
                         fn($record): string =>
@@ -114,94 +128,94 @@ class InvoiceItemsRelationManager extends RelationManager
                     ->weight(FontWeight::Medium)
                     ->sortable(),
 
-                Tables\Columns\TextColumn::make('name')
+                TextColumn::make('name')
                     ->label('Description')
                     ->searchable()
                     ->weight(FontWeight::Medium)
                     ->wrap(),
 
-                Tables\Columns\TextColumn::make('product.name')
+                TextColumn::make('product.name')
                     ->label('Product')
                     ->searchable()
                     ->toggleable(),
 
-                Tables\Columns\TextColumn::make('price')
+                TextColumn::make('price')
                     ->label('Price')
                     ->money('MYR', 100)
                     ->sortable(),
 
-                Tables\Columns\TextColumn::make('quantity')
+                TextColumn::make('quantity')
                     ->label('Qty')
                     ->alignCenter()
                     ->sortable(),
 
-                Tables\Columns\TextColumn::make('total')
+                TextColumn::make('total')
                     ->label('Total')
                     ->money('MYR', 100)
                     ->weight(FontWeight::Bold)
                     ->sortable(),
 
-                Tables\Columns\IconColumn::make('paid')
+                IconColumn::make('paid')
                     ->label('Paid')
                     ->boolean()
                     ->trueColor('success')
                     ->falseColor('warning')
                     ->sortable(),
 
-                Tables\Columns\TextColumn::make('balance_amount')
+                TextColumn::make('balance_amount')
                     ->label('Balance')
                     ->money('MYR', 100)
                     ->color(fn($state): string => $state > 0 ? 'warning' : 'success')
                     ->sortable(),
 
-                Tables\Columns\TextColumn::make('effective_date')
+                TextColumn::make('effective_date')
                     ->label('Effective Date')
                     ->date()
                     ->sortable(),
 
-                Tables\Columns\TextColumn::make('period_start')
+                TextColumn::make('period_start')
                     ->label('Period Start')
                     ->date()
                     ->sortable()
                     ->toggleable(),
 
-                Tables\Columns\TextColumn::make('period_end')
+                TextColumn::make('period_end')
                     ->label('Period End')
                     ->date()
                     ->sortable()
                     ->toggleable(),
 
-                Tables\Columns\TextColumn::make('description')
+                TextColumn::make('description')
                     ->label('Description')
                     ->limit(30)
                     ->placeholder('-')
                     ->toggleable(isToggledHiddenByDefault: true),
 
-                Tables\Columns\TextColumn::make('created_at')
+                TextColumn::make('created_at')
                     ->label('Created')
                     ->dateTime()
                     ->sortable()
                     ->toggleable(isToggledHiddenByDefault: true),
             ])
             ->filters([
-                Tables\Filters\SelectFilter::make('paid')
+                SelectFilter::make('paid')
                     ->label('Payment Status')
                     ->options([
                         1 => 'Paid',
                         0 => 'Unpaid',
                     ]),
 
-                Tables\Filters\SelectFilter::make('product_id')
+                SelectFilter::make('product_id')
                     ->label('Product')
                     ->relationship('product', 'name')
                     ->searchable()
                     ->preload(),
 
-                Tables\Filters\Filter::make('effective_date')
-                    ->form([
-                        Forms\Components\DatePicker::make('from')
+                Filter::make('effective_date')
+                    ->schema([
+                        DatePicker::make('from')
                             ->label('From Date'),
-                        Forms\Components\DatePicker::make('until')
+                        DatePicker::make('until')
                             ->label('Until Date'),
                     ])
                     ->query(function (Builder $query, array $data): Builder {
@@ -218,10 +232,10 @@ class InvoiceItemsRelationManager extends RelationManager
                     ->indicateUsing(function (array $data): array {
                         $indicators = [];
                         if ($data['from'] ?? null) {
-                            $indicators['from'] = 'From ' . \Carbon\Carbon::parse($data['from'])->toFormattedDateString();
+                            $indicators['from'] = 'From ' . Carbon::parse($data['from'])->toFormattedDateString();
                         }
                         if ($data['until'] ?? null) {
-                            $indicators['until'] = 'Until ' . \Carbon\Carbon::parse($data['until'])->toFormattedDateString();
+                            $indicators['until'] = 'Until ' . Carbon::parse($data['until'])->toFormattedDateString();
                         }
                         return $indicators;
                     }),
@@ -229,9 +243,9 @@ class InvoiceItemsRelationManager extends RelationManager
             ->headerActions([
                 // Remove create action as invoice items should be created through the billing process
             ])
-            ->actions([
-                Tables\Actions\ActionGroup::make([
-                    Tables\Actions\Action::make('view_invoice')
+            ->recordActions([
+                ActionGroup::make([
+                    Action::make('view_invoice')
                         ->label('View Invoice')
                         ->icon('heroicon-o-document-text')
                         ->color('primary')
@@ -250,7 +264,7 @@ class InvoiceItemsRelationManager extends RelationManager
                     ->color('gray')
                     ->button(),
             ])
-            ->bulkActions([
+            ->toolbarActions([
                 // Remove bulk actions for safety
             ])
             ->defaultSort('created_at', 'desc')

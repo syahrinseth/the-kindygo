@@ -2,22 +2,25 @@
 
 namespace App\Filament\Widgets;
 
+use Filament\Actions\Contracts\HasActions;
+use Filament\Actions\Concerns\InteractsWithActions;
 use App\Models\Centre;
 use App\Models\User;
 use Filament\Facades\Filament;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Concerns\InteractsWithForms;
 use Filament\Forms\Contracts\HasForms;
-use Filament\Forms\Form;
 use Filament\Notifications\Notification;
 use Filament\Widgets\Widget;
+use Filament\Schemas\Schema;
 use Illuminate\Support\Facades\Auth;
 
-class CurrentCentreSelector extends Widget implements HasForms
+class CurrentCentreSelector extends Widget implements HasForms, HasActions, HasActions
 {
+    use InteractsWithActions;
     use InteractsWithForms;
 
-    protected static string $view = 'filament.widgets.current-centre-selector';
+    protected string $view = 'filament.widgets.current-centre-selector';
     
     protected static ?string $heading = 'Current Centre';
     
@@ -39,10 +42,10 @@ class CurrentCentreSelector extends Widget implements HasForms
         ]);
     }
 
-    public function form(Form $form): Form
+    public function form(Schema $schema): Schema
     {
-        return $form
-            ->schema([
+        return $schema
+            ->components([
                 Select::make('current_centre_id')
                     ->label('Current Centre')
                     ->options(function () {
@@ -55,8 +58,8 @@ class CurrentCentreSelector extends Widget implements HasForms
                     })
                     ->placeholder('Select a centre')
                     ->helperText('Select your current working centre'),
-            ])
-            ->statePath('data');
+                ])
+                ->statePath('data');
     }
 
     public function updateCurrentCentre(?string $centreId): void

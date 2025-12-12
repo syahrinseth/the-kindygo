@@ -2,6 +2,7 @@
 
 namespace App\Services;
 
+use Spatie\LaravelPdf\Facades\Pdf;
 use Spatie\Browsershot\Browsershot;
 use Spatie\LaravelPdf\PdfBuilder;
 
@@ -93,7 +94,7 @@ class PdfConfigurationService
      */
     public function createStandardPdf(string $view, array $data = []): PdfBuilder
     {
-        $pdf = \Spatie\LaravelPdf\Facades\Pdf::view($view, $data)
+        $pdf = Pdf::view($view, $data)
             ->format($this->getStandardFormat())
             ->margins(...$this->getStandardMargins());
 

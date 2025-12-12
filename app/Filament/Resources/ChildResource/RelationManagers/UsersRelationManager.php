@@ -2,9 +2,17 @@
 
 namespace App\Filament\Resources\ChildResource\RelationManagers;
 
+use Filament\Forms\Components\TextInput;
+use Filament\Forms\Components\Select;
+use Filament\Tables\Columns\TextColumn;
+use Filament\Actions\CreateAction;
+use Filament\Actions\EditAction;
+use Filament\Actions\DeleteAction;
+use Filament\Actions\BulkActionGroup;
+use Filament\Actions\DeleteBulkAction;
 use App\Models\User;
 use Filament\Forms;
-use Filament\Forms\Form;
+use Filament\Actions;
 use Filament\Resources\RelationManagers\RelationManager;
 use Filament\Tables;
 use Filament\Tables\Table;
@@ -12,6 +20,7 @@ use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletingScope;
 use Illuminate\Support\Facades\Hash;
+use Filament\Schemas\Schema;
 
 class UsersRelationManager extends RelationManager
 {
@@ -19,18 +28,18 @@ class UsersRelationManager extends RelationManager
 
     protected static ?string $recordTitleAttribute = 'name';
 
-    public function form(Form $form): Form
+    public function form(Schema $schema): Schema
     {
-        return $form
-            ->schema([
-                Forms\Components\TextInput::make('name')
+        return $schema
+            ->components([
+                TextInput::make('name')
                     ->required()
                     ->maxLength(255),
-                Forms\Components\TextInput::make('email')
+                TextInput::make('email')
                     ->email()
                     ->required()
                     ->maxLength(255),
-                Forms\Components\Select::make('relationship_type')
+                Select::make('relationship_type')
                     ->label('Relationship')
                     ->options([
                         'parent' => 'Parent',
@@ -46,13 +55,13 @@ class UsersRelationManager extends RelationManager
     {
         return $table
             ->columns([
-                Tables\Columns\TextColumn::make('name')
+                TextColumn::make('name')
                     ->searchable()
                     ->sortable(),
-                Tables\Columns\TextColumn::make('email')
+                TextColumn::make('email')
                     ->searchable()
                     ->sortable(),
-                Tables\Columns\TextColumn::make('pivot.relationship_type')
+                TextColumn::make('pivot.relationship_type')
                     ->label('Relationship')
                     ->formatStateUsing(fn (string $state): string => ucfirst($state)),
             ])
@@ -60,21 +69,21 @@ class UsersRelationManager extends RelationManager
                 //
             ])
             ->headerActions([
-                Tables\Actions\CreateAction::make()
-                    ->form([
-                        Forms\Components\TextInput::make('name')
+                CreateAction::make()
+                    ->schema([
+                        TextInput::make('name')
                             ->required()
                             ->maxLength(255),
-                        Forms\Components\TextInput::make('email')
+                        TextInput::make('email')
                             ->email()
                             ->required()
                             ->maxLength(255),
-                        Forms\Components\TextInput::make('password')
+                        TextInput::make('password')
                             ->password()
                             ->required()
                             ->minLength(8)
                             ->maxLength(255),
-                        Forms\Components\Select::make('relationship_type')
+                        Select::make('relationship_type')
                             ->label('Relationship')
                             ->options([
                                 'parent' => 'Parent',
@@ -102,17 +111,17 @@ class UsersRelationManager extends RelationManager
                         ]);
                     }),
             ])
-            ->actions([
-                Tables\Actions\EditAction::make()
-                    ->form([
-                        Forms\Components\TextInput::make('name')
+            ->recordActions([
+                EditAction::make()
+                    ->schema([
+                        TextInput::make('name')
                             ->required()
                             ->maxLength(255),
-                        Forms\Components\TextInput::make('email')
+                        TextInput::make('email')
                             ->email()
                             ->required()
                             ->maxLength(255),
-                        Forms\Components\Select::make('relationship_type')
+                        Select::make('relationship_type')
                             ->label('Relationship')
                             ->options([
                                 'parent' => 'Parent',
@@ -140,11 +149,11 @@ class UsersRelationManager extends RelationManager
                         
                         return $data;
                     }),
-                Tables\Actions\DeleteAction::make(),
+                DeleteAction::make(),
             ])
-            ->bulkActions([
-                Tables\Actions\BulkActionGroup::make([
-                    Tables\Actions\DeleteBulkAction::make(),
+            ->toolbarActions([
+                BulkActionGroup::make([
+                    DeleteBulkAction::make(),
                 ]),
             ]);
     }

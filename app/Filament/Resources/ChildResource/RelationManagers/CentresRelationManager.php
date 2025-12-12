@@ -2,28 +2,35 @@
 
 namespace App\Filament\Resources\ChildResource\RelationManagers;
 
+use Filament\Forms\Components\TextInput;
+use Filament\Tables\Columns\TextColumn;
+use Filament\Actions\AttachAction;
+use Filament\Actions\DetachAction;
+use Filament\Actions\BulkActionGroup;
+use Filament\Actions\DetachBulkAction;
 use Filament\Forms;
-use Filament\Forms\Form;
+use Filament\Actions;
 use Filament\Resources\RelationManagers\RelationManager;
 use Filament\Tables;
 use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\SoftDeletingScope;
 use Illuminate\Support\Facades\Auth;
+use Filament\Schemas\Schema;
 
 class CentresRelationManager extends RelationManager
 {
     protected static string $relationship = 'centres';
 
-    public function form(Form $form): Form
+    public function form(Schema $schema): Schema
     {
-        return $form
-            ->schema([
-                Forms\Components\TextInput::make('name')
+        return $schema
+            ->components([
+                TextInput::make('name')
                     ->required()
                     ->maxLength(255)
                     ->disabled(),
-                Forms\Components\TextInput::make('campus.name')
+                TextInput::make('campus.name')
                     ->label('Campus')
                     ->disabled(),
             ]);
@@ -34,17 +41,17 @@ class CentresRelationManager extends RelationManager
         return $table
             ->recordTitleAttribute('name')
             ->columns([
-                Tables\Columns\TextColumn::make('name')
+                TextColumn::make('name')
                     ->searchable()
                     ->sortable(),
-                Tables\Columns\TextColumn::make('campus.name')
+                TextColumn::make('campus.name')
                     ->label('Campus')
                     ->searchable()
                     ->sortable(),
-                Tables\Columns\TextColumn::make('status')
+                TextColumn::make('status')
                     ->badge()
                     ->sortable(),
-                Tables\Columns\TextColumn::make('created_at')
+                TextColumn::make('created_at')
                     ->label('Added to Centre')
                     ->dateTime()
                     ->sortable(),
@@ -53,7 +60,7 @@ class CentresRelationManager extends RelationManager
                 //
             ])
             ->headerActions([
-                Tables\Actions\AttachAction::make()
+                AttachAction::make()
                     ->preloadRecordSelect()
                     ->recordSelectOptionsQuery(fn (Builder $query) => $query->whereHas('users', function (Builder $subQuery) {
                         $user = Auth::user();
@@ -61,13 +68,13 @@ class CentresRelationManager extends RelationManager
                     }))
                     ->visible(fn () => Auth::user()->can('manageCentres', $this->getOwnerRecord())),
             ])
-            ->actions([
-                Tables\Actions\DetachAction::make()
+            ->recordActions([
+                DetachAction::make()
                     ->visible(fn () => Auth::user()->can('manageCentres', $this->getOwnerRecord())),
             ])
-            ->bulkActions([
-                Tables\Actions\BulkActionGroup::make([
-                    Tables\Actions\DetachBulkAction::make()
+            ->toolbarActions([
+                BulkActionGroup::make([
+                    DetachBulkAction::make()
                         ->visible(fn () => Auth::user()->can('manageCentres', $this->getOwnerRecord())),
                 ]),
             ]);

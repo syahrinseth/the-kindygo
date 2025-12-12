@@ -2,8 +2,11 @@
 
 namespace App\Filament\Resources\ProductResource\RelationManagers;
 
+use Filament\Tables\Columns\TextColumn;
+use Filament\Tables\Filters\SelectFilter;
+use Filament\Actions\ViewAction;
 use Filament\Forms;
-use Filament\Forms\Form;
+use Filament\Actions;
 use Filament\Resources\RelationManagers\RelationManager;
 use Filament\Tables;
 use Filament\Tables\Table;
@@ -21,48 +24,48 @@ class InvoiceItemsRelationManager extends RelationManager
         return $table
             ->recordTitleAttribute('name')
             ->columns([
-                Tables\Columns\TextColumn::make('invoice.number')
+                TextColumn::make('invoice.number')
                     ->label('Invoice')
                     ->sortable()
                     ->searchable(),
 
-                Tables\Columns\TextColumn::make('name')
+                TextColumn::make('name')
                     ->label('Item Name')
                     ->searchable()
                     ->sortable(),
 
-                Tables\Columns\TextColumn::make('quantity')
+                TextColumn::make('quantity')
                     ->numeric()
                     ->sortable(),
 
-                Tables\Columns\TextColumn::make('price')
+                TextColumn::make('price')
                     ->label('Unit Price')
                     ->money('MYR', divideBy: 100)
                     ->sortable(),
 
-                Tables\Columns\TextColumn::make('discount')
+                TextColumn::make('discount')
                     ->money('MYR', divideBy: 100)
                     ->sortable()
                     ->toggleable(),
 
-                Tables\Columns\TextColumn::make('total')
+                TextColumn::make('total')
                     ->money('MYR', divideBy: 100)
                     ->sortable()
                     ->weight('bold'),
 
-                Tables\Columns\TextColumn::make('child.first_name')
+                TextColumn::make('child.first_name')
                     ->label('Child')
                     ->formatStateUsing(fn ($record) => $record->child ? $record->child->first_name . ' ' . $record->child->last_name : '-')
                     ->sortable()
                     ->toggleable(),
 
-                Tables\Columns\TextColumn::make('created_at')
+                TextColumn::make('created_at')
                     ->dateTime()
                     ->sortable()
                     ->toggleable(isToggledHiddenByDefault: true),
             ])
             ->filters([
-                Tables\Filters\SelectFilter::make('invoice')
+                SelectFilter::make('invoice')
                     ->relationship('invoice', 'number')
                     ->searchable()
                     ->preload(),
@@ -70,10 +73,10 @@ class InvoiceItemsRelationManager extends RelationManager
             ->headerActions([
                 // Remove create action since invoice items should be created through invoices
             ])
-            ->actions([
-                Tables\Actions\ViewAction::make(),
+            ->recordActions([
+                ViewAction::make(),
             ])
-            ->bulkActions([
+            ->toolbarActions([
                 // Remove bulk actions for safety
             ])
             ->defaultSort('created_at', 'desc');

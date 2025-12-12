@@ -2,6 +2,7 @@
 
 namespace App\Filament\Resources\UserResource\Pages;
 
+use Illuminate\Database\Eloquent\Model;
 use App\Filament\Resources\UserResource;
 use App\Models\UserProfile;
 use App\Models\UserAddress;
@@ -13,7 +14,7 @@ class CreateUser extends CreateRecord
 {
     protected static string $resource = UserResource::class;
 
-    protected function handleRecordCreation(array $data): \Illuminate\Database\Eloquent\Model
+    protected function handleRecordCreation(array $data): Model
     {
         // Extract related model data
         $profileData = $data['profile'] ?? [];

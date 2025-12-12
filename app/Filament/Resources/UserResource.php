@@ -2,13 +2,26 @@
 
 namespace App\Filament\Resources;
 
+use Filament\Tables\Columns\TextColumn;
+use Filament\Tables\Columns\IconColumn;
+use Filament\Tables\Filters\SelectFilter;
+use Filament\Tables\Filters\Filter;
+use Filament\Actions\ActionGroup;
+use Filament\Actions\ViewAction;
+use Filament\Actions\EditAction;
+use Filament\Actions\DeleteAction;
+use Filament\Actions\BulkActionGroup;
+use Filament\Actions\DeleteBulkAction;
+use App\Filament\Resources\UserResource\Pages\ListUsers;
+use App\Filament\Resources\UserResource\Pages\CreateUser;
+use App\Filament\Resources\UserResource\Pages\EditUser;
 use App\Filament\Resources\UserResource\Actions\InviteUserToTenantAction;
 use App\Filament\Resources\UserResource\Pages;
 use App\Filament\Resources\UserResource\RelationManagers;
 use App\Filament\Resources\UserResource\RelationManagers\InvoicesRelationManager;
 use App\Models\User;
 use Filament\Forms;
-use Filament\Forms\Form;
+use Filament\Actions;
 use Filament\Resources\Resource;
 use Filament\Tables;
 use Filament\Tables\Table;
@@ -17,14 +30,17 @@ use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\SoftDeletingScope;
 use Illuminate\Support\Facades\Auth;
 use App\Filament\Forms\UserForm;
+use BackedEnum;
+use UnitEnum;
+use Filament\Schemas\Schema;
 
 class UserResource extends Resource
 {
     protected static ?string $model = User::class;
 
-    protected static ?string $navigationIcon = 'heroicon-o-users';
+    protected static string | \BackedEnum | null $navigationIcon = 'heroicon-o-users';
 
-    protected static ?string $navigationGroup = 'User Management';
+    protected static string | \UnitEnum | null $navigationGroup = 'User Management';
 
     protected static ?string $tenantOwnershipRelationshipName = 'tenants';
 
@@ -62,9 +78,10 @@ class UserResource extends Resource
         return Auth::user()->can('viewAny', User::class);
     }
 
-    public static function form(Form $form): Form
+    public static function form(Schema $schema): Schema
     {
-        return $form->schema(UserForm::make());
+        return $schema
+            ->components(UserForm::make());
     }
 
     public static function table(Table $table): Table
@@ -80,31 +97,31 @@ class UserResource extends Resource
                     ->circular()
                     ->defaultImageUrl(url('/images/default-avatar.svg'))
                     ->toggleable(),
-                Tables\Columns\TextColumn::make('name')
+                TextColumn::make('name')
                     ->searchable()
                     ->sortable(),
-                Tables\Columns\TextColumn::make('email')
+                TextColumn::make('email')
                     ->searchable()
                     ->sortable(),
-                Tables\Columns\TextColumn::make('roles.name')
+                TextColumn::make('roles.name')
                     ->badge()
                     ->searchable()
                     ->sortable(),
-                Tables\Columns\TextColumn::make('centres.name')
+                TextColumn::make('centres.name')
                     ->badge()
                     ->searchable()
                     ->sortable(),
-                Tables\Columns\TextColumn::make('profile.nric')
+                TextColumn::make('profile.nric')
                     ->label('NRIC')
                     ->searchable()
                     ->toggleable(isToggledHiddenByDefault: true)
                     ->placeholder('Not set'),
-                Tables\Columns\TextColumn::make('profile.passport')
+                TextColumn::make('profile.passport')
                     ->label('Passport')
                     ->searchable()
                     ->toggleable(isToggledHiddenByDefault: true)
                     ->placeholder('Not set'),
-                Tables\Columns\TextColumn::make('profile.tin')
+                TextColumn::make('profile.tin')
                     ->label('TIN')
                     ->searchable()
                     ->toggleable(isToggledHiddenByDefault: true)
@@ -115,17 +132,17 @@ class UserResource extends Resource
                     ->tooltip(function (?string $state): string {
                         return $state ? 'TIN: ' . $state : 'TIN not provided';
                     }),
-                Tables\Columns\TextColumn::make('profile.phone')
+                TextColumn::make('profile.phone')
                     ->label('Phone')
                     ->searchable()
                     ->toggleable(isToggledHiddenByDefault: true)
                     ->placeholder('Not set'),
-                Tables\Columns\TextColumn::make('userAddress.city')
+                TextColumn::make('userAddress.city')
                     ->label('City')
                     ->searchable()
                     ->toggleable(isToggledHiddenByDefault: true)
                     ->placeholder('Not set'),
-                Tables\Columns\IconColumn::make('einvoice_ready')
+                IconColumn::make('einvoice_ready')
                     ->label('E-Invoice Ready')
                     ->boolean()
                     ->getStateUsing(function (User $record): bool {
@@ -144,58 +161,58 @@ class UserResource extends Resource
                         return 'Missing: ' . implode(', ', $missing);
                     })
                     ->toggleable(),
-                Tables\Columns\TextColumn::make('created_at')
+                TextColumn::make('created_at')
                     ->dateTime()
                     ->sortable()
                     ->toggleable(isToggledHiddenByDefault: true),
-                Tables\Columns\TextColumn::make('updated_at')
+                TextColumn::make('updated_at')
                     ->dateTime()
                     ->sortable()
                     ->toggleable(isToggledHiddenByDefault: true),
             ])
             ->filters([
-                Tables\Filters\SelectFilter::make('roles')
+                SelectFilter::make('roles')
                     ->relationship('roles', 'name')
                     ->multiple()
                     ->preload(),
-                Tables\Filters\SelectFilter::make('centres')
+                SelectFilter::make('centres')
                     ->relationship('centres', 'name')
                     ->multiple()
                     ->preload(),
-                Tables\Filters\Filter::make('einvoice_ready')
+                Filter::make('einvoice_ready')
                     ->label('E-Invoice Ready')
                     ->query(fn (Builder $query): Builder =>
                         $query->eInvoiceReady()
                     )
                     ->toggle(),
-                Tables\Filters\Filter::make('missing_identification')
+                Filter::make('missing_identification')
                     ->label('Missing ID (NRIC/Passport)')
                     ->query(fn (Builder $query): Builder =>
                         $query->missingIdentification()
                     )
                     ->toggle(),
-                Tables\Filters\Filter::make('missing_tin')
+                Filter::make('missing_tin')
                     ->label('Missing TIN')
                     ->query(fn (Builder $query): Builder =>
                         $query->missingTin()
                     )
                     ->toggle(),
-                Tables\Filters\Filter::make('missing_address')
+                Filter::make('missing_address')
                     ->label('Missing Complete Address')
                     ->query(fn (Builder $query): Builder =>
                         $query->missingCompleteAddress()
                     )
                     ->toggle(),
             ])
-            ->actions([
-                Tables\Actions\ActionGroup::make([
-                    Tables\Actions\ViewAction::make()
+            ->recordActions([
+                ActionGroup::make([
+                    ViewAction::make()
                         ->visible(fn (User $record) => Auth::user()->can('view', $record)),
 
-                    Tables\Actions\EditAction::make()
+                    EditAction::make()
                         ->visible(fn (User $record) => Auth::user()->can('update', $record)),
 
-                    Tables\Actions\DeleteAction::make()
+                    DeleteAction::make()
                         ->visible(fn (User $record) => Auth::user()->can('delete', $record)),
                 ])
                     ->label('Actions')
@@ -208,9 +225,9 @@ class UserResource extends Resource
                 InviteUserToTenantAction::make()
                     ->visible(fn () => Auth::user()->can('inviteUsers', User::class)),
             ])
-            ->bulkActions([
-                Tables\Actions\BulkActionGroup::make([
-                    Tables\Actions\DeleteBulkAction::make()
+            ->toolbarActions([
+                BulkActionGroup::make([
+                    DeleteBulkAction::make()
                         ->visible(fn () => Auth::user()->can('deleteAny', User::class)),
                 ]),
             ]);
@@ -226,9 +243,9 @@ class UserResource extends Resource
     public static function getPages(): array
     {
         return [
-            'index' => Pages\ListUsers::route('/'),
-            'create' => Pages\CreateUser::route('/create'),
-            'edit' => Pages\EditUser::route('/{record}/edit'),
+            'index' => ListUsers::route('/'),
+            'create' => CreateUser::route('/create'),
+            'edit' => EditUser::route('/{record}/edit'),
         ];
     }
 }
