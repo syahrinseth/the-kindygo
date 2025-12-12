@@ -16,7 +16,7 @@
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div class="flex justify-between h-16">
                 <div class="flex">
-                    <div class="flex-shrink-0 flex items-center">
+                    <div class="shrink-0 flex items-center">
                         <span class="text-2xl font-bold text-blue-600">KindyGo</span>
                     </div>
                 </div>
