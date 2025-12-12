@@ -5,7 +5,7 @@ namespace App\Filament\Widgets;
 use App\Filament\Pages\FinanceDashboard;
 use App\Enums\InvoiceStatus;
 use App\Models\Invoice;
-use App\Filament\Resources\InvoiceResource;
+use App\Filament\Resources\Invoices\InvoiceResource;
 use Filament\Actions\Action;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Table;
