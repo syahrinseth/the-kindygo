@@ -36,5 +36,11 @@ class CurrentCentreDisplayServiceProvider extends ServiceProvider
                 </div>
             @endif')
         );
+
+        // Inject tenant menu next to logo so it's visible in the topbar
+        FilamentView::registerRenderHook(
+            'panels::topbar.logo.after',
+            fn (): string => Blade::render('@if (filament()->hasTenancy() && filament()->hasTenantMenu())<div class="ms-4"><x-filament-panels::tenant-menu /></div>@endif')
+        );
     }
 }
