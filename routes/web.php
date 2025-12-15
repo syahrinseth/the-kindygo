@@ -1,21 +1,23 @@
 <?php
 
-use Illuminate\Support\Facades\Route;
-use Illuminate\Support\Facades\Auth;
 use App\Http\Controllers\Auth\LoginController;
 use App\Http\Controllers\Auth\RegisterController;
-use App\Http\Controllers\TenantInvitationController;
-use App\Http\Controllers\SecureMediaController;
 use App\Http\Controllers\ChipPaymentController;
 use App\Http\Controllers\InvoicePdfController;
 use App\Http\Controllers\PaymentReceiptController;
 use App\Http\Controllers\ProfileController;
+use App\Http\Controllers\SecureMediaController;
 use App\Http\Controllers\TenantDirectoryController;
+use App\Http\Controllers\TenantInvitationController;
+use Filament\Facades\Filament;
+use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Route;
 
 Route::get('/', function () {
     if (Auth::check()) {
-        return redirect('/app');
+        return redirect(Filament::getHomeUrl());
     }
+
     return redirect('/login');
 });
 
@@ -31,7 +33,7 @@ Route::middleware('guest')->group(function () {
         return redirect('/login');
     })->name('register');
     Route::post('/register', [RegisterController::class, 'register']);
-    
+
     // Tenant-specific registration routes
     Route::get('/register/{tenantSlug}', [RegisterController::class, 'showTenantRegistrationForm'])
         ->name('tenant.register.form');
@@ -40,6 +42,9 @@ Route::middleware('guest')->group(function () {
 });
 
 Route::post('/logout', [LoginController::class, 'logout'])->name('logout')->middleware('auth');
+
+// Alias route for Filament logout links
+Route::post('/filament/logout', [LoginController::class, 'logout'])->name('filament.app.auth.logout')->middleware('auth');
 
 // Profile completion routes
 Route::middleware('auth')->group(function () {
@@ -62,13 +67,13 @@ Route::middleware('auth')->group(function () {
 Route::prefix('chip')->name('chip.')->group(function () {
     Route::get('success/{payment}', [ChipPaymentController::class, 'success'])
         ->name('success');
-        // ->middleware('signed'); // temp disable
+    // ->middleware('signed'); // temp disable
     Route::get('failure/{payment}', [ChipPaymentController::class, 'failure'])
         ->name('failure');
-        // ->middleware('signed'); // temp disable
+    // ->middleware('signed'); // temp disable
     Route::get('cancel/{payment}', [ChipPaymentController::class, 'cancel'])
         ->name('cancel');
-        // ->middleware('signed'); // temp disable
+    // ->middleware('signed'); // temp disable
     Route::post('webhook', [ChipPaymentController::class, 'webhook'])->name('webhook');
 });
 

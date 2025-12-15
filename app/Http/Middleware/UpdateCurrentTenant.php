@@ -13,23 +13,34 @@ class UpdateCurrentTenant
     /**
      * Handle an incoming request.
      *
-     * @param Closure(Request):Response $next
+     * @param  Closure(Request):Response  $next
      */
     public function handle(Request $request, Closure $next): Response
     {
         $response = $next($request);
 
-        // Only proceed if user is authenticated and we have a Filament tenant
-        if (Auth::check() && Filament::getTenant()) {
+        // Only proceed if user is authenticated and we can determine a tenant
+        if (Auth::check()) {
             $user = Auth::user();
+
+            // Prefer Filament tenant, fall back to route parameter if necessary
             $currentTenant = Filament::getTenant();
-            
-            // Update the user's current_tenant_id if it has changed
-            if ($user->current_tenant_id !== $currentTenant->id) {
+
+            if (! $currentTenant) {
+                $routeTenant = $request->route('tenant');
+
+                if ($routeTenant instanceof \App\Models\Tenant) {
+                    $currentTenant = $routeTenant;
+                } elseif (is_string($routeTenant)) {
+                    $currentTenant = \App\Models\Tenant::where('slug', $routeTenant)->first();
+                }
+            }
+
+            if ($currentTenant && $user->current_tenant_id !== $currentTenant->id) {
                 $user->update([
-                    'current_tenant_id' => $currentTenant->id
+                    'current_tenant_id' => $currentTenant->id,
                 ]);
-                
+
                 // Also update the pivot table timestamp to track latest access
                 $user->setCurrentTenant($currentTenant);
             }

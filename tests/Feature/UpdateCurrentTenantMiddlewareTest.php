@@ -3,6 +3,7 @@
 use App\Models\Tenant;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Spatie\Permission\Models\Role;
 
 uses(RefreshDatabase::class);
 
@@ -27,9 +28,14 @@ test('user current tenant id is updated when accessing tenant route', function (
     // Associate user with tenant
     $user->tenants()->attach($tenant);
 
-    // Act as the user and visit a tenant route
+    // Ensure role exists, give the user a panel role and visit the tenant route
+    Role::firstOrCreate(['name' => 'Admin']);
+    $user->assignRole('Admin');
+
     $response = $this->actingAs($user)
-        ->get("/app/{$tenant->slug}");
+        ->get("/{$tenant->slug}");
+
+    $response->assertSuccessful();
 
     // Assert the user's current_tenant_id was updated
     $user->refresh();
@@ -66,9 +72,13 @@ test('user current tenant id is updated when switching between tenants', functio
     // Set initial tenant
     $user->update(['current_tenant_id' => $tenant1->id]);
 
+    // Ensure role exists and assign so user can access panel
+    Role::firstOrCreate(['name' => 'Admin']);
+    $user->assignRole('Admin');
+
     // Switch to second tenant
     $response = $this->actingAs($user)
-        ->get("/app/{$tenant2->slug}");
+        ->get("/{$tenant2->slug}");
 
     // Assert the user's current_tenant_id was updated to the new tenant
     $user->refresh();
@@ -87,7 +97,7 @@ test('middleware does not run for unauthenticated users', function () {
     ]);
 
     // Visit tenant route without authentication
-    $response = $this->get("/app/{$tenant->slug}");
+    $response = $this->get("/{$tenant->slug}");
 
     // Should redirect to login (no error should occur)
     $response->assertRedirect('/login');

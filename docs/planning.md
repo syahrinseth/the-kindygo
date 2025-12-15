@@ -22,7 +22,7 @@ Reviewed against .ai/guidelines/00-feature-domain.md on 2025-12-11 to reflect th
 
 ## Gaps vs Requirements
 - Missing dedicated System Owner surface (console.{domain}) with system-level dashboards, settings, tenant/user/payment/product/feature management, logs, notifications.
-- Tenant Admin surface currently mounted at `/app` but not clearly separated for admin vs parent; lacks documented admin prefixes (e.g., /app/admin/...).
+- Tenant Admin surface was mounted at `/app`; updated to mount at the root (no `/app` prefix) to make tenant and parent surfaces accessible at `/` and tenant slugs at `/{tenant}`.
 - Parent-facing surface (app.{domain}/ for parents) not present; current root redirects authenticated users to `/app` (Filament), not a parent UI.
 - FinanceDashboard not wired as the main dashboard; panel still uses Filament default dashboard.
 - British spelling audit needed (legacy "Enrollment" names may still exist; renames were in progress).

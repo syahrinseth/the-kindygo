@@ -2,21 +2,19 @@
 
 namespace App\Providers\Filament;
 
+use App\Filament\Pages\Dashboard;
 use App\Filament\Pages\EditProfile;
-use Filament\Pages\Dashboard;
-use App\Filament\Widgets\InvoiceStats;
-use App\Filament\Widgets\InvoiceChart;
-use App\Http\Middleware\EnsureProfileCompleted;
-use App\Filament\Forms\TenantForm;
 use App\Filament\Pages\Tenancy\EditTenantProfilePage;
 use App\Filament\Pages\Tenancy\RegisterTenancyPage;
+use App\Filament\Widgets\InvoiceChart;
+use App\Filament\Widgets\InvoiceStats;
+use App\Http\Middleware\EnsureProfileCompleted;
 use App\Http\Middleware\UpdateCurrentTenant;
 use App\Models\Tenant;
 use Filament\Http\Middleware\Authenticate;
 use Filament\Http\Middleware\AuthenticateSession;
 use Filament\Http\Middleware\DisableBladeIconComponents;
 use Filament\Http\Middleware\DispatchServingFilamentEvent;
-use Filament\Pages;
 use Filament\Panel;
 use Filament\PanelProvider;
 use Filament\Support\Colors\Color;
@@ -27,8 +25,6 @@ use Illuminate\Foundation\Http\Middleware\VerifyCsrfToken;
 use Illuminate\Routing\Middleware\SubstituteBindings;
 use Illuminate\Session\Middleware\StartSession;
 use Illuminate\Support\Facades\App;
-use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\Blade;
 use Illuminate\View\Middleware\ShareErrorsFromSession;
 
 class AppPanelProvider extends PanelProvider
@@ -38,7 +34,7 @@ class AppPanelProvider extends PanelProvider
         return $panel
             ->default()
             ->id('app')
-            ->path('app')
+            ->path('')
             ->colors([
                 'primary' => Color::Amber,
             ])

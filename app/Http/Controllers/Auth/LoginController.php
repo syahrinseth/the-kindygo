@@ -17,7 +17,7 @@ class LoginController extends Controller
         if ($request->has('redirect')) {
             session(['url.intended' => $request->redirect]);
         }
-        
+
         return view('auth.login');
     }
 
@@ -33,14 +33,16 @@ class LoginController extends Controller
 
         if (Auth::attempt($credentials, $request->boolean('remember'))) {
             $request->session()->regenerate();
-            
+
             // Redirect to the intended URL if it exists, otherwise go to /app
             if (session()->has('url.intended')) {
                 $redirectUrl = session('url.intended');
                 session()->forget('url.intended');
+
                 return redirect()->to($redirectUrl);
             }
-            return redirect('/app');
+
+            return redirect('/');
         }
 
         return back()->withErrors([
@@ -56,6 +58,7 @@ class LoginController extends Controller
         Auth::logout();
         $request->session()->invalidate();
         $request->session()->regenerateToken();
+
         return redirect('/');
     }
 }
