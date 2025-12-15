@@ -5,7 +5,7 @@ use Illuminate\Foundation\Testing\RefreshDatabase;
 
 uses(RefreshDatabase::class);
 
-it('redirects authenticated user to root after login', function () {
+it('redirects authenticated user to dashboard after login', function () {
     $password = 'secret-password';
 
     $user = User::factory()->create([
@@ -17,7 +17,7 @@ it('redirects authenticated user to root after login', function () {
         'password' => $password,
     ]);
 
-    $response->assertRedirect('/');
+    $response->assertRedirect('/dashboard');
 });
 
 it('dashboard is accessible to authenticated user', function () {
@@ -37,15 +37,16 @@ it('dashboard is accessible to authenticated user', function () {
     ]);
 
     $user->tenants()->attach($tenant->id);
+    $user->update(['current_tenant_id' => $tenant->id]);
 
     $response = $this->actingAs($user)
         ->get('/');
 
-    // Should redirect to the Filament home URL for the user
-    $response->assertRedirect(Filament\Facades\Filament::getHomeUrl());
+    // Should redirect to the dashboard route for the user
+    $response->assertRedirect('/dashboard');
 
     // Visit the Filament home URL and assert it is successful
     $this->actingAs($user)
-        ->get(Filament\Facades\Filament::getHomeUrl())
+        ->get('/dashboard')
         ->assertSuccessful();
 });

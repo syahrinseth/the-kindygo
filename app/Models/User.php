@@ -112,10 +112,10 @@ class User extends Authenticatable implements FilamentUser, HasAvatar, HasDefaul
      * This will return either:
      * 1. The directly assigned tenant
      * 2. The user's personal tenant
-     * 3. The latest accessed tenant
+     * 3. The latest accessed tewnant
      * 4. The first available tenant
      */
-    public function getDefaultTenant(Panel $panel): ?Model
+    public function getDefaultTenant(?Panel $panel = null): ?Model
     {
         // Try to find a personal tenant first
         $personalTenant = $this->tenants()

@@ -19,20 +19,26 @@ class UpdateCurrentTenant
     {
         $response = $next($request);
 
-        // Only proceed if user is authenticated and we can determine a tenant
+        // Only proceed if user is authenticated
         if (Auth::check()) {
             $user = Auth::user();
 
-            // Prefer Filament tenant, fall back to route parameter if necessary
+            // First prefer any Filament tenant (if present for specific panels)
             $currentTenant = Filament::getTenant();
 
+            // If no tenant was provided via panel routing (we removed tenant slugs from URLs),
+            // resolve the tenant from the user's defaults (personal or last used) or first attached.
             if (! $currentTenant) {
-                $routeTenant = $request->route('tenant');
+                $panel = Filament::getPanel();
 
-                if ($routeTenant instanceof \App\Models\Tenant) {
-                    $currentTenant = $routeTenant;
-                } elseif (is_string($routeTenant)) {
-                    $currentTenant = \App\Models\Tenant::where('slug', $routeTenant)->first();
+                // Try the user's default tenant (uses user's personal tenant, latest accessed, first available)
+                if (method_exists($user, 'getDefaultTenant')) {
+                    $currentTenant = $user->getDefaultTenant($panel);
+                }
+
+                // Fallback to the first attached tenant
+                if (! $currentTenant) {
+                    $currentTenant = $user->tenants()->first();
                 }
             }
 

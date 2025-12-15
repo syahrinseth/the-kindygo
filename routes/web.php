@@ -10,14 +10,15 @@ use App\Http\Controllers\SecureMediaController;
 use App\Http\Controllers\TenantDirectoryController;
 use App\Http\Controllers\TenantInvitationController;
 use Filament\Facades\Filament;
-use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Route;
 
-Route::get('/', function () {
-    if (Auth::check()) {
-        return redirect(Filament::getHomeUrl());
-    }
+// Authenticated users: redirect to dashboard
+Route::middleware('auth')->get('/', function () {
+    return redirect('/dashboard');
+});
 
+// Guests: go to login
+Route::middleware('guest')->get('/', function () {
     return redirect('/login');
 });
 

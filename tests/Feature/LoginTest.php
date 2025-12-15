@@ -14,6 +14,6 @@ it('allows seeded user to login', function () {
         'password' => 'password@123',
     ]);
 
-    $response->assertRedirect('/app');
+    $response->assertRedirect('/dashboard');
     $this->assertAuthenticated();
 });
