@@ -23,7 +23,8 @@
     - is_super_admin flag on users table
     - routes:
       - console.{domain}* route for all system admin
-      - console.{domain}/ for system admin dashboard
+      - console.{domain}/ checking for auth sessions, then redirect to /dashboard or /login accordingly
+      - console.{domain}/dashboard for system admin dashboard
       - console.{domain}/settings for system settings
       - console.{domain}/reports for system reports
       - console.{domain}/tenants for tenant management
@@ -42,11 +43,12 @@
 
   - Tenant (company) - tenant owner, can have multiple users
     - routes:
-      - app.{domain}/admin/ route for tenant admin dashboard
+      - app.{domain}/admin/ route for tenant admin dashboard checking for auth sessions, then redirect to /admin/dashboard or /dashboard accordingly
+      - app.{domain}/admin/dashboard route for tenant admin dashboard
       - app.{domain}/admin/settings for tenant settings
       - app.{domain}/admin/branches for centre management
       - app.{domain}/admin/children for child management
-    - is_tenant_owner flag on tenant_users table
+    - owner_id flag on tenants table
     - can manage tenant settings in Filament
     - can invite other users to tenant
     - can has multiple Tenant (Subscribe to multiple companies plan)
@@ -96,7 +98,8 @@
 
   - Parent - general user under tenant, can have multiple children, belongs to multiple tenants
     - routes:
-      - app.{domain}/ route for parent dashboard
+      - app.{domain}/ route for parent dashboard checking for auth sessions, then redirect to /dashboard or /login accordingly
+      - app.{domain}/dashboard route for parent dashboard
       - app.{domain}/profile for profile management
       - app.{domain}/children/{child_id} for child details
       - app.{domain}/invoices for viewing invoices
@@ -134,7 +137,7 @@
   - console.kindygo.com/features
   - console.kindygo.com/logs
   - console.kindygo.com/notifications
-- Tenant Owner/Admin & Staff (app):
+- Tenant Owner/Admin (app):
   - app.kindygo.com/admin/
   - app.kindygo.com/admin/settings
   - app.kindygo.com/admin/branches
@@ -145,22 +148,32 @@
   - app.kindygo.com/admin/finance
   - app.kindygo.com/admin/users
   - app.kindygo.com/admin/products
+- Tenant Staff (app):
+  - app.kindygo.com/staff/
+  - app.kindygo.com/staff/settings
+  - app.kindygo.com/staff/branches
+  - app.kindygo.com/staff/children
+  - app.kindygo.com/staff/enrolments
+  - app.kindygo.com/staff/invoices
+  - app.kindygo.com/staff/payments
+  - app.kindygo.com/staff/finance
+  - app.kindygo.com/staff/users
+  - app.kindygo.com/staff/products
 - Parent (app):
-  - app.kindygo.com/
+  - app.kindygo.com/dashboard
   - app.kindygo.com/profile
   - app.kindygo.com/children/{child_id}
   - app.kindygo.com/invoices
   - app.kindygo.com/payments
   - app.kindygo.com/transactions
 - Public / Guest:
+  - app.kindygo.com/ - redirects to kindygo.com (suggestion: landing page?)
   - app.kindygo.com/{tenant:slug}/login
   - app.kindygo.com/{tenant:slug}/register
   - app.kindygo.com/login - loaded current_tenant_id if any on previous session, else load the first tenant user belongs to
-  - app.kindygo.com/register - list of tenants to register under (select tenant first, redirect to tenant specific register)
   - app.kindygo.com/password/reset
   - app.kindygo.com/password/reset/{token}
   - app.kindygo.com/email/verify
-  - app.kindygo.com/ - redirects to kindygo.com (suggestion: landing page?)
   - app.kindygo.com/company/register - register new tenant/company
 
 ## Media Upload Structure
