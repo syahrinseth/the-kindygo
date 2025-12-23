@@ -61,11 +61,7 @@
             </div>
         </div>
 
-        @if (filament()->hasTenancy() && filament()->hasTenantMenu())
-            <div class="flex items-center">
-                <x-filament-panels::tenant-menu />
-            </div>
-        @endif
+        {{-- Tenant menu moved next to logo for better discoverability --}}
 
         @if (filament()->hasTopNavigation() && filament()->hasNavigation())
             <ul class="me-4 hidden items-center gap-x-4 lg:flex">

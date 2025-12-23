@@ -2,6 +2,7 @@
 
 namespace App\Console\Commands;
 
+use Exception;
 use App\Enums\InvoiceStatus;
 use App\Models\Invoice;
 use App\Models\Tenant;
@@ -99,7 +100,7 @@ class SendInvoiceReminders extends Command
                     
                     $overdueCount++;
                     
-                } catch (\Exception $e) {
+                } catch (Exception $e) {
                     $errorCount++;
                     $this->error("Failed to send overdue notification for invoice #{$invoice->number}: " . $e->getMessage());
                     
@@ -140,7 +141,7 @@ class SendInvoiceReminders extends Command
                     
                     $pendingCount++;
                     
-                } catch (\Exception $e) {
+                } catch (Exception $e) {
                     $errorCount++;
                     $this->error("Failed to send pending notification for invoice #{$invoice->number}: " . $e->getMessage());
                     
@@ -224,7 +225,7 @@ class SendInvoiceReminders extends Command
             try {
                 $invoice->update(['status' => InvoiceStatus::OVERDUE]);
                 $count++;
-            } catch (\Exception $e) {
+            } catch (Exception $e) {
                 Log::error('Failed to mark invoice as overdue', [
                     'invoice_id' => $invoice->id,
                     'error' => $e->getMessage(),

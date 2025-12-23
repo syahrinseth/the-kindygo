@@ -9,13 +9,13 @@ A comprehensive childcare and kindergarten management system built with Laravel,
 
 ## About KindyGo
 
-KindyGo is a modern childcare management system designed to streamline operations for kindergartens, childcare centers, and educational institutions. The system provides comprehensive tools for managing children, enrollments, billing, payments, and administrative tasks through an intuitive web interface.
+KindyGo is a modern childcare management system designed to streamline operations for kindergartens, childcare centers, and educational institutions. The system provides comprehensive tools for managing children, enrolments, billing, payments, and administrative tasks through an intuitive web interface.
 
 ### Key Features
 
 - **👶 Child Management**: Complete child profiles with personal information, medical records, and documentation
 - **🏫 Multi-Centre Support**: Manage multiple centres and campuses from a single platform
-- **📝 Enrollment Management**: Handle child enrollments with flexible billing cycles and status tracking
+- **📝 Enrolment Management**: Handle child enrolments with flexible billing cycles and status tracking
 - **💰 Billing & Invoicing**: Automated invoice generation with Malaysian e-invoice compliance
 - **💳 Payment Processing**: Integrated payment gateway (CHIP) with multiple payment methods
 - **👨‍👩‍👧‍👦 Parent Portal**: Dedicated interface for parents to manage their children's information
@@ -26,6 +26,7 @@ KindyGo is a modern childcare management system designed to streamline operation
 ## Technology Stack
 
 ### Backend
+
 - **Laravel 12.0** - PHP framework
 - **PHP 8.2+** - Programming language
 - **MySQL/PostgreSQL** - Database
@@ -34,16 +35,19 @@ KindyGo is a modern childcare management system designed to streamline operation
 - **Laravel Sanctum** - API authentication
 
 ### Frontend
+
 - **TailwindCSS 4.0** - CSS framework
 - **Vite 6.2** - Build tool
 - **Livewire** - Full-stack framework (via Filament)
 
 ### Payment & Integrations
+
 - **CHIP Payment Gateway** - Payment processing
 - **MyInvois PHP SDK** - Malaysian e-invoice integration
 - **Spatie Media Library** - File and media management
 
 ### Development & Testing
+
 - **Pest PHP** - Testing framework
 - **Laravel Pint** - Code formatting
 - **Faker** - Test data generation
@@ -61,28 +65,33 @@ KindyGo is a modern childcare management system designed to streamline operation
 ### Setup Instructions
 
 1. **Clone the repository**
+
    ```bash
    git clone <repository-url> kindygo-app
    cd kindygo-app
    ```
 
 2. **Install PHP dependencies**
+
    ```bash
    composer install
    ```
 
 3. **Install Node.js dependencies**
+
    ```bash
    npm install
    ```
 
 4. **Environment configuration**
+
    ```bash
    cp .env.example .env
    php artisan key:generate
    ```
 
 5. **Configure your `.env` file**
+
    ```env
    APP_NAME="KindyGo"
    APP_URL=http://localhost
@@ -107,17 +116,20 @@ KindyGo is a modern childcare management system designed to streamline operation
    ```
 
 6. **Database setup**
+
    ```bash
    php artisan migrate
    php artisan db:seed
    ```
 
 7. **Storage linking**
+
    ```bash
    php artisan storage:link
    ```
 
 8. **Build assets**
+
    ```bash
    npm run build
    # or for development
@@ -125,6 +137,7 @@ KindyGo is a modern childcare management system designed to streamline operation
    ```
 
 9. **Create admin user**
+
    ```bash
    php artisan make:filament-user
    ```
@@ -142,6 +155,7 @@ npm run dev
 ```
 
 Access the application at `http://localhost:8000`
+
 - Admin Panel: `/admin`
 - Parent Portal: `/parent`
 
@@ -175,7 +189,7 @@ php artisan db:seed
 
 ## Project Structure
 
-```
+```bash
 ├── app/
 │   ├── Enums/              # Application enumerations
 │   ├── Filament/           # Filament admin panel resources
@@ -202,7 +216,7 @@ php artisan db:seed
 
 - **Child**: Represents a child enrolled in the system
 - **Centre**: Childcare centers/campuses
-- **ChildEnrollment**: Child enrollment records with billing information
+- **ChildEnrolment**: Child enrolment records with billing information
 - **Invoice**: Billing invoices for services
 - **Payment**: Payment records and transactions
 - **User**: System users (parents, staff, administrators)
@@ -212,7 +226,8 @@ php artisan db:seed
 The system integrates with CHIP Payment Gateway for processing payments. See [CHIP_INTEGRATION.md](CHIP_INTEGRATION.md) for detailed implementation notes.
 
 ### Payment Flow
-1. Invoice generation from enrollments
+
+1. Invoice generation from enrolments
 2. Payment initiation through CHIP gateway
 3. Redirect to secure payment page
 4. Callback handling for payment status
@@ -223,14 +238,16 @@ The system integrates with CHIP Payment Gateway for processing payments. See [CH
 The system provides RESTful APIs for integration with external systems. API endpoints are secured with Laravel Sanctum.
 
 ### Authentication
+
 ```bash
 # Get API token
 POST /api/login
 ```
 
 ### Available Endpoints
+
 - `/api/children` - Child management
-- `/api/enrollments` - Enrollment management
+- `/api/enrolments` - Enrolment management
 - `/api/invoices` - Invoice management
 - `/api/payments` - Payment processing
 
@@ -245,6 +262,7 @@ POST /api/login
    - Redis (recommended for caching and sessions)
 
 2. **Deployment Steps**
+
    ```bash
    # Optimize for production
    php artisan config:cache
@@ -280,6 +298,7 @@ POST /api/login
 If you discover any security vulnerabilities, please send an email to the development team. All security vulnerabilities will be promptly addressed.
 
 ### Security Features
+
 - Multi-tenant data isolation
 - Role-based access control
 - CSRF protection
@@ -294,6 +313,7 @@ This project is proprietary software. All rights reserved.
 ## Support
 
 For technical support and questions:
+
 - Create an issue in the repository
 - Contact the development team
 - Check the documentation in the `/docs` directory

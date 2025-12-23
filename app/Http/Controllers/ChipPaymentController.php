@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use Exception;
 use App\Http\Controllers\Controller;
 use App\Enums\InvoiceStatus;
 use App\Enums\PaymentStatus;
@@ -28,7 +29,7 @@ class ChipPaymentController extends Controller
             }
             
             $this->updatePaymentStatus($payment, PaymentStatus::PAID, $gatewayData);
-        } catch (\Exception $e) {
+        } catch (Exception $e) {
             // Fallback to just updating status if CHIP API fails
             Log::warning('Failed to fetch CHIP data on success callback', [
                 'payment_id' => $payment->id,
@@ -67,7 +68,7 @@ class ChipPaymentController extends Controller
             }
             
             $this->updatePaymentStatus($payment, PaymentStatus::FAILED, $gatewayData);
-        } catch (\Exception $e) {
+        } catch (Exception $e) {
             // Fallback to just updating status if CHIP API fails
             Log::warning('Failed to fetch CHIP data on failure callback', [
                 'payment_id' => $payment->id,
@@ -106,7 +107,7 @@ class ChipPaymentController extends Controller
             }
             
             $this->updatePaymentStatus($payment, PaymentStatus::CANCELLED, $gatewayData);
-        } catch (\Exception $e) {
+        } catch (Exception $e) {
             // Fallback to just updating status if CHIP API fails
             Log::warning('Failed to fetch CHIP data on cancel callback', [
                 'payment_id' => $payment->id,
@@ -167,7 +168,7 @@ class ChipPaymentController extends Controller
             }
             
             return response()->json(['status' => 'success']);
-        } catch (\Exception $e) {
+        } catch (Exception $e) {
             Log::error('CHIP webhook processing failed', [
                 'error' => $e->getMessage(),
                 'request' => $request->all()
@@ -244,7 +245,7 @@ class ChipPaymentController extends Controller
             }
 
             DB::commit();
-        } catch (\Exception $e) {
+        } catch (Exception $e) {
             DB::rollBack();
             Log::error('Payment status update failed', [
                 'payment_id' => $payment->id,
@@ -314,7 +315,7 @@ class ChipPaymentController extends Controller
                 ]);
             }
 
-        } catch (\Exception $e) {
+        } catch (Exception $e) {
             Log::error('Failed to update invoice items paid status', [
                 'invoice_id' => $invoice->id,
                 'payment_id' => $payment->id,
@@ -373,7 +374,7 @@ class ChipPaymentController extends Controller
                 }
             }
 
-        } catch (\Exception $e) {
+        } catch (Exception $e) {
             Log::error('Failed to revert invoice items paid status', [
                 'invoice_id' => $invoice->id,
                 'payment_id' => $payment->id,
@@ -449,7 +450,7 @@ class ChipPaymentController extends Controller
 
             return $gatewayData;
             
-        } catch (\Exception $e) {
+        } catch (Exception $e) {
             Log::warning('Failed to fetch comprehensive CHIP data', [
                 'payment_id' => $payment->id,
                 'gateway_payment_id' => $payment->gateway_payment_id,

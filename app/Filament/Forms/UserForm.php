@@ -2,6 +2,10 @@
 
 namespace App\Filament\Forms;
 
+use Filament\Schemas\Components\Section;
+use Filament\Forms\Components\TextInput;
+use Filament\Forms\Components\Textarea;
+use Filament\Forms\Components\Select;
 use App\Models\User;
 use Filament\Forms;
 use Filament\Forms\Components\SpatieMediaLibraryFileUpload;
@@ -14,21 +18,21 @@ class UserForm
     public static function make(): array
     {
         return [
-            Forms\Components\Section::make('Basic Information')
+            Section::make('Basic Information')
                 ->schema([
-                    Forms\Components\TextInput::make('name')
+                    TextInput::make('name')
                         ->required()
                         ->maxLength(255),
-                    Forms\Components\TextInput::make('email')
+                    TextInput::make('email')
                         ->email()
                         ->required()
                         ->maxLength(255),
                 ])->columns(2),
 
-            Forms\Components\Section::make('Personal Information')
+            Section::make('Personal Information')
                 ->description('Personal identification and contact information')
                 ->schema([
-                    Forms\Components\TextInput::make('profile.nric')
+                    TextInput::make('profile.nric')
                         ->label('NRIC/IC Number')
                         ->placeholder('e.g., 950101014321')
                         ->helperText('Malaysian NRIC/IC number for individual customers')
@@ -42,7 +46,7 @@ class UserForm
                             }
                         }),
 
-                    Forms\Components\TextInput::make('profile.passport')
+                    TextInput::make('profile.passport')
                         ->label('Passport Number')
                         ->placeholder('e.g., A12345678')
                         ->helperText('Passport number for foreign customers (if no NRIC)')
@@ -56,7 +60,7 @@ class UserForm
                             }
                         }),
 
-                    Forms\Components\TextInput::make('profile.phone')
+                    TextInput::make('profile.phone')
                         ->label('Phone Number')
                         ->placeholder('e.g., +60123456789')
                         ->helperText('Primary contact phone number')
@@ -64,13 +68,13 @@ class UserForm
                         ->required()
                         ->maxLength(20),
 
-                    Forms\Components\TextInput::make('profile.occupation')
+                    TextInput::make('profile.occupation')
                         ->label('Occupation')
                         ->placeholder('e.g., Teacher, Engineer, Doctor')
                         ->required()
                         ->maxLength(100),
 
-                    Forms\Components\TextInput::make('profile.tin')
+                    TextInput::make('profile.tin')
                         ->label('TIN (Tax Identification Number)')
                         ->placeholder('e.g., C12345678901')
                         ->helperText('Individual TIN for tax purposes (optional)')
@@ -83,10 +87,10 @@ class UserForm
                 ->collapsible()
                 ->collapsed(false),
 
-            Forms\Components\Section::make('Home Address')
+            Section::make('Home Address')
                 ->description('Residential address information for e-Invoice')
                 ->schema([
-                    Forms\Components\Textarea::make('userAddress.address')
+                    Textarea::make('userAddress.address')
                         ->label('Address')
                         ->placeholder('e.g., 123 Jalan Test, Taman Example')
                         ->helperText('Full street address for e-Invoice')
@@ -94,27 +98,27 @@ class UserForm
                         ->rows(2)
                         ->maxLength(500),
 
-                    Forms\Components\Textarea::make('userAddress.address_2')
+                    Textarea::make('userAddress.address_2')
                         ->label('Address Line 2')
                         ->placeholder('e.g., Unit 5-3, Block A')
                         ->helperText('Additional address information (optional)')
                         ->rows(1)
                         ->maxLength(500),
 
-                    Forms\Components\TextInput::make('userAddress.city')
+                    TextInput::make('userAddress.city')
                         ->label('City')
                         ->placeholder('e.g., Kuala Lumpur')
                         ->required()
                         ->maxLength(100),
 
-                    Forms\Components\TextInput::make('userAddress.postal_code')
+                    TextInput::make('userAddress.postal_code')
                         ->label('Postal Code')
                         ->placeholder('e.g., 50000')
                         ->required()
                         ->maxLength(10)
                         ->rules(['required', 'regex:/^\d{5}$/']),
 
-                    Forms\Components\Select::make('userAddress.state_code')
+                    Select::make('userAddress.state_code')
                         ->label('State')
                         ->placeholder('Select state')
                         ->required()
@@ -142,42 +146,42 @@ class UserForm
                 ->collapsible()
                 ->collapsed(false),
 
-            Forms\Components\Section::make('Office Information')
+            Section::make('Office Information')
                 ->description('Office contact and address information (optional)')
                 ->schema([
-                    Forms\Components\TextInput::make('officeInfo.office_phone')
+                    TextInput::make('officeInfo.office_phone')
                         ->label('Office Phone Number')
                         ->placeholder('e.g., +60323456789')
                         ->helperText('Office contact phone number')
                         ->tel()
                         ->maxLength(20),
 
-                    Forms\Components\Textarea::make('officeInfo.office_address')
+                    Textarea::make('officeInfo.office_address')
                         ->label('Office Address')
                         ->placeholder('e.g., 456 Jalan Business, Commercial Center')
                         ->helperText('Office street address')
                         ->rows(2)
                         ->maxLength(500),
 
-                    Forms\Components\Textarea::make('officeInfo.office_address_2')
+                    Textarea::make('officeInfo.office_address_2')
                         ->label('Office Address Line 2')
                         ->placeholder('e.g., Suite 10-5, Tower B')
                         ->helperText('Additional office address information (optional)')
                         ->rows(1)
                         ->maxLength(500),
 
-                    Forms\Components\TextInput::make('officeInfo.office_postal_code')
+                    TextInput::make('officeInfo.office_postal_code')
                         ->label('Office Postal Code')
                         ->placeholder('e.g., 50000')
                         ->maxLength(10)
                         ->rules(['nullable', 'regex:/^\d{5}$/']),
 
-                    Forms\Components\TextInput::make('officeInfo.office_city')
+                    TextInput::make('officeInfo.office_city')
                         ->label('Office City')
                         ->placeholder('e.g., Kuala Lumpur')
                         ->maxLength(100),
 
-                    Forms\Components\Select::make('officeInfo.office_state_code')
+                    Select::make('officeInfo.office_state_code')
                         ->label('Office State')
                         ->placeholder('Select office state')
                         ->options([
@@ -204,7 +208,7 @@ class UserForm
                 ->collapsible()
                 ->collapsed(true),
 
-            Forms\Components\Section::make('Documents & Photos')
+            Section::make('Documents & Photos')
                 ->schema([
 
                     SpatieMediaLibraryFileUpload::make('photo')
@@ -246,9 +250,9 @@ class UserForm
                         ->helperText('Upload immunization card. Accepted formats: JPG, PNG, WebP, PDF. Maximum size: 10MB'),
                 ])->columns(3),
 
-            Forms\Components\Section::make('Role Assignment')
+            Section::make('Role Assignment')
                 ->schema([
-                    Forms\Components\Select::make('roles')
+                    Select::make('roles')
                         ->multiple()
                         ->relationship('roles', 'name')
                         ->options(function () {
@@ -292,9 +296,9 @@ class UserForm
                 ])
                 ->collapsible(),
 
-            Forms\Components\Section::make('Centre Assignments')
+            Section::make('Centre Assignments')
                 ->schema([
-                    Forms\Components\Select::make('centres')
+                    Select::make('centres')
                         ->multiple()
                         ->relationship('centres', 'name', function ($query) {
                             $user = Auth::user();
@@ -335,9 +339,9 @@ class UserForm
                 })
                 ->collapsible(),
 
-            Forms\Components\Section::make('Password')
+            Section::make('Password')
                 ->schema([
-                    Forms\Components\TextInput::make('password')
+                    TextInput::make('password')
                         ->password()
                         ->dehydrateStateUsing(fn ($state) => filled($state) ? Hash::make($state) : null)
                         ->dehydrated(fn ($state) => filled($state))
@@ -348,7 +352,7 @@ class UserForm
                         ->label(fn (string $context): string =>
                             $context === 'edit' ? 'New Password' : 'Password'
                         ),
-                    Forms\Components\TextInput::make('password_confirmation')
+                    TextInput::make('password_confirmation')
                         ->password()
                         ->required(fn (string $context): bool => $context === 'create')
                         ->minLength(8)

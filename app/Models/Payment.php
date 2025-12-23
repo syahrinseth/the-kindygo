@@ -57,7 +57,7 @@ class Payment extends Model implements HasMedia
     /**
      * Get the invoices associated with the payment.
      *
-     * @return \Illuminate\Database\Eloquent\Relations\BelongsToMany
+     * @return BelongsToMany
      */
     public function invoices(): BelongsToMany
     {
@@ -69,7 +69,7 @@ class Payment extends Model implements HasMedia
     /**
      * Get the user who made the payment.
      *
-     * @return \Illuminate\Database\Eloquent\Relations\BelongsTo
+     * @return BelongsTo
      */
     public function user(): BelongsTo
     {

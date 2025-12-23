@@ -2,6 +2,9 @@
 
 namespace App\Console\Commands;
 
+use Exception;
+use App\Http\Controllers\ChipPaymentController;
+use ReflectionClass;
 use App\Enums\Gateway;
 use App\Models\Payment;
 use Illuminate\Console\Command;
@@ -64,7 +67,7 @@ class VerifyChipEnhancements extends Command
             } else {
                 $this->error('   ✗ gateway_payment_data column missing - run migration');
             }
-        } catch (\Exception $e) {
+        } catch (Exception $e) {
             $this->error('   ✗ Database check failed: ' . $e->getMessage());
         }
 
@@ -92,8 +95,8 @@ class VerifyChipEnhancements extends Command
         // Check controller enhancements
         $this->info('4. Checking Controller Enhancements...');
         try {
-            $controller = new \App\Http\Controllers\ChipPaymentController();
-            $reflection = new \ReflectionClass($controller);
+            $controller = new ChipPaymentController();
+            $reflection = new ReflectionClass($controller);
             
             $methods = [
                 'fetchAndPrepareChipData',
@@ -114,7 +117,7 @@ class VerifyChipEnhancements extends Command
                     $this->error("   ✗ {$method}() - Missing");
                 }
             }
-        } catch (\Exception $e) {
+        } catch (Exception $e) {
             $this->error('   ✗ Controller check failed: ' . $e->getMessage());
         }
 
@@ -158,7 +161,7 @@ class VerifyChipEnhancements extends Command
             $this->info("   Legacy Payment Method: " . ($legacyPayment->getChipPaymentMethod() ?: 'N/A'));
             $this->info("   Legacy Status: " . ($legacyPayment->getChipStatus() ?: 'N/A'));
 
-        } catch (\Exception $e) {
+        } catch (Exception $e) {
             $this->error('   ✗ Helper method test failed: ' . $e->getMessage());
         }
 

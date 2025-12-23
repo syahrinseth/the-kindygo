@@ -13,23 +13,40 @@ class UpdateCurrentTenant
     /**
      * Handle an incoming request.
      *
-     * @param  \Closure(\Illuminate\Http\Request): (\Symfony\Component\HttpFoundation\Response)  $next
+     * @param  Closure(Request):Response  $next
      */
     public function handle(Request $request, Closure $next): Response
     {
         $response = $next($request);
 
-        // Only proceed if user is authenticated and we have a Filament tenant
-        if (Auth::check() && Filament::getTenant()) {
+        // Only proceed if user is authenticated
+        if (Auth::check()) {
             $user = Auth::user();
+
+            // First prefer any Filament tenant (if present for specific panels)
             $currentTenant = Filament::getTenant();
-            
-            // Update the user's current_tenant_id if it has changed
-            if ($user->current_tenant_id !== $currentTenant->id) {
+
+            // If no tenant was provided via panel routing (we removed tenant slugs from URLs),
+            // resolve the tenant from the user's defaults (personal or last used) or first attached.
+            if (! $currentTenant) {
+                $panel = Filament::getPanel();
+
+                // Try the user's default tenant (uses user's personal tenant, latest accessed, first available)
+                if (method_exists($user, 'getDefaultTenant')) {
+                    $currentTenant = $user->getDefaultTenant($panel);
+                }
+
+                // Fallback to the first attached tenant
+                if (! $currentTenant) {
+                    $currentTenant = $user->tenants()->first();
+                }
+            }
+
+            if ($currentTenant && $user->current_tenant_id !== $currentTenant->id) {
                 $user->update([
-                    'current_tenant_id' => $currentTenant->id
+                    'current_tenant_id' => $currentTenant->id,
                 ]);
-                
+
                 // Also update the pivot table timestamp to track latest access
                 $user->setCurrentTenant($currentTenant);
             }

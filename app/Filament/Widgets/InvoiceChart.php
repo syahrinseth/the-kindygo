@@ -2,6 +2,7 @@
 
 namespace App\Filament\Widgets;
 
+use App\Filament\Pages\FinanceDashboard;
 use App\Models\Invoice;
 use App\Enums\InvoiceStatus;
 use Filament\Widgets\ChartWidget;
@@ -10,15 +11,15 @@ use Carbon\Carbon;
 
 class InvoiceChart extends ChartWidget
 {
-    protected static ?string $heading = 'Monthly Invoice Totals';
+    protected ?string $heading = 'Monthly Invoice Totals';
     
     protected int | string | array $columnSpan = 'full';
     
-    protected static ?string $maxHeight = '300px';
+    protected ?string $maxHeight = '300px';
 
     public static function canView(): bool
     {
-        return Auth::user()->can('viewInvoiceAnalytics', \App\Filament\Pages\FinanceDashboard::class);
+        return Auth::user()->can('viewInvoiceAnalytics', FinanceDashboard::class);
     }
 
     protected function getData(): array
@@ -59,19 +60,19 @@ class InvoiceChart extends ChartWidget
         foreach ($months as $month) {
             $startOfMonth = $month->copy()->startOfMonth();
             $endOfMonth = $month->copy()->endOfMonth();
-            
+
             // Pending invoices for this month
             $pendingData[] = (clone $baseQuery)
                 ->where('status', InvoiceStatus::PENDING)
                 ->whereBetween('date', [$startOfMonth, $endOfMonth])
                 ->sum('total') / 100; // Convert to dollars
-                
+
             // Paid invoices for this month
             $paidData[] = (clone $baseQuery)
                 ->where('status', InvoiceStatus::PAID)
                 ->whereBetween('date', [$startOfMonth, $endOfMonth])
                 ->sum('total') / 100; // Convert to dollars
-                
+
             // Overdue invoices for this month
             $overdueData[] = (clone $baseQuery)
                 ->where('status', InvoiceStatus::OVERDUE)

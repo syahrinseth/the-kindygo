@@ -2,6 +2,7 @@
 
 namespace App\Console\Commands;
 
+use Exception;
 use App\Models\InvoiceItem;
 use App\Models\Scopes\TenantScope;
 use App\Models\Scopes\BelongsToManyTenantScope;
@@ -77,7 +78,7 @@ class CalculateInvoiceItemBalances extends Command
                         $updatedCount++;
                     }
                     $processedCount++;
-                } catch (\Exception $e) {
+                } catch (Exception $e) {
                     $errorCount++;
                     $this->error("Error processing item {$item->id}: " . $e->getMessage());
                 }

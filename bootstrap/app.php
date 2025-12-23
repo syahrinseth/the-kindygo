@@ -14,6 +14,7 @@ return Application::configure(basePath: dirname(__DIR__))
     ->withMiddleware(function (Middleware $middleware) {
         $middleware->alias([
             'profile.completed' => \App\Http\Middleware\EnsureProfileCompleted::class,
+            'update.current_tenant' => \App\Http\Middleware\UpdateCurrentTenant::class,
         ]);
     })
     ->withExceptions(function (Exceptions $exceptions) {

@@ -2,6 +2,8 @@
 
 namespace App\Models;
 
+use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Database\Eloquent\Relations\HasOne;
 use App\Enums\ProductStatus;
 use App\Enums\ProductType;
 use App\Enums\ProductPriority;
@@ -54,7 +56,7 @@ class Product extends Model
     /**
      * Get the tenant that owns the product.
      *
-     * @return \Illuminate\Database\Eloquent\Relations\BelongsTo
+     * @return BelongsTo
      */
     public function tenant(): BelongsTo
     {
@@ -64,7 +66,7 @@ class Product extends Model
     /**
      * Get the invoice items for this product.
      *
-     * @return \Illuminate\Database\Eloquent\Relations\HasMany
+     * @return HasMany
      */
     public function invoiceItems(): HasMany
     {
@@ -72,41 +74,41 @@ class Product extends Model
     }
 
     /**
-     * Get the child enrollments for this product.
+     * Get the child enrolments for this product.
      *
-     * @return \Illuminate\Database\Eloquent\Relations\HasMany
+     * @return HasMany
      */
-    public function enrollments(): HasMany
+    public function enrolments(): HasMany
     {
-        return $this->hasMany(ChildEnrollment::class);
+        return $this->hasMany(ChildEnrolment::class);
     }
 
     /**
-     * Get the active child enrollments for this product.
+     * Get the active child enrolments for this product.
      *
-     * @return \Illuminate\Database\Eloquent\Relations\HasMany
+     * @return HasMany
      */
-    public function activeEnrollments(): HasMany
+    public function activeEnrolments(): HasMany
     {
-        return $this->hasMany(ChildEnrollment::class)->active();
+        return $this->hasMany(ChildEnrolment::class)->active();
     }
 
     /**
-     * Get the current child enrollments for this product.
+     * Get the current child enrolments for this product.
      *
-     * @return \Illuminate\Database\Eloquent\Relations\HasMany
+     * @return HasMany
      */
-    public function currentEnrollments(): HasMany
+    public function currentEnrolments(): HasMany
     {
-        return $this->hasMany(ChildEnrollment::class)->current();
+        return $this->hasMany(ChildEnrolment::class)->current();
     }
 
     /**
      * Scope a query to filter by status.
      *
-     * @param  \Illuminate\Database\Eloquent\Builder  $query
+     * @param Builder $query
      * @param  string  $status
-     * @return \Illuminate\Database\Eloquent\Builder
+     * @return Builder
      */
     public function scopeByStatus($query, $status)
     {
@@ -116,9 +118,9 @@ class Product extends Model
     /**
      * Scope a query to filter by type.
      *
-     * @param  \Illuminate\Database\Eloquent\Builder  $query
+     * @param Builder $query
      * @param  string  $type
-     * @return \Illuminate\Database\Eloquent\Builder
+     * @return Builder
      */
     public function scopeByType($query, $type)
     {
@@ -128,9 +130,9 @@ class Product extends Model
     /**
      * Scope a query to filter by priority.
      *
-     * @param  \Illuminate\Database\Eloquent\Builder  $query
+     * @param Builder $query
      * @param  ProductPriority|int  $priority
-     * @return \Illuminate\Database\Eloquent\Builder
+     * @return Builder
      */
     public function scopeByPriority($query, ProductPriority|int $priority)
     {
@@ -146,7 +148,7 @@ class Product extends Model
     /**
      * Get the prices for this product.
      *
-     * @return \Illuminate\Database\Eloquent\Relations\HasMany
+     * @return HasMany
      */
     public function prices(): HasMany
     {
@@ -156,13 +158,13 @@ class Product extends Model
     /**
      * Get the current active price for this product.
      *
-     * @return \Illuminate\Database\Eloquent\Relations\HasOne
+     * @return HasOne
      */
     public function currentPrice()
     {
         return $this->hasOne(ProductPrice::class)
-                    ->current()
-                    ->orderBy('start_date', 'desc');
+            ->current()
+            ->orderBy('start_date', 'desc');
     }
 
     /**
@@ -174,10 +176,10 @@ class Product extends Model
     public function currentPriceForCentre($centreId = null)
     {
         return $this->prices()
-                    ->with('centres')
-                    ->activeForCentre($centreId)
-                    ->orderBy('start_date', 'desc')
-                    ->first();
+            ->with('centres')
+            ->activeForCentre($centreId)
+            ->orderBy('start_date', 'desc')
+            ->first();
     }
 
     /**
@@ -201,10 +203,10 @@ class Product extends Model
     public function getPriceForCentre($date = null, $centreId = null)
     {
         return $this->prices()
-                    ->with('centres')
-                    ->activeForCentre($centreId, $date)
-                    ->orderBy('start_date', 'desc')
-                    ->first();
+            ->with('centres')
+            ->activeForCentre($centreId, $date)
+            ->orderBy('start_date', 'desc')
+            ->first();
     }
 
     /**
@@ -243,8 +245,8 @@ class Product extends Model
     /**
      * Scope a query to filter by high priority (Critical and High).
      *
-     * @param  \Illuminate\Database\Eloquent\Builder  $query
-     * @return \Illuminate\Database\Eloquent\Builder
+     * @param Builder $query
+     * @return Builder
      */
     public function scopeHighPriority($query)
     {
@@ -254,8 +256,8 @@ class Product extends Model
     /**
      * Scope a query to filter by critical priority only.
      *
-     * @param  \Illuminate\Database\Eloquent\Builder  $query
-     * @return \Illuminate\Database\Eloquent\Builder
+     * @param Builder $query
+     * @return Builder
      */
     public function scopeCriticalPriority($query)
     {

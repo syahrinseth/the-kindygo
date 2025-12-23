@@ -37,9 +37,32 @@ return [
             'database' => env('DB_DATABASE', database_path('database.sqlite')),
             'prefix' => '',
             'foreign_key_constraints' => env('DB_FOREIGN_KEYS', true),
-            'busy_timeout' => null,
-            'journal_mode' => null,
-            'synchronous' => null,
+            'prefix_indexes' => null,
+            'busy_timeout' => env('DB_SQLITE_BUSY_TIMEOUT', 15000),
+            'journal_mode' => env('DB_SQLITE_JOURNAL_MODE', 'wal'),
+            'synchronous' => env('DB_SQLITE_SYNCHRONOUS', 'normal'),
+            'transaction_mode' => env('DB_SQLITE_TRANSACTION_MODE', 'IMMEDIATE'),
+            'pragmas' => [
+                'temp_store' => env('DB_SQLITE_TEMP_STORE', 'memory'),
+                'cache_size' => env('DB_SQLITE_CACHE_SIZE', -2000),
+            ],
+        ],
+
+        'telescope' => [
+            'driver' => 'sqlite',
+            'url' => env('TELESCOPE_DB_URL'),
+            'database' => env('TELESCOPE_DB_DATABASE', database_path('telescope.sqlite')),
+            'prefix' => '',
+            'foreign_key_constraints' => true,
+            'prefix_indexes' => null,
+            'busy_timeout' => env('TELESCOPE_DB_BUSY_TIMEOUT', 15000),
+            'journal_mode' => env('TELESCOPE_DB_JOURNAL_MODE', 'wal'),
+            'synchronous' => env('TELESCOPE_DB_SYNCHRONOUS', 'normal'),
+            'transaction_mode' => env('TELESCOPE_DB_TRANSACTION_MODE', 'IMMEDIATE'),
+            'pragmas' => [
+                'temp_store' => env('TELESCOPE_DB_TEMP_STORE', 'memory'),
+                'cache_size' => env('TELESCOPE_DB_CACHE_SIZE', -2000),
+            ],
         ],
 
         'mysql' => [

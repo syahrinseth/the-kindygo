@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use Illuminate\Database\Eloquent\Collection;
 use App\Models\User;
 use App\Models\Child;
 use App\Models\Invoice;
@@ -122,27 +123,27 @@ class Tenant extends Model
     }
 
     /**
-     * Get the child enrollments belonging to the tenant.
+     * Get the child enrolments belonging to the tenant.
      */
-    public function childEnrollments(): HasMany
+    public function childEnrolments(): HasMany
     {
-        return $this->hasMany(ChildEnrollment::class);
+        return $this->hasMany(ChildEnrolment::class);
     }
 
     /**
-     * Get the active child enrollments belonging to the tenant.
+     * Get the active child enrolments belonging to the tenant.
      */
-    public function activeChildEnrollments(): HasMany
+    public function activeChildEnrolments(): HasMany
     {
-        return $this->hasMany(ChildEnrollment::class)->active();
+        return $this->hasMany(ChildEnrolment::class)->active();
     }
 
     /**
-     * Get the current child enrollments belonging to the tenant.
+     * Get the current child enrolments belonging to the tenant.
      */
-    public function currentChildEnrollments(): HasMany
+    public function currentChildEnrolments(): HasMany
     {
-        return $this->hasMany(ChildEnrollment::class)->current();
+        return $this->hasMany(ChildEnrolment::class)->current();
     }
 
     /**
@@ -245,7 +246,7 @@ class Tenant extends Model
      * Get children with a specific status at this tenant.
      *
      * @param ChildStatus $status The status to filter by
-     * @return \Illuminate\Database\Eloquent\Collection The children with the specified status
+     * @return Collection The children with the specified status
      */
     public function getChildrenByStatus(ChildStatus $status)
     {
@@ -257,7 +258,7 @@ class Tenant extends Model
     /**
      * Get new children at this tenant.
      *
-     * @return \Illuminate\Database\Eloquent\Collection
+     * @return Collection
      */
     public function getNewChildren()
     {
@@ -267,7 +268,7 @@ class Tenant extends Model
     /**
      * Get active children at this tenant.
      *
-     * @return \Illuminate\Database\Eloquent\Collection
+     * @return Collection
      */
     public function getActiveChildren()
     {
@@ -277,7 +278,7 @@ class Tenant extends Model
     /**
      * Get returning children at this tenant.
      *
-     * @return \Illuminate\Database\Eloquent\Collection
+     * @return Collection
      */
     public function getReturningChildren()
     {
@@ -287,7 +288,7 @@ class Tenant extends Model
     /**
      * Get alumni children at this tenant.
      *
-     * @return \Illuminate\Database\Eloquent\Collection
+     * @return Collection
      */
     public function getAlumniChildren()
     {

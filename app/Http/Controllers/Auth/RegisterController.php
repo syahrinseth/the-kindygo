@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\Auth;
 
+use App\Models\Scopes\TenantScope;
 use App\Http\Controllers\Controller;
 use App\Models\Tenant;
 use App\Models\User;
@@ -72,7 +73,7 @@ class RegisterController extends Controller
     {
         $tenant = Tenant::where('slug', $tenantSlug)->firstOrFail();
         // Use withoutGlobalScope to bypass TenantScope since user is not authenticated yet
-        $centres = $tenant->centres()->withoutGlobalScope(\App\Models\Scopes\TenantScope::class)->get();
+        $centres = $tenant->centres()->withoutGlobalScope(TenantScope::class)->get();
         
         return view('auth.tenant-register', compact('tenant', 'centres'));
     }
@@ -91,7 +92,7 @@ class RegisterController extends Controller
                 'required',
                 'integer',
                 function ($attribute, $value, $fail) use ($tenant) {
-                    if (!$tenant->centres()->withoutGlobalScope(\App\Models\Scopes\TenantScope::class)
+                    if (!$tenant->centres()->withoutGlobalScope(TenantScope::class)
                     ->where('id', $value)->exists()) {
                         $fail('The selected centre does not belong to this tenant.');
                     }

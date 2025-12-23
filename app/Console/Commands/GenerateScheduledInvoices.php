@@ -2,10 +2,11 @@
 
 namespace App\Console\Commands;
 
-use App\Models\ChildEnrollment;
-use App\Services\ChildEnrollmentInvoiceService;
-use App\Enums\ChildEnrollmentStatus;
-use App\Enums\ChildEnrollmentBilledEvery;
+use Exception;
+use App\Models\ChildEnrolment;
+use App\Services\ChildEnrolmentInvoiceService;
+use App\Enums\ChildEnrolmentStatus;
+use App\Enums\ChildEnrolmentBilledEvery;
 use Illuminate\Console\Command;
 use Carbon\Carbon;
 
@@ -13,136 +14,135 @@ class GenerateScheduledInvoices extends Command
 {
     protected $signature = 'invoices:generate-scheduled
                           {--days-ahead=7 : How many days ahead to generate invoices}
-                          {--enrollment-id= : Generate for specific enrollment ID}
+                          {--enrolment-id= : Generate for specific enrolment ID}
                           {--tenant-id= : Generate for specific tenant ID}
                           {--dry-run : Show what invoices would be generated without creating them}';
 
-    protected $description = 'Generate scheduled invoices for child enrollments';
+    protected $description = 'Generate scheduled invoices for child enrolments';
 
-    public function handle(ChildEnrollmentInvoiceService $invoiceService): int
+    public function handle(ChildEnrolmentInvoiceService $invoiceService): int
     {
         $daysAhead = (int) $this->option('days-ahead');
-        $enrollmentId = $this->option('enrollment-id');
+        $enrolmentId = $this->option('enrolment-id');
         $tenantId = $this->option('tenant-id');
         $dryRun = $this->option('dry-run');
-        
+
         if ($dryRun) {
             $this->info('🔍 DRY RUN MODE: No invoices will be created');
         }
-        
+
         $this->info('Starting invoice generation...');
-        
-        // Include enrollments that may not be ACTIVE yet but need to be activated when invoiced
+
+        // Include enrolments that may not be ACTIVE yet but need to be activated when invoiced
         $allowedStatuses = [
-            ChildEnrollmentStatus::ACTIVE,
-            ChildEnrollmentStatus::DRAFT,
-            ChildEnrollmentStatus::PENDING,
-            ChildEnrollmentStatus::INACTIVE
+            ChildEnrolmentStatus::ACTIVE,
+            ChildEnrolmentStatus::DRAFT,
+            ChildEnrolmentStatus::PENDING,
+            ChildEnrolmentStatus::INACTIVE
         ];
-        
-        $query = ChildEnrollment::whereIn('status', $allowedStatuses)
+
+        $query = ChildEnrolment::whereIn('status', $allowedStatuses)
             ->with(['child.users', 'centre', 'product']);
-        
-        if ($enrollmentId) {
-            $query->where('id', $enrollmentId);
+
+        if ($enrolmentId) {
+            $query->where('id', $enrolmentId);
         }
-        
+
         if ($tenantId) {
             $query->where('tenant_id', $tenantId);
         }
-        
-        $enrollments = $query->get();
-        
-        // Filter enrollments that need invoicing using service logic
-        $enrollmentsNeedingInvoices = $enrollments->filter(function ($enrollment) use ($daysAhead, $invoiceService) {
-            return $invoiceService->shouldGenerateInvoices($enrollment, $daysAhead);
+
+        $enrolments = $query->get();
+
+        // Filter enrolments that need invoicing using service logic
+        $enrolmentsNeedingInvoices = $enrolments->filter(function ($enrolment) use ($daysAhead, $invoiceService) {
+            return $invoiceService->shouldGenerateInvoices($enrolment, $daysAhead);
         });
-        
-        if ($enrollmentsNeedingInvoices->isEmpty()) {
-            $this->info('No enrollments need invoicing at this time.');
+
+        if ($enrolmentsNeedingInvoices->isEmpty()) {
+            $this->info('No enrolments need invoicing at this time.');
             return 0;
         }
-        
-        $this->info("Found {$enrollmentsNeedingInvoices->count()} enrollment(s) that need invoicing...");
-        
+
+        $this->info("Found {$enrolmentsNeedingInvoices->count()} enrolment(s) that need invoicing...");
+
         if ($dryRun) {
             $this->info('📋 DRY RUN - Showing what would be generated:');
-            
+
             // Show what would be generated without actually creating invoices
-            $groupedEnrollments = $this->groupEnrollmentsByParentAndCentre($enrollmentsNeedingInvoices);
+            $groupedEnrolments = $this->groupEnrolmentsByParentAndCentre($enrolmentsNeedingInvoices);
             $invoiceCount = 0;
-            
-            foreach ($groupedEnrollments as $group) {
+
+            foreach ($groupedEnrolments as $group) {
                 $invoiceCount++;
                 $parent = $group['parent'];
                 $centre = $group['centre'];
-                $children = $group['enrollments']->map(function ($enrollment) {
-                    return $enrollment->child->full_name;
+                $children = $group['enrolments']->map(function ($enrolment) {
+                    return $enrolment->child->full_name;
                 })->join(', ');
-                
+
                 $this->info("  - Would create Invoice #{$invoiceCount} for {$parent->name} at {$centre->name} (Children: {$children})");
-                
-                // Show billing details for each enrollment
-                foreach ($group['enrollments'] as $enrollment) {
-                    $nextBillingDate = $invoiceService->getNextBillingPeriodStart($enrollment);
-                    $this->line("    • {$enrollment->child->full_name}: {$enrollment->product->name} (Next billing: {$nextBillingDate->format('M j, Y')})");
+
+                // Show billing details for each enrolment
+                foreach ($group['enrolments'] as $enrolment) {
+                    $nextBillingDate = $invoiceService->getNextBillingPeriodStart($enrolment);
+                    $this->line("    • {$enrolment->child->full_name}: {$enrolment->product->name} (Next billing: {$nextBillingDate->format('M j, Y')})");
                 }
             }
-            
+
             $this->info("📊 Total invoices that would be generated: {$invoiceCount}");
             return 0;
         }
-        
+
         try {
-            $invoices = $invoiceService->generateInvoicesForEnrollments($enrollmentsNeedingInvoices);
+            $invoices = $invoiceService->generateInvoicesForEnrolments($enrolmentsNeedingInvoices);
             $totalGenerated = $invoices->count();
-            
+
             $this->info("Successfully generated {$totalGenerated} invoice(s)");
-            
+
             // Show summary by parent and centre
             $invoices->each(function ($invoice) {
                 $parent = $invoice->user;
                 $centre = $invoice->centre;
                 $children = $invoice->getChildren();
                 $childNames = $children->pluck('full_name')->join(', ');
-                
+
                 $this->info("  - Invoice #{$invoice->number} for {$parent->name} at {$centre->name} (Children: {$childNames})");
             });
-            
-        } catch (\Exception $e) {
+        } catch (Exception $e) {
             $this->error("Failed to generate invoices: " . $e->getMessage());
             return 1;
         }
-        
+
         return 0;
     }
-    
-    private function groupEnrollmentsByParentAndCentre($enrollments): array
+
+    private function groupEnrolmentsByParentAndCentre($enrolments): array
     {
         $grouped = [];
-        
-        foreach ($enrollments as $enrollment) {
+
+        foreach ($enrolments as $enrolment) {
             // Get the parent/guardian user
-            $parent = $enrollment->child->users()->first();
+            $parent = $enrolment->child->users()->first();
             if (!$parent) {
                 continue; // Skip if no parent found
             }
-            
+
             // Group by tenant_id + user_id + centre_id
-            $groupKey = $enrollment->tenant_id . '_' . $parent->id . '_' . $enrollment->centre_id;
-            
+            $groupKey = $enrolment->tenant_id . '_' . $parent->id . '_' . $enrolment->centre_id;
+
             if (!isset($grouped[$groupKey])) {
                 $grouped[$groupKey] = [
                     'parent' => $parent,
-                    'centre' => $enrollment->centre,
-                    'tenant_id' => $enrollment->tenant_id,
-                    'enrollments' => collect(),
+                    'centre' => $enrolment->centre,
+                    'tenant_id' => $enrolment->tenant_id,
+                    'enrolments' => collect(),
                 ];
             }
-            
-            $grouped[$groupKey]['enrollments']->push($enrollment);
+
+            $grouped[$groupKey]['enrolments']->push($enrolment);
         }
-        
+
         return $grouped;
     }
 }

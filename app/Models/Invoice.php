@@ -2,6 +2,12 @@
 
 namespace App\Models;
 
+use Exception;
+use App\Services\EInvoiceSDKService;
+use Illuminate\Database\Eloquent\Collection;
+use Illuminate\Database\Eloquent\Relations\BelongsToMany;
+use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\HasManyThrough;
 use App\Enums\InvoiceStatus;
 use App\Enums\PaymentStatus;
 use App\Models\Scopes\TenantScope;
@@ -11,6 +17,7 @@ use App\Enums\EInvoiceClassificationCode;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Support\Facades\Auth;
 
 class Invoice extends Model
 {
@@ -85,7 +92,7 @@ class Invoice extends Model
     /**
      * Generate a preschool-friendly centre code.
      *
-     * @param \App\Models\Centre|null $centre
+     * @param Centre|null $centre
      * @return string
      */
     private function generatePreschoolCentreCode($centre): string
@@ -224,7 +231,7 @@ class Invoice extends Model
     /**
      * Get the tenant that owns the invoice.
      *
-     * @return \Illuminate\Database\Eloquent\Relations\BelongsTo
+     * @return BelongsTo
      */
     public function tenant(): BelongsTo
     {
@@ -234,7 +241,7 @@ class Invoice extends Model
     /**
      * Get the centre that owns the invoice.
      *
-     * @return \Illuminate\Database\Eloquent\Relations\BelongsTo
+     * @return BelongsTo
      */
     public function centre(): BelongsTo
     {
@@ -244,7 +251,7 @@ class Invoice extends Model
     /**
      * Get the user that owns the invoice.
      *
-     * @return \Illuminate\Database\Eloquent\Relations\BelongsTo
+     * @return BelongsTo
      */
     public function user(): BelongsTo
     {
@@ -254,7 +261,7 @@ class Invoice extends Model
     /**
      * Get the child that owns the invoice.
      *
-     * @return \Illuminate\Database\Eloquent\Relations\BelongsTo
+     * @return BelongsTo
      */
     public function child(): BelongsTo
     {
@@ -262,25 +269,27 @@ class Invoice extends Model
     }
 
     /**
-     * Get all child enrollments related to this invoice through invoice items.
+     * Get all child enrolments related to this invoice through invoice items.
      *
-     * @return \Illuminate\Database\Eloquent\Collection
+     * @return Collection
      */
-    public function getChildEnrollments()
+    public function getChildEnrolments()
     {
-        return ChildEnrollment::whereIn('id',
-            $this->invoiceItems()->whereNotNull('child_enrollment_id')->pluck('child_enrollment_id')
+        return ChildEnrolment::whereIn(
+            'id',
+            $this->invoiceItems()->whereNotNull('child_enrolment_id')->pluck('child_enrolment_id')
         )->get();
     }
 
     /**
      * Get all children related to this invoice through invoice items.
      *
-     * @return \Illuminate\Database\Eloquent\Collection
+     * @return Collection
      */
     public function getChildren()
     {
-        return Child::whereIn('id',
+        return Child::whereIn(
+            'id',
             $this->invoiceItems()->whereNotNull('child_id')->pluck('child_id')
         )->get();
     }
@@ -303,15 +312,15 @@ class Invoice extends Model
     public function isOverdue(): bool
     {
         return $this->status === InvoiceStatus::OVERDUE ||
-               ($this->status === InvoiceStatus::PENDING && $this->due_at < now());
+            ($this->status === InvoiceStatus::PENDING && $this->due_at < now());
     }
 
     /**
      * Scope a query to only include invoices for a specific tenant.
      *
-     * @param  \Illuminate\Database\Eloquent\Builder  $query
+     * @param Builder $query
      * @param  int  $tenantId
-     * @return \Illuminate\Database\Eloquent\Builder
+     * @return Builder
      */
     public function scopeForTenant($query, $tenantId)
     {
@@ -321,9 +330,9 @@ class Invoice extends Model
     /**
      * Scope a query to only include invoices for a specific centre.
      *
-     * @param  \Illuminate\Database\Eloquent\Builder  $query
+     * @param Builder $query
      * @param  int  $centreId
-     * @return \Illuminate\Database\Eloquent\Builder
+     * @return Builder
      */
     public function scopeForCentre($query, $centreId)
     {
@@ -333,26 +342,26 @@ class Invoice extends Model
     /**
      * Scope a query to only include overdue invoices.
      *
-     * @param  \Illuminate\Database\Eloquent\Builder  $query
-     * @return \Illuminate\Database\Eloquent\Builder
+     * @param Builder $query
+     * @return Builder
      */
     public function scopeOverdue($query)
     {
         return $query->where(function ($query) {
             $query->where('status', InvoiceStatus::OVERDUE)
-                  ->orWhere(function ($query) {
-                      $query->where('status', InvoiceStatus::PENDING)
-                            ->where('due_at', '<', now());
-                  });
+                ->orWhere(function ($query) {
+                    $query->where('status', InvoiceStatus::PENDING)
+                        ->where('due_at', '<', now());
+                });
         });
     }
 
     /**
      * Scope a query to only include invoices with a specific status.
      *
-     * @param  \Illuminate\Database\Eloquent\Builder  $query
-     * @param  \App\Enums\InvoiceStatus  $status
-     * @return \Illuminate\Database\Eloquent\Builder
+     * @param Builder $query
+     * @param InvoiceStatus $status
+     * @return Builder
      */
     public function scopeWithStatus($query, InvoiceStatus $status)
     {
@@ -362,15 +371,14 @@ class Invoice extends Model
     /**
      * Scope a query to filter invoices based on current user's role and permissions.
      *
-     * @param  \Illuminate\Database\Eloquent\Builder  $query
-     * @param  \App\Models\User|null  $user
-     * @return \Illuminate\Database\Eloquent\Builder
+     * @param Builder $query
+     * @param User|null $user
+     * @return Builder
      */
-    public function scopeForCurrentUser($query, $user = null)
+    public function scopeForCurrentUser($query)
     {
-        if (!$user) {
-            $user = \Illuminate\Support\Facades\Auth::user();
-        }
+        $user = Auth::user();
+
 
         if (!$user || !$user->current_tenant_id) {
             return $query->whereRaw('1 = 0'); // Return empty result if no user or tenant
@@ -454,7 +462,7 @@ class Invoice extends Model
     /**
      * Get the payments associated with the invoice.
      *
-     * @return \Illuminate\Database\Eloquent\Relations\BelongsToMany
+     * @return BelongsToMany
      */
     public function payments()
     {
@@ -466,7 +474,7 @@ class Invoice extends Model
     /**
      * Get the invoice items associated with the invoice.
      *
-     * @return \Illuminate\Database\Eloquent\Relations\HasMany
+     * @return HasMany
      */
     public function invoiceItems()
     {
@@ -476,7 +484,7 @@ class Invoice extends Model
     /**
      * Alias for invoiceItems relationship for convenience.
      *
-     * @return \Illuminate\Database\Eloquent\Relations\HasMany
+     * @return HasMany
      */
     public function items()
     {
@@ -484,26 +492,26 @@ class Invoice extends Model
     }
 
     /**
-     * Get all child enrollments associated with this invoice via invoice items.
+     * Get all child enrolments associated with this invoice via invoice items.
      *
-     * @return \Illuminate\Database\Eloquent\Relations\HasManyThrough
+     * @return HasManyThrough
      */
-    public function childEnrollments()
+    public function childEnrolments()
     {
         return $this->hasManyThrough(
-            ChildEnrollment::class,
+            ChildEnrolment::class,
             InvoiceItem::class,
             'invoice_id',
             'id',
             'id',
-            'child_enrollment_id'
-        )->whereNotNull('invoice_items.child_enrollment_id');
+            'child_enrolment_id'
+        )->whereNotNull('invoice_items.child_enrolment_id');
     }
 
     /**
      * Get all children associated with this invoice via invoice items.
      *
-     * @return \Illuminate\Database\Eloquent\Relations\HasManyThrough
+     * @return HasManyThrough
      */
     public function children()
     {
@@ -622,24 +630,24 @@ class Invoice extends Model
      * Submit invoice to LHDN e-Invoice system.
      *
      * @return array
-     * @throws \Exception
+     * @throws Exception
      */
     public function submitToEInvoice(): array
     {
         if ($this->einvoice_uuid) {
-            throw new \Exception('Invoice already submitted to e-Invoice system');
+            throw new Exception('Invoice already submitted to e-Invoice system');
         }
 
         // Validate that invoice date is not in the future
         if ($this->date > now()) {
-            throw new \Exception('Invoice date cannot be in the future. Please update the invoice date before submitting to e-Invoice system.');
+            throw new Exception('Invoice date cannot be in the future. Please update the invoice date before submitting to e-Invoice system.');
         }
 
         // Get tenant's TIN for authentication
         $tenant = $this->tenant;
 
         // Create e-Invoice service with tenant-specific TIN
-        $eInvoiceService = new \App\Services\EInvoiceSDKService($tenant);
+        $eInvoiceService = new EInvoiceSDKService($tenant);
 
         // Convert invoice data to e-Invoice format
         $invoiceData = $this->toEInvoiceFormat();
@@ -647,8 +655,8 @@ class Invoice extends Model
         // Submit to LHDN
         try {
             $response = $eInvoiceService->submitInvoice($invoiceData);
-        } catch (\Exception $e) {
-            throw new \Exception('Failed to submit invoice to e-Invoice system: ' . $e->getMessage());
+        } catch (Exception $e) {
+            throw new Exception('Failed to submit invoice to e-Invoice system: ' . $e->getMessage());
         }
 
         // Update invoice with e-Invoice details
@@ -731,7 +739,7 @@ class Invoice extends Model
                     'CountrySubentityCode' => $tenant->state_code,
                     'AddressLine' => [
                         'Line' => ($tenant->address_1) .
-                                 ($tenant->address_2 ? ', ' . $tenant->address_2 : '')
+                            ($tenant->address_2 ? ', ' . $tenant->address_2 : '')
                     ],
                     'Country' => [
                         'IdentificationCode' => [
@@ -941,19 +949,19 @@ class Invoice extends Model
      *
      * @param string $reason
      * @return array
-     * @throws \Exception
+     * @throws Exception
      */
     public function cancelEInvoice(string $reason): array
     {
         if (!$this->einvoice_uuid) {
-            throw new \Exception('Invoice not submitted to e-Invoice system');
+            throw new Exception('Invoice not submitted to e-Invoice system');
         }
 
         // Get tenant's TIN for authentication
         $tenant = $this->tenant;
 
         // Create e-Invoice service with tenant-specific TIN
-        $eInvoiceService = new \App\Services\EInvoiceSDKService($tenant);
+        $eInvoiceService = new EInvoiceSDKService($tenant);
 
         $response = $eInvoiceService->cancelDocument($this->einvoice_uuid, $reason);
 
@@ -969,19 +977,19 @@ class Invoice extends Model
      * Refresh e-Invoice status from LHDN.
      *
      * @return array
-     * @throws \Exception
+     * @throws Exception
      */
     public function refreshEInvoiceStatus(): array
     {
         if (!$this->einvoice_uuid) {
-            throw new \Exception('Invoice not submitted to e-Invoice system');
+            throw new Exception('Invoice not submitted to e-Invoice system');
         }
 
         // Get tenant's TIN for authentication
         $tenant = $this->tenant;
 
         // Create e-Invoice service with tenant-specific TIN
-        $eInvoiceService = new \App\Services\EInvoiceSDKService($tenant);
+        $eInvoiceService = new EInvoiceSDKService($tenant);
 
         $response = $eInvoiceService->getDocumentStatus($this->einvoice_uuid);
 
@@ -995,7 +1003,7 @@ class Invoice extends Model
         return $response;
     }
 
-    private function getTenantPartyIdentification(?Tenant $tenant = null) : array
+    private function getTenantPartyIdentification(?Tenant $tenant = null): array
     {
         $data = [];
         $tenant = $tenant ?? $this->tenant;

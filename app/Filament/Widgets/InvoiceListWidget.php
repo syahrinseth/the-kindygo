@@ -2,10 +2,11 @@
 
 namespace App\Filament\Widgets;
 
+use App\Filament\Pages\FinanceDashboard;
 use App\Enums\InvoiceStatus;
 use App\Models\Invoice;
-use App\Filament\Resources\InvoiceResource;
-use Filament\Tables\Actions\Action;
+use App\Filament\Resources\Invoices\Invoices\InvoiceResource;
+use Filament\Actions\Action;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Table;
 use Filament\Widgets\TableWidget as BaseWidget;
@@ -21,7 +22,7 @@ class InvoiceListWidget extends BaseWidget
     
     public static function canView(): bool
     {
-        return Auth::user()->can('viewInvoiceList', \App\Filament\Pages\FinanceDashboard::class);
+        return Auth::user()->can('viewInvoiceList', FinanceDashboard::class);
     }
 
     public function table(Table $table): Table
@@ -52,7 +53,7 @@ class InvoiceListWidget extends BaseWidget
                         InvoiceStatus::CANCELLED => 'gray',
                     }),
             ])
-            ->actions([
+            ->recordActions([
                 Action::make('view')
                     ->url(fn (Invoice $record): string => InvoiceResource::getUrl('view', ['record' => $record]))
                     ->icon('heroicon-o-eye'),

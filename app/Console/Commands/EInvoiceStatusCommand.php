@@ -2,6 +2,7 @@
 
 namespace App\Console\Commands;
 
+use Exception;
 use App\Models\Invoice;
 use App\Models\Tenant;
 use App\Services\EInvoiceSDKService;
@@ -171,7 +172,7 @@ class EInvoiceStatusCommand extends Command
             } else {
                 $this->line('  ✅ TIN format valid');
             }
-        } catch (\Exception $e) {
+        } catch (Exception $e) {
             $this->line('  ❌ TIN validation error: ' . $e->getMessage());
         }
         
@@ -224,7 +225,7 @@ class EInvoiceStatusCommand extends Command
                 $this->line('  ❌ E-Invoice columns missing - run migration');
             }
             
-        } catch (\Exception $e) {
+        } catch (Exception $e) {
             $this->line('  ❌ Database connection failed: ' . $e->getMessage());
         }
         
@@ -243,11 +244,11 @@ class EInvoiceStatusCommand extends Command
             try {
                 $isValid = $service->validateTaxpayerTinDirect();
                 $this->line('  ✅ API Connection: TIN validation successful');
-            } catch (\Exception $e) {
+            } catch (Exception $e) {
                 $this->line('  ⚠️  API Connection: ' . $e->getMessage());
             }
             
-        } catch (\Exception $e) {
+        } catch (Exception $e) {
             $this->line('  ❌ EInvoiceSDKService: ' . $e->getMessage());
         }
         
@@ -289,7 +290,7 @@ class EInvoiceStatusCommand extends Command
                 
             $this->line("  📅 Submissions last 7 days: {$recentSubmissions}");
             
-        } catch (\Exception $e) {
+        } catch (Exception $e) {
             $this->line('  ❌ Could not retrieve invoice statistics: ' . $e->getMessage());
         }
         
@@ -318,7 +319,7 @@ class EInvoiceStatusCommand extends Command
                 $this->line("  📈 Submission rate: {$submissionRate}%");
             }
             
-        } catch (\Exception $e) {
+        } catch (Exception $e) {
             $this->line('  ❌ Could not retrieve invoice statistics: ' . $e->getMessage());
         }
         

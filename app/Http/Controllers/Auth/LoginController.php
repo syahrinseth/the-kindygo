@@ -17,7 +17,7 @@ class LoginController extends Controller
         if ($request->has('redirect')) {
             session(['url.intended' => $request->redirect]);
         }
-        
+
         return view('auth.login');
     }
 
@@ -33,14 +33,38 @@ class LoginController extends Controller
 
         if (Auth::attempt($credentials, $request->boolean('remember'))) {
             $request->session()->regenerate();
-            
-            // Redirect to the intended URL if it exists, otherwise go to /app
+
+            // After successful login, ensure user's current tenant is set
+            $user = Auth::user();
+            if ($user && ! $user->current_tenant_id) {
+                try {
+                    $panel = \Filament\Facades\Filament::getPanel();
+                    if (method_exists($user, 'getDefaultTenant')) {
+                        $tenant = $user->getDefaultTenant($panel);
+                    }
+                } catch (\Throwable $e) {
+                    $tenant = null;
+                }
+
+                if (empty($tenant)) {
+                    $tenant = $user->tenants()->first();
+                }
+
+                if ($tenant) {
+                    $user->update(['current_tenant_id' => $tenant->id]);
+                    $user->setCurrentTenant($tenant);
+                }
+            }
+
+            // Redirect to the intended URL if it exists, otherwise go to dashboard
             if (session()->has('url.intended')) {
                 $redirectUrl = session('url.intended');
                 session()->forget('url.intended');
+
                 return redirect()->to($redirectUrl);
             }
-            return redirect('/app');
+
+            return redirect('/dashboard');
         }
 
         return back()->withErrors([
@@ -56,6 +80,7 @@ class LoginController extends Controller
         Auth::logout();
         $request->session()->invalidate();
         $request->session()->regenerateToken();
+
         return redirect('/');
     }
 }

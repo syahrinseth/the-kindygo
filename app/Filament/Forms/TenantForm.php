@@ -2,6 +2,12 @@
 
 namespace App\Filament\Forms;
 
+use Filament\Schemas\Components\Section;
+use Filament\Forms\Components\TextInput;
+use Filament\Schemas\Components\Utilities\Set;
+use Filament\Schemas\Components\Group;
+use Filament\Forms\Components\Select;
+use Filament\Schemas\Components\Utilities\Get;
 use Filament\Forms;
 use Illuminate\Support\Str;
 
@@ -10,68 +16,68 @@ class TenantForm
     public static function make(): array
     {
         return [
-            Forms\Components\Section::make()
+            Section::make()
                 ->schema([
-                    Forms\Components\TextInput::make('name')
+                    TextInput::make('name')
                         ->required()
                         ->maxLength(255)
                         ->live(onBlur: true)
-                        ->afterStateUpdated(function ($state, Forms\Set $set) {
+                        ->afterStateUpdated(function ($state, Set $set) {
                             $set('slug', Str::slug($state));
                         }),
-                    Forms\Components\TextInput::make('slug')
+                    TextInput::make('slug')
                         ->required()
                         ->unique('tenants', 'slug', ignoreRecord: true)
                         ->maxLength(255),
-                    Forms\Components\TextInput::make('email')
+                    TextInput::make('email')
                         ->email()
                         ->required()
                         ->maxLength(255),
-                    Forms\Components\TextInput::make('phone')
+                    TextInput::make('phone')
                         ->tel()
                         ->maxLength(20),
                 ])->columns(2),
 
-            Forms\Components\Section::make('Address')
+            Section::make('Address')
                 ->schema([
-                    Forms\Components\TextInput::make('address_1')
+                    TextInput::make('address_1')
                         ->label('Address Line 1')
                         ->required()
                         ->maxLength(255),
-                    Forms\Components\TextInput::make('address_2')
+                    TextInput::make('address_2')
                         ->label('Address Line 2')
                         ->maxLength(255),
-                    Forms\Components\TextInput::make('city')
+                    TextInput::make('city')
                         ->required()
                         ->maxLength(100),
-                    Forms\Components\TextInput::make('state')
+                    TextInput::make('state')
                         ->required()
                         ->maxLength(100),
-                    Forms\Components\TextInput::make('postal_code')
+                    TextInput::make('postal_code')
                         ->required()
                         ->maxLength(20),
                 ])
                 ->columns(2)
                 ->collapsible(),
 
-            Forms\Components\Section::make('Business Information')
+            Section::make('Business Information')
                 ->description('Required for e-Invoice generation and LHDN compliance')
                 ->schema([
-                    Forms\Components\TextInput::make('tax_identification_number')
+                    TextInput::make('tax_identification_number')
                         ->label('Tax Identification Number (TIN)')
                         ->helperText('Required for e-Invoice submission to LHDN')
                         ->maxLength(50),
-                    Forms\Components\TextInput::make('business_activity_code')
+                    TextInput::make('business_activity_code')
                         ->label('Business Activity Code')
                         ->helperText('MSIC code (e.g., 85100 for childcare)')
                         ->maxLength(10)
                         ->default('85100'),
-                    Forms\Components\TextInput::make('business_activity_description')
+                    TextInput::make('business_activity_description')
                         ->label('Business Activity Description')
                         ->maxLength(255)
                         ->default('Child day-care activities'),
-                    Forms\Components\Group::make([
-                        Forms\Components\Select::make('business_id_type')
+                    Group::make([
+                        Select::make('business_id_type')
                             ->label('Business ID Type')
                             ->options([
                                 'NRIC' => 'NRIC (National Registration Identity Card)',
@@ -81,11 +87,11 @@ class TenantForm
                             ->required()
                             ->live()
                             ->helperText('Select the type of business identification'),
-                        Forms\Components\TextInput::make('business_id_value')
+                        TextInput::make('business_id_value')
                             ->label('Business ID Value')
                             ->required()
                             ->maxLength(50)
-                            ->helperText(function (Forms\Get $get) {
+                            ->helperText(function (Get $get) {
                                 return match ($get('business_id_type')) {
                                     'NRIC' => 'Enter 12 digits without dashes (e.g., 920728015777)',
                                     'BRN' => 'Enter your Business Registration Number',
@@ -94,7 +100,7 @@ class TenantForm
                                 };
                             })
                             ->live()
-                            ->rules(function (Forms\Get $get) {
+                            ->rules(function (Get $get) {
                                 $rules = ['required', 'max:50'];
                                 
                                 if ($get('business_id_type') === 'NRIC') {
@@ -107,7 +113,7 @@ class TenantForm
                                 'regex' => 'NRIC must be exactly 12 digits without dashes (e.g., 920728015777)',
                             ]),
                     ])->columns(2),
-                    Forms\Components\Select::make('country')
+                    Select::make('country')
                         ->label('Country')
                         ->options([
                             'MY' => 'Malaysia',
@@ -119,7 +125,7 @@ class TenantForm
                         ])
                         ->default('MY')
                         ->required(),
-                    Forms\Components\TextInput::make('state_code')
+                    TextInput::make('state_code')
                         ->label('State Code')
                         ->helperText('For Malaysian states (e.g., 14 for Selangor)')
                         ->maxLength(10)
@@ -128,20 +134,20 @@ class TenantForm
                 ->columns(2)
                 ->collapsible(),
 
-            Forms\Components\Section::make('E-Invoice API Configuration')
+            Section::make('E-Invoice API Configuration')
                 ->description('MyInvois API credentials for this tenant. Leave empty to use global configuration.')
                 ->schema([
-                    Forms\Components\TextInput::make('einvoice_client_id')
+                    TextInput::make('einvoice_client_id')
                         ->label('MyInvois Client ID')
                         ->helperText('Obtained from MyInvois portal for this tenant')
                         ->maxLength(255),
-                    Forms\Components\TextInput::make('einvoice_client_secret')
+                    TextInput::make('einvoice_client_secret')
                         ->label('MyInvois Client Secret')
                         ->helperText('Obtained from MyInvois portal for this tenant')
                         ->password()
                         ->revealable()
                         ->maxLength(255),
-                    Forms\Components\Select::make('einvoice_environment')
+                    Select::make('einvoice_environment')
                         ->label('Environment')
                         ->options([
                             'sandbox' => 'Sandbox (Testing)',

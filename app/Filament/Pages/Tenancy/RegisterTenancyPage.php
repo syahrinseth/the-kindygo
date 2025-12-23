@@ -7,8 +7,8 @@ use App\Models\Tenant;
 use App\Models\Website;
 use Filament\Forms\Components\TextInput;
 use Filament\Forms\Components\Toggle;
-use Filament\Forms\Form;
 use Filament\Pages\Tenancy\RegisterTenant;
+use Filament\Schemas\Schema;
 use Illuminate\Support\Facades\Auth;
 
 class RegisterTenancyPage extends RegisterTenant
@@ -18,10 +18,11 @@ class RegisterTenancyPage extends RegisterTenant
         return 'Register Company';
     }
 
-    public function form(Form $form): Form
+    public function form(Schema $schema): Schema
     {
-        return $form
-            ->schema(TenantForm::make())->columns(1);
+        return $schema
+            ->components(TenantForm::make())
+            ->columns(1);
     }
 
     protected function handleRegistration(array $data): Tenant
