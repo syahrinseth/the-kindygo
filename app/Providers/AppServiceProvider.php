@@ -3,10 +3,11 @@
 namespace App\Providers;
 
 use Filament\Panel;
-use Filament\Support\Facades\FilamentView;
-use Filament\Navigation\NavigationGroup;
-use Illuminate\Support\ServiceProvider;
+use App\Models\Centre;
 use Illuminate\Support\Facades\View;
+use Illuminate\Support\ServiceProvider;
+use Filament\Navigation\NavigationGroup;
+use Filament\Support\Facades\FilamentView;
 
 class AppServiceProvider extends ServiceProvider
 {
@@ -41,5 +42,8 @@ class AppServiceProvider extends ServiceProvider
                     ->collapsed(),
             ]);
         });
+
+        // Model Observers can be registered here if needed
+        Centre::observe(\App\Observers\CentreObserver::class);
     }
 }

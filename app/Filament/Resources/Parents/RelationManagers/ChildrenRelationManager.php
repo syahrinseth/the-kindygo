@@ -11,7 +11,6 @@ use Filament\Actions\BulkActionGroup;
 use Filament\Actions\DetachBulkAction;
 use App\Enums\ChildStatus;
 use App\Filament\Forms\ChildForm;
-use App\Filament\Resources\Children\Children\ChildResource;
 use App\Models\Child;
 use Filament\Actions;
 use Filament\Forms;
@@ -33,7 +32,7 @@ class ChildrenRelationManager extends RelationManager
     public static function canViewForRecord(Model $ownerRecord, string $pageClass): bool
     {
         // Only allow viewing children if the user can view the owner record and has appropriate permissions
-        return Auth::user()->can('view', $ownerRecord) && 
+        return Auth::user()->can('view', $ownerRecord) &&
                Auth::user()->can('viewAny', Child::class);
     }
 
@@ -86,7 +85,7 @@ class ChildrenRelationManager extends RelationManager
                         if (!$user || !$user->current_tenant_id) {
                             return 'Unknown';
                         }
-                        
+
                         $status = $record->getStatusAtTenant($user->current_tenant_id);
                         return $status ? ucfirst($status->value) : 'Unknown';
                     })
@@ -96,7 +95,7 @@ class ChildrenRelationManager extends RelationManager
                             if (!$user || !$user->current_tenant_id) {
                                 return false;
                             }
-                            
+
                             $status = $record->getStatusAtTenant($user->current_tenant_id);
                             return $status === ChildStatus::NEW;
                         },
@@ -105,7 +104,7 @@ class ChildrenRelationManager extends RelationManager
                             if (!$user || !$user->current_tenant_id) {
                                 return false;
                             }
-                            
+
                             $status = $record->getStatusAtTenant($user->current_tenant_id);
                             return $status === ChildStatus::ACTIVE;
                         },
@@ -114,7 +113,7 @@ class ChildrenRelationManager extends RelationManager
                             if (!$user || !$user->current_tenant_id) {
                                 return false;
                             }
-                            
+
                             $status = $record->getStatusAtTenant($user->current_tenant_id);
                             return $status === ChildStatus::RETURN;
                         },
@@ -123,7 +122,7 @@ class ChildrenRelationManager extends RelationManager
                             if (!$user || !$user->current_tenant_id) {
                                 return false;
                             }
-                            
+
                             $status = $record->getStatusAtTenant($user->current_tenant_id);
                             return $status === ChildStatus::ALUMNI;
                         },
@@ -147,7 +146,7 @@ class ChildrenRelationManager extends RelationManager
                         if (empty($data['value'])) {
                             return $query;
                         }
-                        
+
                         return $query->wherePivot('relationship_type', $data['value']);
                     }),
                 SelectFilter::make('status')
@@ -157,12 +156,12 @@ class ChildrenRelationManager extends RelationManager
                         if (empty($data['value'])) {
                             return $query;
                         }
-                        
+
                         $user = Auth::user();
                         if (!$user || !$user->current_tenant_id) {
                             return $query;
                         }
-                        
+
                         return $query->whereHas('tenants', function (Builder $subQuery) use ($data, $user) {
                             $subQuery->where('tenant_id', $user->current_tenant_id)
                                      ->where('status', $data['value']);
@@ -173,11 +172,11 @@ class ChildrenRelationManager extends RelationManager
                 ViewAction::make()
                     ->schema(fn (Form $form) => $form->schema(ChildForm::withoutAssociatedUsers()))
                     ->visible(fn (Child $record) => Auth::user()->can('view', $record)),
-                    
+
                 EditAction::make()
                     ->schema(fn (Form $form) => $form->schema(ChildForm::withoutAssociatedUsers()))
                     ->visible(fn (Child $record) => Auth::user()->can('update', $record)),
-                    
+
                 DetachAction::make()
                     ->visible(fn (Child $record) => Auth::user()->can('manageParents', $record)),
             ])

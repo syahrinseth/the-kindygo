@@ -1,11 +1,11 @@
 <?php
 
-namespace App\Filament\Resources\Children\Children;
+namespace App\Filament\Resources\Children;
 
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Filters\SelectFilter;
 use Filament\Tables\Filters\Filter;
-use App\Filament\Resources\Forms\Components\DatePicker;
+use Filament\Forms\Components\DatePicker;
 use Filament\Actions\ActionGroup;
 use Filament\Actions\ViewAction;
 use Filament\Actions\EditAction;

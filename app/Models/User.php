@@ -135,6 +135,15 @@ class User extends Authenticatable implements FilamentUser, HasAvatar, HasDefaul
         return $this->tenants()->first();
     }
 
+    public function currentTenant(): ?Tenant
+    {
+        if ($this->current_tenant_id) {
+            return $this->tenants()->find($this->current_tenant_id);
+        }
+
+        return $this->tenants()->first();
+    }
+
     /**
      * Get the latest tenant relationship
      */

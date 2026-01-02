@@ -1,4 +1,4 @@
-<div class="flex items-center gap-2 ml-4">
+<div class="flex items-center gap-2 ml-4" style="margin-left: 10px;">
     <select
         id="tenant-switcher"
         wire:model.live="selectedTenant"

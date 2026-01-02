@@ -18,14 +18,14 @@ class TenantScope implements Scope
         if (app()->runningInConsole() && !app()->runningUnitTests()) {
             return;
         }
-        
+
         $user = Auth::user();
-        
+
         if (!$user || !$user->current_tenant_id) {
             $builder->whereRaw('1 = 0'); // Return empty result set if no current tenant
             return;
         }
-        
+
         $builder->where($model->getTable() . '.tenant_id', $user->current_tenant_id);
     }
 }

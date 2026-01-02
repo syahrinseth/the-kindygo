@@ -3,7 +3,7 @@
 namespace App\Filament\Resources\Parents\Pages;
 
 use Illuminate\Database\Eloquent\Model;
-use App\Filament\Resources\Parents\Parents\ParentResource;
+use App\Filament\Resources\Parents\ParentResource;
 use App\Models\UserProfile;
 use App\Models\UserAddress;
 use App\Models\UserOfficeInfo;
@@ -22,7 +22,7 @@ class CreateParent extends CreateRecord
         if ($parentRole) {
             $data['roles'] = [$parentRole->id];
         }
-        
+
         return $data;
     }
 

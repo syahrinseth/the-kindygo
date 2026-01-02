@@ -2,22 +2,22 @@
 
 namespace App\Filament\Resources\Centres\RelationManagers;
 
-use Filament\Tables\Columns\TextColumn;
+use Filament\Forms;
+use Filament\Tables;
+use Filament\Actions;
+use Filament\Tables\Table;
+use Filament\Schemas\Schema;
+use App\Filament\Forms\UserForm;
+use Filament\Actions\EditAction;
 use Filament\Actions\AttachAction;
 use Filament\Actions\CreateAction;
-use Filament\Actions\EditAction;
 use Filament\Actions\DetachAction;
 use Filament\Actions\BulkActionGroup;
 use Filament\Actions\DetachBulkAction;
-use Filament\Forms;
-use Filament\Actions;
-use Filament\Resources\RelationManagers\RelationManager;
-use Filament\Tables;
-use Filament\Tables\Table;
-use App\Filament\Forms\UserForm;
+use Filament\Tables\Columns\TextColumn;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\SoftDeletingScope;
-use Filament\Schemas\Schema;
+use Filament\Resources\RelationManagers\RelationManager;
 
 class UsersRelationManager extends RelationManager
 {
@@ -55,8 +55,8 @@ class UsersRelationManager extends RelationManager
             ])
             ->headerActions([
                 AttachAction::make()
-                    ->preloadRecordSelect(),
-                CreateAction::make(),
+                    ->label('Assign User')
+                    ->preloadRecordSelect()
             ])
             ->recordActions([
                 EditAction::make(),

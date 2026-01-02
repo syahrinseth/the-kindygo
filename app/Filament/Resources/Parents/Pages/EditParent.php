@@ -4,7 +4,7 @@ namespace App\Filament\Resources\Parents\Pages;
 
 use Filament\Actions\DeleteAction;
 use Illuminate\Database\Eloquent\Model;
-use App\Filament\Resources\Parents\Parents\ParentResource;
+use App\Filament\Resources\Parents\ParentResource;
 use App\Models\UserProfile;
 use App\Models\UserAddress;
 use App\Models\UserOfficeInfo;
@@ -28,15 +28,15 @@ class EditParent extends EditRecord
     {
         // Load related model data into the form
         $user = $this->record;
-        
+
         if ($user->profile) {
             $data['profile'] = $user->profile->toArray();
         }
-        
+
         if ($user->userAddress) {
             $data['userAddress'] = $user->userAddress->toArray();
         }
-        
+
         if ($user->officeInfo) {
             $data['officeInfo'] = $user->officeInfo->toArray();
         }

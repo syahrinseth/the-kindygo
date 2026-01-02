@@ -1,7 +1,8 @@
 <?php
 
-namespace App\Filament\Resources\Parents\Parents;
+namespace App\Filament\Resources\Parents;
 
+use App\Enums\NavigationGroup;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Columns\IconColumn;
 use Filament\Tables\Filters\SelectFilter;
@@ -36,12 +37,12 @@ class ParentResource extends Resource
 {
     protected static ?string $model = User::class;
 
-    protected static string | \BackedEnum | null $navigationIcon = 'heroicon-o-user-group';
+    protected static BackedEnum|string|null $navigationIcon = 'heroicon-o-user-group';
 
-    protected static string | \UnitEnum | null $navigationGroup = 'User Management';
+    protected static string | UnitEnum | null $navigationGroup = NavigationGroup::USER_MANAGEMENT->value;
 
     protected static ?string $navigationLabel = 'Parents';
-    
+
     protected static ?string $tenantOwnershipRelationshipName = 'tenants';
 
     protected static ?string $label = 'Parent';
@@ -66,7 +67,7 @@ class ParentResource extends Resource
     {
         $query = parent::getEloquentQuery()
             ->with(['profile', 'userAddress', 'officeInfo'])
-            ->whereHas('roles', fn (Builder $query) => 
+            ->whereHas('roles', fn (Builder $query) =>
                 $query->where('name', 'Parent')
             );
 
@@ -123,8 +124,8 @@ class ParentResource extends Resource
                     ->label('Profile Complete')
                     ->boolean()
                     ->getStateUsing(function (User $record): bool {
-                        return $record->profile && 
-                               $record->userAddress && 
+                        return $record->profile &&
+                               $record->userAddress &&
                                $record->userAddress->isComplete() &&
                                (!empty($record->profile->nric) || !empty($record->profile->passport));
                     })
@@ -152,10 +153,10 @@ class ParentResource extends Resource
                 ActionGroup::make([
                     ViewAction::make()
                         ->visible(fn (User $record) => Auth::user()->can('view', $record)),
-                    
+
                     EditAction::make()
                         ->visible(fn (User $record) => Auth::user()->can('update', $record)),
-                    
+
                     DeleteAction::make()
                         ->visible(fn (User $record) => Auth::user()->can('delete', $record)),
                 ])

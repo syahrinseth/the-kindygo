@@ -2,7 +2,7 @@
 
 namespace App\Filament\Resources\Centres\Pages;
 
-use App\Filament\Resources\Centres\Centres\CentreResource;
+use App\Filament\Resources\Centres\CentreResource;
 use Filament\Actions;
 use Filament\Resources\Pages\CreateRecord;
 use Illuminate\Database\Eloquent\Model;
