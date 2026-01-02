@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Filament\Resources\Products\Products;
+namespace App\Filament\Resources\Products;
 
 use Filament\Schemas\Components\Section;
 use Filament\Forms\Components\TextInput;
@@ -51,51 +51,56 @@ class ProductResource extends Resource
     {
         return $schema
             ->components([
-                Section::make('Product Information')
+                Section::make('Product Details')
+                    ->description('Enter the basic product information')
                     ->schema([
+                        TextInput::make('name')
+                            ->required()
+                            ->maxLength(255)
+                            ->placeholder('e.g., Monthly Childcare Fee')
+                            ->columnSpanFull()
+                            ->autofocus(),
+
                         TextInput::make('code')
                             ->required()
                             ->unique(ignoreRecord: true)
                             ->maxLength(255)
                             ->placeholder('e.g., PROD-001')
                             ->helperText('Unique product code for identification'),
-                        
-                        TextInput::make('name')
-                            ->required()
-                            ->maxLength(255)
-                            ->placeholder('e.g., Monthly Childcare Fee')
-                            ->columnSpanFull(),
-                    ])
-                    ->columns(2),
-
-                Section::make('Classification')
-                    ->schema([
-                        Select::make('status')
-                            ->required()
-                            ->options(collect(ProductStatus::cases())->mapWithKeys(fn($case) => [$case->value => $case->label()]))
-                            ->default(ProductStatus::ACTIVE->value)
-                            ->native(false)
-                            ->helperText('Current status of the product'),
-
-                        Select::make('type')
-                            ->required()
-                            ->options(collect(ProductType::cases())->mapWithKeys(fn($case) => [$case->value => $case->getDisplayName()]))
-                            ->default(ProductType::SERVICE->value)
-                            ->native(false)
-                            ->helperText('Type of product or service'),
 
                         Select::make('priority')
                             ->required()
                             ->options(ProductPriority::getOptions())
                             ->default(ProductPriority::MEDIUM->value)
-                            ->native(false),
+                            ->native(false)
+                            ->helperText('Set the display priority for this product'),
                     ])
-                    ->columns(3),
+                    ->columns(2),
 
-                Section::make('Assignment')
+                Section::make('Classification')
+                    ->description('Define the product type and status')
+                    ->schema([
+                        Select::make('type')
+                            ->required()
+                            ->options(collect(ProductType::cases())->mapWithKeys(fn($case) => [$case->value => $case->getDisplayName()]))
+                            ->default(ProductType::SERVICE->value)
+                            ->native(false)
+                            ->helperText('Select the type of product or service'),
+
+                        Select::make('status')
+                            ->required()
+                            ->options(collect(ProductStatus::cases())->mapWithKeys(fn($case) => [$case->value => $case->label()]))
+                            ->default(ProductStatus::ACTIVE->value)
+                            ->native(false)
+                            ->helperText('Set the current status of the product'),
+                    ])
+                    ->columns(2),
+
+                Section::make('Centre Availability')
+                    ->description('Control which centres can use this product')
                     ->schema([
                         Select::make('centres')
-                            ->label('Centres')
+                            ->label('Available at Centres')
                             ->relationship('centres', 'name', function (Builder $query) {
                                 $user = Auth::user();
                                 if (!$user->current_tenant_id) {
@@ -108,16 +113,17 @@ class ProductResource extends Resource
                                         $q->where('users.id', $user->id);
                                     });
                                 }
-                                
+
                                 return $query;
                             })
                             ->multiple()
                             ->searchable()
                             ->preload()
                             ->native(false)
-                            ->placeholder('Select centres (leave empty for all centres)')
-                            ->helperText('Assign this product to specific centres, or leave empty to make it available to all centres'),
-                            
+                            ->placeholder('Leave empty to make available to all centres')
+                            ->helperText('Select specific centres, or leave empty to make this product available to all centres in your organisation')
+                            ->columnSpanFull(),
+
                         Hidden::make('tenant_id')
                             ->default(fn () => Auth::user()?->current_tenant_id),
                     ]),

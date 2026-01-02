@@ -38,63 +38,75 @@ class PricesRelationManager extends RelationManager
     {
         return $schema
             ->components([
-                Section::make('Price Details')
+                Section::make('Price Information')
+                    ->description('Set the price amount for this product')
                     ->schema([
                         TextInput::make('price')
-                            ->label('Price')
+                            ->label('Price Amount')
                             ->required()
                             ->numeric()
                             ->prefix('RM')
                             ->step(0.01)
                             ->minValue(0)
-                            ->helperText('Enter price in RM (e.g., 100.00)')
+                            ->helperText('Enter the price in Malaysian Ringgit (e.g., 100.00 for RM100)')
                             ->afterStateHydrated(function (TextInput $component, $state) {
                                 // Convert from cents to decimal for display
                                 $component->state($state ? number_format($state / 100, 2, '.', '') : '0.00');
                             })
-                            ->dehydrateStateUsing(fn ($state) => (int) ($state * 100)),
-                            
-                        Grid::make(2)
-                            ->schema([
-                                DatePicker::make('start_date')
-                                    ->required()
-                                    ->default(now())
-                                    ->native(false)
-                                    ->displayFormat('M d, Y')
-                                    ->helperText('When this price becomes effective'),
-                                    
-                                DatePicker::make('end_date')
-                                    ->native(false)
-                                    ->displayFormat('M d, Y')
-                                    ->helperText('Leave empty for open-ended pricing')
-                                    ->afterOrEqual('start_date'),
-                            ]),
-                            
+                            ->dehydrateStateUsing(fn ($state) => (int) ($state * 100))
+                            ->columnSpanFull()
+                            ->autofocus(),
+                    ]),
+
+                Section::make('Effective Period')
+                    ->description('Define when this price is valid')
+                    ->schema([
+                        DatePicker::make('start_date')
+                            ->label('Effective From')
+                            ->required()
+                            ->default(now())
+                            ->native(false)
+                            ->displayFormat('M d, Y')
+                            ->helperText('The date when this price becomes active'),
+
+                        DatePicker::make('end_date')
+                            ->label('Effective Until')
+                            ->native(false)
+                            ->displayFormat('M d, Y')
+                            ->helperText('Leave empty for ongoing pricing with no end date')
+                            ->afterOrEqual('start_date'),
+                    ])
+                    ->columns(2),
+
+                Section::make('Centre Availability')
+                    ->description('Control which centres use this price')
+                    ->schema([
                         Select::make('centres')
-                            ->label('Centres')
+                            ->label('Apply to Centres')
                             ->relationship('centres', 'name', function (Builder $query) {
                                 $user = Auth::user();
                                 if (!$user->current_tenant_id) {
                                     return $query->whereRaw('1 = 0');
                                 }
-                                
+
                                 $query->where('tenant_id', $user->current_tenant_id);
-                                
+
                                 // If Principal, limit to their centres
                                 if ($user->hasRole('Principal')) {
                                     $query->whereHas('users', function (Builder $q) use ($user) {
                                         $q->where('users.id', $user->id);
                                     });
                                 }
-                                
+
                                 return $query;
                             })
                             ->multiple()
                             ->searchable()
                             ->preload()
                             ->native(false)
-                            ->placeholder('Leave empty for global pricing')
-                            ->helperText('Select specific centres for this price, or leave empty to apply to all centres'),
+                            ->placeholder('Leave empty to apply globally to all centres')
+                            ->helperText('Select specific centres for this price, or leave empty to apply to all centres assigned to this product')
+                            ->columnSpanFull(),
                     ]),
             ]);
     }
@@ -109,18 +121,18 @@ class PricesRelationManager extends RelationManager
                     ->label('Price')
                     ->money('MYR', 100)
                     ->sortable(),
-                    
+
                 TextColumn::make('start_date')
                     ->label('Effective From')
                     ->date('M d, Y')
                     ->sortable(),
-                    
+
                 TextColumn::make('end_date')
                     ->label('Effective Until')
                     ->date('M d, Y')
                     ->placeholder('Ongoing')
                     ->sortable(),
-                    
+
                 TextColumn::make('centres')
                     ->label('Centres')
                     ->getStateUsing(function (ProductPrice $record) {
@@ -139,7 +151,7 @@ class PricesRelationManager extends RelationManager
                         $count = $record->centres->count();
                         return $count === 1 ? '1 centre' : "{$count} centres";
                     }),
-                    
+
                 TextColumn::make('scope')
                     ->label('Applies To')
                     ->badge()
@@ -149,7 +161,7 @@ class PricesRelationManager extends RelationManager
                     ->color(fn (string $state): string => $state === 'Global' ? 'success' : 'primary')
                     ->sortable(false)
                     ->toggleable(isToggledHiddenByDefault: true),
-                    
+
                 TextColumn::make('status')
                     ->label('Status')
                     ->badge()
@@ -168,7 +180,7 @@ class PricesRelationManager extends RelationManager
                         'Expired' => 'gray',
                         default => 'gray',
                     }),
-                    
+
                 TextColumn::make('created_at')
                     ->label('Created')
                     ->dateTime('M d, Y H:i')

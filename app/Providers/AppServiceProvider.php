@@ -4,6 +4,7 @@ namespace App\Providers;
 
 use Filament\Panel;
 use App\Models\Centre;
+use Illuminate\Support\Facades\File;
 use Illuminate\Support\Facades\View;
 use Illuminate\Support\ServiceProvider;
 use Filament\Navigation\NavigationGroup;
@@ -44,6 +45,42 @@ class AppServiceProvider extends ServiceProvider
         });
 
         // Model Observers can be registered here if needed
-        Centre::observe(\App\Observers\CentreObserver::class);
+        $this->registerObservers();
+    }
+
+    /**
+     * Register all model observers dynamically.
+     */
+    protected function registerObservers(): void
+    {
+        $observersPath = app_path('Observers');
+
+        if (!File::isDirectory($observersPath)) {
+            return;
+        }
+
+        $observerFiles = File::files($observersPath);
+
+        foreach ($observerFiles as $file) {
+            // Get filename without extension (e.g., 'CentreObserver')
+            $observerName = $file->getFilenameWithoutExtension();
+
+            // Skip if it doesn't end with 'Observer'
+            if (!str_ends_with($observerName, 'Observer')) {
+                continue;
+            }
+
+            // Extract model name (e.g., 'Centre' from 'CentreObserver')
+            $modelName = str_replace('Observer', '', $observerName);
+
+            // Build fully qualified class names
+            $observerClass = "App\\Observers\\{$observerName}";
+            $modelClass = "App\\Models\\{$modelName}";
+
+            // Check if both classes exist
+            if (class_exists($observerClass) && class_exists($modelClass)) {
+                $modelClass::observe($observerClass);
+            }
+        }
     }
 }

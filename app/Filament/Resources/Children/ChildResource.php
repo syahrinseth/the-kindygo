@@ -385,7 +385,6 @@ class ChildResource extends Resource
         return [
             'index' => ListChildren::route('/'),
             'create' => CreateChild::route('/create'),
-            'view' => ViewChild::route('/{record}'),
             'edit' => EditChild::route('/{record}/edit'),
         ];
     }

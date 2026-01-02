@@ -14,21 +14,70 @@ class CampusForm
     {
         return $schema
             ->components([
-                Select::make('tenant_id')
-                    ->relationship('tenant', 'name')
-                    ->required(),
-                TextInput::make('name')
-                    ->required(),
-                TextInput::make('phone')
-                    ->tel(),
-                TextInput::make('email')
-                    ->label('Email address')
-                    ->email(),
-                TextInput::make('address_1'),
-                TextInput::make('address_2'),
-                TextInput::make('postal_code'),
-                TextInput::make('city'),
-                TextInput::make('state'),
+                Section::make('Campus Information')
+                    ->description('Enter the campus name and contact details')
+                    ->schema([
+                        TextInput::make('name')
+                            ->label('Campus Name')
+                            ->required()
+                            ->maxLength(255)
+                            ->placeholder('e.g., Kuala Lumpur Campus')
+                            ->suffixIcon('heroicon-m-building-office-2')
+                            ->columnSpanFull()
+                            ->autofocus(),
+
+                        TextInput::make('phone')
+                            ->label('Phone Number')
+                            ->tel()
+                            ->maxLength(255)
+                            ->placeholder('+60 3-1234 5678')
+                            ->suffixIcon('heroicon-m-phone'),
+
+                        TextInput::make('email')
+                            ->label('Email Address')
+                            ->email()
+                            ->maxLength(255)
+                            ->placeholder('campus@example.com')
+                            ->suffixIcon('heroicon-m-envelope'),
+                    ])
+                    ->columns(2),
+
+                Section::make('Location')
+                    ->description('Provide the complete campus address')
+                    ->schema([
+                        TextInput::make('address_1')
+                            ->label('Address Line 1')
+                            ->maxLength(255)
+                            ->placeholder('123 Jalan Example')
+                            ->columnSpanFull(),
+
+                        TextInput::make('address_2')
+                            ->label('Address Line 2')
+                            ->maxLength(255)
+                            ->placeholder('Taman Test (optional)')
+                            ->helperText('Additional address details if needed')
+                            ->columnSpanFull(),
+
+                        TextInput::make('postal_code')
+                            ->label('Postal Code')
+                            ->maxLength(5)
+                            ->placeholder('50000')
+                            ->mask('99999')
+                            ->suffixIcon('heroicon-m-hashtag'),
+
+                        TextInput::make('city')
+                            ->label('City')
+                            ->maxLength(255)
+                            ->placeholder('Kuala Lumpur')
+                            ->suffixIcon('heroicon-m-map-pin'),
+
+                        TextInput::make('state')
+                            ->label('State')
+                            ->maxLength(255)
+                            ->placeholder('Selangor')
+                            ->suffixIcon('heroicon-m-map'),
+                    ])
+                    ->columns(3),
             ]);
     }
 
@@ -38,7 +87,8 @@ class CampusForm
     public static function getComponents(): array
     {
         return [
-            Section::make('Campus Details')
+            Section::make('Campus Information')
+                ->description('Enter the campus name and contact details')
                 ->schema([
                     TextInput::make('name')
                         ->label('Campus Name')
@@ -46,27 +96,27 @@ class CampusForm
                         ->maxLength(255)
                         ->placeholder('e.g., Kuala Lumpur Campus')
                         ->suffixIcon('heroicon-m-building-office-2')
-                        ->columnSpanFull(),
+                        ->columnSpanFull()
+                        ->autofocus(),
 
-                    Grid::make(2)
-                        ->schema([
-                            TextInput::make('phone')
-                                ->label('Phone Number')
-                                ->tel()
-                                ->maxLength(255)
-                                ->placeholder('+60312345678')
-                                ->suffixIcon('heroicon-m-phone'),
+                    TextInput::make('phone')
+                        ->label('Phone Number')
+                        ->tel()
+                        ->maxLength(255)
+                        ->placeholder('+60 3-1234 5678')
+                        ->suffixIcon('heroicon-m-phone'),
 
-                            TextInput::make('email')
-                                ->label('Email Address')
-                                ->email()
-                                ->maxLength(255)
-                                ->placeholder('campus@example.com')
-                                ->suffixIcon('heroicon-m-envelope'),
-                        ]),
-                ]),
+                    TextInput::make('email')
+                        ->label('Email Address')
+                        ->email()
+                        ->maxLength(255)
+                        ->placeholder('campus@example.com')
+                        ->suffixIcon('heroicon-m-envelope'),
+                ])
+                ->columns(2),
 
-            Section::make('Campus Address')
+            Section::make('Location')
+                ->description('Provide the complete campus address')
                 ->schema([
                     TextInput::make('address_1')
                         ->label('Address Line 1')
@@ -78,30 +128,29 @@ class CampusForm
                         ->label('Address Line 2')
                         ->maxLength(255)
                         ->placeholder('Taman Test (optional)')
+                        ->helperText('Additional address details if needed')
                         ->columnSpanFull(),
 
-                    Grid::make(3)
-                        ->schema([
-                            TextInput::make('city')
-                                ->label('City')
-                                ->maxLength(255)
-                                ->placeholder('Kuala Lumpur')
-                                ->suffixIcon('heroicon-m-map-pin'),
+                    TextInput::make('postal_code')
+                        ->label('Postal Code')
+                        ->maxLength(5)
+                        ->placeholder('50000')
+                        ->mask('99999')
+                        ->suffixIcon('heroicon-m-hashtag'),
 
-                            TextInput::make('postal_code')
-                                ->label('Postal Code')
-                                ->maxLength(255)
-                                ->placeholder('50000')
-                                ->mask('99999'),
+                    TextInput::make('city')
+                        ->label('City')
+                        ->maxLength(255)
+                        ->placeholder('Kuala Lumpur')
+                        ->suffixIcon('heroicon-m-map-pin'),
 
-                            TextInput::make('state')
-                                ->label('State')
-                                ->maxLength(255)
-                                ->placeholder('Selangor')
-                                ->suffixIcon('heroicon-m-map'),
-                        ]),
+                    TextInput::make('state')
+                        ->label('State')
+                        ->maxLength(255)
+                        ->placeholder('Selangor')
+                        ->suffixIcon('heroicon-m-map'),
                 ])
-                ->columns(1),
+                ->columns(3),
         ];
     }
 }

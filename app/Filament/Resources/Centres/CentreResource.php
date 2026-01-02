@@ -2,42 +2,43 @@
 
 namespace App\Filament\Resources\Centres;
 
-use Filament\Schemas\Components\Section;
-use Filament\Schemas\Components\Grid;
-use Filament\Schemas\Components\Tabs;
-use Filament\Schemas\Components\Utilities\Set;
-use Filament\Schemas\Components\Utilities\Get;
-use Filament\Tables\Columns\TextColumn;
-use Filament\Tables\Columns\SelectColumn;
-use Filament\Actions\ActionGroup;
-use Filament\Actions\EditAction;
-use Filament\Actions\DeleteAction;
-use Filament\Actions\BulkActionGroup;
-use Filament\Actions\DeleteBulkAction;
-use App\Filament\Resources\Centres\RelationManagers\UsersRelationManager;
-use App\Filament\Resources\Centres\Pages\ListCentres;
-use App\Filament\Resources\Centres\Pages\CreateCentre;
-use App\Filament\Resources\Centres\Pages\EditCentre;
-use App\Filament\Resources\CentreResource\Pages;
-use App\Filament\Resources\CentreResource\RelationManagers;
-use App\Filament\Resources\Centres\RelationManagers\InvoicesRelationManager;
-use App\Filament\Resources\Campuses\Schemas\CampusForm;
+use UnitEnum;
+use BackedEnum;
+use Filament\Forms;
+use Filament\Tables;
+use Filament\Actions;
 use App\Models\Campus;
 use App\Models\Centre;
-use Filament\Actions;
-use Filament\Facades\Filament;
-use Filament\Forms;
-use Filament\Forms\Components\Hidden;
-use Filament\Forms\Components\Select;
-use Filament\Forms\Components\TextInput;
-use Filament\Resources\Resource;
-use Filament\Tables;
 use Filament\Tables\Table;
 use Filament\Schemas\Schema;
-use Illuminate\Database\Eloquent\Builder;
+use Filament\Facades\Filament;
+use Filament\Actions\EditAction;
+use Filament\Actions\ViewAction;
+use Filament\Resources\Resource;
+use Filament\Actions\ActionGroup;
+use Filament\Actions\DeleteAction;
 use Illuminate\Support\Facades\Auth;
-use BackedEnum;
-use UnitEnum;
+use Filament\Actions\BulkActionGroup;
+use Filament\Forms\Components\Hidden;
+use Filament\Forms\Components\Select;
+use Filament\Schemas\Components\Grid;
+use Filament\Schemas\Components\Tabs;
+use Filament\Actions\DeleteBulkAction;
+use Filament\Tables\Columns\TextColumn;
+use Filament\Forms\Components\TextInput;
+use Filament\Schemas\Components\Section;
+use Filament\Tables\Columns\SelectColumn;
+use Illuminate\Database\Eloquent\Builder;
+use Filament\Schemas\Components\Utilities\Get;
+use Filament\Schemas\Components\Utilities\Set;
+use App\Filament\Resources\CentreResource\Pages;
+use App\Filament\Resources\Centres\Pages\EditCentre;
+use App\Filament\Resources\Centres\Pages\ListCentres;
+use App\Filament\Resources\Centres\Pages\CreateCentre;
+use App\Filament\Resources\Campuses\Schemas\CampusForm;
+use App\Filament\Resources\CentreResource\RelationManagers;
+use App\Filament\Resources\Centres\RelationManagers\UsersRelationManager;
+use App\Filament\Resources\Centres\RelationManagers\InvoicesRelationManager;
 
 class CentreResource extends Resource
 {
@@ -287,6 +288,7 @@ class CentreResource extends Resource
             ])
             ->recordActions([
                 ActionGroup::make([
+                    ViewAction::make(),
                     EditAction::make(),
                     DeleteAction::make(),
                 ])
