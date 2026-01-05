@@ -7,7 +7,7 @@ use App\Models\ChildEnrolment;
 use Carbon\Carbon;
 
 beforeEach(function () {
-    Carbon::setTestNow('2026-01-15 10:00:00');
+    Carbon::setTestNow('2026-01-23 08:00:00');
     $this->getNextBillingDate = new GetNextBillingDate;
     $this->action = new GetNextBillingPeriodStart($this->getNextBillingDate);
 });
