@@ -2,7 +2,6 @@
 
 namespace Database\Factories;
 
-use App\Enums\ChildStatus;
 use Illuminate\Database\Eloquent\Factories\Factory;
 
 /**
@@ -30,13 +29,11 @@ class ChildFactory extends Factory
             'race' => fake()->optional(0.8)->randomElement(['Malay', 'Chinese', 'Indian', 'Others']),
             'religion' => fake()->optional(0.8)->randomElement(['Islam', 'Buddhism', 'Hinduism', 'Christianity', 'Others']),
             'languages' => fake()->optional(0.8)->randomElement(['English', 'Malay', 'English, Malay', 'English, Mandarin', 'English, Tamil']),
-            
+
             'allergies' => fake()->optional(0.3)->text(100),
             'diseases' => fake()->optional(0.3)->text(100),
             'family_clinic' => fake()->optional(0.7)->company(),
             'family_clinic_phone' => fake()->optional(0.7)->phoneNumber(),
-            
-            'status' => fake()->randomElement(ChildStatus::values()),
         ];
     }
 }

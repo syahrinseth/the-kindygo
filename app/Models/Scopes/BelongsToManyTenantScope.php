@@ -16,17 +16,17 @@ class BelongsToManyTenantScope implements Scope
     public function apply(Builder $builder, Model $model): void
     {
         // Skip scope when running in console/command context
-        if (app()->runningInConsole() && !app()->runningUnitTests()) {
+        if (app()->runningInConsole() && app()->runningUnitTests()) {
             return;
         }
-        
+
         $user = Auth::user();
-        
+
         if (!$user || !$user->current_tenant_id) {
             $builder->whereRaw('1 = 0'); // Return empty result set if no current tenant
             return;
         }
-        
+
         // Join the pivot table and filter by the current tenant
         $builder->whereHas('tenants', function (Builder $query) use ($user) {
             $query->where('tenant_id', $user->current_tenant_id);

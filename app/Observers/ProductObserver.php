@@ -10,7 +10,7 @@ class ProductObserver
     {
         if (empty($product->tenant_id)) {
             // Assign tenant_id before creating the product
-            $product->tenant_id = auth()->user()->currentTenant()?->id ?? 0;
+            $product->tenant_id = auth()->user()?->currentTenant()?->id ?? 0;
         }
     }
 }
