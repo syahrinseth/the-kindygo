@@ -15,6 +15,7 @@ return Application::configure(basePath: dirname(__DIR__))
         $middleware->alias([
             'profile.completed' => \App\Http\Middleware\EnsureProfileCompleted::class,
             'update.current_tenant' => \App\Http\Middleware\UpdateCurrentTenant::class,
+            'allow.incomplete.registration' => \App\Http\Middleware\AllowIncompleteRegistration::class,
         ]);
     })
     ->withExceptions(function (Exceptions $exceptions) {

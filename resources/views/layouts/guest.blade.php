@@ -12,9 +12,7 @@
     @livewireStyles
 </head>
 <body class="font-sans antialiased bg-gray-100">
-    <div class="min-h-screen py-12">
-        @yield('content')
-    </div>
+    {{ $slot }}
     @livewireScripts
 </body>
 </html>

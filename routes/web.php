@@ -1,7 +1,6 @@
 <?php
 
 use App\Http\Controllers\Auth\LoginController;
-use App\Http\Controllers\Auth\RegisterController;
 use App\Http\Controllers\ChipPaymentController;
 use App\Http\Controllers\InvoicePdfController;
 use App\Http\Controllers\PaymentReceiptController;
@@ -9,6 +8,7 @@ use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\SecureMediaController;
 use App\Http\Controllers\TenantDirectoryController;
 use App\Http\Controllers\TenantInvitationController;
+use App\Livewire\TenantRegistrationWizard;
 use Filament\Facades\Filament;
 use Illuminate\Support\Facades\Route;
 
@@ -29,18 +29,17 @@ Route::get('/join', [TenantDirectoryController::class, 'index'])->name('tenant.d
 Route::middleware('guest')->group(function () {
     Route::get('/login', [LoginController::class, 'showLoginForm'])->name('login');
     Route::post('/login', [LoginController::class, 'login']);
-    // Temporarily redirect register route to login
+
+    // Temporarily redirect general register route to login
     Route::get('/register', function () {
         return redirect('/login');
     })->name('register');
-    Route::post('/register', [RegisterController::class, 'register']);
-
-    // Tenant-specific registration routes
-    Route::get('/register/{tenantSlug}', [RegisterController::class, 'showTenantRegistrationForm'])
-        ->name('tenant.register.form');
-    Route::post('/register/{tenantSlug}', [RegisterController::class, 'registerToTenant'])
-        ->name('tenant.register');
 });
+
+// Tenant-specific registration routes with wizard (outside guest middleware)
+Route::get('/register/{tenant:slug}', TenantRegistrationWizard::class)
+    ->middleware('allow.incomplete.registration')
+    ->name('tenant.register.form');
 
 Route::post('/logout', [LoginController::class, 'logout'])->name('logout')->middleware('auth');
 

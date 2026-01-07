@@ -89,6 +89,9 @@ class User extends Authenticatable implements FilamentUser, HasAvatar, HasDefaul
             'email_verified_at' => 'datetime',
             'password' => 'hashed',
             'profile_completed' => 'boolean',
+            'registration_step' => 'integer',
+            'registration_data' => 'array',
+            'registration_token_expires_at' => 'datetime',
         ];
     }
 
@@ -564,5 +567,66 @@ class User extends Authenticatable implements FilamentUser, HasAvatar, HasDefaul
                     ->orWhereNull('state_code')
                     ->orWhere('state_code', '');
             });
+    }
+
+    /**
+     * Check if the user has completed registration.
+     */
+    public function isRegistrationComplete(): bool
+    {
+        return $this->registration_step === 4 && $this->profile_completed === true;
+    }
+
+    /**
+     * Get the current registration step.
+     */
+    public function getCurrentRegistrationStep(): int
+    {
+        return $this->registration_step ?? 0;
+    }
+
+    /**
+     * Get registration data for a specific key or all data.
+     */
+    public function getRegistrationData(?string $key = null): mixed
+    {
+        if ($key === null) {
+            return $this->registration_data ?? [];
+        }
+
+        return data_get($this->registration_data, $key);
+    }
+
+    /**
+     * Update registration data for a specific step.
+     */
+    public function updateRegistrationData(int $step, array $data): void
+    {
+        $registrationData = $this->registration_data ?? [];
+        $registrationData["step_{$step}"] = $data;
+
+        $this->registration_data = $registrationData;
+        $this->save();
+    }
+
+    /**
+     * Clear the registration token and expiry.
+     */
+    public function clearRegistrationToken(): void
+    {
+        $this->registration_token = null;
+        $this->registration_token_expires_at = null;
+    }
+
+    /**
+     * Check if the registration token has expired.
+     */
+    public function isRegistrationTokenExpired(): bool
+    {
+        if (!$this->registration_token_expires_at) {
+            return true;
+        }
+
+        return $this->registration_token_expires_at->isPast();
     }
 }

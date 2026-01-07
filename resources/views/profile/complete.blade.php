@@ -29,7 +29,7 @@
             <div class="px-8 py-8">
                 <form class="space-y-8" action="{{ route('profile.complete') }}" method="POST" enctype="multipart/form-data">
                     @csrf
-                    
+
                     <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
                         <!-- Contact Information Section -->
                         <div class="space-y-6">
@@ -37,11 +37,11 @@
                                 <h3 class="text-lg font-medium text-gray-900 mb-2">Contact Information</h3>
                                 <p class="text-sm text-gray-600">Your contact details for communication</p>
                             </div>
-                            
+
                             <div>
                                 <label for="phone" class="block text-sm font-medium text-gray-700 mb-2">Phone Number *</label>
-                                <input id="phone" name="phone" type="tel" required 
-                                       class="block w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 @error('phone') border-red-500 @enderror" 
+                                <input id="phone" name="phone" type="tel" required
+                                       class="block w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 @error('phone') border-red-500 @enderror"
                                        placeholder="Enter your phone number" value="{{ old('phone', $user->profile?->phone) }}">
                                 @error('phone')
                                     <p class="mt-2 text-sm text-red-500">{{ $message }}</p>
@@ -55,26 +55,26 @@
                                 <h3 class="text-lg font-medium text-gray-900 mb-2">Identity Information</h3>
                                 <p class="text-sm text-gray-600">Please provide either NRIC or Passport number</p>
                             </div>
-                            
+
                             <div class="space-y-4">
                                 <div>
                                     <label for="nric" class="block text-sm font-medium text-gray-700 mb-2">NRIC</label>
-                                    <input id="nric" name="nric" type="text" 
-                                           class="block w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 @error('nric') border-red-500 @enderror" 
+                                    <input id="nric" name="nric" type="text"
+                                           class="block w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 @error('nric') border-red-500 @enderror"
                                            placeholder="NRIC Number" value="{{ old('nric', $user->profile?->nric) }}">
                                     @error('nric')
                                         <p class="mt-2 text-sm text-red-500">{{ $message }}</p>
                                     @enderror
                                 </div>
-                                
+
                                 <div class="flex items-center justify-center">
                                     <span class="bg-gray-100 px-3 py-1 rounded-full text-sm text-gray-500">OR</span>
                                 </div>
-                                
+
                                 <div>
                                     <label for="passport" class="block text-sm font-medium text-gray-700 mb-2">Passport</label>
-                                    <input id="passport" name="passport" type="text" 
-                                           class="block w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 @error('passport') border-red-500 @enderror" 
+                                    <input id="passport" name="passport" type="text"
+                                           class="block w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 @error('passport') border-red-500 @enderror"
                                            placeholder="Passport Number" value="{{ old('passport', $user->profile?->passport) }}">
                                     @error('passport')
                                         <p class="mt-2 text-sm text-red-500">{{ $message }}</p>
@@ -87,8 +87,8 @@
                         <div class="space-y-6">
                             <div>
                                 <label for="occupation" class="block text-sm font-medium text-gray-700 mb-2">Occupation (Optional)</label>
-                                <input id="occupation" name="occupation" type="text" 
-                                       class="block w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 @error('occupation') border-red-500 @enderror" 
+                                <input id="occupation" name="occupation" type="text"
+                                       class="block w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 @error('occupation') border-red-500 @enderror"
                                        placeholder="e.g., Teacher, Engineer, Doctor" value="{{ old('occupation', $user->profile?->occupation) }}">
                                 @error('occupation')
                                     <p class="mt-2 text-sm text-red-500">{{ $message }}</p>
@@ -154,60 +154,47 @@
                             <h3 class="text-lg font-medium text-gray-900 mb-2">Address Information</h3>
                             <p class="text-sm text-gray-600">Your residential address for official purposes</p>
                         </div>
-                        
+
                         <div class="grid grid-cols-1 gap-6">
                             <div>
                                 <label for="address" class="block text-sm font-medium text-gray-700 mb-2">Full Address *</label>
-                                <textarea id="address" name="address" rows="4" required 
-                                          class="block w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 @error('address') border-red-500 @enderror" 
+                                <textarea id="address" name="address" rows="4" required
+                                          class="block w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 @error('address') border-red-500 @enderror"
                                           placeholder="Enter your complete address">{{ old('address', $user->userAddress?->address) }}</textarea>
                                 @error('address')
                                     <p class="mt-2 text-sm text-red-500">{{ $message }}</p>
                                 @enderror
                             </div>
-                            
+
                             <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
                                 <div>
                                     <label for="city" class="block text-sm font-medium text-gray-700 mb-2">City *</label>
-                                    <input id="city" name="city" type="text" required 
-                                           class="block w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 @error('city') border-red-500 @enderror" 
+                                    <input id="city" name="city" type="text" required
+                                           class="block w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 @error('city') border-red-500 @enderror"
                                            placeholder="City" value="{{ old('city', $user->userAddress?->city) }}">
                                     @error('city')
                                         <p class="mt-2 text-sm text-red-500">{{ $message }}</p>
                                     @enderror
                                 </div>
-                                
+
                                 <div>
                                     <label for="postal_code" class="block text-sm font-medium text-gray-700 mb-2">Postal Code *</label>
-                                    <input id="postal_code" name="postal_code" type="text" required 
-                                           class="block w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 @error('postal_code') border-red-500 @enderror" 
+                                    <input id="postal_code" name="postal_code" type="text" required
+                                           class="block w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 @error('postal_code') border-red-500 @enderror"
                                            placeholder="Postal Code" value="{{ old('postal_code', $user->userAddress?->postal_code) }}">
                                     @error('postal_code')
                                         <p class="mt-2 text-sm text-red-500">{{ $message }}</p>
                                     @enderror
                                 </div>
-                                
+
                                 <div>
                                     <label for="state_code" class="block text-sm font-medium text-gray-700 mb-2">State *</label>
-                                    <select id="state_code" name="state_code" required 
+                                    <select id="state_code" name="state_code" required
                                             class="block w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 @error('state_code') border-red-500 @enderror">
                                         <option value="">Select State</option>
-                                        <option value="JHR" {{ old('state_code', $user->userAddress?->state_code) == 'JHR' ? 'selected' : '' }}>Johor</option>
-                                        <option value="KDH" {{ old('state_code', $user->userAddress?->state_code) == 'KDH' ? 'selected' : '' }}>Kedah</option>
-                                        <option value="KTN" {{ old('state_code', $user->userAddress?->state_code) == 'KTN' ? 'selected' : '' }}>Kelantan</option>
-                                        <option value="MLK" {{ old('state_code', $user->userAddress?->state_code) == 'MLK' ? 'selected' : '' }}>Melaka</option>
-                                        <option value="NSN" {{ old('state_code', $user->userAddress?->state_code) == 'NSN' ? 'selected' : '' }}>Negeri Sembilan</option>
-                                        <option value="PHG" {{ old('state_code', $user->userAddress?->state_code) == 'PHG' ? 'selected' : '' }}>Pahang</option>
-                                        <option value="PRK" {{ old('state_code', $user->userAddress?->state_code) == 'PRK' ? 'selected' : '' }}>Perak</option>
-                                        <option value="PLS" {{ old('state_code', $user->userAddress?->state_code) == 'PLS' ? 'selected' : '' }}>Perlis</option>
-                                        <option value="PNG" {{ old('state_code', $user->userAddress?->state_code) == 'PNG' ? 'selected' : '' }}>Pulau Pinang</option>
-                                        <option value="SBH" {{ old('state_code', $user->userAddress?->state_code) == 'SBH' ? 'selected' : '' }}>Sabah</option>
-                                        <option value="SWK" {{ old('state_code', $user->userAddress?->state_code) == 'SWK' ? 'selected' : '' }}>Sarawak</option>
-                                        <option value="SGR" {{ old('state_code', $user->userAddress?->state_code) == 'SGR' ? 'selected' : '' }}>Selangor</option>
-                                        <option value="TRG" {{ old('state_code', $user->userAddress?->state_code) == 'TRG' ? 'selected' : '' }}>Terengganu</option>
-                                        <option value="KUL" {{ old('state_code', $user->userAddress?->state_code) == 'KUL' ? 'selected' : '' }}>Kuala Lumpur</option>
-                                        <option value="LBN" {{ old('state_code', $user->userAddress?->state_code) == 'LBN' ? 'selected' : '' }}>Labuan</option>
-                                        <option value="PJY" {{ old('state_code', $user->userAddress?->state_code) == 'PJY' ? 'selected' : '' }}>Putrajaya</option>
+                                        @foreach(\App\Enums\MalaysianState::options() as $code => $name)
+                                            <option value="{{ $code }}" {{ old('state_code', $user->userAddress?->state_code?->value) == $code ? 'selected' : '' }}>{{ $name }}</option>
+                                        @endforeach
                                     </select>
                                     @error('state_code')
                                         <p class="mt-2 text-sm text-red-500">{{ $message }}</p>
@@ -218,7 +205,7 @@
                     </div>
 
                     <div class="pt-8 border-t border-gray-200">
-                        <button type="submit" 
+                        <button type="submit"
                                 class="w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold py-4 px-6 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition duration-200">
                             Complete Profile & Continue
                         </button>
@@ -232,14 +219,14 @@
 document.addEventListener('DOMContentLoaded', function() {
     const nricInput = document.getElementById('nric');
     const passportInput = document.getElementById('passport');
-    
+
     // Clear the other field when one is filled
     nricInput.addEventListener('input', function() {
         if (this.value.trim()) {
             passportInput.value = '';
         }
     });
-    
+
     passportInput.addEventListener('input', function() {
         if (this.value.trim()) {
             nricInput.value = '';

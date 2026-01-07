@@ -2,17 +2,18 @@
 
 namespace App\Filament\Forms;
 
+use App\Enums\MalaysianState;
 use App\Models\User;
-use Spatie\Permission\Models\Role;
-use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\Hash;
 use Filament\Forms\Components\Select;
+use Filament\Forms\Components\SpatieMediaLibraryFileUpload;
 use Filament\Forms\Components\Textarea;
 use Filament\Forms\Components\TextInput;
-use Filament\Schemas\Components\Section;
 use Filament\Schemas\Components\Grid;
+use Filament\Schemas\Components\Section;
 use Filament\Schemas\Components\Tabs;
-use Filament\Forms\Components\SpatieMediaLibraryFileUpload;
+use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Hash;
+use Spatie\Permission\Models\Role;
 
 class UserForm
 {
@@ -143,24 +144,7 @@ class UserForm
                                                 ->label('State')
                                                 ->placeholder('Select state')
                                                 ->required()
-                                                ->options([
-                                                    '01' => 'Johor',
-                                                    '02' => 'Kedah',
-                                                    '03' => 'Kelantan',
-                                                    '04' => 'Melaka',
-                                                    '05' => 'Negeri Sembilan',
-                                                    '06' => 'Pahang',
-                                                    '07' => 'Pulau Pinang',
-                                                    '08' => 'Perak',
-                                                    '09' => 'Perlis',
-                                                    '10' => 'Selangor',
-                                                    '11' => 'Terengganu',
-                                                    '12' => 'Sabah',
-                                                    '13' => 'Sarawak',
-                                                    '14' => 'Wilayah Persekutuan Kuala Lumpur',
-                                                    '15' => 'Wilayah Persekutuan Labuan',
-                                                    '16' => 'Wilayah Persekutuan Putrajaya',
-                                                ])
+                                                ->options(MalaysianState::options())
                                                 ->searchable()
                                                 ->native(false),
                                         ]),
@@ -209,24 +193,7 @@ class UserForm
                                             Select::make('officeInfo.office_state_code')
                                                 ->label('Office State')
                                                 ->placeholder('Select state')
-                                                ->options([
-                                                    '01' => 'Johor',
-                                                    '02' => 'Kedah',
-                                                    '03' => 'Kelantan',
-                                                    '04' => 'Melaka',
-                                                    '05' => 'Negeri Sembilan',
-                                                    '06' => 'Pahang',
-                                                    '07' => 'Pulau Pinang',
-                                                    '08' => 'Perak',
-                                                    '09' => 'Perlis',
-                                                    '10' => 'Selangor',
-                                                    '11' => 'Terengganu',
-                                                    '12' => 'Sabah',
-                                                    '13' => 'Sarawak',
-                                                    '14' => 'Wilayah Persekutuan Kuala Lumpur',
-                                                    '15' => 'Wilayah Persekutuan Labuan',
-                                                    '16' => 'Wilayah Persekutuan Putrajaya',
-                                                ])
+                                                ->options(MalaysianState::options())
                                                 ->searchable()
                                                 ->native(false),
                                         ]),
@@ -317,13 +284,14 @@ class UserForm
                                         ->preload()
                                         ->required()
                                         ->disabled(function (?User $record = null) {
-                                            if (!$record) {
+                                            if (! $record) {
                                                 return false;
                                             }
-                                            return !Auth::user()->can('manageRoles', $record);
+
+                                            return ! Auth::user()->can('manageRoles', $record);
                                         })
                                         ->afterStateHydrated(function ($component, ?User $record = null) {
-                                            if (!$record && empty($component->getState())) {
+                                            if (! $record && empty($component->getState())) {
                                                 $parentRole = Role::where('name', 'Parent')->first();
                                                 if ($parentRole) {
                                                     $component->state([$parentRole->id]);
@@ -358,18 +326,20 @@ class UserForm
                                         ->preload()
                                         ->searchable()
                                         ->disabled(function (?User $record = null) {
-                                            if (!$record) {
+                                            if (! $record) {
                                                 return false;
                                             }
-                                            return !Auth::user()->can('manageCentres', $record);
+
+                                            return ! Auth::user()->can('manageCentres', $record);
                                         })
                                         ->helperText('Select centres this user should have access to')
                                         ->columnSpanFull(),
                                 ])
                                 ->visible(function (?User $record = null) {
-                                    if (!$record) {
-                                        return Auth::user()->can('manageCentres', new User());
+                                    if (! $record) {
+                                        return Auth::user()->can('manageCentres', new User);
                                     }
+
                                     return Auth::user()->can('manageCentres', $record);
                                 })
                                 ->afterStateUpdated(function ($component, $state) {
@@ -394,8 +364,7 @@ class UserForm
                                                 ->confirmed()
                                                 ->minLength(8)
                                                 ->maxLength(255)
-                                                ->label(fn (string $context): string =>
-                                                    $context === 'edit' ? 'New Password' : 'Password'
+                                                ->label(fn (string $context): string => $context === 'edit' ? 'New Password' : 'Password'
                                                 )
                                                 ->revealable()
                                                 ->helperText('Minimum 8 characters'),
@@ -405,8 +374,7 @@ class UserForm
                                                 ->required(fn (string $context): bool => $context === 'create')
                                                 ->minLength(8)
                                                 ->maxLength(255)
-                                                ->label(fn (string $context): string =>
-                                                    $context === 'edit' ? 'Confirm New Password' : 'Confirm Password'
+                                                ->label(fn (string $context): string => $context === 'edit' ? 'Confirm New Password' : 'Confirm Password'
                                                 )
                                                 ->dehydrated(false)
                                                 ->revealable()

@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Enums\MalaysianState;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -24,6 +25,10 @@ class UserAddress extends Model
         'state_code',
     ];
 
+    protected $casts = [
+        'state_code' => MalaysianState::class,
+    ];
+
     /**
      * Get the user that owns the address.
      */
@@ -34,21 +39,17 @@ class UserAddress extends Model
 
     /**
      * Check if address information is complete for e-invoice.
-     *
-     * @return bool
      */
     public function isComplete(): bool
     {
-        return !empty($this->address) && 
-               !empty($this->city) && 
-               !empty($this->postal_code) && 
-               !empty($this->state_code);
+        return ! empty($this->address) &&
+               ! empty($this->city) &&
+               ! empty($this->postal_code) &&
+               ! empty($this->state_code);
     }
-    
+
     /**
      * Get formatted address for e-invoice display.
-     *
-     * @return string
      */
     public function getFormattedAddress(): string
     {
@@ -59,36 +60,15 @@ class UserAddress extends Model
             $this->postal_code,
             $this->getStateName(),
         ]);
-        
+
         return implode(', ', $parts);
     }
-    
+
     /**
      * Get state name from state code.
-     *
-     * @return string
      */
     public function getStateName(): string
     {
-        $stateMapping = [
-            '01' => 'Johor',
-            '02' => 'Kedah',
-            '03' => 'Kelantan',
-            '04' => 'Melaka',
-            '05' => 'Negeri Sembilan',
-            '06' => 'Pahang',
-            '07' => 'Pulau Pinang',
-            '08' => 'Perak',
-            '09' => 'Perlis',
-            '10' => 'Selangor',
-            '11' => 'Terengganu',
-            '12' => 'Sabah',
-            '13' => 'Sarawak',
-            '14' => 'Wilayah Persekutuan Kuala Lumpur',
-            '15' => 'Wilayah Persekutuan Labuan',
-            '16' => 'Wilayah Persekutuan Putrajaya',
-        ];
-        
-        return $stateMapping[$this->state_code] ?? $this->state_code ?? '';
+        return MalaysianState::getNameFromCode($this->state_code);
     }
 }

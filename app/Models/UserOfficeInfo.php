@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Enums\MalaysianState;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -25,6 +26,10 @@ class UserOfficeInfo extends Model
         'office_state_code',
     ];
 
+    protected $casts = [
+        'office_state_code' => MalaysianState::class,
+    ];
+
     /**
      * Get the user that owns the office info.
      */
@@ -35,21 +40,17 @@ class UserOfficeInfo extends Model
 
     /**
      * Check if office address information is complete.
-     *
-     * @return bool
      */
     public function hasCompleteAddress(): bool
     {
-        return !empty($this->office_address) && 
-               !empty($this->office_city) && 
-               !empty($this->office_postal_code) && 
-               !empty($this->office_state_code);
+        return ! empty($this->office_address) &&
+               ! empty($this->office_city) &&
+               ! empty($this->office_postal_code) &&
+               ! empty($this->office_state_code);
     }
-    
+
     /**
      * Get formatted office address.
-     *
-     * @return string
      */
     public function getFormattedAddress(): string
     {
@@ -60,14 +61,12 @@ class UserOfficeInfo extends Model
             $this->office_postal_code,
             $this->getStateName(),
         ]);
-        
+
         return implode(', ', $parts);
     }
-    
+
     /**
      * Get state name from state code.
-     *
-     * @return string
      */
     public function getStateName(): string
     {
@@ -89,7 +88,7 @@ class UserOfficeInfo extends Model
             '15' => 'Wilayah Persekutuan Labuan',
             '16' => 'Wilayah Persekutuan Putrajaya',
         ];
-        
+
         return $stateMapping[$this->office_state_code] ?? $this->office_state_code ?? '';
     }
 }

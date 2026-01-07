@@ -46,7 +46,7 @@ test('parent with complete profile can access profile page', function () {
         'address' => '123 Test Street',
         'city' => 'Test City',
         'postal_code' => '12345',
-        'state_code' => 'SGR',
+        'state_code' => '10',
     ]);
     $user->assignRole($parentRole);
     $tenant->addUser($user);

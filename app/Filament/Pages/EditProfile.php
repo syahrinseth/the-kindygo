@@ -2,9 +2,9 @@
 
 namespace App\Filament\Pages;
 
+use App\Filament\Forms\UserForm;
 use App\Models\User;
 use Illuminate\Database\Eloquent\Model;
-use App\Filament\Forms\UserForm;
 use Illuminate\Support\Facades\Auth;
 
 class EditProfile extends \Filament\Auth\Pages\EditProfile
@@ -57,7 +57,7 @@ class EditProfile extends \Filament\Auth\Pages\EditProfile
                 'address_2' => $user->userAddress->address_2,
                 'city' => $user->userAddress->city,
                 'postal_code' => $user->userAddress->postal_code,
-                'state_code' => $user->userAddress->state_code,
+                'state_code' => $user->userAddress->state_code?->value,
             ];
         }
 
@@ -69,7 +69,7 @@ class EditProfile extends \Filament\Auth\Pages\EditProfile
                 'office_address_2' => $user->officeInfo->office_address_2,
                 'office_city' => $user->officeInfo->office_city,
                 'office_postal_code' => $user->officeInfo->office_postal_code,
-                'office_state_code' => $user->officeInfo->office_state_code,
+                'office_state_code' => $user->officeInfo->office_state_code?->value,
             ];
         }
 
