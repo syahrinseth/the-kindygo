@@ -1,38 +1,39 @@
 <?php
 
-namespace App\Filament\Resources\Users\Users;
+namespace App\Filament\Resources\Users;
 
-use Filament\Tables\Columns\TextColumn;
-use Filament\Tables\Columns\IconColumn;
-use Filament\Tables\Filters\SelectFilter;
-use Filament\Tables\Filters\Filter;
-use Filament\Actions\ActionGroup;
-use Filament\Actions\ViewAction;
+use UnitEnum;
+use BackedEnum;
+use Filament\Forms;
+use App\Models\User;
+use Filament\Tables;
+use Filament\Actions;
+use Filament\Tables\Table;
+use Filament\Schemas\Schema;
+use App\Filament\Forms\UserForm;
 use Filament\Actions\EditAction;
+use Filament\Actions\ViewAction;
+use Filament\Resources\Resource;
+use Filament\Actions\ActionGroup;
 use Filament\Actions\DeleteAction;
+use Filament\Tables\Filters\Filter;
+use Illuminate\Support\Facades\Auth;
 use Filament\Actions\BulkActionGroup;
 use Filament\Actions\DeleteBulkAction;
+use Filament\Tables\Columns\IconColumn;
+use Filament\Tables\Columns\TextColumn;
+use Filament\Tables\Filters\SelectFilter;
+use Illuminate\Database\Eloquent\Builder;
+use App\Filament\Resources\UserResource\Pages;
+use App\Models\Scopes\BelongsToManyTenantScope;
+use App\Filament\Resources\Users\Pages\EditUser;
 use App\Filament\Resources\Users\Pages\ListUsers;
 use App\Filament\Resources\Users\Pages\CreateUser;
-use App\Filament\Resources\Users\Pages\EditUser;
-use App\Filament\Resources\Users\Actions\InviteUserToTenantAction;
-use App\Filament\Resources\UserResource\Pages;
-use App\Filament\Resources\UserResource\RelationManagers;
-use App\Filament\Resources\Users\RelationManagers\InvoicesRelationManager;
-use App\Models\User;
-use Filament\Forms;
-use Filament\Actions;
-use Filament\Resources\Resource;
-use Filament\Tables;
-use Filament\Tables\Table;
-use Filament\Tables\Columns\SpatieMediaLibraryImageColumn;
-use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\SoftDeletingScope;
-use Illuminate\Support\Facades\Auth;
-use App\Filament\Forms\UserForm;
-use BackedEnum;
-use UnitEnum;
-use Filament\Schemas\Schema;
+use App\Filament\Resources\UserResource\RelationManagers;
+use Filament\Tables\Columns\SpatieMediaLibraryImageColumn;
+use App\Filament\Resources\Users\Actions\InviteUserToTenantAction;
+use App\Filament\Resources\Users\RelationManagers\InvoicesRelationManager;
 
 class UserResource extends Resource
 {
@@ -58,7 +59,9 @@ class UserResource extends Resource
 
     public static function getEloquentQuery(): Builder
     {
-        $query = parent::getEloquentQuery()->with(['profile', 'userAddress', 'officeInfo']);
+        $query = parent::getEloquentQuery()
+            ->belongsToCurrentTenant()
+            ->with(['profile', 'userAddress', 'officeInfo']);
         $user = Auth::user();
 
         // Use policy to determine query scope

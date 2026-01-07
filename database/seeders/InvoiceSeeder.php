@@ -16,21 +16,19 @@ class InvoiceSeeder extends Seeder
      */
     public function run(): void
     {
-        // Get or create tenants
-        $tenants = Tenant::all();
+        // Get existing tenants (from UserSeeder)
+        $tenants = Tenant::with('users')->get();
+
         if ($tenants->isEmpty()) {
-            // Create 3 tenants
-            $tenants = collect();
-            for ($i = 0; $i < 3; $i++) {
-                $tenants->push(Tenant::factory()->create());
-            }
+            $this->command->warn('No tenants found. Please run UserSeeder first.');
+            return;
         }
-        
-        // For each tenant, ensure they have centres
+
+        // For each tenant, ensure they have centres and create invoices
         foreach ($tenants as $tenant) {
             // Get or create centres for this tenant
             $centres = Centre::where('tenant_id', $tenant->id)->get();
-            
+
             if ($centres->isEmpty()) {
                 // Create 2 centres for this tenant
                 $centres = collect();
@@ -42,19 +40,16 @@ class InvoiceSeeder extends Seeder
                     );
                 }
             }
-            
-            // Get users or create some test users if none exist
-            $users = User::all();
+
+            // Get users that belong to this tenant
+            $users = $tenant->users;
+
             if ($users->isEmpty()) {
-                $users = User::factory(3)->create();
-                
-                // Associate users with tenant
-                foreach ($users as $user) {
-                    $tenant->users()->attach($user->id);
-                }
+                $this->command->warn("No users found for tenant: {$tenant->name}");
+                continue;
             }
-            
-            // Create invoices for each centre and user
+
+            // Create invoices for each centre and user in this tenant
             foreach ($centres as $centre) {
                 foreach ($users as $user) {
                     // Create one invoice in each status

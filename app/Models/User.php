@@ -3,29 +3,30 @@
 namespace App\Models;
 
 // use Illuminate\Contracts\Auth\MustVerifyEmail;
-use Database\Factories\UserFactory;
 use Exception;
-use Filament\Facades\Filament;
-use Filament\Models\Contracts\FilamentUser;
-use Filament\Models\Contracts\HasAvatar;
-use Filament\Models\Contracts\HasDefaultTenant;
-use Filament\Models\Contracts\HasTenants;
 use Filament\Panel;
-use Illuminate\Database\Eloquent\Builder;
-use Illuminate\Database\Eloquent\Factories\HasFactory;
-use Illuminate\Database\Eloquent\Model;
-use Illuminate\Database\Eloquent\Relations\BelongsTo;
-use Illuminate\Database\Eloquent\Relations\BelongsToMany;
-use Illuminate\Database\Eloquent\Relations\HasMany;
-use Illuminate\Database\Eloquent\Relations\HasOne;
-use Illuminate\Foundation\Auth\User as Authenticatable;
-use Illuminate\Notifications\Notifiable;
+use Filament\Facades\Filament;
+use Spatie\MediaLibrary\HasMedia;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
-use Spatie\MediaLibrary\HasMedia;
-use Spatie\MediaLibrary\InteractsWithMedia;
-use Spatie\MediaLibrary\MediaCollections\Models\Media;
+use Database\Factories\UserFactory;
 use Spatie\Permission\Traits\HasRoles;
+use Illuminate\Database\Eloquent\Model;
+use Filament\Models\Contracts\HasAvatar;
+use Illuminate\Notifications\Notifiable;
+use Filament\Models\Contracts\HasTenants;
+use Illuminate\Database\Eloquent\Builder;
+use Filament\Models\Contracts\FilamentUser;
+use Spatie\MediaLibrary\InteractsWithMedia;
+use App\Models\Scopes\BelongsToManyTenantScope;
+use Filament\Models\Contracts\HasDefaultTenant;
+use Illuminate\Database\Eloquent\Relations\HasOne;
+use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Spatie\MediaLibrary\MediaCollections\Models\Media;
+use Illuminate\Foundation\Auth\User as Authenticatable;
+use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 
 class User extends Authenticatable implements FilamentUser, HasAvatar, HasDefaultTenant, HasMedia, HasTenants
 {
@@ -484,6 +485,16 @@ class User extends Authenticatable implements FilamentUser, HasAvatar, HasDefaul
         }
 
         return '';
+    }
+
+    public function scopeBelongsToCurrentTenant(Builder $query): Builder
+    {
+        if (auth()->check() && auth()->user()->current_tenant_id) {
+            return $query->whereHas('tenants', function (Builder $tenantQuery) {
+                $tenantQuery->where('tenant_id', auth()->user()->current_tenant_id);
+            });
+        }
+        return $query->whereRaw('1 = 0'); // No results if no current tenant
     }
 
     public function scopeEInvoiceReady(Builder $query): Builder
