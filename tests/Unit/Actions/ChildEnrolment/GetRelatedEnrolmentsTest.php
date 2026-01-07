@@ -10,7 +10,10 @@ use App\Models\ChildEnrolment;
 use App\Enums\ChildEnrolmentStatus;
 use App\Enums\ChildEnrolmentBilledEvery;
 use App\Models\Scopes\BelongsToManyTenantScope;
+use Illuminate\Foundation\Testing\RefreshDatabase;
 use App\Actions\ChildEnrolment\GetRelatedEnrolments;
+
+uses(RefreshDatabase::class);
 
 beforeEach(function () {
     Carbon::setTestNow('2026-01-23');
@@ -63,7 +66,7 @@ it('returns null when child has no parent', function () {
         'status' => ChildEnrolmentStatus::ACTIVE,
     ]);
 
-    $result = $this->action->execute($enrolment);
+    $result = $this->action->execute($enrolment, now());
 
     expect($result)->toBeNull();
 });
@@ -84,7 +87,7 @@ it('returns null when no enrolments need invoicing', function () {
         'billed_every' => ChildEnrolmentBilledEvery::MONTHLY,
     ]);
 
-    $result = $this->action->execute($enrolment);
+    $result = $this->action->execute($enrolment, now());
 
     expect($result)->toBeNull();
 });
@@ -128,7 +131,7 @@ it('returns collection of related enrolments needing invoices', function () {
         'child.users' => collect([$this->parent]),
     ]);
 
-    $result = $this->action->execute($enrolment1);
+    $result = $this->action->execute($enrolment1, now());
 
     expect($result)->toBeInstanceOf(\Illuminate\Support\Collection::class)
         ->and($result->count())->toBe(2)
@@ -166,7 +169,7 @@ it('excludes enrolments from different centres', function () {
         'billed_every' => ChildEnrolmentBilledEvery::MONTHLY,
     ]);
 
-    $result = $this->action->execute($enrolment1);
+    $result = $this->action->execute($enrolment1, now());
 
     expect($result->count())->toBe(1)
         ->and($result->first()->id)->toBe($enrolment1->id);
@@ -201,7 +204,7 @@ it('excludes inactive enrolments', function () {
         'billed_every' => ChildEnrolmentBilledEvery::MONTHLY,
     ]);
 
-    $result = $this->action->execute($enrolment1);
+    $result = $this->action->execute($enrolment1, now());
 
     expect($result->count())->toBe(1)
         ->and($result->first()->id)->toBe($enrolment1->id);
@@ -244,7 +247,7 @@ it('excludes enrolments that already have invoice items for next period', functi
         'period_start' => '2026-02-01',
     ]);
 
-    $result = $this->action->execute($enrolment1);
+    $result = $this->action->execute($enrolment1, now());
 
     expect($result->count())->toBe(1)
         ->and($result->first()->id)->toBe($enrolment1->id);

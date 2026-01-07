@@ -12,10 +12,11 @@ class GetNextBillingPeriodStart
         protected GetNextBillingDate $getNextBillingDate,
     ) {}
 
-    public function execute(ChildEnrolment $enrolment): ?Carbon
+    public function execute(ChildEnrolment $enrolment, ?Carbon $today = null): ?Carbon
     {
         $startDate = Carbon::parse($enrolment->date_start);
-        $today = now();
+        $today = $today ?? now();
+
         $endDate = $enrolment->date_end ? Carbon::parse($enrolment->date_end) : null;
 
         if ($today->lt($startDate)) {

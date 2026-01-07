@@ -16,7 +16,7 @@ class CalculateInvoiceItemBalances extends Command
      *
      * @var string
      */
-    protected $signature = 'invoice-items:calculate-balances 
+    protected $signature = 'invoice-items:calculate-balances
                             {--dry-run : Run without making changes}
                             {--invoice= : Process specific invoice ID}
                             {--chunk=100 : Number of items to process at once}';
@@ -42,19 +42,13 @@ class CalculateInvoiceItemBalances extends Command
 
         $this->info('Starting invoice item balance calculation...');
         $this->warn('TenantScope temporarily disabled for this operation');
-        
+
         if ($dryRun) {
             $this->warn('DRY RUN MODE - No changes will be made');
         }
 
-        $query = InvoiceItem::with(['invoice' => function ($query) {
-            $query->withoutGlobalScope(TenantScope::class);
-        }, 'product' => function ($query) {
-            $query->withoutGlobalScope(TenantScope::class);
-        }, 'child' => function ($query) {
-            $query->withoutGlobalScope(BelongsToManyTenantScope::class);
-        }]);
-        
+        $query = InvoiceItem::with(['invoice', 'product', 'child']);
+
         if ($invoiceId) {
             $query->where('invoice_id', $invoiceId);
             $this->info("Processing invoice ID: {$invoiceId}");
@@ -82,7 +76,7 @@ class CalculateInvoiceItemBalances extends Command
                     $errorCount++;
                     $this->error("Error processing item {$item->id}: " . $e->getMessage());
                 }
-                
+
                 $bar->advance();
             }
         });
@@ -175,10 +169,10 @@ class CalculateInvoiceItemBalances extends Command
     {
         // This method serves as documentation for which models have TenantScope disabled
         // The actual disabling is done in the query builder methods
-        
+
         $modelsAffected = [
             'Invoice' => 'TenantScope disabled in relationship loading',
-            'Product' => 'TenantScope disabled in relationship loading', 
+            'Product' => 'TenantScope disabled in relationship loading',
             'Child' => 'BelongsToManyTenantScope disabled in relationship loading',
             'Centre' => 'Available without TenantScope through relationships',
             'Campus' => 'Available without TenantScope through relationships',

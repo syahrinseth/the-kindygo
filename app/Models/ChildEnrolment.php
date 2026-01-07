@@ -2,17 +2,16 @@
 
 namespace App\Models;
 
-use Illuminate\Database\Eloquent\Relations\HasMany;
-use Illuminate\Database\Eloquent\Collection;
-use Illuminate\Database\Eloquent\Builder;
-use App\Enums\ChildEnrolmentStatus;
 use App\Enums\ChildEnrolmentBilledEvery;
+use App\Enums\ChildEnrolmentStatus;
 use App\Enums\ChildEnrolmentType;
 use App\Models\Scopes\TenantScope;
+use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Database\Eloquent\Collection;
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
-use Illuminate\Database\Eloquent\Relations\BelongsToMany;
-use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class ChildEnrolment extends Model
 {
@@ -42,6 +41,7 @@ class ChildEnrolment extends Model
         'billed_every',
         'date_start',
         'date_end',
+        'next_bill_date',
         'type',
         'additional_products',
     ];
@@ -57,13 +57,12 @@ class ChildEnrolment extends Model
         'type' => ChildEnrolmentType::class,
         'date_start' => 'datetime',
         'date_end' => 'datetime',
+        'next_bill_date' => 'datetime',
         'additional_products' => 'array',
     ];
 
     /**
      * Get the tenant that owns the enrolment.
-     *
-     * @return BelongsTo
      */
     public function tenant(): BelongsTo
     {
@@ -72,8 +71,6 @@ class ChildEnrolment extends Model
 
     /**
      * Get the centre associated with the enrolment.
-     *
-     * @return BelongsTo
      */
     public function centre(): BelongsTo
     {
@@ -82,8 +79,6 @@ class ChildEnrolment extends Model
 
     /**
      * Get the child that owns the enrolment.
-     *
-     * @return BelongsTo
      */
     public function child(): BelongsTo
     {
@@ -92,8 +87,6 @@ class ChildEnrolment extends Model
 
     /**
      * Get the product associated with the enrolment.
-     *
-     * @return BelongsTo
      */
     public function product(): BelongsTo
     {
@@ -126,7 +119,7 @@ class ChildEnrolment extends Model
     /**
      * Scope a query to only include active enrolments.
      *
-     * @param Builder $query
+     * @param  Builder  $query
      * @return Builder
      */
     public function scopeActive($query)
@@ -141,7 +134,7 @@ class ChildEnrolment extends Model
      * - Have already started (date_start <= now)
      * - Have not ended yet (date_end is null OR date_end >= now)
      *
-     * @param Builder $query
+     * @param  Builder  $query
      * @return Builder
      */
     public function scopeCurrent($query)
@@ -158,7 +151,7 @@ class ChildEnrolment extends Model
      * Scope a query to include active enrolments that haven't ended yet.
      * This includes enrolments that may have future start dates.
      *
-     * @param Builder $query
+     * @param  Builder  $query
      * @return Builder
      */
     public function scopeNotEnded($query)
@@ -174,7 +167,7 @@ class ChildEnrolment extends Model
      * Scope a query to include enrolments that are running today.
      * This includes enrolments where today is between start and end dates.
      *
-     * @param Builder $query
+     * @param  Builder  $query
      * @return Builder
      */
     public function scopeRunningToday($query)
@@ -190,8 +183,7 @@ class ChildEnrolment extends Model
     /**
      * Scope a query to filter by enrolment type.
      *
-     * @param Builder $query
-     * @param  ChildEnrolmentType  $type
+     * @param  Builder  $query
      * @return Builder
      */
     public function scopeByType($query, ChildEnrolmentType $type)
@@ -201,8 +193,6 @@ class ChildEnrolment extends Model
 
     /**
      * Check if the enrolment is currently active.
-     *
-     * @return bool
      */
     public function isActive(): bool
     {
@@ -213,11 +203,9 @@ class ChildEnrolment extends Model
 
     /**
      * Check if the enrolment has expired.
-     *
-     * @return bool
      */
     public function hasExpired(): bool
     {
-        return !is_null($this->date_end) && $this->date_end < now();
+        return ! is_null($this->date_end) && $this->date_end < now();
     }
 }

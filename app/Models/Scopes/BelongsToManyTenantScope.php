@@ -16,7 +16,7 @@ class BelongsToManyTenantScope implements Scope
     public function apply(Builder $builder, Model $model): void
     {
         // Skip scope when running in console/command context
-        if (app()->runningInConsole() && app()->runningUnitTests()) {
+        if (app()->runningInConsole() || app()->runningUnitTests()) {
             return;
         }
 

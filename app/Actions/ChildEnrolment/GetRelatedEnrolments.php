@@ -9,14 +9,15 @@ use Illuminate\Support\Collection;
 
 class GetRelatedEnrolments
 {
-    public function execute(ChildEnrolment $enrolment): ?Collection
+    public function execute(ChildEnrolment $enrolment, ?Carbon $today = null): ?Collection
     {
         $parent = $enrolment->child->users()->first();
         if (! $parent) {
             return null;
         }
 
-        $groupedEnrolments = ChildEnrolment::where('tenant_id', $enrolment->tenant_id)
+        $groupedEnrolments = ChildEnrolment::withoutGlobalScopes()
+            ->where('tenant_id', $enrolment->tenant_id)
             ->where('centre_id', $enrolment->centre_id)
             ->where('status', ChildEnrolmentStatus::ACTIVE)
             ->whereHas('child.users', function ($query) use ($parent) {
@@ -24,13 +25,13 @@ class GetRelatedEnrolments
             })
             ->get();
 
-        $enrolmentsNeedingInvoice = $groupedEnrolments->filter(function ($enrolment) {
-            if ($enrolment->date_end && Carbon::parse($enrolment->date_end)->lt(Carbon::now())) {
+        $enrolmentsNeedingInvoice = $groupedEnrolments->filter(function ($enrolment) use ($today) {
+            if ($enrolment->date_end && Carbon::parse($enrolment->date_end)->lt($today ?? now())) {
                 return false;
             }
 
             $getNextBillingPeriodStart = app(GetNextBillingPeriodStart::class);
-            $nextBillingDate = $getNextBillingPeriodStart->execute($enrolment);
+            $nextBillingDate = $getNextBillingPeriodStart->execute($enrolment, $today ?? now());
 
             if (! $nextBillingDate) {
                 return false;

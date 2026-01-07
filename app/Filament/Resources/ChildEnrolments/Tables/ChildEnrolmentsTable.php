@@ -112,6 +112,12 @@ class ChildEnrolmentsTable
                     ->formatStateUsing(fn ($state): string => ucwords(str_replace('_', ' ', $state->value)))
                     ->sortable(),
 
+                TextColumn::make('next_bill_date')
+                    ->label('Next Billing')
+                    ->date('d M Y')
+                    ->placeholder('-')
+                    ->sortable(),
+
                 TextColumn::make('date_start')
                     ->label('Start Date')
                     ->date()

@@ -8,6 +8,7 @@ use Carbon\Carbon;
 
 beforeEach(function () {
     Carbon::setTestNow('2026-01-23 08:00:00');
+    $this->now = Carbon::now();
     $this->getNextBillingDate = new GetNextBillingDate;
     $this->action = new GetNextBillingPeriodStart($this->getNextBillingDate);
 });
@@ -110,13 +111,13 @@ it('calculates next monthly billing date', function () {
 
 it('calculates next weekly billing date', function () {
     $enrolment = mock(ChildEnrolment::class)->makePartial();
-    $enrolment->date_start = '2026-01-06';
+    $enrolment->date_start = '2026-01-23';
     $enrolment->date_end = null;
     $enrolment->billed_every = ChildEnrolmentBilledEvery::WEEKLY;
 
-    $result = $this->action->execute($enrolment);
+    $result = $this->action->execute($enrolment, $this->now);
 
-    expect($result->toDateString())->toBe('2026-01-20');
+    expect($result->toDateString())->toBe($this->now->copy()->addWeek()->toDateString());
 });
 
 it('returns tomorrow for daily billing', function () {
@@ -125,9 +126,8 @@ it('returns tomorrow for daily billing', function () {
     $enrolment->date_end = null;
     $enrolment->billed_every = ChildEnrolmentBilledEvery::DAILY;
 
-    $result = $this->action->execute($enrolment);
-
-    expect($result->toDateString())->toBe('2026-01-16');
+    $result = $this->action->execute($enrolment, $this->now);
+    expect($result->toDateString())->toBe($this->now->copy()->addDay()->toDateString());
 });
 
 it('returns null when next billing date is after end date', function () {
