@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Filament\Resources\Invoices\Invoices;
+namespace App\Filament\Resources\Invoices;
 
 use Filament\Schemas\Components\Section;
 use Filament\Resources\Pages\EditRecord;
@@ -55,16 +55,16 @@ class InvoiceResource extends Resource
     protected static ?string $model = Invoice::class;
 
     protected static string | \BackedEnum | null $navigationIcon = 'heroicon-o-document-text';
-    
+
     protected static string | \UnitEnum | null $navigationGroup = 'Finance';
-    
+
     protected static ?int $navigationSort = 10;
 
     public static function getNavigationBadge(): ?string
     {
         return static::getEloquentQuery()->where('status', InvoiceStatus::PENDING)->count();
     }
-    
+
     public static function getNavigationBadgeColor(): ?string
     {
         return static::getEloquentQuery()->where('status', InvoiceStatus::OVERDUE)->count() > 0
@@ -80,10 +80,10 @@ class InvoiceResource extends Resource
     public static function getEloquentQuery(): Builder
     {
         $query = parent::getEloquentQuery();
-        
+
         // Apply the forCurrentUser scope for multi-tenant filtering
         return $query->forCurrentUser()->with([
-            'user', 
+            'user',
             'centre',
             'payments' => function ($query) {
                 $query->where('status', PaymentStatus::PAID);
@@ -112,43 +112,20 @@ class InvoiceResource extends Resource
     public static function form(Schema $schema): Schema
     {
         return $schema
+            ->columns(3)
             ->components([
-                Section::make('Invoice Details')
+                Section::make()
                     ->schema([
                         // Show generated invoice number on edit forms
                         TextInput::make('number')
                             ->label('Invoice Number')
                             ->disabled()
                             ->visible(fn ($livewire) => $livewire instanceof EditRecord)
-                            ->columnSpanFull()
-                            ->helperText('Auto-generated in format: #{CENTRE_CODE}/{YEAR}/{NUMBER}'),
-                            
-                        Grid::make(3)
-                            ->schema([
-                                Select::make('status')
-                                    ->options(collect(InvoiceStatus::cases())->pluck('value', 'value')->toArray())
-                                    ->required()
-                                    ->native(false)
-                                    ->columnSpan(1),
-                            ])->columns(3),
-                        
-                        Grid::make(2)
-                            ->schema([
-                                DateTimePicker::make('date')
-                                    ->label('Billing Month')
-                                    ->required()
-                                    ->native(false)
-                                    ->displayFormat('M d, Y')
-                                    ->default(now()),
-                                    
-                                DateTimePicker::make('due_at')
-                                    ->required()
-                                    ->native(false)
-                                    ->displayFormat('M d, Y')
-                                    ->default(now()->addDays(7)),
-                            ]),
-                            
-                        Grid::make(2)
+                            ->helperText('Auto-generated in format: #{CENTRE_CODE}/{YEAR}/{NUMBER}')
+                            ->columnSpanFull(),
+
+                        Section::make('Billing Information')
+                            ->description('Select the centre and parent for this invoice.')
                             ->schema([
                                 Select::make('centre_id')
                                     ->label('Centre')
@@ -157,23 +134,24 @@ class InvoiceResource extends Resource
                                         if (!$user->current_tenant_id) {
                                             return [];
                                         }
-                                        
+
                                         $query = Centre::where('tenant_id', $user->current_tenant_id);
-                                        
+
                                         // If Principal, limit to their centres
                                         if ($user->hasRole('Principal')) {
                                             $query->whereHas('users', function (Builder $q) use ($user) {
                                                 $q->where('users.id', $user->id);
                                             });
                                         }
-                                        
+
                                         return $query->pluck('name', 'id');
                                     })
                                     ->required()
                                     ->searchable()
                                     ->preload()
-                                    ->native(false),
-                                    
+                                    ->native(false)
+                                    ->columnSpanFull(),
+
                                 Select::make('user_id')
                                     ->label('Parent')
                                     ->options(function () {
@@ -181,7 +159,7 @@ class InvoiceResource extends Resource
                                         if (!$user->current_tenant_id) {
                                             return [];
                                         }
-                                        
+
                                         return User::whereHas('tenants', function (Builder $query) use ($user) {
                                             $query->where('tenants.id', $user->current_tenant_id);
                                         })->pluck('name', 'id');
@@ -189,10 +167,48 @@ class InvoiceResource extends Resource
                                     ->required()
                                     ->searchable()
                                     ->preload()
-                                    ->native(false),
-                            ]),
-                    ]),
-                    
+                                    ->native(false)
+                                    ->columnSpanFull(),
+                            ])
+                            ->columns(1),
+
+                        Section::make('Date & Period')
+                            ->description('Set billing period and payment deadline.')
+                            ->schema([
+                                DateTimePicker::make('date')
+                                    ->label('Billing Month')
+                                    ->required()
+                                    ->native(false)
+                                    ->displayFormat('M d, Y')
+                                    ->default(now())
+                                    ->helperText('The month this invoice covers.'),
+
+                                DateTimePicker::make('due_at')
+                                    ->label('Due Date')
+                                    ->required()
+                                    ->native(false)
+                                    ->displayFormat('M d, Y')
+                                    ->default(now()->addDays(7))
+                                    ->helperText('Payment deadline for this invoice.'),
+                            ])
+                            ->columns(2),
+                    ])
+                    ->columnSpan(2),
+
+                Section::make('Status')
+                    ->description('Current invoice status.')
+                    ->schema([
+                        Select::make('status')
+                            ->label('Invoice Status')
+                            ->options(collect(InvoiceStatus::cases())->pluck('value', 'value')->toArray())
+                            ->required()
+                            ->native(false)
+                            ->default(InvoiceStatus::DRAFT->value)
+                            ->helperText('Update status as invoice progresses.')
+                            ->columnSpanFull(),
+                    ])
+                    ->columnSpan(1),
+
                 Section::make('E-Invoice Information')
                     ->schema([
                         Grid::make(2)
@@ -201,27 +217,27 @@ class InvoiceResource extends Resource
                                     ->label('E-Invoice UUID')
                                     ->disabled()
                                     ->visible(fn ($livewire) => $livewire instanceof EditRecord),
-                                    
+
                                 TextInput::make('einvoice_status')
                                     ->label('E-Invoice Status')
                                     ->disabled()
                                     ->visible(fn ($livewire) => $livewire instanceof EditRecord),
                             ]),
-                            
+
                         Grid::make(2)
                             ->schema([
                                 TextInput::make('einvoice_submission_id')
                                     ->label('Submission ID')
                                     ->disabled()
                                     ->visible(fn ($livewire) => $livewire instanceof EditRecord),
-                                    
+
                                 DateTimePicker::make('einvoice_submitted_at')
                                     ->label('Submitted At')
                                     ->disabled()
                                     ->visible(fn ($livewire) => $livewire instanceof EditRecord)
                                     ->displayFormat('M d, Y H:i'),
                             ]),
-                            
+
                         TextInput::make('einvoice_validation_url')
                             ->label('Validation URL')
                             ->disabled()
@@ -232,7 +248,7 @@ class InvoiceResource extends Resource
                     ->visible(fn ($record) => $record && $record->einvoice_uuid)
                     ->collapsible()
                     ->collapsed(),
-                    
+
                 Hidden::make('tenant_id')
                     ->default(function () {
                         return Auth::user()->current_tenant_id;
@@ -246,10 +262,16 @@ class InvoiceResource extends Resource
             ->defaultSort('date', 'desc')
             ->columns([
                 TextColumn::make('number')
+                    ->label('Invoice No.')
+                    ->searchable()
+                    ->sortable(),
+
+                TextColumn::make('centre.name')
+                    ->label('Centre')
                     ->searchable()
                     ->sortable()
-                    ->description(fn (Invoice $record): string => $record->centre->name ?? 'No centre assigned'),
-                    
+                    ->toggleable(),
+
                 TextColumn::make('user.name')
                     ->label('Parent')
                     ->searchable()
@@ -259,19 +281,19 @@ class InvoiceResource extends Resource
                         $children = $record->user->children->filter(function ($child) use ($record) {
                             return $child->centres->contains('id', $record->centre_id);
                         });
-                        
+
                         if ($children->isEmpty()) {
                             return null;
                         }
                         return $children->pluck('full_name')->join(', ');
                     }),
-                    
+
                 TextColumn::make('date')
                     ->label('Billing Month')
                     ->date('M, Y')
                     ->sortable()
                     ->description(fn (Invoice $record): string => 'Due: ' . $record->due_at->format('M d, Y')),
-                    
+
                 TextColumn::make('status')
                     ->badge()
                     ->color(fn (InvoiceStatus $state): string => match ($state) {
@@ -283,7 +305,7 @@ class InvoiceResource extends Resource
                     })
                     ->searchable()
                     ->sortable(),
-                    
+
                 TextColumn::make('einvoice_status')
                     ->label('E-Invoice')
                     ->badge()
@@ -306,21 +328,21 @@ class InvoiceResource extends Resource
                         };
                     })
                     ->sortable(),
-                    
+
                 TextColumn::make('total_amount')
                     ->label('Amount')
                     ->money('MYR', 100)
                     ->sortable(),
-                    
+
                 TextColumn::make('total_discounts')
                     ->label('Discounts')
                     ->money('MYR', 100)
                     ->sortable(),
-                    
+
                 TextColumn::make('total')
                     ->money('MYR', 100)
                     ->sortable(),
-                    
+
                 TextColumn::make('balance')
                     ->money('MYR', 100)
                     ->sortable(),
@@ -332,7 +354,7 @@ class InvoiceResource extends Resource
                 SelectFilter::make('status')
                     ->options(collect(InvoiceStatus::cases())->pluck('value', 'value')->toArray())
                     ->multiple(),
-                    
+
                 SelectFilter::make('einvoice_status')
                     ->label('E-Invoice Status')
                     ->options([
@@ -346,22 +368,22 @@ class InvoiceResource extends Resource
                         if (! $data['value']) {
                             return $query;
                         }
-                        
+
                         if ($data['value'] === 'not_submitted') {
                             return $query->whereNull('einvoice_status');
                         }
-                        
+
                         return $query->where('einvoice_status', $data['value']);
                     }),
-                    
+
                 Filter::make('overdue')
                     ->query(fn (Builder $query): Builder => $query->overdue()),
-                
+
                 SelectFilter::make('centre')
                     ->relationship('centre', 'name')
                     ->searchable()
                     ->preload(),
-                
+
                 Filter::make('created_at')
                     ->schema([
                         DatePicker::make('created_from'),
@@ -383,20 +405,20 @@ class InvoiceResource extends Resource
                 ActionGroup::make([
                     ViewAction::make()
                         ->visible(fn (Invoice $record) => Auth::user()->can('view', $record)),
-                    
+
                     DownloadInvoicePdfAction::make(),
-                    
+
                     SubmitToEInvoiceAction::make(),
-                    
+
                     SendNotificationAction::make(),
-                    
+
                     MakePaymentAction::make(),
-                    
+
                     MarkAsPaidAction::make(),
-                    
+
                     EditAction::make()
                         ->visible(fn (Invoice $record) => Auth::user()->can('update', $record)),
-                    
+
                     DeleteAction::make()
                         ->visible(fn (Invoice $record) => Auth::user()->can('delete', $record)),
                 ])

@@ -637,7 +637,11 @@ class TenantRegistrationWizard extends Component implements HasForms
         // Execute action
         try {
             $action = new CompleteParentRegistrationAction;
-            $action->execute(Auth::user(), $validator->validated());
+            $action->execute(
+                Auth::user(),
+                $validator->validated(),
+                request()
+            );
 
             // Redirect to parent dashboard
             return redirect()->route('filament.app.pages.dashboard');

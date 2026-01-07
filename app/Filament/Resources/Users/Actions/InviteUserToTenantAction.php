@@ -35,22 +35,22 @@ class InviteUserToTenantAction extends Action
                     ->options(function () {
                         $user = Auth::user();
                         $allRoles = Role::all();
-                        
+
                         // Super Admin can assign any role
                         if ($user->hasRole('Super Admin')) {
                             return $allRoles->pluck('name', 'name');
                         }
-                        
+
                         // Admin can assign all roles except Super Admin
                         if ($user->hasRole('Admin')) {
                             return $allRoles->where('name', '!=', 'Super Admin')->pluck('name', 'name');
                         }
-                        
+
                         // Principal can only assign Teacher and Parent roles
                         if ($user->hasRole('Principal')) {
                             return $allRoles->whereIn('name', ['Teacher', 'Parent'])->pluck('name', 'name');
                         }
-                        
+
                         // Default fallback to Parent role only
                         return collect(['Parent' => 'Parent']);
                     })
@@ -60,15 +60,15 @@ class InviteUserToTenantAction extends Action
             ->modalHeading('Invite User to a Company')
             ->action(function (array $data): void {
                 DB::transaction(function () use ($data) {
-                    $tenant = Filament::getTenant();
-                    
+                    $tenant = Auth::user()->currentTenant();
+
                     // Check if the user already exists
                     $existingUser = User::where('email', $data['email'])->first();
-                    
+
                     if ($existingUser && $tenant->hasUser($existingUser)) {
                         $this->halt('This user is already a member of this company.');
                     }
-                    
+
                     // Create invitation record
                     $invitation = $tenant->invitations()->create([
                         'email' => $data['email'],

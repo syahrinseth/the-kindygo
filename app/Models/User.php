@@ -3,30 +3,30 @@
 namespace App\Models;
 
 // use Illuminate\Contracts\Auth\MustVerifyEmail;
+use App\Models\Scopes\TenantScope;
+use Database\Factories\UserFactory;
 use Exception;
-use Filament\Panel;
 use Filament\Facades\Filament;
-use Spatie\MediaLibrary\HasMedia;
+use Filament\Models\Contracts\FilamentUser;
+use Filament\Models\Contracts\HasAvatar;
+use Filament\Models\Contracts\HasDefaultTenant;
+use Filament\Models\Contracts\HasTenants;
+use Filament\Panel;
+use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\BelongsToMany;
+use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\HasOne;
+use Illuminate\Foundation\Auth\User as Authenticatable;
+use Illuminate\Notifications\Notifiable;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
-use Database\Factories\UserFactory;
-use Spatie\Permission\Traits\HasRoles;
-use Illuminate\Database\Eloquent\Model;
-use Filament\Models\Contracts\HasAvatar;
-use Illuminate\Notifications\Notifiable;
-use Filament\Models\Contracts\HasTenants;
-use Illuminate\Database\Eloquent\Builder;
-use Filament\Models\Contracts\FilamentUser;
+use Spatie\MediaLibrary\HasMedia;
 use Spatie\MediaLibrary\InteractsWithMedia;
-use App\Models\Scopes\BelongsToManyTenantScope;
-use Filament\Models\Contracts\HasDefaultTenant;
-use Illuminate\Database\Eloquent\Relations\HasOne;
-use Illuminate\Database\Eloquent\Relations\HasMany;
-use Illuminate\Database\Eloquent\Relations\BelongsTo;
-use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Spatie\MediaLibrary\MediaCollections\Models\Media;
-use Illuminate\Foundation\Auth\User as Authenticatable;
-use Illuminate\Database\Eloquent\Relations\BelongsToMany;
+use Spatie\Permission\Traits\HasRoles;
 
 class User extends Authenticatable implements FilamentUser, HasAvatar, HasDefaultTenant, HasMedia, HasTenants
 {
@@ -35,6 +35,16 @@ class User extends Authenticatable implements FilamentUser, HasAvatar, HasDefaul
 
     public function canAccessPanel(Panel $panel): bool
     {
+        // Parent panel - only accessible by users with Parent role
+        if ($panel->getId() === 'parent') {
+            return $this->hasRole('Parent');
+        }
+
+        // App panel - accessible by all authenticated users except pure parents
+        if ($panel->getId() === 'app') {
+            return true;
+        }
+
         return $this->can('accessPanel', $this);
     }
 
@@ -302,6 +312,30 @@ class User extends Authenticatable implements FilamentUser, HasAvatar, HasDefaul
     }
 
     /**
+     * Get the parent undertaking agreements for this user.
+     */
+    public function undertakingAgreements(): HasMany
+    {
+        return $this->hasMany(ParentUndertakingAgreement::class);
+    }
+
+    /**
+     * Check if user has agreed to letter of undertaking for a specific tenant.
+     */
+    public function hasAgreedToUndertaking(int $tenantId, ?int $letterOfUndertakingId = null): bool
+    {
+        $query = $this->undertakingAgreements()
+            ->withoutGlobalScope(TenantScope::class)
+            ->where('tenant_id', $tenantId);
+
+        if ($letterOfUndertakingId) {
+            $query->where('letter_of_undertaking_id', $letterOfUndertakingId);
+        }
+
+        return $query->exists();
+    }
+
+    /**
      * Get the user's office information.
      */
     public function officeInfo(): HasOne
@@ -497,6 +531,7 @@ class User extends Authenticatable implements FilamentUser, HasAvatar, HasDefaul
                 $tenantQuery->where('tenant_id', auth()->user()->current_tenant_id);
             });
         }
+
         return $query->whereRaw('1 = 0'); // No results if no current tenant
     }
 
@@ -623,7 +658,7 @@ class User extends Authenticatable implements FilamentUser, HasAvatar, HasDefaul
      */
     public function isRegistrationTokenExpired(): bool
     {
-        if (!$this->registration_token_expires_at) {
+        if (! $this->registration_token_expires_at) {
             return true;
         }
 

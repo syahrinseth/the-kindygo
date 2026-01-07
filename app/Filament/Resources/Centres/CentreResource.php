@@ -53,7 +53,7 @@ class CentreResource extends Resource
 
     public static function getEloquentQuery(): Builder
     {
-        return parent::getEloquentQuery()->forCurrentUser();
+        return parent::getEloquentQuery();
     }
 
     public static function canViewAny(): bool
@@ -145,7 +145,7 @@ class CentreResource extends Resource
                                         Select::make('campus_id')
                                             ->label('Campus')
                                             ->relationship('campus', 'name')
-                                            ->options(Campus::pluck('name', 'id'))
+                                            ->options(Campus::pluck('name', 'id')->toArray())
                                             ->searchable()
                                             ->preload()
                                             ->required()

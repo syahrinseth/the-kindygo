@@ -691,27 +691,63 @@
                         @error('tnc_accepted') <p class="mt-3 text-sm text-red-600 font-medium">{{ $message }}</p> @enderror
                     </div>
 
-                    <div class="p-6 border-2 border-gray-200 rounded-xl bg-gradient-to-br from-white to-green-50 hover:border-green-300 transition-all">
-                        <label class="flex items-start cursor-pointer group">
-                            <input type="checkbox" wire:model="undertaking_accepted" class="rounded border-gray-300 text-green-600 shadow-sm focus:border-green-500 focus:ring-green-500 mt-1 w-5 h-5 cursor-pointer">
-                            <div class="ml-4 flex-1">
-                                <div class="flex items-start space-x-2">
-                                    <svg class="w-5 h-5 text-green-500 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    @php
+                        $activeLetter = app(\App\Actions\Undertaking\GetActiveLetterForTenantAction::class)
+                            ->execute($tenant);
+                    @endphp
+
+                    @if($activeLetter)
+                        <div class="border-2 border-gray-200 rounded-xl bg-white overflow-hidden">
+                            <div class="bg-gradient-to-r from-green-50 to-emerald-50 border-b-2 border-green-200 p-6">
+                                <div class="flex items-start space-x-3">
+                                    <svg class="w-6 h-6 text-green-600 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4"></path>
                                     </svg>
-                                    <div>
-                                        <span class="font-bold text-gray-900 group-hover:text-green-700 transition-colors">I have read and accept the
-                                            <a href="{{ route('undertaking') }}" target="_blank" class="text-green-600 hover:text-green-800 underline font-bold" onclick="event.stopPropagation();">
-                                                Letter of Undertaking
-                                            </a>
-                                        </span>
-                                        <span class="block text-sm text-gray-600 mt-1">Required to complete registration. Click the link to read full undertaking.</span>
+                                    <div class="flex-1">
+                                        <h4 class="text-lg font-bold text-gray-900">{{ $activeLetter->title }}</h4>
+                                        <p class="text-sm text-gray-600 mt-1">Version {{ $activeLetter->version }} • {{ $tenant->name }}</p>
                                     </div>
                                 </div>
                             </div>
-                        </label>
-                        @error('undertaking_accepted') <p class="mt-3 text-sm text-red-600 font-medium">{{ $message }}</p> @enderror
-                    </div>
+
+                            <div class="p-6 max-h-96 overflow-y-auto bg-gray-50">
+                                <div class="prose prose-sm max-w-none">
+                                    {!! $activeLetter->content !!}
+                                </div>
+                            </div>
+
+                            <div class="bg-white border-t-2 border-gray-200 p-6">
+                                <label class="flex items-start cursor-pointer group">
+                                    <input type="checkbox" wire:model="undertaking_accepted" class="rounded border-gray-300 text-green-600 shadow-sm focus:border-green-500 focus:ring-green-500 mt-1 w-5 h-5 cursor-pointer">
+                                    <div class="ml-4 flex-1">
+                                        <span class="font-bold text-gray-900 group-hover:text-green-700 transition-colors">
+                                            I have read and accept the Letter of Undertaking (Version {{ $activeLetter->version }})
+                                        </span>
+                                        <span class="block text-sm text-gray-600 mt-1">Required to complete registration.</span>
+                                    </div>
+                                </label>
+                                @error('undertaking_accepted') <p class="mt-3 text-sm text-red-600 font-medium">{{ $message }}</p> @enderror
+                            </div>
+                        </div>
+                    @else
+                        <div class="p-6 border-2 border-gray-200 rounded-xl bg-gradient-to-br from-white to-green-50 hover:border-green-300 transition-all">
+                            <label class="flex items-start cursor-pointer group">
+                                <input type="checkbox" wire:model="undertaking_accepted" class="rounded border-gray-300 text-green-600 shadow-sm focus:border-green-500 focus:ring-green-500 mt-1 w-5 h-5 cursor-pointer">
+                                <div class="ml-4 flex-1">
+                                    <div class="flex items-start space-x-2">
+                                        <svg class="w-5 h-5 text-green-500 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4"></path>
+                                        </svg>
+                                        <div>
+                                            <span class="font-bold text-gray-900 group-hover:text-green-700 transition-colors">I acknowledge and accept the terms of service</span>
+                                            <span class="block text-sm text-gray-600 mt-1">No active letter of undertaking is currently required.</span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </label>
+                            @error('undertaking_accepted') <p class="mt-3 text-sm text-red-600 font-medium">{{ $message }}</p> @enderror
+                        </div>
+                    @endif
                 </div>
             @endif
         </div>

@@ -1,17 +1,21 @@
 <?php
 
-use App\Actions\Registration\CompleteParentRegistrationAction;
 use App\Models\User;
+use App\Models\Tenant;
 use Illuminate\Support\Str;
+use App\Actions\Registration\CompleteParentRegistrationAction;
 
 beforeEach(function () {
     $this->action = new CompleteParentRegistrationAction();
+    $this->tenant = Tenant::factory()->create();
     $this->user = User::factory()->create([
+        'current_tenant_id' => $this->tenant->id,
         'profile_completed' => false,
         'registration_step' => 3,
         'registration_token' => Str::random(40),
         'registration_token_expires_at' => now()->addDays(5),
     ]);
+    $this->user->tenants()->attach($this->tenant->id);
 });
 
 it('sets profile_completed to true', function () {

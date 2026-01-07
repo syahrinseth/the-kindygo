@@ -2,13 +2,13 @@
 
 namespace App\Filament\Forms;
 
-use Filament\Schemas\Components\Section;
-use Filament\Forms\Components\TextInput;
-use Filament\Schemas\Components\Utilities\Set;
-use Filament\Schemas\Components\Group;
-use Filament\Forms\Components\Select;
-use Filament\Schemas\Components\Utilities\Get;
 use Filament\Forms;
+use Filament\Forms\Components\Select;
+use Filament\Forms\Components\TextInput;
+use Filament\Schemas\Components\Group;
+use Filament\Schemas\Components\Section;
+use Filament\Schemas\Components\Utilities\Get;
+use Filament\Schemas\Components\Utilities\Set;
 use Illuminate\Support\Str;
 
 class TenantForm
@@ -102,11 +102,11 @@ class TenantForm
                             ->live()
                             ->rules(function (Get $get) {
                                 $rules = ['required', 'max:50'];
-                                
+
                                 if ($get('business_id_type') === 'NRIC') {
                                     $rules[] = 'regex:/^[0-9]{12}$/';
                                 }
-                                
+
                                 return $rules;
                             })
                             ->validationMessages([
@@ -158,6 +158,17 @@ class TenantForm
                         ->helperText('Use sandbox for testing, production for live transactions'),
                 ])
                 ->columns(2)
+                ->collapsible()
+                ->collapsed(),
+
+            Section::make('Parent Agreement Settings')
+                ->description('Configure if parents are required to agree to Letter of Undertaking for this tenant.')
+                ->schema([
+                    Forms\Components\Toggle::make('require_undertaking_agreement')
+                        ->label('Require Letter of Undertaking Agreement')
+                        ->helperText('When enabled, parents must agree to an active Letter of Undertaking to access the parent portal.')
+                        ->default(false),
+                ])
                 ->collapsible()
                 ->collapsed(),
         ];

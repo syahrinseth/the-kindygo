@@ -2,17 +2,14 @@
 
 namespace App\Models;
 
-use Illuminate\Database\Eloquent\Collection;
-use App\Models\User;
-use App\Models\Child;
-use App\Models\Invoice;
 use App\Enums\ChildStatus;
-use Spatie\Permission\Models\Role;
-use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
-use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
+use Illuminate\Database\Eloquent\Relations\HasMany;
+use Spatie\Permission\Models\Role;
 
 class Tenant extends Model
 {
@@ -101,7 +98,7 @@ class Tenant extends Model
      */
     public function addUser(User $user): void
     {
-        if (!$this->hasUser($user)) {
+        if (! $this->hasUser($user)) {
             $this->users()->attach($user->id);
         }
     }
@@ -155,6 +152,22 @@ class Tenant extends Model
     }
 
     /**
+     * Get the letters of undertaking for this tenant.
+     */
+    public function lettersOfUndertaking(): HasMany
+    {
+        return $this->hasMany(LetterOfUndertaking::class);
+    }
+
+    /**
+     * Get the active letter of undertaking for this tenant.
+     */
+    public function activeLetterOfUndertaking(): ?LetterOfUndertaking
+    {
+        return $this->lettersOfUndertaking()->active()->first();
+    }
+
+    /**
      * Get the children belonging to the tenant.
      */
     public function children(): BelongsToMany
@@ -168,15 +181,14 @@ class Tenant extends Model
     /**
      * Add a child to this tenant with a specific status.
      *
-     * @param Child|int $child The child or child ID
-     * @param ChildStatus $status The initial status
-     * @return void
+     * @param  Child|int  $child  The child or child ID
+     * @param  ChildStatus  $status  The initial status
      */
     public function addChild($child, ChildStatus $status = ChildStatus::NEW): void
     {
         $childId = $child instanceof Child ? $child->id : $child;
 
-        if (!$this->hasChild($childId)) {
+        if (! $this->hasChild($childId)) {
             $this->children()->attach($childId, [
                 'status' => $status,
             ]);
@@ -186,8 +198,7 @@ class Tenant extends Model
     /**
      * Remove a child from this tenant.
      *
-     * @param Child|int $child The child or child ID
-     * @return void
+     * @param  Child|int  $child  The child or child ID
      */
     public function removeChild($child): void
     {
@@ -199,8 +210,7 @@ class Tenant extends Model
     /**
      * Check if a child belongs to this tenant.
      *
-     * @param Child|int $child The child or child ID
-     * @return bool
+     * @param  Child|int  $child  The child or child ID
      */
     public function hasChild($child): bool
     {
@@ -212,7 +222,7 @@ class Tenant extends Model
     /**
      * Get the status of a child at this tenant.
      *
-     * @param Child|int $child The child or child ID
+     * @param  Child|int  $child  The child or child ID
      * @return ChildStatus|null The status or null if the child is not associated with this tenant
      */
     public function getChildStatus($child): ?ChildStatus
@@ -227,8 +237,8 @@ class Tenant extends Model
     /**
      * Update the status of a child at this tenant.
      *
-     * @param Child|int $child The child or child ID
-     * @param ChildStatus $status The new status
+     * @param  Child|int  $child  The child or child ID
+     * @param  ChildStatus  $status  The new status
      * @return bool Whether the update was successful
      */
     public function updateChildStatus($child, ChildStatus $status): bool
@@ -245,7 +255,7 @@ class Tenant extends Model
     /**
      * Get children with a specific status at this tenant.
      *
-     * @param ChildStatus $status The status to filter by
+     * @param  ChildStatus  $status  The status to filter by
      * @return Collection The children with the specified status
      */
     public function getChildrenByStatus(ChildStatus $status)
@@ -302,7 +312,7 @@ class Tenant extends Model
     {
         $tenant = static::create([
             'name' => "{$user->name}'s Space",
-            'slug' => str($user->name)->slug() . '-space',
+            'slug' => str($user->name)->slug().'-space',
             'user_id' => $user->id,
             'personal_tenant' => true,
         ]);
@@ -321,8 +331,6 @@ class Tenant extends Model
     /**
      * Get the e-Invoice client ID for this tenant.
      * Falls back to global config if not set.
-     *
-     * @return string|null
      */
     public function getEInvoiceClientId(): ?string
     {
@@ -332,8 +340,6 @@ class Tenant extends Model
     /**
      * Get the e-Invoice client secret for this tenant.
      * Falls back to global config if not set.
-     *
-     * @return string|null
      */
     public function getEInvoiceClientSecret(): ?string
     {
@@ -343,8 +349,6 @@ class Tenant extends Model
     /**
      * Get the e-Invoice environment for this tenant.
      * Falls back to global config if not set.
-     *
-     * @return string
      */
     public function getEInvoiceEnvironment(): string
     {
@@ -353,18 +357,14 @@ class Tenant extends Model
 
     /**
      * Check if tenant has e-Invoice credentials configured.
-     *
-     * @return bool
      */
     public function hasEInvoiceCredentials(): bool
     {
-        return !empty($this->einvoice_client_id) && !empty($this->einvoice_client_secret);
+        return ! empty($this->einvoice_client_id) && ! empty($this->einvoice_client_secret);
     }
 
     /**
      * Check if tenant is using production e-Invoice environment.
-     *
-     * @return bool
      */
     public function isEInvoiceProduction(): bool
     {

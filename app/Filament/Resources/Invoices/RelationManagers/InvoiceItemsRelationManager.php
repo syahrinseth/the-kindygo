@@ -45,131 +45,148 @@ class InvoiceItemsRelationManager extends RelationManager
     public function form(Schema $schema): Schema
     {
         return $schema
+            ->columns(3)
             ->components([
-                \Filament\Schemas\Components\Section::make('Item Details')
+                \Filament\Schemas\Components\Section::make()
                     ->schema([
-                        Select::make('product_id')
-                            ->label('Product')
-                            ->relationship(
-                                name: 'product',
-                                titleAttribute: 'name',
-                                modifyQueryUsing: fn (Builder $query) => $query
-                                    ->where('tenant_id', Auth::user()?->current_tenant_id)
-                                    ->with('currentPrice')
-                            )
-                            ->getOptionLabelFromRecordUsing(function ($record) {
-                                $label = $record->name;
-                                
-                                // Get centre-specific price for the invoice's centre
-                                $invoice = $this->getOwnerRecord();
-                                $centreId = $invoice->centre_id ?? null;
-                                $currentPrice = $record->currentPriceForCentre($centreId);
-                                
-                                if ($currentPrice) {
-                                    $price = number_format($currentPrice->price / 100, 2);
-                                    $label .= " (RM {$price})";
-                                }
-                                
-                                return $label;
-                            })
-                            ->searchable()
-                            ->preload()
-                            ->live()
-                            ->afterStateUpdated(function ($state, Set $set, Get $get) {
-                                if ($state) {
-                                    $product = Product::find($state);
-                                    if ($product) {
-                                        $set('name', $product->name);
-                                        
+                        \Filament\Schemas\Components\Section::make('Product Selection')
+                            ->description('Choose a product or enter custom item details.')
+                            ->schema([
+                                Select::make('product_id')
+                                    ->label('Product Template')
+                                    ->relationship(
+                                        name: 'product',
+                                        titleAttribute: 'name',
+                                        modifyQueryUsing: fn (Builder $query) => $query
+                                            ->where('tenant_id', Auth::user()?->current_tenant_id)
+                                            ->with('currentPrice')
+                                    )
+                                    ->getOptionLabelFromRecordUsing(function ($record) {
+                                        $label = $record->name;
+
                                         // Get centre-specific price for the invoice's centre
                                         $invoice = $this->getOwnerRecord();
                                         $centreId = $invoice->centre_id ?? null;
-                                        $currentPrice = $product->currentPriceForCentre($centreId);
-                                        
-                                        // Auto-populate price if product has a current price for this centre
+                                        $currentPrice = $record->currentPriceForCentre($centreId);
+
                                         if ($currentPrice) {
-                                            // Convert from cents to decimal for the form
-                                            $price = $currentPrice->price / 100;
-                                            $set('price', number_format($price, 2, '.', ''));
-                                            
-                                            // Recalculate total after setting the price
-                                            $this->calculateTotal($set, $get);
+                                            $price = number_format($currentPrice->price / 100, 2);
+                                            $label .= " (RM {$price})";
                                         }
-                                    }
-                                }
-                            })
-                            ->helperText('Select a product to auto-fill the name and price (if available)'),
 
-                        TextInput::make('name')
-                            ->required()
-                            ->maxLength(255)
-                            ->placeholder('e.g., Monthly Childcare Fee')
-                            ->columnSpanFull(),
+                                        return $label;
+                                    })
+                                    ->searchable()
+                                    ->preload()
+                                    ->live()
+                                    ->afterStateUpdated(function ($state, Set $set, Get $get) {
+                                        if ($state) {
+                                            $product = Product::find($state);
+                                            if ($product) {
+                                                $set('name', $product->name);
+
+                                                // Get centre-specific price for the invoice's centre
+                                                $invoice = $this->getOwnerRecord();
+                                                $centreId = $invoice->centre_id ?? null;
+                                                $currentPrice = $product->currentPriceForCentre($centreId);
+
+                                                // Auto-populate price if product has a current price for this centre
+                                                if ($currentPrice) {
+                                                    // Convert from cents to decimal for the form
+                                                    $price = $currentPrice->price / 100;
+                                                    $set('price', number_format($price, 2, '.', ''));
+
+                                                    // Recalculate total after setting the price
+                                                    $this->calculateTotal($set, $get);
+                                                }
+                                            }
+                                        }
+                                    })
+                                    ->helperText('Optional: Select to auto-fill details')
+                                    ->columnSpanFull(),
+
+                                TextInput::make('name')
+                                    ->label('Item Name')
+                                    ->required()
+                                    ->maxLength(255)
+                                    ->placeholder('e.g., Monthly Childcare Fee')
+                                    ->helperText('Describe this line item')
+                                    ->columnSpanFull(),
+                            ]),
+
+                        \Filament\Schemas\Components\Section::make('Pricing Details')
+                            ->description('Set quantity, pricing, and discounts.')
+                            ->schema([
+                                TextInput::make('quantity')
+                                    ->label('Quantity')
+                                    ->required()
+                                    ->numeric()
+                                    ->default(1)
+                                    ->minValue(1)
+                                    ->suffix('unit(s)')
+                                    ->live()
+                                    ->afterStateUpdated(fn ($state, Set $set, Get $get) =>
+                                        $this->calculateTotal($set, $get))
+                                    ->columnSpan(1),
+
+                                TextInput::make('price')
+                                    ->label('Unit Price')
+                                    ->required()
+                                    ->numeric()
+                                    ->prefix('RM')
+                                    ->step(0.01)
+                                    ->minValue(0)
+                                    ->afterStateHydrated(function (TextInput $component, $state) {
+                                        // Convert from cents to decimal for display
+                                        $component->state($state ? number_format($state / 100, 2, '.', '') : '0.00');
+                                    })
+                                    ->dehydrateStateUsing(fn ($state) => (int) ($state * 100))
+                                    ->live()
+                                    ->afterStateUpdated(fn ($state, Set $set, Get $get) =>
+                                        $this->calculateTotal($set, $get))
+                                    ->columnSpan(1),
+
+                                TextInput::make('discount')
+                                    ->label('Discount/Unit')
+                                    ->numeric()
+                                    ->prefix('RM')
+                                    ->step(0.01)
+                                    ->default(0)
+                                    ->minValue(0)
+                                    ->helperText('Per unit, multiplied by quantity')
+                                    ->afterStateHydrated(function (TextInput $component, $state) {
+                                        // Convert from cents to decimal for display
+                                        $component->state($state ? number_format($state / 100, 2, '.', '') : '0.00');
+                                    })
+                                    ->dehydrateStateUsing(fn ($state) => (int) ($state * 100))
+                                    ->live()
+                                    ->afterStateUpdated(fn ($state, Set $set, Get $get) =>
+                                        $this->calculateTotal($set, $get))
+                                    ->columnSpan(1),
+                            ])
+                            ->columns(3),
                     ])
-                    ->columns(2),
+                    ->columnSpan(2),
 
-                \Filament\Schemas\Components\Section::make('Pricing & Quantity')
+                \Filament\Schemas\Components\Section::make('Summary & Assignment')
                     ->schema([
-                        TextInput::make('price')
-                            ->label('Unit Price')
-                            ->required()
-                            ->numeric()
-                            ->prefix('RM')
-                            ->step(0.01)
-                            ->minValue(0)
-                            ->afterStateHydrated(function (TextInput $component, $state) {
-                                // Convert from cents to decimal for display
-                                $component->state($state ? number_format($state / 100, 2, '.', '') : '0.00');
-                            })
-                            ->dehydrateStateUsing(fn ($state) => (int) ($state * 100))
-                            ->live()
-                            ->afterStateUpdated(fn ($state, Set $set, Get $get) => 
-                                $this->calculateTotal($set, $get)),
-
-                        TextInput::make('quantity')
-                            ->required()
-                            ->numeric()
-                            ->default(1)
-                            ->minValue(1)
-                            ->live()
-                            ->afterStateUpdated(fn ($state, Set $set, Get $get) => 
-                                $this->calculateTotal($set, $get)),
-
-                        TextInput::make('discount')
-                            ->label('Discount Per Unit')
-                            ->numeric()
-                            ->prefix('RM')
-                            ->step(0.01)
-                            ->default(0)
-                            ->minValue(0)
-                            ->helperText('Discount amount per unit (will be multiplied by quantity)')
-                            ->afterStateHydrated(function (TextInput $component, $state) {
-                                // Convert from cents to decimal for display
-                                $component->state($state ? number_format($state / 100, 2, '.', '') : '0.00');
-                            })
-                            ->dehydrateStateUsing(fn ($state) => (int) ($state * 100))
-                            ->live()
-                            ->afterStateUpdated(fn ($state, Set $set, Get $get) => 
-                                $this->calculateTotal($set, $get)),
-
                         TextInput::make('total')
-                            ->label('Total Amount')
+                            ->label('Line Total')
                             ->required()
                             ->numeric()
                             ->prefix('RM')
                             ->disabled()
+                            ->extraAttributes(['class' => 'font-bold text-lg'])
                             ->afterStateHydrated(function (TextInput $component, $state) {
                                 // Convert from cents to decimal for display
                                 $component->state($state ? number_format($state / 100, 2, '.', '') : '0.00');
                             })
-                            ->dehydrateStateUsing(fn ($state) => (int) ($state * 100)),
-                    ])
-                    ->columns(4),
+                            ->dehydrateStateUsing(fn ($state) => (int) ($state * 100))
+                            ->helperText('Auto-calculated')
+                            ->columnSpanFull(),
 
-                \Filament\Schemas\Components\Section::make('Assignment')
-                    ->schema([
                         Select::make('child_id')
-                            ->label('Child (Optional)')
+                            ->label('Assign to Child')
                             ->relationship(
                                 name: 'child',
                                 titleAttribute: 'first_name',
@@ -180,16 +197,19 @@ class InvoiceItemsRelationManager extends RelationManager
                             ->getOptionLabelFromRecordUsing(fn ($record) => $record->first_name . ' ' . $record->last_name)
                             ->searchable(['first_name', 'last_name'])
                             ->preload()
-                            ->helperText('Link this item to a specific child if applicable'),
+                            ->placeholder('Optional')
+                            ->helperText('Link to specific child')
+                            ->columnSpanFull(),
 
                         DatePicker::make('effective_date')
                             ->label('Effective Date')
                             ->default(now())
                             ->required()
-                            ->helperText('The date when this item becomes effective for accounting purposes')
-                            ->native(false),
+                            ->helperText('Accounting date')
+                            ->native(false)
+                            ->columnSpanFull(),
                     ])
-                    ->columns(2),
+                    ->columnSpan(1),
             ]);
     }
 
@@ -201,7 +221,7 @@ class InvoiceItemsRelationManager extends RelationManager
             ->description(function () {
                 $invoice = $this->getOwnerRecord();
                 $totals = $invoice->recalculateTotals();
-                
+
                 return "Items: {$totals['total_items']} | " .
                        "Subtotal: RM " . number_format($totals['total_amount'] / 100, 2) . " | " .
                        "Discounts: RM " . number_format($totals['total_discounts'] / 100, 2) . " | " .
@@ -341,11 +361,11 @@ class InvoiceItemsRelationManager extends RelationManager
         $price = (float) ($get('price') ?? 0);
         $quantity = (int) ($get('quantity') ?? 1);
         $discountPerUnit = (float) ($get('discount') ?? 0);
-        
+
         $subtotal = $price * $quantity;
         $totalDiscount = $discountPerUnit * $quantity;
         $total = $subtotal - $totalDiscount;
-        
+
         $set('total', number_format(max(0, $total), 2, '.', ''));
     }
 }
