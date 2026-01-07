@@ -677,6 +677,6 @@ class TenantRegistrationWizard extends Component implements HasForms
     public function render()
     {
         return view('livewire.tenant-registration-wizard')
-            ->layout('layouts.guest');
+            ->layout('components.guest-layout');
     }
 }

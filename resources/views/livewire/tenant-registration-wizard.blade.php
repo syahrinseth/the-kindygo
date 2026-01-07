@@ -678,8 +678,12 @@
                                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
                                     </svg>
                                     <div>
-                                        <span class="font-bold text-gray-900 group-hover:text-blue-700 transition-colors">I have read and accept the Terms and Conditions</span>
-                                        <span class="block text-sm text-gray-600 mt-1">Required to proceed with registration</span>
+                                        <span class="font-bold text-gray-900 group-hover:text-blue-700 transition-colors">I have read and accept the
+                                            <a href="{{ route('terms') }}" target="_blank" class="text-blue-600 hover:text-blue-800 underline font-bold" onclick="event.stopPropagation();">
+                                                Terms and Conditions
+                                            </a>
+                                        </span>
+                                        <span class="block text-sm text-gray-600 mt-1">Required to proceed with registration. Click the link to read full terms.</span>
                                     </div>
                                 </div>
                             </div>
@@ -696,8 +700,12 @@
                                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4"></path>
                                     </svg>
                                     <div>
-                                        <span class="font-bold text-gray-900 group-hover:text-green-700 transition-colors">I have read and accept the Letter of Undertaking</span>
-                                        <span class="block text-sm text-gray-600 mt-1">Required to complete registration</span>
+                                        <span class="font-bold text-gray-900 group-hover:text-green-700 transition-colors">I have read and accept the
+                                            <a href="{{ route('undertaking') }}" target="_blank" class="text-green-600 hover:text-green-800 underline font-bold" onclick="event.stopPropagation();">
+                                                Letter of Undertaking
+                                            </a>
+                                        </span>
+                                        <span class="block text-sm text-gray-600 mt-1">Required to complete registration. Click the link to read full undertaking.</span>
                                     </div>
                                 </div>
                             </div>

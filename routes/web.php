@@ -25,6 +25,15 @@ Route::middleware('guest')->get('/', function () {
 // Public tenant directory
 Route::get('/join', [TenantDirectoryController::class, 'index'])->name('tenant.directory');
 
+// Public pages
+Route::get('/terms-and-conditions', function () {
+    return view('pages.terms-and-conditions');
+})->name('terms');
+
+Route::get('/letter-of-undertaking', function () {
+    return view('pages.letter-of-undertaking');
+})->name('undertaking');
+
 // Authentication Routes
 Route::middleware('guest')->group(function () {
     Route::get('/login', [LoginController::class, 'showLoginForm'])->name('login');

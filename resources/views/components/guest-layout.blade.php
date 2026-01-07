@@ -12,7 +12,7 @@
     @livewireStyles
 </head>
 <body class="font-sans antialiased bg-gray-100">
-    @yield('content')
+    {{ $slot }}
     @livewireScripts
 </body>
 </html>
