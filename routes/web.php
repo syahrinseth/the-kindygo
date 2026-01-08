@@ -5,6 +5,7 @@ use App\Http\Controllers\ChipPaymentController;
 use App\Http\Controllers\InvoicePdfController;
 use App\Http\Controllers\PaymentReceiptController;
 use App\Http\Controllers\ProfileController;
+use App\Http\Controllers\QuotationPdfController;
 use App\Http\Controllers\SecureMediaController;
 use App\Http\Controllers\TenantDirectoryController;
 use App\Http\Controllers\TenantInvitationController;
@@ -90,6 +91,12 @@ Route::prefix('chip')->name('chip.')->group(function () {
 Route::middleware('auth')->group(function () {
     Route::get('/invoice/{invoice}/download-pdf', [InvoicePdfController::class, 'download'])
         ->name('invoice.download-pdf');
+});
+
+// Quotation PDF Download Route
+Route::middleware('auth')->group(function () {
+    Route::get('/quotation/{quotation}/download-pdf', [QuotationPdfController::class, 'download'])
+        ->name('quotation.download-pdf');
 });
 
 // Payment Receipt PDF Download Routes
