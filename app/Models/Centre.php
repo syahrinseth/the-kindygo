@@ -2,9 +2,6 @@
 
 namespace App\Models;
 
-use App\Models\Tenant;
-use App\Models\Campus;
-use App\Models\Invoice;
 use App\Models\Scopes\TenantScope;
 use App\Models\Scopes\UserCentreScope;
 use Illuminate\Database\Eloquent\Builder;
@@ -13,7 +10,6 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
-use Illuminate\Support\Facades\Auth;
 
 class Centre extends Model
 {
@@ -113,8 +109,6 @@ class Centre extends Model
 
     /**
      * Get the children associated with this centre.
-     *
-     * @return BelongsToMany
      */
     public function children(): BelongsToMany
     {
@@ -126,14 +120,13 @@ class Centre extends Model
     /**
      * Add a child to this centre.
      *
-     * @param Child|int $child The child or child ID
-     * @return void
+     * @param  Child|int  $child  The child or child ID
      */
     public function addChild($child): void
     {
         $childId = $child instanceof Child ? $child->id : $child;
 
-        if (!$this->children()->where('child_id', $childId)->exists()) {
+        if (! $this->children()->where('child_id', $childId)->exists()) {
             $this->children()->attach($childId);
         }
     }
@@ -141,8 +134,7 @@ class Centre extends Model
     /**
      * Remove a child from this centre.
      *
-     * @param Child|int $child The child or child ID
-     * @return void
+     * @param  Child|int  $child  The child or child ID
      */
     public function removeChild($child): void
     {
@@ -154,8 +146,7 @@ class Centre extends Model
     /**
      * Check if a specific child is in this centre.
      *
-     * @param Child|int $child The child or child ID
-     * @return bool
+     * @param  Child|int  $child  The child or child ID
      */
     public function hasChild($child): bool
     {
@@ -173,6 +164,16 @@ class Centre extends Model
     }
 
     /**
+     * Get the payments associated with this centre.
+     */
+    public function payments(): BelongsToMany
+    {
+        return $this->belongsToMany(Payment::class, 'payment_centre')
+            ->withPivot('allocated_amount')
+            ->withTimestamps();
+    }
+
+    /**
      * Get the product prices associated with this centre.
      */
     public function prices(): BelongsToMany
@@ -184,21 +185,16 @@ class Centre extends Model
     /**
      * Scope a query to only include centres that the authenticated user has access to
      * and that belong to the user's current tenant.
-     *
-     * @param Builder $query
-     * @return Builder
      */
     public function scopeForCurrentUser(Builder $query): Builder
     {
         return $query->withoutGlobalScope(UserCentreScope::class)
-            ->withGlobalScope('user_centre', new UserCentreScope());
+            ->withGlobalScope('user_centre', new UserCentreScope);
     }
 
     /**
      * Get the full address for this centre.
      * If centre address is not available, fallback to tenant address.
-     *
-     * @return string|null
      */
     public function getFullAddressAttribute(): ?string
     {
@@ -206,8 +202,8 @@ class Centre extends Model
         $centreAddress = collect([
             $this->address_1,
             $this->address_2,
-            $this->postal_code ? $this->postal_code . ' ' . $this->city : $this->city,
-            $this->state
+            $this->postal_code ? $this->postal_code.' '.$this->city : $this->city,
+            $this->state,
         ])->filter()->implode(', ');
 
         // If centre address is empty, use tenant address as fallback
@@ -215,11 +211,11 @@ class Centre extends Model
             $centreAddress = collect([
                 $this->tenant->address_1,
                 $this->tenant->address_2,
-                $this->tenant->postal_code ? $this->tenant->postal_code . ' ' . $this->tenant->city : $this->tenant->city,
-                $this->tenant->state
+                $this->tenant->postal_code ? $this->tenant->postal_code.' '.$this->tenant->city : $this->tenant->city,
+                $this->tenant->state,
             ])->filter()->implode(', ');
         }
 
-        return !empty($centreAddress) ? $centreAddress : null;
+        return ! empty($centreAddress) ? $centreAddress : null;
     }
 }

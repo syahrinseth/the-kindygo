@@ -5,12 +5,12 @@ namespace App\Models;
 use App\Enums\Gateway;
 use App\Enums\PaymentStatus;
 use App\Models\Scopes\TenantScope;
-use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
-use Spatie\MediaLibrary\InteractsWithMedia;
 use Spatie\MediaLibrary\HasMedia;
+use Spatie\MediaLibrary\InteractsWithMedia;
 use Spatie\MediaLibrary\MediaCollections\Models\Media;
 
 class Payment extends Model implements HasMedia
@@ -24,7 +24,6 @@ class Payment extends Model implements HasMedia
      */
     protected $fillable = [
         'tenant_id',
-        'centre_id',
         'user_id',
         'gateway',
         'reference_no',
@@ -56,8 +55,6 @@ class Payment extends Model implements HasMedia
 
     /**
      * Get the invoices associated with the payment.
-     *
-     * @return BelongsToMany
      */
     public function invoices(): BelongsToMany
     {
@@ -67,9 +64,17 @@ class Payment extends Model implements HasMedia
     }
 
     /**
+     * Get the centres associated with this payment.
+     */
+    public function centres(): BelongsToMany
+    {
+        return $this->belongsToMany(Centre::class, 'payment_centre')
+            ->withPivot('allocated_amount')
+            ->withTimestamps();
+    }
+
+    /**
      * Get the user who made the payment.
-     *
-     * @return BelongsTo
      */
     public function user(): BelongsTo
     {
@@ -77,15 +82,51 @@ class Payment extends Model implements HasMedia
     }
 
     /**
+     * Get the tenant that owns the payment.
+     */
+    public function tenant(): BelongsTo
+    {
+        return $this->belongsTo(Tenant::class);
+    }
+
+    /**
+     * Get the amount allocated to a specific centre (in cents).
+     */
+    public function getCentreAllocation(int $centreId): int
+    {
+        return $this->centres()
+            ->where('centre_id', $centreId)
+            ->first()
+            ?->pivot
+            ?->allocated_amount ?? 0;
+    }
+
+    /**
+     * Check if this payment covers invoices from multiple centres.
+     */
+    public function isMultiCentre(): bool
+    {
+        return $this->centres()->count() > 1;
+    }
+
+    /**
+     * Get the primary centre (first centre, for display purposes).
+     */
+    public function getPrimaryCentre(): ?Centre
+    {
+        return $this->centres()->first();
+    }
+
+    /**
      * Format a monetary amount for display.
      *
-     * @param bool $includeCurrency Whether to include the currency symbol
-     * @return string
+     * @param  bool  $includeCurrency  Whether to include the currency symbol
      */
     public function getFormattedAmount(bool $includeCurrency = true): string
     {
         $formatted = number_format($this->amount / 100, 2);
-        return $includeCurrency ? 'RM' . $formatted : $formatted;
+
+        return $includeCurrency ? 'RM'.$formatted : $formatted;
     }
 
     /**
@@ -105,27 +146,15 @@ class Payment extends Model implements HasMedia
     public function registerMediaConversions(?Media $media = null): void
     {
         $this->addMediaConversion('thumb')
-              ->width(300)
-              ->height(300)
-              ->sharpen(10)
-              ->performOnCollections('payment_proof')
-              ->nonQueued();
-    }
-
-    public function tenant()
-    {
-        return $this->belongsTo(Tenant::class);
-    }
-
-    public function centre()
-    {
-        return $this->belongsTo(Centre::class);
+            ->width(300)
+            ->height(300)
+            ->sharpen(10)
+            ->performOnCollections('payment_proof')
+            ->nonQueued();
     }
 
     /**
      * Get CHIP payment data if this is a CHIP payment
-     *
-     * @return array|null
      */
     public function getChipData(): ?array
     {
@@ -138,8 +167,6 @@ class Payment extends Model implements HasMedia
 
     /**
      * Get nested CHIP data from gateway_payment_data['chip_data']
-     *
-     * @return array|null
      */
     public function getNestedChipData(): ?array
     {
@@ -148,7 +175,7 @@ class Payment extends Model implements HasMedia
         }
 
         $gatewayData = $this->gateway_payment_data;
-        if (!is_array($gatewayData)) {
+        if (! is_array($gatewayData)) {
             return null;
         }
 
@@ -158,15 +185,14 @@ class Payment extends Model implements HasMedia
     /**
      * Get specific CHIP payment information with chip_data fallback
      *
-     * @param string $key
-     * @param mixed $default
+     * @param  mixed  $default
      * @return mixed
      */
     public function getChipInfo(string $key, $default = null)
     {
         $gatewayData = $this->getChipData();
-        
-        if (!$gatewayData || !is_array($gatewayData)) {
+
+        if (! $gatewayData || ! is_array($gatewayData)) {
             return $default;
         }
 
@@ -182,8 +208,6 @@ class Payment extends Model implements HasMedia
 
     /**
      * Check if this is a CHIP payment
-     *
-     * @return bool
      */
     public function isChipPayment(): bool
     {
@@ -192,8 +216,6 @@ class Payment extends Model implements HasMedia
 
     /**
      * Get CHIP payment status from gateway data
-     *
-     * @return string|null
      */
     public function getChipStatus(): ?string
     {
@@ -202,8 +224,6 @@ class Payment extends Model implements HasMedia
 
     /**
      * Get CHIP payment method from gateway data
-     *
-     * @return string|null
      */
     public function getChipPaymentMethod(): ?string
     {
@@ -212,8 +232,6 @@ class Payment extends Model implements HasMedia
 
     /**
      * Get CHIP client email from gateway data
-     *
-     * @return string|null
      */
     public function getChipClientEmail(): ?string
     {
@@ -222,8 +240,6 @@ class Payment extends Model implements HasMedia
 
     /**
      * Get CHIP transaction ID from gateway data
-     *
-     * @return string|null
      */
     public function getChipTransactionId(): ?string
     {
@@ -231,15 +247,13 @@ class Payment extends Model implements HasMedia
         if ($transactionId) {
             return $transactionId;
         }
-        
+
         // Try fpx_transaction_id as fallback
         return $this->getChipInfo('fpx_transaction_id');
     }
 
     /**
      * Get CHIP bank name from gateway data
-     *
-     * @return string|null
      */
     public function getChipBankName(): ?string
     {
@@ -248,8 +262,6 @@ class Payment extends Model implements HasMedia
 
     /**
      * Get CHIP reference from gateway data
-     *
-     * @return string|null
      */
     public function getChipReference(): ?string
     {

@@ -2,22 +2,21 @@
 
 namespace App\Filament\Resources\Payments\Pages;
 
-use Filament\Schemas\Components\Section;
-use Filament\Schemas\Components\Grid;
-use Filament\Schemas\Components\Group;
+use App\Enums\Gateway;
+use App\Enums\PaymentStatus;
+use App\Filament\Resources\Payments\Payments\PaymentResource;
 use Exception;
 use Filament\Actions\Action;
 use Filament\Actions\EditAction;
-use App\Filament\Resources\Payments\Payments\PaymentResource;
-use Filament\Actions;
-use Filament\Infolists\Components\TextEntry;
-use Filament\Infolists\Components\SpatieMediaLibraryImageEntry;
 use Filament\Infolists\Components\RepeatableEntry;
+use Filament\Infolists\Components\SpatieMediaLibraryImageEntry;
+use Filament\Infolists\Components\TextEntry;
 use Filament\Resources\Pages\ViewRecord;
-use Illuminate\Support\Facades\Auth;
-use App\Enums\PaymentStatus;
-use App\Enums\Gateway;
+use Filament\Schemas\Components\Grid;
+use Filament\Schemas\Components\Group;
+use Filament\Schemas\Components\Section;
 use Filament\Schemas\Schema;
+use Illuminate\Support\Facades\Auth;
 
 class ViewPayment extends ViewRecord
 {
@@ -67,7 +66,7 @@ class ViewPayment extends ViewRecord
                                 ]),
                             ]),
                     ]),
-                    
+
                 // CHIP Payment Details Section
                 Section::make('CHIP Payment Details')
                     ->schema([
@@ -84,6 +83,7 @@ class ViewPayment extends ViewRecord
                                     ->badge()
                                     ->color(function ($record): string {
                                         $status = $record->getChipStatus();
+
                                         return match ($status) {
                                             'pending' => 'warning',
                                             'paid' => 'success',
@@ -94,13 +94,13 @@ class ViewPayment extends ViewRecord
                                     }),
                             ]),
                         Grid::make(2)
-                            ->schema([                                            
+                            ->schema([
                                 TextEntry::make('gateway_payment_data.chip_data.payment_method')
                                     ->label('Payment Method')
                                     ->formatStateUsing(function ($record) {
                                         return $record->getChipPaymentMethod() ?: 'N/A';
                                     })
-                                    ->placeholder('Not available'),                                            
+                                    ->placeholder('Not available'),
                                 TextEntry::make('gateway_payment_data.chip_data.client_email')
                                     ->label('Client Email')
                                     ->formatStateUsing(function ($record) {
@@ -114,12 +114,16 @@ class ViewPayment extends ViewRecord
                                     ->label('Created Date')
                                     ->formatStateUsing(function ($record) {
                                         $data = $record->gateway_payment_data;
-                                        if (!is_array($data)) return 'N/A';
-                                        
+                                        if (! is_array($data)) {
+                                            return 'N/A';
+                                        }
+
                                         // Check nested chip_data first, then fallback to root level
                                         $createdOn = $data['chip_data']['created_on'] ?? $data['created_on'] ?? null;
-                                        if (!$createdOn) return 'N/A';
-                                        
+                                        if (! $createdOn) {
+                                            return 'N/A';
+                                        }
+
                                         try {
                                             return date('M d, Y H:i', strtotime($createdOn));
                                         } catch (Exception $e) {
@@ -131,12 +135,16 @@ class ViewPayment extends ViewRecord
                                     ->label('Updated Date')
                                     ->formatStateUsing(function ($record) {
                                         $data = $record->gateway_payment_data;
-                                        if (!is_array($data)) return 'N/A';
-                                        
+                                        if (! is_array($data)) {
+                                            return 'N/A';
+                                        }
+
                                         // Check nested chip_data first, then fallback to root level
                                         $updatedOn = $data['chip_data']['updated_on'] ?? $data['updated_on'] ?? null;
-                                        if (!$updatedOn) return 'N/A';
-                                        
+                                        if (! $updatedOn) {
+                                            return 'N/A';
+                                        }
+
                                         try {
                                             return date('M d, Y H:i', strtotime($updatedOn));
                                         } catch (Exception $e) {
@@ -149,18 +157,22 @@ class ViewPayment extends ViewRecord
                             ->label('Purchase Total')
                             ->formatStateUsing(function ($record) {
                                 $data = $record->gateway_payment_data;
-                                if (!is_array($data)) return 'N/A';
-                                
+                                if (! is_array($data)) {
+                                    return 'N/A';
+                                }
+
                                 // Check nested chip_data first, then fallback to purchase array
-                                $total = $data['chip_data']['total'] ?? 
+                                $total = $data['chip_data']['total'] ??
                                         $data['purchase']['total'] ?? null;
-                                $currency = $data['chip_data']['currency'] ?? 
+                                $currency = $data['chip_data']['currency'] ??
                                         $data['purchase']['currency'] ?? 'MYR';
-                                
-                                if (!$total) return 'N/A';
-                                
+
+                                if (! $total) {
+                                    return 'N/A';
+                                }
+
                                 try {
-                                    return $currency . ' ' . number_format($total / 100, 2);
+                                    return $currency.' '.number_format($total / 100, 2);
                                 } catch (Exception $e) {
                                     return 'Invalid amount';
                                 }
@@ -170,31 +182,39 @@ class ViewPayment extends ViewRecord
                             ->label('Checkout URL')
                             ->formatStateUsing(function ($record) {
                                 $data = $record->gateway_payment_data;
-                                if (!is_array($data)) return 'N/A';
-                                
+                                if (! is_array($data)) {
+                                    return 'N/A';
+                                }
+
                                 // Check nested chip_data first, then fallback to root level
                                 $url = $data['chip_data']['checkout_url'] ?? $data['checkout_url'] ?? null;
+
                                 return $url ?: 'N/A';
                             })
                             ->placeholder('Not available')
                             ->url(function ($record) {
                                 $data = $record->gateway_payment_data;
-                                if (!is_array($data)) return null;
-                                
+                                if (! is_array($data)) {
+                                    return null;
+                                }
+
                                 return $data['chip_data']['checkout_url'] ?? $data['checkout_url'] ?? null;
                             })
                             ->openUrlInNewTab()
                             ->visible(function ($record) {
                                 $data = $record->gateway_payment_data;
-                                if (!is_array($data)) return false;
-                                
+                                if (! is_array($data)) {
+                                    return false;
+                                }
+
                                 $url = $data['chip_data']['checkout_url'] ?? $data['checkout_url'] ?? null;
-                                return !empty($url);
+
+                                return ! empty($url);
                             }),
-                        
+
                         // Additional CHIP transaction details
                         Grid::make(2)
-                            ->schema([                                            
+                            ->schema([
                                 TextEntry::make('gateway_payment_data.chip_data.transaction_id')
                                     ->label('Transaction ID')
                                     ->formatStateUsing(function ($record) {
@@ -202,7 +222,7 @@ class ViewPayment extends ViewRecord
                                     })
                                     ->placeholder('Not available')
                                     ->visible(function ($record) {
-                                        return !empty($record->getChipTransactionId());
+                                        return ! empty($record->getChipTransactionId());
                                     }),
                                 TextEntry::make('gateway_payment_data.chip_data.bank_name')
                                     ->label('Bank Name')
@@ -211,7 +231,7 @@ class ViewPayment extends ViewRecord
                                     })
                                     ->placeholder('Not available')
                                     ->visible(function ($record) {
-                                        return !empty($record->getChipBankName());
+                                        return ! empty($record->getChipBankName());
                                     }),
                             ]),
                         TextEntry::make('gateway_payment_data.chip_data.reference')
@@ -222,9 +242,11 @@ class ViewPayment extends ViewRecord
                             ->placeholder('Not available')
                             ->visible(function ($record) {
                                 $data = $record->gateway_payment_data;
-                                if (!is_array($data)) return false;
-                                
-                                return !empty($data['chip_data']['reference']);
+                                if (! is_array($data)) {
+                                    return false;
+                                }
+
+                                return ! empty($data['chip_data']['reference']);
                             }),
 
                         // Additional callback information if available
@@ -232,10 +254,10 @@ class ViewPayment extends ViewRecord
                             ->label('Last Webhook')
                             ->formatStateUsing(function ($record) {
                                 $data = $record->gateway_payment_data;
-                                if (!is_array($data) || !isset($data['webhook_received_at'])) {
+                                if (! is_array($data) || ! isset($data['webhook_received_at'])) {
                                     return 'No webhook received';
                                 }
-                                
+
                                 try {
                                     return date('M d, Y H:i', strtotime($data['webhook_received_at']));
                                 } catch (Exception $e) {
@@ -245,21 +267,24 @@ class ViewPayment extends ViewRecord
                             ->placeholder('No webhook received')
                             ->visible(function ($record) {
                                 $data = $record->gateway_payment_data;
-                                if (!is_array($data)) return false;
-                                return !empty($data['webhook_received_at']);
+                                if (! is_array($data)) {
+                                    return false;
+                                }
+
+                                return ! empty($data['webhook_received_at']);
                             }),
-                        
+
                         TextEntry::make('gateway_payment_data.chip_data.success_callback_data.retrieved_at')
                             ->label('Success Callback')
                             ->formatStateUsing(function ($record) {
                                 $data = $record->gateway_payment_data;
-                                if (!is_array($data) || !isset($data['success_callback_data']) || !is_array($data['success_callback_data'])) {
+                                if (! is_array($data) || ! isset($data['success_callback_data']) || ! is_array($data['success_callback_data'])) {
                                     return 'No success callback';
                                 }
-                                if (!isset($data['success_callback_data']['retrieved_at'])) {
+                                if (! isset($data['success_callback_data']['retrieved_at'])) {
                                     return 'No success callback';
                                 }
-                                
+
                                 try {
                                     return date('M d, Y H:i', strtotime($data['success_callback_data']['retrieved_at']));
                                 } catch (Exception $e) {
@@ -269,16 +294,17 @@ class ViewPayment extends ViewRecord
                             ->placeholder('No success callback')
                             ->visible(function ($record) {
                                 $data = $record->gateway_payment_data;
-                                if (!is_array($data) || !isset($data['success_callback_data']) || !is_array($data['success_callback_data'])) {
+                                if (! is_array($data) || ! isset($data['success_callback_data']) || ! is_array($data['success_callback_data'])) {
                                     return false;
                                 }
-                                return !empty($data['success_callback_data']);
+
+                                return ! empty($data['success_callback_data']);
                             }),
                     ])
                     ->collapsible()
                     ->collapsed()
-                    ->visible(fn ($record) => $record->gateway === Gateway::CHIP && !empty($record->gateway_payment_data)),
-                    
+                    ->visible(fn ($record) => $record->gateway === Gateway::CHIP && ! empty($record->gateway_payment_data)),
+
                 // Fallback for CHIP payments without detailed data
                 Section::make('CHIP Payment Information')
                     ->schema([
@@ -292,33 +318,43 @@ class ViewPayment extends ViewRecord
                     ])
                     ->collapsible()
                     ->collapsed()
-                    ->visible(fn ($record) => $record->gateway === Gateway::CHIP && empty($record->gateway_payment_data) && !empty($record->gateway_payment_id)),
-                    
+                    ->visible(fn ($record) => $record->gateway === Gateway::CHIP && empty($record->gateway_payment_data) && ! empty($record->gateway_payment_id)),
+
                 Section::make('User & Centre Information')
                     ->schema([
-                        Grid::make(2)
+                        TextEntry::make('user.name')
+                            ->label('User'),
+
+                        RepeatableEntry::make('centres')
+                            ->label('Centre(s) & Allocated Amounts')
                             ->schema([
-                                TextEntry::make('user.name')
-                                    ->label('User'),
-                                TextEntry::make('centre.name')
-                                    ->label('Centre')
-                                    ->placeholder('Not assigned'),
-                            ]),
+                                Grid::make(2)
+                                    ->schema([
+                                        TextEntry::make('name')
+                                            ->label('Centre Name'),
+                                        TextEntry::make('pivot.allocated_amount')
+                                            ->label('Allocated Amount')
+                                            ->money('MYR')
+                                            ->formatStateUsing(fn ($state) => $state / 100),
+                                    ]),
+                            ])
+                            ->columnSpanFull()
+                            ->visible(fn ($record) => $record->centres->count() > 0),
                     ]),
-                    
+
                 Section::make('Additional Information')
                     ->schema([
                         TextEntry::make('description')
                             ->columnSpanFull()
                             ->placeholder('No description provided'),
-                            
+
                         SpatieMediaLibraryImageEntry::make('payment_proof')
                             ->label('Payment Proof')
                             ->collection('payment_proof')
                             ->columnSpanFull()
                             ->visibility('private'),
                     ]),
-                    
+
                 Section::make('Associated Invoices')
                     ->schema([
                         RepeatableEntry::make('invoices')
@@ -359,7 +395,7 @@ class ViewPayment extends ViewRecord
                 ->url(fn (): string => route('payment.download-receipt', $this->record))
                 ->openUrlInNewTab()
                 ->visible(fn () => Auth::user()->can('view', $this->record) && $this->record->status === PaymentStatus::PAID),
-                
+
             EditAction::make()
                 ->visible(fn () => Auth::user()->can('update', $this->record)),
         ];
