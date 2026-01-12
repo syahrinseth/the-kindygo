@@ -26,7 +26,13 @@ beforeEach(function () {
     // Create parent user
     $this->parent = User::factory()->create([
         'email' => 'parent@example.com',
+        'current_tenant_id' => $this->tenant->id,
+        'profile_completed' => true,
     ]);
+    
+    // Assign Parent role
+    \Spatie\Permission\Models\Role::firstOrCreate(['name' => 'Parent']);
+    $this->parent->assignRole('Parent');
 
     $this->parent->tenants()->attach($this->tenant->id);
 
@@ -56,6 +62,7 @@ beforeEach(function () {
     ]);
 
     $this->actingAs($this->parent);
+    Filament::setTenant($this->tenant);
 });
 
 it('checks all invoices by default', function () {

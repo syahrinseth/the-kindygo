@@ -306,7 +306,7 @@ class MakePayment extends Page
 
     public static function canAccess(): bool
     {
-        // Allow all authenticated users to access
-        return Auth::check();
+        // Only allow Parent role to access
+        return Auth::check() && Auth::user()->hasRole('Parent');
     }
 }

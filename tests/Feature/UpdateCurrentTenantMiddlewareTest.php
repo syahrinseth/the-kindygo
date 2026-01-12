@@ -36,7 +36,7 @@ test('user current tenant id is updated when accessing tenant route', function (
     expect($user->tenants()->count())->toBeGreaterThan(0);
 
     $response = $this->actingAs($user)
-        ->get('/centres/centres');
+        ->get('/admin/centres');
 
     $response->assertSuccessful();
 
@@ -87,7 +87,7 @@ test('user current tenant id is updated when switching between tenants', functio
     expect($latest->id)->toBe($tenant2->id);
 
     $response = $this->actingAs($user)
-        ->get('/centres/centres');
+        ->get('/admin/centres');
 
     $response->assertSuccessful();
 

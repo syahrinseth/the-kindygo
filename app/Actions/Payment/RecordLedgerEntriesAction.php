@@ -44,7 +44,9 @@ class RecordLedgerEntriesAction
                     $creditAmount = $item->paid_amount; // This is cumulative, we need the delta
 
                     // Better approach: Get the latest ledger balance and calculate delta
+                    // Only look at credit entries (payment allocations) to get the previous balance
                     $previousBalance = InvoiceItemsLedger::where('invoice_item_id', $item->id)
+                        ->where('credit_amount', '>', 0)
                         ->latest('recorded_at')
                         ->value('balance_amount') ?? $item->total;
 

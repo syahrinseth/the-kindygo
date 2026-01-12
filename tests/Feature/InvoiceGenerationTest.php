@@ -40,9 +40,10 @@ class InvoiceGenerationTest extends TestCase
             'code' => 'TC',
         ]);
         $this->parent = User::factory()->create([
-            'tenant_id' => $this->tenant->id,
             'name' => 'Test Parent',
+            'current_tenant_id' => $this->tenant->id,
         ]);
+        $this->parent->tenants()->attach($this->tenant->id);
         $this->child = Child::factory()->create([
             'first_name' => 'Test',
             'last_name' => 'Child',
@@ -50,8 +51,13 @@ class InvoiceGenerationTest extends TestCase
         $this->product = Product::factory()->create([
             'tenant_id' => $this->tenant->id,
             'name' => 'Monthly Care',
-            'price' => 300.00,
-            'is_main' => true,
+        ]);
+        
+        // Create price for the product
+        \App\Models\ProductPrice::factory()->create([
+            'product_id' => $this->product->id,
+            'price' => 30000, // 300.00 in cents
+            'start_date' => Carbon::now()->subMonth(),
         ]);
 
         // Associate child with tenant
@@ -73,24 +79,22 @@ class InvoiceGenerationTest extends TestCase
         $enrolment1 = ChildEnrolment::factory()->create([
             'tenant_id' => $this->tenant->id,
             'centre_id' => $this->centre->id,
-            'user_id' => $this->parent->id,
             'child_id' => $this->child->id,
             'product_id' => $this->product->id,
-            'next_billing_at' => Carbon::now()->subDay(), // Due for billing
+            'next_bill_date' => Carbon::now()->subDay(), // Due for billing
             'billed_every' => 'monthly',
         ]);
 
         $enrolment2 = ChildEnrolment::factory()->create([
             'tenant_id' => $this->tenant->id,
             'centre_id' => $this->centre->id,
-            'user_id' => $this->parent->id,
             'child_id' => $this->child->id,
             'product_id' => $this->product->id,
-            'next_billing_at' => Carbon::now()->subDay(),
+            'next_bill_date' => Carbon::now()->subDay(),
             'billed_every' => 'monthly',
         ]);
 
-        $service = new ChildEnrolmentInvoiceService;
+        $service = app(ChildEnrolmentInvoiceService::class);
         $enrolments = collect([$enrolment1, $enrolment2]);
         $generatedInvoices = $service->generateInvoicesForEnrolments($enrolments);
 
@@ -119,14 +123,13 @@ class InvoiceGenerationTest extends TestCase
         $enrolment = ChildEnrolment::factory()->create([
             'tenant_id' => $this->tenant->id,
             'centre_id' => $this->centre->id,
-            'user_id' => $this->parent->id,
             'child_id' => $this->child->id,
             'product_id' => $this->product->id,
-            'next_billing_at' => Carbon::now()->subDay(),
+            'next_bill_date' => Carbon::now()->subDay(),
             'billed_every' => 'monthly',
         ]);
 
-        $service = new ChildEnrolmentInvoiceService;
+        $service = app(ChildEnrolmentInvoiceService::class);
         $invoices = $service->generateInvoicesForEnrolment($enrolment);
 
         $this->assertCount(1, $invoices);
@@ -146,14 +149,13 @@ class InvoiceGenerationTest extends TestCase
         $enrolment = ChildEnrolment::factory()->create([
             'tenant_id' => $this->tenant->id,
             'centre_id' => $this->centre->id,
-            'user_id' => $this->parent->id,
             'child_id' => $this->child->id,
             'product_id' => $this->product->id,
-            'next_billing_at' => Carbon::now()->subDay(),
+            'next_bill_date' => Carbon::now()->subDay(),
             'billed_every' => 'monthly',
         ]);
 
-        $service = new ChildEnrolmentInvoiceService;
+        $service = app(ChildEnrolmentInvoiceService::class);
         $invoices = $service->generateInvoicesForEnrolment($enrolment);
 
         $invoice = $invoices[0];

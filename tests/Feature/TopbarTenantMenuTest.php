@@ -12,14 +12,14 @@ it('shows tenant menu in topbar next to logo', function () {
     $user = \App\Models\User::where('email', 'test@example.com')->first();
     $this->actingAs($user);
 
-    $response = $this->followingRedirects()->get('/dashboard');
+    $response = $this->followingRedirects()->get('/admin/dashboard');
     $response->assertStatus(200);
 
     // Tenant name from seeder should appear in topbar via tenant switcher
-    $response->assertSee('Default Tenant');
+    $response->assertSee('Test Tenant', false); // Don't escape HTML
 
     // Verify the custom tenant switcher is rendered
     $content = $response->getContent();
-    expect($content)->toContain('Centre:'); // Label for tenant switcher
+    expect($content)->toContain('id="tenant-switcher"'); // Tenant switcher element
     expect($content)->toContain('wire:model.live="selectedTenant"'); // Livewire binding
 });

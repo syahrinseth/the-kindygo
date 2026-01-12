@@ -109,10 +109,6 @@ it('returns collection of related enrolments needing invoices', function () {
         'date_end' => null,
         'billed_every' => ChildEnrolmentBilledEvery::MONTHLY,
     ]);
-    $enrolment1->setRelations([
-        'child' => $child1,
-        'child.users' => collect([$this->parent]),
-    ]);
 
     $enrolment2 = ChildEnrolment::factory()->create([
         'child_id' => $child2->id,
@@ -123,10 +119,6 @@ it('returns collection of related enrolments needing invoices', function () {
         'date_start' => '2026-01-01',
         'date_end' => null,
         'billed_every' => ChildEnrolmentBilledEvery::MONTHLY,
-    ]);
-    $enrolment2->setRelations([
-        'child' => $child2,
-        'child.users' => collect([$this->parent]),
     ]);
 
     $result = $this->action->execute($enrolment1, now());
@@ -152,11 +144,6 @@ it('excludes enrolments from different centres', function () {
         'date_start' => '2026-01-01',
         'billed_every' => ChildEnrolmentBilledEvery::MONTHLY,
     ]);
-    $enrolment1->setRelations([
-        'child' => $child,
-        'child.users' => collect([$this->parent]),
-    ]);
-
     ChildEnrolment::factory()->create([
         'child_id' => $child->id,
         'centre_id' => $centre2->id,
@@ -186,10 +173,6 @@ it('excludes inactive enrolments', function () {
         'status' => ChildEnrolmentStatus::ACTIVE,
         'date_start' => '2026-01-01',
         'billed_every' => ChildEnrolmentBilledEvery::MONTHLY,
-    ]);
-    $enrolment1->setRelations([
-        'child' => $child,
-        'child.users' => collect([$this->parent]),
     ]);
 
     ChildEnrolment::factory()->create([
