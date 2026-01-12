@@ -8,7 +8,7 @@ use App\Models\Tenant;
 use App\Models\User;
 use Carbon\Carbon;
 
-use function Pest\Laravel\{actingAs, assertDatabaseHas};
+use function Pest\Laravel\actingAs;
 
 beforeEach(function () {
     Carbon::setTestNow('2026-01-08');
@@ -22,7 +22,7 @@ beforeEach(function () {
     $this->child = Child::factory()->create();
     $this->child->tenants()->attach($this->tenant->id);
 
-    $this->action = new CreateQuotation();
+    $this->action = new CreateQuotation;
 });
 
 afterEach(function () {

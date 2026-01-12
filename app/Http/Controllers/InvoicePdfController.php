@@ -4,8 +4,8 @@ namespace App\Http\Controllers;
 
 use App\Models\Invoice;
 use App\Services\PdfConfigurationService;
-use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+
 use function Spatie\LaravelPdf\Support\pdf;
 
 class InvoicePdfController extends Controller
@@ -21,7 +21,7 @@ class InvoicePdfController extends Controller
     {
         // Check if user can access this invoice
         $user = Auth::user();
-        
+
         // Super Admin, Admin, Principal can download invoices from their associated centres
         if ($user->hasAnyRole(['Super Admin', 'Admin', 'Principal'])) {
             // For Super Admin and Admin, check if invoice is from their tenant
@@ -30,11 +30,11 @@ class InvoicePdfController extends Controller
                     abort(403, 'Unauthorized access to invoice.');
                 }
             }
-            
+
             // For Principal, check if invoice is from centres they're associated with
             if ($user->hasRole('Principal') && $invoice->centre_id) {
                 if ($invoice->tenant_id !== $user->current_tenant_id ||
-                    !$user->centres()->where('centres.id', $invoice->centre_id)->exists()) {
+                    ! $user->centres()->where('centres.id', $invoice->centre_id)->exists()) {
                     abort(403, 'Unauthorized access to invoice.');
                 }
             }
@@ -44,8 +44,7 @@ class InvoicePdfController extends Controller
             if ($invoice->user_id !== $user->id || $invoice->tenant_id !== $user->current_tenant_id) {
                 abort(403, 'Unauthorized access to invoice.');
             }
-        }
-        else {
+        } else {
             abort(403, 'Unauthorized access to invoice.');
         }
 

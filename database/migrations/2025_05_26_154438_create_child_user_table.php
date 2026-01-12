@@ -17,7 +17,7 @@ return new class extends Migration
             $table->foreignId('user_id')->constrained()->onDelete('cascade');
             $table->string('relationship_type')->nullable()->comment('Parent, Guardian, etc.');
             $table->timestamps();
-            
+
             // Ensure a child can only be associated with a user once
             $table->unique(['child_id', 'user_id']);
         });

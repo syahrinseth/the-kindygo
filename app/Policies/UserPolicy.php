@@ -98,7 +98,7 @@ class UserPolicy
         }
 
         // Admin can delete users in the same tenant (except Super Admins)
-        if ($user->hasRole('Admin') && !$model->hasRole('Super Admin')) {
+        if ($user->hasRole('Admin') && ! $model->hasRole('Super Admin')) {
             return $this->sharesTenant($user, $model);
         }
 
@@ -161,13 +161,13 @@ class UserPolicy
         }
 
         // Admin can manage roles for non-Super Admin users in same tenant
-        if ($user->hasRole('Admin') && !$model->hasRole('Super Admin')) {
+        if ($user->hasRole('Admin') && ! $model->hasRole('Super Admin')) {
             return $this->sharesTenant($user, $model);
         }
 
         // Principal can only assign Teacher and Parent roles
         if ($user->hasRole('Principal')) {
-            return $this->sharesCurrentCentre($user, $model) && 
+            return $this->sharesCurrentCentre($user, $model) &&
                    $model->hasAnyRole(['Teacher', 'Parent']);
         }
 
@@ -232,7 +232,7 @@ class UserPolicy
      */
     private function sharesTenant(User $user1, User $user2): bool
     {
-        if (!$user1->current_tenant_id || !$user2->current_tenant_id) {
+        if (! $user1->current_tenant_id || ! $user2->current_tenant_id) {
             return false;
         }
 
@@ -247,7 +247,7 @@ class UserPolicy
         $user1Centre = $user1->currentCentre;
         $user2Centre = $user2->currentCentre;
 
-        if (!$user1Centre || !$user2Centre) {
+        if (! $user1Centre || ! $user2Centre) {
             return false;
         }
 

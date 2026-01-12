@@ -4,31 +4,30 @@ namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
-use Illuminate\Validation\Rule;
 
 class ProfileController extends Controller
 {
     public function showCompleteForm()
     {
         $user = Auth::user();
-        
+
         // Redirect if profile is already completed
         if ($user->profile_completed) {
             return redirect('/app')->with('info', 'Your profile is already completed.');
         }
-        
+
         return view('profile.complete', compact('user'));
     }
-    
+
     public function complete(Request $request)
     {
         $user = Auth::user();
-        
+
         // Redirect if profile is already completed
         if ($user->profile_completed) {
             return redirect('/app')->with('info', 'Your profile is already completed.');
         }
-        
+
         $request->validate([
             'phone' => 'required|string|max:20',
             'nric' => 'nullable|string|max:20',
@@ -58,7 +57,7 @@ class ProfileController extends Controller
             'immunization_card.mimes' => 'Immunization card must be in JPEG, PNG, WebP, or PDF format.',
             'immunization_card.max' => 'Immunization card file size must not exceed 10MB.',
         ]);
-        
+
         // Validate that either NRIC or Passport is provided
         if (empty($request->nric) && empty($request->passport)) {
             return back()->withErrors([
@@ -66,7 +65,7 @@ class ProfileController extends Controller
                 'passport' => 'Either NRIC or Passport is required.',
             ])->withInput();
         }
-        
+
         // Update user profile using the new relationship structure
         $user->profile()->updateOrCreate(
             ['user_id' => $user->id],

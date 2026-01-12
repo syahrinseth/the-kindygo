@@ -2,19 +2,19 @@
 
 namespace App\Filament\Widgets;
 
+use App\Enums\InvoiceStatus;
 use App\Filament\Pages\FinanceDashboard;
 use App\Models\Invoice;
-use App\Enums\InvoiceStatus;
+use Carbon\Carbon;
 use Filament\Widgets\ChartWidget;
 use Illuminate\Support\Facades\Auth;
-use Carbon\Carbon;
 
 class InvoiceChart extends ChartWidget
 {
     protected ?string $heading = 'Monthly Invoice Totals';
-    
-    protected int | string | array $columnSpan = 'full';
-    
+
+    protected int|string|array $columnSpan = 'full';
+
     protected ?string $maxHeight = '300px';
 
     public static function canView(): bool
@@ -25,38 +25,38 @@ class InvoiceChart extends ChartWidget
     protected function getData(): array
     {
         $user = Auth::user();
-        
+
         // If no tenant is selected, show empty chart
-        if (!$user->current_tenant_id) {
+        if (! $user->current_tenant_id) {
             return [
                 'datasets' => [],
                 'labels' => [],
             ];
         }
-        
+
         // Get the last 6 months
         $months = collect();
         $labels = [];
-        
+
         for ($i = 5; $i >= 0; $i--) {
             $month = Carbon::now()->subMonths($i);
             $months->push($month);
             $labels[] = $month->format('M Y');
         }
-        
+
         // Create a base query filtered by tenant
         $baseQuery = Invoice::where('tenant_id', $user->current_tenant_id);
-        
+
         // If user is Principal, only show their centres
         if ($user->hasRole('Principal')) {
             $baseQuery->whereIn('centre_id', $user->centres()->pluck('centres.id'));
         }
-        
+
         // Get monthly totals for different statuses
         $pendingData = [];
         $paidData = [];
         $overdueData = [];
-        
+
         foreach ($months as $month) {
             $startOfMonth = $month->copy()->startOfMonth();
             $endOfMonth = $month->copy()->endOfMonth();
@@ -79,7 +79,7 @@ class InvoiceChart extends ChartWidget
                 ->whereBetween('date', [$startOfMonth, $endOfMonth])
                 ->sum('total') / 100; // Convert to dollars
         }
-        
+
         return [
             'datasets' => [
                 [
@@ -107,7 +107,7 @@ class InvoiceChart extends ChartWidget
             'labels' => $labels,
         ];
     }
-    
+
     protected function getOptions(): array
     {
         return [
@@ -131,7 +131,7 @@ class InvoiceChart extends ChartWidget
             ],
         ];
     }
-    
+
     protected function getType(): string
     {
         return 'bar';

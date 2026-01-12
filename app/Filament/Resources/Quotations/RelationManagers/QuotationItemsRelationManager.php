@@ -3,6 +3,11 @@
 namespace App\Filament\Resources\Quotations\RelationManagers;
 
 use App\Models\Product;
+use Filament\Actions\BulkActionGroup;
+use Filament\Actions\CreateAction;
+use Filament\Actions\DeleteAction;
+use Filament\Actions\DeleteBulkAction;
+use Filament\Actions\EditAction;
 use Filament\Forms\Components\DatePicker;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\Textarea;
@@ -12,11 +17,6 @@ use Filament\Schemas\Components\Section;
 use Filament\Schemas\Components\Utilities\Get;
 use Filament\Schemas\Components\Utilities\Set;
 use Filament\Schemas\Schema;
-use Filament\Actions\BulkActionGroup;
-use Filament\Actions\CreateAction;
-use Filament\Actions\DeleteAction;
-use Filament\Actions\DeleteBulkAction;
-use Filament\Actions\EditAction;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Builder;
@@ -108,8 +108,7 @@ class QuotationItemsRelationManager extends RelationManager
                                     ->minValue(1)
                                     ->suffix('unit(s)')
                                     ->live()
-                                    ->afterStateUpdated(fn ($state, Set $set, Get $get) =>
-                                        $this->calculateTotal($set, $get))
+                                    ->afterStateUpdated(fn ($state, Set $set, Get $get) => $this->calculateTotal($set, $get))
                                     ->columnSpan(1),
 
                                 TextInput::make('price')
@@ -124,8 +123,7 @@ class QuotationItemsRelationManager extends RelationManager
                                     })
                                     ->dehydrateStateUsing(fn ($state) => (int) ($state * 100))
                                     ->live()
-                                    ->afterStateUpdated(fn ($state, Set $set, Get $get) =>
-                                        $this->calculateTotal($set, $get))
+                                    ->afterStateUpdated(fn ($state, Set $set, Get $get) => $this->calculateTotal($set, $get))
                                     ->columnSpan(1),
 
                                 TextInput::make('discount')
@@ -141,8 +139,7 @@ class QuotationItemsRelationManager extends RelationManager
                                     })
                                     ->dehydrateStateUsing(fn ($state) => (int) ($state * 100))
                                     ->live()
-                                    ->afterStateUpdated(fn ($state, Set $set, Get $get) =>
-                                        $this->calculateTotal($set, $get))
+                                    ->afterStateUpdated(fn ($state, Set $set, Get $get) => $this->calculateTotal($set, $get))
                                     ->columnSpan(1),
 
                                 TextInput::make('total')
@@ -193,8 +190,8 @@ class QuotationItemsRelationManager extends RelationManager
             ->description(function () {
                 $quotation = $this->getOwnerRecord();
 
-                return "Items: {$quotation->total_items} | " .
-                       "Total: RM " . number_format($quotation->total / 100, 2);
+                return "Items: {$quotation->total_items} | ".
+                       'Total: RM '.number_format($quotation->total / 100, 2);
             })
             ->columns([
                 TextColumn::make('name')

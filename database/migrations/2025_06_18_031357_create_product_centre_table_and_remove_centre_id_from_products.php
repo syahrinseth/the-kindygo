@@ -3,7 +3,6 @@
 use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
-use Illuminate\Support\Facades\DB;
 
 return new class extends Migration
 {
@@ -18,10 +17,10 @@ return new class extends Migration
             $table->foreignId('product_id')->constrained()->onDelete('cascade');
             $table->foreignId('centre_id')->constrained()->onDelete('cascade');
             $table->timestamps();
-            
+
             // Add unique constraint to prevent duplicate relationships
             $table->unique(['product_id', 'centre_id']);
-            
+
             // Add indexes for better performance
             $table->index('product_id');
             $table->index('centre_id');

@@ -102,8 +102,6 @@ class QuotationItem extends Model
 
     /**
      * Get the quotation that owns the quotation item.
-     *
-     * @return BelongsTo
      */
     public function quotation(): BelongsTo
     {
@@ -112,8 +110,6 @@ class QuotationItem extends Model
 
     /**
      * Get the product associated with the quotation item.
-     *
-     * @return BelongsTo
      */
     public function product(): BelongsTo
     {
@@ -122,8 +118,6 @@ class QuotationItem extends Model
 
     /**
      * Get the child associated with the quotation item.
-     *
-     * @return BelongsTo
      */
     public function child(): BelongsTo
     {
@@ -132,8 +126,6 @@ class QuotationItem extends Model
 
     /**
      * Get the child enrolment associated with the quotation item.
-     *
-     * @return BelongsTo
      */
     public function childEnrolment(): BelongsTo
     {
@@ -143,8 +135,6 @@ class QuotationItem extends Model
     /**
      * Calculate and set the total amount.
      * Discount is applied per unit and multiplied by quantity.
-     *
-     * @return void
      */
     public function calculateTotal(): void
     {
@@ -155,8 +145,6 @@ class QuotationItem extends Model
 
     /**
      * Calculate and set the balance amount.
-     *
-     * @return void
      */
     public function calculateBalance(): void
     {
@@ -166,8 +154,6 @@ class QuotationItem extends Model
 
     /**
      * Get the payment status.
-     *
-     * @return string
      */
     public function getPaymentStatus(): string
     {
@@ -184,8 +170,6 @@ class QuotationItem extends Model
 
     /**
      * Format the price as a decimal.
-     *
-     * @return string
      */
     public function getFormattedPrice(): string
     {
@@ -194,8 +178,6 @@ class QuotationItem extends Model
 
     /**
      * Format the discount as a decimal.
-     *
-     * @return string
      */
     public function getFormattedDiscount(): string
     {
@@ -204,8 +186,6 @@ class QuotationItem extends Model
 
     /**
      * Format the total as a decimal.
-     *
-     * @return string
      */
     public function getFormattedTotal(): string
     {
@@ -214,8 +194,6 @@ class QuotationItem extends Model
 
     /**
      * Format the paid amount as a decimal.
-     *
-     * @return string
      */
     public function getFormattedPaidAmount(): string
     {
@@ -224,8 +202,6 @@ class QuotationItem extends Model
 
     /**
      * Format the balance amount as a decimal.
-     *
-     * @return string
      */
     public function getFormattedBalanceAmount(): string
     {
@@ -234,8 +210,6 @@ class QuotationItem extends Model
 
     /**
      * Calculate discount percentage per unit.
-     *
-     * @return float
      */
     public function getDiscountPercentage(): float
     {
@@ -248,10 +222,6 @@ class QuotationItem extends Model
 
     /**
      * Scope a query to filter by quotation.
-     *
-     * @param Builder $query
-     * @param int $quotationId
-     * @return Builder
      */
     public function scopeForQuotation(Builder $query, int $quotationId): Builder
     {
@@ -260,10 +230,6 @@ class QuotationItem extends Model
 
     /**
      * Scope a query to filter by child.
-     *
-     * @param Builder $query
-     * @param int $childId
-     * @return Builder
      */
     public function scopeForChild(Builder $query, int $childId): Builder
     {
@@ -272,9 +238,6 @@ class QuotationItem extends Model
 
     /**
      * Scope a query to filter items with discounts.
-     *
-     * @param Builder $query
-     * @return Builder
      */
     public function scopeWithDiscount(Builder $query): Builder
     {
@@ -283,9 +246,6 @@ class QuotationItem extends Model
 
     /**
      * Scope a query to filter paid items.
-     *
-     * @param Builder $query
-     * @return Builder
      */
     public function scopePaid(Builder $query): Builder
     {
@@ -294,9 +254,6 @@ class QuotationItem extends Model
 
     /**
      * Scope a query to filter unpaid items.
-     *
-     * @param Builder $query
-     * @return Builder
      */
     public function scopeUnpaid(Builder $query): Builder
     {

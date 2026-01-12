@@ -135,7 +135,7 @@ class ChildEnrolmentPolicy
      */
     private function enrolmentBelongsToUserTenant(User $user, ChildEnrolment $childEnrolment): bool
     {
-        if (!$user->current_tenant_id) {
+        if (! $user->current_tenant_id) {
             return false;
         }
 
@@ -155,7 +155,7 @@ class ChildEnrolmentPolicy
      */
     private function enrolmentBelongsToUserCentres(User $user, ChildEnrolment $childEnrolment): bool
     {
-        if (!$user->current_tenant_id) {
+        if (! $user->current_tenant_id) {
             return false;
         }
 

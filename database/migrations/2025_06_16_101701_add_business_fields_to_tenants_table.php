@@ -21,7 +21,7 @@ return new class extends Migration
                 ->comment('MSIC business activity code');
             $table->string('business_activity_description')->nullable()->after('business_activity_code')
                 ->comment('Description of business activity');
-            
+
             // Enhanced Address Information for e-Invoice
             $table->string('country')->default('MY')->after('business_activity_description')
                 ->comment('Country code (ISO 3166-1)');
@@ -38,11 +38,11 @@ return new class extends Migration
         Schema::table('tenants', function (Blueprint $table) {
             $table->dropColumn([
                 'tax_identification_number',
-                'business_registration_number', 
+                'business_registration_number',
                 'business_activity_code',
                 'business_activity_description',
                 'country',
-                'state_code'
+                'state_code',
             ]);
         });
     }

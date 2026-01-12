@@ -36,18 +36,16 @@ class UserProfile extends Model
     /**
      * Get the appropriate identification scheme for e-invoice.
      * Returns 'TIN', 'NRIC', or 'PASSPORT' based on available data.
-     *
-     * @return string
      */
     public function getEInvoiceSchemeId(): string
     {
         // For Malaysian individuals, use NRIC if available
-        if (!empty($this->nric)) {
+        if (! empty($this->nric)) {
             return 'NRIC';
         }
 
         // For foreign customers, use passport
-        if (!empty($this->passport)) {
+        if (! empty($this->passport)) {
             return 'PASSPORT';
         }
 
@@ -58,17 +56,16 @@ class UserProfile extends Model
     /**
      * Get the identification value for e-invoice.
      *
-     * @return string
      * @throws Exception if no valid identification is available
      */
     public function getEInvoiceIdentification(): string
     {
         // Priority: NRIC > Passport
-        if (!empty($this->nric)) {
+        if (! empty($this->nric)) {
             return $this->nric;
         }
 
-        if (!empty($this->passport)) {
+        if (! empty($this->passport)) {
             return $this->passport;
         }
 
@@ -78,7 +75,7 @@ class UserProfile extends Model
 
     public function getEInvoiceTIN(): string
     {
-        if (!empty($this->tin)) {
+        if (! empty($this->tin)) {
             return $this->tin;
         }
 

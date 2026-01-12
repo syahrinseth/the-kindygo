@@ -12,11 +12,10 @@ use Illuminate\Database\Eloquent\SoftDeletes;
 use Spatie\MediaLibrary\HasMedia;
 use Spatie\MediaLibrary\InteractsWithMedia;
 use Spatie\MediaLibrary\MediaCollections\Models\Media;
-use Spatie\MediaLibrary\MediaCollections\MediaCollection;
 
 class Child extends Model implements HasMedia
 {
-    use HasFactory, SoftDeletes, InteractsWithMedia;
+    use HasFactory, InteractsWithMedia, SoftDeletes;
 
     /**
      * The "booted" method of the model.
@@ -56,7 +55,7 @@ class Child extends Model implements HasMedia
         'allergies',
         'diseases',
         'family_clinic',
-        'family_clinic_phone'
+        'family_clinic_phone',
     ];
 
     /**
@@ -66,13 +65,11 @@ class Child extends Model implements HasMedia
      */
     protected $casts = [
         'date_of_birth' => 'date',
-        'position_of_child' => 'integer'
+        'position_of_child' => 'integer',
     ];
 
     /**
      * Get the full name of the child.
-     *
-     * @return string
      */
     public function getFullNameAttribute(): string
     {
@@ -81,8 +78,6 @@ class Child extends Model implements HasMedia
 
     /**
      * Get the name of the child (alias for full_name).
-     *
-     * @return string
      */
     public function getNameAttribute(): string
     {
@@ -100,7 +95,7 @@ class Child extends Model implements HasMedia
     /**
      * Get the status of this child at a specific tenant.
      *
-     * @param Tenant|int $tenant The tenant or tenant ID
+     * @param  Tenant|int  $tenant  The tenant or tenant ID
      * @return ChildStatus|null The status of the child at the tenant or null if not associated
      */
     public function getStatusAtTenant($tenant): ?ChildStatus
@@ -115,8 +110,8 @@ class Child extends Model implements HasMedia
     /**
      * Update the status of this child at a specific tenant.
      *
-     * @param Tenant|int $tenant The tenant or tenant ID
-     * @param ChildStatus $status The new status
+     * @param  Tenant|int  $tenant  The tenant or tenant ID
+     * @param  ChildStatus  $status  The new status
      * @return bool Whether the update was successful
      */
     public function updateStatusAtTenant($tenant, ChildStatus $status): bool
@@ -133,7 +128,7 @@ class Child extends Model implements HasMedia
     /**
      * Activate this child at a specific tenant.
      *
-     * @param Tenant|int $tenant The tenant or tenant ID
+     * @param  Tenant|int  $tenant  The tenant or tenant ID
      * @return bool Whether the update was successful
      */
     public function activateAtTenant($tenant): bool
@@ -144,7 +139,7 @@ class Child extends Model implements HasMedia
     /**
      * Mark this child as returning at a specific tenant.
      *
-     * @param Tenant|int $tenant The tenant or tenant ID
+     * @param  Tenant|int  $tenant  The tenant or tenant ID
      * @return bool Whether the update was successful
      */
     public function markAsReturningAtTenant($tenant): bool
@@ -155,7 +150,7 @@ class Child extends Model implements HasMedia
     /**
      * Mark this child as alumni at a specific tenant.
      *
-     * @param Tenant|int $tenant The tenant or tenant ID
+     * @param  Tenant|int  $tenant  The tenant or tenant ID
      * @return bool Whether the update was successful
      */
     public function markAsAlumniAtTenant($tenant): bool
@@ -166,15 +161,14 @@ class Child extends Model implements HasMedia
     /**
      * Associate this child with a tenant, setting the initial status.
      *
-     * @param Tenant|int $tenant The tenant or tenant ID
-     * @param ChildStatus $status The initial status (defaults to NEW)
-     * @return void
+     * @param  Tenant|int  $tenant  The tenant or tenant ID
+     * @param  ChildStatus  $status  The initial status (defaults to NEW)
      */
     public function addToTenant($tenant, ChildStatus $status = ChildStatus::NEW): void
     {
         $tenantId = $tenant instanceof Tenant ? $tenant->id : $tenant;
 
-        if (!$this->tenants()->where('tenant_id', $tenantId)->exists()) {
+        if (! $this->tenants()->where('tenant_id', $tenantId)->exists()) {
             $this->tenants()->attach($tenantId, [
                 'status' => $status,
             ]);
@@ -184,8 +178,7 @@ class Child extends Model implements HasMedia
     /**
      * Remove this child from a tenant.
      *
-     * @param Tenant|int $tenant The tenant or tenant ID
-     * @return void
+     * @param  Tenant|int  $tenant  The tenant or tenant ID
      */
     public function removeFromTenant($tenant): void
     {
@@ -196,8 +189,6 @@ class Child extends Model implements HasMedia
 
     /**
      * Get the users associated with this child.
-     *
-     * @return BelongsToMany
      */
     public function users(): BelongsToMany
     {
@@ -209,8 +200,6 @@ class Child extends Model implements HasMedia
 
     /**
      * Get the centres associated with this child.
-     *
-     * @return BelongsToMany
      */
     public function centres(): BelongsToMany
     {
@@ -231,8 +220,6 @@ class Child extends Model implements HasMedia
 
     /**
      * Get the enrolments associated with this child.
-     *
-     * @return HasMany
      */
     public function enrolments(): HasMany
     {
@@ -241,8 +228,6 @@ class Child extends Model implements HasMedia
 
     /**
      * Get the active enrolments for this child.
-     *
-     * @return HasMany
      */
     public function activeEnrolments(): HasMany
     {
@@ -251,8 +236,6 @@ class Child extends Model implements HasMedia
 
     /**
      * Get the current enrolments for this child.
-     *
-     * @return HasMany
      */
     public function currentEnrolments(): HasMany
     {
@@ -262,14 +245,13 @@ class Child extends Model implements HasMedia
     /**
      * Add this child to a centre.
      *
-     * @param Centre|int $centre The centre or centre ID
-     * @return void
+     * @param  Centre|int  $centre  The centre or centre ID
      */
     public function addToCentre($centre): void
     {
         $centreId = $centre instanceof Centre ? $centre->id : $centre;
 
-        if (!$this->centres()->where('centre_id', $centreId)->exists()) {
+        if (! $this->centres()->where('centre_id', $centreId)->exists()) {
             $this->centres()->attach($centreId);
         }
     }
@@ -277,8 +259,7 @@ class Child extends Model implements HasMedia
     /**
      * Remove this child from a centre.
      *
-     * @param Centre|int $centre The centre or centre ID
-     * @return void
+     * @param  Centre|int  $centre  The centre or centre ID
      */
     public function removeFromCentre($centre): void
     {
@@ -290,8 +271,7 @@ class Child extends Model implements HasMedia
     /**
      * Check if this child is associated with a specific centre.
      *
-     * @param Centre|int $centre The centre or centre ID
-     * @return bool
+     * @param  Centre|int  $centre  The centre or centre ID
      */
     public function isInCentre($centre): bool
     {
@@ -324,7 +304,7 @@ class Child extends Model implements HasMedia
     /**
      * Register media conversions for the child.
      */
-    public function registerMediaConversions(Media $media = null): void
+    public function registerMediaConversions(?Media $media = null): void
     {
         $this->addMediaConversion('thumb')
             ->width(300)

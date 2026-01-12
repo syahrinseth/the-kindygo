@@ -9,8 +9,6 @@ enum InvoiceItemType: string
 
     /**
      * Get all enum values as an array.
-     *
-     * @return array
      */
     public static function values(): array
     {
@@ -19,8 +17,6 @@ enum InvoiceItemType: string
 
     /**
      * Get the display name for the enum value.
-     *
-     * @return string
      */
     public function label(): string
     {
@@ -32,13 +28,11 @@ enum InvoiceItemType: string
 
     /**
      * Get all enum cases with their labels.
-     *
-     * @return array
      */
     public static function options(): array
     {
-        return collect(self::cases())->mapWithKeys(fn($case) => [
-            $case->value => $case->label()
+        return collect(self::cases())->mapWithKeys(fn ($case) => [
+            $case->value => $case->label(),
         ])->toArray();
     }
 }

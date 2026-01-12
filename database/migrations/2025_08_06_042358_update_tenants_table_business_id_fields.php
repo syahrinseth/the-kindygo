@@ -36,7 +36,7 @@ return new class extends Migration
             // Remove the new business ID fields
             $table->dropColumn([
                 'business_id_type',
-                'business_id_value'
+                'business_id_value',
             ]);
         });
     }

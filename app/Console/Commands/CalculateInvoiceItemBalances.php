@@ -2,11 +2,10 @@
 
 namespace App\Console\Commands;
 
-use Exception;
+use App\Enums\InvoiceStatus;
 use App\Models\InvoiceItem;
 use App\Models\Scopes\TenantScope;
-use App\Models\Scopes\BelongsToManyTenantScope;
-use App\Enums\InvoiceStatus;
+use Exception;
 use Illuminate\Console\Command;
 
 class CalculateInvoiceItemBalances extends Command
@@ -74,7 +73,7 @@ class CalculateInvoiceItemBalances extends Command
                     $processedCount++;
                 } catch (Exception $e) {
                     $errorCount++;
-                    $this->error("Error processing item {$item->id}: " . $e->getMessage());
+                    $this->error("Error processing item {$item->id}: ".$e->getMessage());
                 }
 
                 $bar->advance();
@@ -84,7 +83,7 @@ class CalculateInvoiceItemBalances extends Command
         $bar->finish();
         $this->newLine();
 
-        $this->info("Processing completed!");
+        $this->info('Processing completed!');
         $this->table(['Metric', 'Count'], [
             ['Processed', $processedCount],
             ['Updated', $updatedCount],
@@ -101,8 +100,6 @@ class CalculateInvoiceItemBalances extends Command
     /**
      * Process a single invoice item.
      *
-     * @param InvoiceItem $item
-     * @param bool $dryRun
      * @return bool Whether the item was updated
      */
     private function processInvoiceItem(InvoiceItem $item, bool $dryRun): bool
@@ -144,7 +141,7 @@ class CalculateInvoiceItemBalances extends Command
             $originalPaid !== $item->paid
         );
 
-        if ($hasChanges && !$dryRun) {
+        if ($hasChanges && ! $dryRun) {
             $item->save();
         }
 
@@ -153,7 +150,7 @@ class CalculateInvoiceItemBalances extends Command
             $this->line("  Total: {$originalTotal} → {$item->total}");
             $this->line("  Paid Amount: {$originalPaidAmount} → {$item->paid_amount}");
             $this->line("  Balance: {$originalBalanceAmount} → {$item->balance_amount}");
-            $this->line("  Paid: " . ($originalPaid ? 'true' : 'false') . " → " . ($item->paid ? 'true' : 'false'));
+            $this->line('  Paid: '.($originalPaid ? 'true' : 'false').' → '.($item->paid ? 'true' : 'false'));
             $this->line("  Invoice Status: {$invoiceStatus}");
         }
 
@@ -162,8 +159,6 @@ class CalculateInvoiceItemBalances extends Command
 
     /**
      * Temporarily disable TenantScope for all related models.
-     *
-     * @return void
      */
     private function disableTenantScopes(): void
     {

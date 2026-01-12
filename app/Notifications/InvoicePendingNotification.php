@@ -36,17 +36,17 @@ class InvoicePendingNotification extends Notification implements ShouldQueue
     {
         $invoiceUrl = route('filament.app.resources.invoices.view', [
             'tenant' => $this->invoice->tenant,
-            'record' => $this->invoice->id
+            'record' => $this->invoice->id,
         ]);
 
         return (new MailMessage)
             ->subject("Payment Required - Invoice #{$this->invoice->number}")
             ->greeting("Hello {$notifiable->name},")
-            ->line("You have a pending invoice that requires payment.")
-            ->line("**Invoice Details:**")
+            ->line('You have a pending invoice that requires payment.')
+            ->line('**Invoice Details:**')
             ->line("Invoice Number: #{$this->invoice->number}")
-            ->line("Amount: RM " . number_format($this->invoice->total / 100, 2))
-            ->line("Due Date: " . $this->invoice->due_at->format('M d, Y'))
+            ->line('Amount: RM '.number_format($this->invoice->total / 100, 2))
+            ->line('Due Date: '.$this->invoice->due_at->format('M d, Y'))
             ->line("Centre: {$this->invoice->centre->name}")
             ->action('View Invoice', $invoiceUrl)
             ->line('Please make your payment by the due date to avoid any late fees.')

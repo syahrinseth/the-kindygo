@@ -5,7 +5,6 @@ namespace App\Policies;
 use App\Enums\ProductStatus;
 use App\Models\Product;
 use App\Models\User;
-use Illuminate\Auth\Access\Response;
 
 class ProductPolicy
 {
@@ -28,23 +27,23 @@ class ProductPolicy
             // Super Admin and Admin can view any product in their tenant
             return $product->tenant_id === $user->current_tenant_id;
         }
-        
+
         // Principal can only view products for their centres or global products
         if ($user->hasRole('Principal')) {
             // Allow access if product belongs to their tenant
             if ($product->tenant_id !== $user->current_tenant_id) {
                 return false;
             }
-            
+
             // If product is assigned to specific centres, check if principal has access to any of those centres
             if ($product->centres->count() > 0) {
                 return $user->centres()->whereIn('centres.id', $product->centres->pluck('id'))->exists();
             }
-            
+
             // If product is not assigned to any specific centres (global product), allow access
             return true;
         }
-        
+
         return false;
     }
 
@@ -66,23 +65,23 @@ class ProductPolicy
         if ($user->hasAnyRole(['Super Admin', 'Admin'])) {
             return $product->tenant_id === $user->current_tenant_id;
         }
-        
+
         // Principal can only update products for their centres or global products
         if ($user->hasRole('Principal')) {
             // Check tenant first
             if ($product->tenant_id !== $user->current_tenant_id) {
                 return false;
             }
-            
+
             // If product is assigned to specific centres, check if principal has access to any of those centres
             if ($product->centres->count() > 0) {
                 return $user->centres()->whereIn('centres.id', $product->centres->pluck('id'))->exists();
             }
-            
+
             // If product is not assigned to any specific centres (global product), allow access
             return true;
         }
-        
+
         return false;
     }
 
@@ -92,31 +91,31 @@ class ProductPolicy
     public function delete(User $user, Product $product): bool
     {
         // Only draft or inactive products can be deleted
-        if (!in_array($product->status, [ProductStatus::DRAFT, ProductStatus::INACTIVE])) {
+        if (! in_array($product->status, [ProductStatus::DRAFT, ProductStatus::INACTIVE])) {
             return false;
         }
-        
+
         // Super Admin and Admin can delete any eligible product in their tenant
         if ($user->hasAnyRole(['Super Admin', 'Admin'])) {
             return $product->tenant_id === $user->current_tenant_id;
         }
-        
+
         // Principal can only delete products for their centres or global products
         if ($user->hasRole('Principal')) {
             // Check tenant first
             if ($product->tenant_id !== $user->current_tenant_id) {
                 return false;
             }
-            
+
             // If product is assigned to specific centres, check if principal has access to any of those centres
             if ($product->centres->count() > 0) {
                 return $user->centres()->whereIn('centres.id', $product->centres->pluck('id'))->exists();
             }
-            
+
             // If product is not assigned to any specific centres (global product), allow access
             return true;
         }
-        
+
         return false;
     }
 
@@ -126,7 +125,7 @@ class ProductPolicy
     public function deleteAny(User $user): bool
     {
         // Super Admin, Admin, and Principal can bulk delete products
-        return $user->hasAnyRole(['Super Admin', 'Admin', 'Principal']) && 
+        return $user->hasAnyRole(['Super Admin', 'Admin', 'Principal']) &&
                $user->current_tenant_id !== null;
     }
 
@@ -136,7 +135,7 @@ class ProductPolicy
     public function forceDelete(User $user, Product $product): bool
     {
         // Only Super Admin can permanently delete products
-        return $user->hasRole('Super Admin') && 
+        return $user->hasRole('Super Admin') &&
                $product->tenant_id === $user->current_tenant_id;
     }
 
@@ -146,7 +145,7 @@ class ProductPolicy
     public function restore(User $user, Product $product): bool
     {
         // Super Admin and Admin can restore products
-        return $user->hasAnyRole(['Super Admin', 'Admin']) && 
+        return $user->hasAnyRole(['Super Admin', 'Admin']) &&
                $product->tenant_id === $user->current_tenant_id;
     }
 }

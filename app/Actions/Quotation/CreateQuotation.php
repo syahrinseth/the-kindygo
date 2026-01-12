@@ -17,7 +17,7 @@ class CreateQuotation
         ?Carbon $validUntil = null
     ): Quotation {
         // Default valid_until to 30 days from date
-        if (!$validUntil) {
+        if (! $validUntil) {
             $validUntil = $date->copy()->addDays(30);
         }
 

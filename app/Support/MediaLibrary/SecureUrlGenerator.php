@@ -14,7 +14,7 @@ class SecureUrlGenerator extends BaseUrlGenerator
     {
         return route('media.show', ['media' => $this->media->id]);
     }
-    
+
     /**
      * Get the URL for a specific conversion.
      */
@@ -23,7 +23,7 @@ class SecureUrlGenerator extends BaseUrlGenerator
         // For private files, we'll use our secure route instead of temporary URLs
         return $this->getUrl();
     }
-    
+
     /**
      * Get the URL for the conversion.
      */
@@ -31,19 +31,19 @@ class SecureUrlGenerator extends BaseUrlGenerator
     {
         return route('media.conversion', [
             'media' => $this->media->id,
-            'conversion' => $conversionName
+            'conversion' => $conversionName,
         ]);
     }
-    
+
     /**
      * Get the full server path for the media file.
      */
     public function getPath(): string
     {
         // Return the full server path to the file
-        return $this->getRootOfDisk() . $this->getPathRelativeToRoot();
+        return $this->getRootOfDisk().$this->getPathRelativeToRoot();
     }
-    
+
     /**
      * Get the responsive images URLs.
      */
@@ -51,7 +51,7 @@ class SecureUrlGenerator extends BaseUrlGenerator
     {
         return $this->getUrl();
     }
-    
+
     /**
      * Get the base media directory URL.
      */
@@ -59,7 +59,7 @@ class SecureUrlGenerator extends BaseUrlGenerator
     {
         return route('media.show', ['media' => '']);
     }
-    
+
     /**
      * Get the root directory of the disk.
      */

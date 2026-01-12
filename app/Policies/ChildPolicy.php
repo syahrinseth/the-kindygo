@@ -184,7 +184,7 @@ class ChildPolicy
 
         return false;
     }
-    
+
     /**
      * Determine whether the user can associate/disassociate centres with children.
      */
@@ -213,7 +213,7 @@ class ChildPolicy
      */
     private function childBelongsToUserTenant(User $user, Child $child): bool
     {
-        if (!$user->current_tenant_id) {
+        if (! $user->current_tenant_id) {
             return false;
         }
 
@@ -227,13 +227,13 @@ class ChildPolicy
     {
         return $child->users()->where('users.id', $user->id)->exists();
     }
-    
+
     /**
      * Helper method to check if a child belongs to any of the user's centres.
      */
     private function childBelongsToUserCentres(User $user, Child $child): bool
     {
-        if (!$user->current_tenant_id) {
+        if (! $user->current_tenant_id) {
             return false;
         }
 
@@ -251,7 +251,7 @@ class ChildPolicy
             ->whereIn('centres.id', $userCentreIds)
             ->exists();
     }
-    
+
     /**
      * Helper method to check centre access based on user role.
      */
@@ -264,7 +264,7 @@ class ChildPolicy
 
         // Principal and Teacher can only access children in their assigned centres
         if ($user->hasAnyRole(['Principal', 'Teacher'])) {
-            return $this->childBelongsToUserTenant($user, $child) && 
+            return $this->childBelongsToUserTenant($user, $child) &&
                    $this->childBelongsToUserCentres($user, $child);
         }
 

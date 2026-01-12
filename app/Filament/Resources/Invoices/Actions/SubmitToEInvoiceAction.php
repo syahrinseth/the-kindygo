@@ -2,9 +2,9 @@
 
 namespace App\Filament\Resources\Invoices\Actions;
 
-use Exception;
 use App\Enums\InvoiceStatus;
 use App\Models\Invoice;
+use Exception;
 use Filament\Actions\Action;
 use Filament\Notifications\Notification;
 use Illuminate\Support\Facades\Auth;
@@ -33,19 +33,19 @@ class SubmitToEInvoiceAction extends Action
                 if ($record->einvoice_uuid) {
                     return false;
                 }
-                
+
                 // Only show for paid or pending invoices (not drafts)
                 if ($record->status === InvoiceStatus::DRAFT || $record->status === InvoiceStatus::CANCELLED) {
                     return false;
                 }
-                
+
                 // Check if user has permission to update the invoice
                 return Auth::user()->can('update', $record);
             })
             ->action(function (Invoice $record): void {
                 try {
                     $response = $record->submitToEInvoice();
-                    
+
                     // The submitToEInvoice method returns a response array directly or throws an exception
                     // If we reach this point, it means the submission was successful
                     Notification::make()
@@ -57,12 +57,12 @@ class SubmitToEInvoiceAction extends Action
                     Log::error('E-Invoice submission error', [
                         'invoice_id' => $record->id,
                         'error' => $e->getMessage(),
-                        'trace' => $e->getTraceAsString()
+                        'trace' => $e->getTraceAsString(),
                     ]);
-                    
+
                     Notification::make()
                         ->title('E-Invoice submission failed')
-                        ->body('An unexpected error occurred: ' . $e->getMessage())
+                        ->body('An unexpected error occurred: '.$e->getMessage())
                         ->danger()
                         ->send();
                 }
@@ -84,19 +84,19 @@ class SubmitToEInvoiceAction extends Action
                 if ($record->einvoice_uuid) {
                     return false;
                 }
-                
+
                 // Only show for paid or pending invoices (not drafts)
                 if ($record->status === InvoiceStatus::DRAFT || $record->status === InvoiceStatus::CANCELLED) {
                     return false;
                 }
-                
+
                 // Check if user has permission to update the invoice
                 return Auth::user()->can('update', $record);
             })
             ->action(function (Invoice $record): void {
                 try {
                     $response = $record->submitToEInvoice();
-                    
+
                     // The submitToEInvoice method returns a response array directly or throws an exception
                     // If we reach this point, it means the submission was successful
                     Notification::make()
@@ -108,12 +108,12 @@ class SubmitToEInvoiceAction extends Action
                     Log::error('E-Invoice submission error', [
                         'invoice_id' => $record->id,
                         'error' => $e->getMessage(),
-                        'trace' => $e->getTraceAsString()
+                        'trace' => $e->getTraceAsString(),
                     ]);
-                    
+
                     Notification::make()
                         ->title('E-Invoice submission failed')
-                        ->body('An unexpected error occurred: ' . $e->getMessage())
+                        ->body('An unexpected error occurred: '.$e->getMessage())
                         ->danger()
                         ->send();
                 }

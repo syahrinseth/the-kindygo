@@ -28,14 +28,14 @@ class MarkAsPaidAction extends Action
                 if ($record->status !== InvoiceStatus::PENDING && $record->status !== InvoiceStatus::OVERDUE) {
                     return false;
                 }
-                
+
                 // Check if user has permission to update the invoice
                 return Auth::user()->can('update', $record);
             })
             ->action(function (Invoice $record): void {
                 $record->status = InvoiceStatus::PAID;
                 $record->save();
-                
+
                 Notification::make()
                     ->title('Invoice marked as paid')
                     ->success()

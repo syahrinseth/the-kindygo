@@ -2,13 +2,12 @@
 
 namespace App\Console\Commands;
 
-use Exception;
 use App\Models\User;
-use App\Models\UserProfile;
 use App\Models\UserAddress;
 use App\Models\UserOfficeInfo;
+use App\Models\UserProfile;
+use Exception;
 use Illuminate\Console\Command;
-use Illuminate\Support\Facades\DB;
 
 class MigrateUserDataToSeparateTables extends Command
 {
@@ -35,7 +34,7 @@ class MigrateUserDataToSeparateTables extends Command
 
         // Since the old fields were already removed from users table in the migration,
         // this command is mainly for future reference or if we need to rollback and migrate again
-        
+
         $users = User::all();
         $this->info("Found {$users->count()} users to process.");
 
@@ -44,7 +43,7 @@ class MigrateUserDataToSeparateTables extends Command
         foreach ($users as $user) {
             try {
                 // Create user profile if it doesn't exist
-                if (!$user->profile) {
+                if (! $user->profile) {
                     UserProfile::create([
                         'user_id' => $user->id,
                         'nric' => null, // These would be populated if we had backup data
@@ -55,7 +54,7 @@ class MigrateUserDataToSeparateTables extends Command
                 }
 
                 // Create user address if it doesn't exist
-                if (!$user->userAddress) {
+                if (! $user->userAddress) {
                     UserAddress::create([
                         'user_id' => $user->id,
                         'address' => null,
@@ -67,7 +66,7 @@ class MigrateUserDataToSeparateTables extends Command
                 }
 
                 // Create user office info if it doesn't exist
-                if (!$user->officeInfo) {
+                if (! $user->officeInfo) {
                     UserOfficeInfo::create([
                         'user_id' => $user->id,
                         'office_phone' => null,
@@ -82,7 +81,7 @@ class MigrateUserDataToSeparateTables extends Command
                 $migratedCount++;
 
             } catch (Exception $e) {
-                $this->error("Failed to migrate user {$user->id}: " . $e->getMessage());
+                $this->error("Failed to migrate user {$user->id}: ".$e->getMessage());
             }
         }
 

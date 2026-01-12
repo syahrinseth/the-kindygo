@@ -2,17 +2,17 @@
 
 namespace App\Models;
 
-use Illuminate\Database\Eloquent\Builder;
-use Illuminate\Database\Eloquent\Relations\HasOne;
+use App\Enums\ProductPriority;
 use App\Enums\ProductStatus;
 use App\Enums\ProductType;
-use App\Enums\ProductPriority;
 use App\Models\Scopes\TenantScope;
+use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
-use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Relations\HasOne;
 
 class Product extends Model
 {
@@ -55,8 +55,6 @@ class Product extends Model
 
     /**
      * Get the tenant that owns the product.
-     *
-     * @return BelongsTo
      */
     public function tenant(): BelongsTo
     {
@@ -65,8 +63,6 @@ class Product extends Model
 
     /**
      * Get the invoice items for this product.
-     *
-     * @return HasMany
      */
     public function invoiceItems(): HasMany
     {
@@ -75,8 +71,6 @@ class Product extends Model
 
     /**
      * Get the child enrolments for this product.
-     *
-     * @return HasMany
      */
     public function enrolments(): HasMany
     {
@@ -85,8 +79,6 @@ class Product extends Model
 
     /**
      * Get the active child enrolments for this product.
-     *
-     * @return HasMany
      */
     public function activeEnrolments(): HasMany
     {
@@ -95,8 +87,6 @@ class Product extends Model
 
     /**
      * Get the current child enrolments for this product.
-     *
-     * @return HasMany
      */
     public function currentEnrolments(): HasMany
     {
@@ -106,7 +96,7 @@ class Product extends Model
     /**
      * Scope a query to filter by status.
      *
-     * @param Builder $query
+     * @param  Builder  $query
      * @param  string  $status
      * @return Builder
      */
@@ -118,7 +108,7 @@ class Product extends Model
     /**
      * Scope a query to filter by type.
      *
-     * @param Builder $query
+     * @param  Builder  $query
      * @param  string  $type
      * @return Builder
      */
@@ -130,8 +120,7 @@ class Product extends Model
     /**
      * Scope a query to filter by priority.
      *
-     * @param Builder $query
-     * @param  ProductPriority|int  $priority
+     * @param  Builder  $query
      * @return Builder
      */
     public function scopeByPriority($query, ProductPriority|int $priority)
@@ -147,8 +136,6 @@ class Product extends Model
 
     /**
      * Get the prices for this product.
-     *
-     * @return HasMany
      */
     public function prices(): HasMany
     {
@@ -170,7 +157,7 @@ class Product extends Model
     /**
      * Get the current active price for this product for a specific centre.
      *
-     * @param int|null $centreId
+     * @param  int|null  $centreId
      * @return ProductPrice|null
      */
     public function currentPriceForCentre($centreId = null)
@@ -185,7 +172,7 @@ class Product extends Model
     /**
      * Get the active price for a specific date.
      *
-     * @param string|null $date
+     * @param  string|null  $date
      * @return ProductPrice|null
      */
     public function getPriceOn($date = null)
@@ -196,8 +183,8 @@ class Product extends Model
     /**
      * Get the active price for a specific date and centre.
      *
-     * @param string|null $date
-     * @param int|null $centreId
+     * @param  string|null  $date
+     * @param  int|null  $centreId
      * @return ProductPrice|null
      */
     public function getPriceForCentre($date = null, $centreId = null)
@@ -211,24 +198,23 @@ class Product extends Model
 
     /**
      * Get the formatted current price.
-     *
-     * @return string
      */
     public function getCurrentFormattedPrice(): string
     {
         $currentPrice = $this->currentPrice;
+
         return $currentPrice ? $currentPrice->formatted_price : 'No price set';
     }
 
     /**
      * Get the formatted current price for a specific centre.
      *
-     * @param int|null $centreId
-     * @return string
+     * @param  int|null  $centreId
      */
     public function getCurrentFormattedPriceForCentre($centreId = null): string
     {
         $currentPrice = $this->currentPriceForCentre($centreId);
+
         return $currentPrice ? $currentPrice->formatted_price : 'No price set';
     }
 
@@ -245,7 +231,7 @@ class Product extends Model
     /**
      * Scope a query to filter by high priority (Critical and High).
      *
-     * @param Builder $query
+     * @param  Builder  $query
      * @return Builder
      */
     public function scopeHighPriority($query)
@@ -256,7 +242,7 @@ class Product extends Model
     /**
      * Scope a query to filter by critical priority only.
      *
-     * @param Builder $query
+     * @param  Builder  $query
      * @return Builder
      */
     public function scopeCriticalPriority($query)
@@ -266,8 +252,6 @@ class Product extends Model
 
     /**
      * Check if the product has high priority (Critical or High).
-     *
-     * @return bool
      */
     public function isHighPriority(): bool
     {
@@ -276,8 +260,6 @@ class Product extends Model
 
     /**
      * Check if the product has critical priority.
-     *
-     * @return bool
      */
     public function isCriticalPriority(): bool
     {

@@ -2,49 +2,40 @@
 
 namespace App\Filament\Resources\Centres;
 
-use UnitEnum;
-use BackedEnum;
-use Filament\Forms;
-use Filament\Tables;
-use Filament\Actions;
-use App\Models\Campus;
-use App\Models\Centre;
-use Filament\Tables\Table;
-use Filament\Schemas\Schema;
-use Filament\Facades\Filament;
-use Filament\Actions\EditAction;
-use Filament\Actions\ViewAction;
-use Filament\Resources\Resource;
-use Filament\Actions\ActionGroup;
-use Filament\Actions\DeleteAction;
-use Illuminate\Support\Facades\Auth;
-use Filament\Actions\BulkActionGroup;
-use Filament\Forms\Components\Hidden;
-use Filament\Forms\Components\Select;
-use Filament\Schemas\Components\Grid;
-use Filament\Schemas\Components\Tabs;
-use Filament\Actions\DeleteBulkAction;
-use Filament\Tables\Columns\TextColumn;
-use Filament\Forms\Components\TextInput;
-use Filament\Schemas\Components\Section;
-use Filament\Tables\Columns\SelectColumn;
-use Illuminate\Database\Eloquent\Builder;
-use Filament\Schemas\Components\Utilities\Get;
-use Filament\Schemas\Components\Utilities\Set;
-use App\Filament\Resources\CentreResource\Pages;
+use App\Filament\Resources\Campuses\Schemas\CampusForm;
+use App\Filament\Resources\Centres\Pages\CreateCentre;
 use App\Filament\Resources\Centres\Pages\EditCentre;
 use App\Filament\Resources\Centres\Pages\ListCentres;
-use App\Filament\Resources\Centres\Pages\CreateCentre;
-use App\Filament\Resources\Campuses\Schemas\CampusForm;
-use App\Filament\Resources\CentreResource\RelationManagers;
-use App\Filament\Resources\Centres\RelationManagers\UsersRelationManager;
 use App\Filament\Resources\Centres\RelationManagers\InvoicesRelationManager;
+use App\Filament\Resources\Centres\RelationManagers\UsersRelationManager;
+use App\Models\Campus;
+use App\Models\Centre;
+use Filament\Actions\ActionGroup;
+use Filament\Actions\BulkActionGroup;
+use Filament\Actions\DeleteAction;
+use Filament\Actions\DeleteBulkAction;
+use Filament\Actions\EditAction;
+use Filament\Actions\ViewAction;
+use Filament\Forms\Components\Select;
+use Filament\Forms\Components\TextInput;
+use Filament\Resources\Resource;
+use Filament\Schemas\Components\Grid;
+use Filament\Schemas\Components\Section;
+use Filament\Schemas\Components\Tabs;
+use Filament\Schemas\Components\Utilities\Get;
+use Filament\Schemas\Components\Utilities\Set;
+use Filament\Schemas\Schema;
+use Filament\Tables\Columns\SelectColumn;
+use Filament\Tables\Columns\TextColumn;
+use Filament\Tables\Table;
+use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Support\Facades\Auth;
 
 class CentreResource extends Resource
 {
     protected static ?string $model = Centre::class;
 
-    protected static string | \BackedEnum | null $navigationIcon = 'heroicon-o-building-storefront';
+    protected static string|\BackedEnum|null $navigationIcon = 'heroicon-o-building-storefront';
 
     public static function shouldCheckPolicyExistence(): bool
     {
@@ -71,7 +62,7 @@ class CentreResource extends Resource
         return Auth::user()->can('viewAny', Centre::class);
     }
 
-    protected static string | \UnitEnum | null $navigationGroup = 'Campus Management';
+    protected static string|\UnitEnum|null $navigationGroup = 'Campus Management';
 
     protected static ?string $modelLabel = 'Centre';
 
@@ -130,7 +121,7 @@ class CentreResource extends Resource
                                                     ->label('Status')
                                                     ->options([
                                                         'active' => 'Active',
-                                                        'inactive' => 'Inactive'
+                                                        'inactive' => 'Inactive',
                                                     ])
                                                     ->required()
                                                     ->default('active')

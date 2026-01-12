@@ -2,35 +2,28 @@
 
 namespace App\Filament\Resources\Invoices\RelationManagers;
 
-use Filament\Forms\Components\Select;
-use Filament\Schemas\Components\Utilities\Set;
-use Filament\Schemas\Components\Utilities\Get;
-use Filament\Forms\Components\TextInput;
-use Filament\Forms\Components\DatePicker;
-use Filament\Tables\Columns\TextColumn;
-use Filament\Tables\Filters\SelectFilter;
-use Filament\Tables\Filters\Filter;
-use Filament\Actions\CreateAction;
-use Filament\Notifications\Notification;
-use Filament\Actions\ViewAction;
-use Filament\Actions\EditAction;
-use Filament\Actions\DeleteAction;
-use Filament\Actions\BulkActionGroup;
-use Filament\Actions\DeleteBulkAction;
 use App\Models\Product;
-use App\Models\Child;
-use Filament\Actions;
-use Filament\Forms;
+use Filament\Actions\BulkActionGroup;
+use Filament\Actions\CreateAction;
+use Filament\Actions\DeleteAction;
+use Filament\Actions\DeleteBulkAction;
+use Filament\Actions\EditAction;
+use Filament\Actions\ViewAction;
+use Filament\Forms\Components\DatePicker;
+use Filament\Forms\Components\Select;
+use Filament\Forms\Components\TextInput;
+use Filament\Notifications\Notification;
 use Filament\Resources\RelationManagers\RelationManager;
-use Filament\Tables;
-use Filament\Tables\Table;
-use Filament\Infolists\Components\TextEntry;
-use Filament\Infolists\Components\Section as InfoSection;
-use Filament\Infolists\Components\Grid as InfoGrid;
-use Illuminate\Database\Eloquent\Builder;
-use Illuminate\Database\Eloquent\SoftDeletingScope;
-use Illuminate\Support\Facades\Auth;
+use Filament\Schemas\Components\Utilities\Get;
+use Filament\Schemas\Components\Utilities\Set;
 use Filament\Schemas\Schema;
+use Filament\Tables;
+use Filament\Tables\Columns\TextColumn;
+use Filament\Tables\Filters\Filter;
+use Filament\Tables\Filters\SelectFilter;
+use Filament\Tables\Table;
+use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Support\Facades\Auth;
 
 class InvoiceItemsRelationManager extends RelationManager
 {
@@ -125,8 +118,7 @@ class InvoiceItemsRelationManager extends RelationManager
                                     ->minValue(1)
                                     ->suffix('unit(s)')
                                     ->live()
-                                    ->afterStateUpdated(fn ($state, Set $set, Get $get) =>
-                                        $this->calculateTotal($set, $get))
+                                    ->afterStateUpdated(fn ($state, Set $set, Get $get) => $this->calculateTotal($set, $get))
                                     ->columnSpan(1),
 
                                 TextInput::make('price')
@@ -142,8 +134,7 @@ class InvoiceItemsRelationManager extends RelationManager
                                     })
                                     ->dehydrateStateUsing(fn ($state) => (int) ($state * 100))
                                     ->live()
-                                    ->afterStateUpdated(fn ($state, Set $set, Get $get) =>
-                                        $this->calculateTotal($set, $get))
+                                    ->afterStateUpdated(fn ($state, Set $set, Get $get) => $this->calculateTotal($set, $get))
                                     ->columnSpan(1),
 
                                 TextInput::make('discount')
@@ -160,8 +151,7 @@ class InvoiceItemsRelationManager extends RelationManager
                                     })
                                     ->dehydrateStateUsing(fn ($state) => (int) ($state * 100))
                                     ->live()
-                                    ->afterStateUpdated(fn ($state, Set $set, Get $get) =>
-                                        $this->calculateTotal($set, $get))
+                                    ->afterStateUpdated(fn ($state, Set $set, Get $get) => $this->calculateTotal($set, $get))
                                     ->columnSpan(1),
                             ])
                             ->columns(3),
@@ -194,7 +184,7 @@ class InvoiceItemsRelationManager extends RelationManager
                                     $q->where('tenant_id', Auth::user()?->current_tenant_id);
                                 })
                             )
-                            ->getOptionLabelFromRecordUsing(fn ($record) => $record->first_name . ' ' . $record->last_name)
+                            ->getOptionLabelFromRecordUsing(fn ($record) => $record->first_name.' '.$record->last_name)
                             ->searchable(['first_name', 'last_name'])
                             ->preload()
                             ->placeholder('Optional')
@@ -222,10 +212,10 @@ class InvoiceItemsRelationManager extends RelationManager
                 $invoice = $this->getOwnerRecord();
                 $totals = $invoice->recalculateTotals();
 
-                return "Items: {$totals['total_items']} | " .
-                       "Subtotal: RM " . number_format($totals['total_amount'] / 100, 2) . " | " .
-                       "Discounts: RM " . number_format($totals['total_discounts'] / 100, 2) . " | " .
-                       "Total: RM " . number_format($totals['total'] / 100, 2);
+                return "Items: {$totals['total_items']} | ".
+                       'Subtotal: RM '.number_format($totals['total_amount'] / 100, 2).' | '.
+                       'Discounts: RM '.number_format($totals['total_discounts'] / 100, 2).' | '.
+                       'Total: RM '.number_format($totals['total'] / 100, 2);
             })
             ->columns([
                 TextColumn::make('name')
@@ -274,7 +264,7 @@ class InvoiceItemsRelationManager extends RelationManager
 
                 TextColumn::make('child.first_name')
                     ->label('Child')
-                    ->formatStateUsing(fn ($record) => $record->child ? $record->child->first_name . ' ' . $record->child->last_name : '-')
+                    ->formatStateUsing(fn ($record) => $record->child ? $record->child->first_name.' '.$record->child->last_name : '-')
                     ->sortable()
                     ->toggleable()
                     ->placeholder('Not assigned'),
@@ -292,7 +282,7 @@ class InvoiceItemsRelationManager extends RelationManager
 
                 SelectFilter::make('child')
                     ->relationship('child', 'first_name')
-                    ->getOptionLabelFromRecordUsing(fn ($record) => $record->first_name . ' ' . $record->last_name)
+                    ->getOptionLabelFromRecordUsing(fn ($record) => $record->first_name.' '.$record->last_name)
                     ->searchable(['first_name', 'last_name'])
                     ->preload(),
 
@@ -305,6 +295,7 @@ class InvoiceItemsRelationManager extends RelationManager
                     ->mutateDataUsing(function (array $data): array {
                         // Ensure the invoice_id is set
                         $data['invoice_id'] = $this->getOwnerRecord()->id;
+
                         return $data;
                     })
                     ->successNotification(

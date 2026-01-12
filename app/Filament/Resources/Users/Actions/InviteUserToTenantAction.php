@@ -2,13 +2,11 @@
 
 namespace App\Filament\Resources\Users\Actions;
 
-use App\Models\Tenant;
 use App\Models\User;
 use App\Notifications\TenantInvitation as TenantInvitationNotification;
-use Filament\Facades\Filament;
+use Filament\Actions\Action;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\TextInput;
-use Filament\Actions\Action;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Notification;
@@ -55,7 +53,7 @@ class InviteUserToTenantAction extends Action
                         return collect(['Parent' => 'Parent']);
                     })
                     ->default('Parent')
-                    ->required()
+                    ->required(),
             ])
             ->modalHeading('Invite User to a Company')
             ->action(function (array $data): void {

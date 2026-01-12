@@ -2,9 +2,9 @@
 
 namespace Database\Factories;
 
-use App\Enums\ProductType;
-use App\Enums\ProductStatus;
 use App\Enums\ProductPriority;
+use App\Enums\ProductStatus;
+use App\Enums\ProductType;
 use Illuminate\Database\Eloquent\Factories\Factory;
 
 /**
@@ -22,7 +22,7 @@ class ProductFactory extends Factory
         $types = ProductType::cases();
         $statuses = ProductStatus::cases();
         $priorities = ProductPriority::cases();
-        
+
         $serviceNames = [
             'Monthly Childcare Fee',
             'Weekly Childcare Service',
@@ -33,11 +33,11 @@ class ProductFactory extends Factory
             'Transportation Service',
             'Meal Plan Service',
             'Learning Activity Package',
-            'Field Trip Service'
+            'Field Trip Service',
         ];
 
         return [
-            'code' => 'PROD-' . strtoupper($this->faker->bothify('###??')),
+            'code' => 'PROD-'.strtoupper($this->faker->bothify('###??')),
             'name' => $this->faker->randomElement($serviceNames),
             'status' => $this->faker->randomElement($statuses)->value,
             'type' => $this->faker->randomElement($types)->value,

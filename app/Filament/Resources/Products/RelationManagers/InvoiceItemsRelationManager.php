@@ -2,16 +2,12 @@
 
 namespace App\Filament\Resources\Products\RelationManagers;
 
+use Filament\Actions;
+use Filament\Actions\ViewAction;
+use Filament\Resources\RelationManagers\RelationManager;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Filters\SelectFilter;
-use Filament\Actions\ViewAction;
-use Filament\Forms;
-use Filament\Actions;
-use Filament\Resources\RelationManagers\RelationManager;
-use Filament\Tables;
 use Filament\Tables\Table;
-use Illuminate\Database\Eloquent\Builder;
-use Illuminate\Database\Eloquent\SoftDeletingScope;
 
 class InvoiceItemsRelationManager extends RelationManager
 {
@@ -55,7 +51,7 @@ class InvoiceItemsRelationManager extends RelationManager
 
                 TextColumn::make('child.first_name')
                     ->label('Child')
-                    ->formatStateUsing(fn ($record) => $record->child ? $record->child->first_name . ' ' . $record->child->last_name : '-')
+                    ->formatStateUsing(fn ($record) => $record->child ? $record->child->first_name.' '.$record->child->last_name : '-')
                     ->sortable()
                     ->toggleable(),
 

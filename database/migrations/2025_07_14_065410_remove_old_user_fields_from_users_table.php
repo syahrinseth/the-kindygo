@@ -16,7 +16,7 @@ return new class extends Migration
             $table->dropColumn([
                 'phone',
                 'nric',
-                'passport', 
+                'passport',
                 'city',
                 'postal_code',
                 'state_code',

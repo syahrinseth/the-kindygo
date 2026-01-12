@@ -2,20 +2,16 @@
 
 namespace App\Filament\Resources\Payments\RelationManagers;
 
+use App\Filament\Resources\Invoices\InvoiceResource;
+use App\Models\Invoice;
+use Filament\Actions\Action;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\TextInput;
-use Filament\Tables\Columns\TextColumn;
-use Filament\Actions\Action;
-use App\Filament\Resources\Invoices\Invoices\InvoiceResource;
-use App\Models\Invoice;
-use Filament\Forms;
-use Filament\Actions;
 use Filament\Resources\RelationManagers\RelationManager;
-use Filament\Tables;
-use Filament\Tables\Table;
-use Illuminate\Database\Eloquent\Builder;
-use Illuminate\Support\Facades\Auth;
 use Filament\Schemas\Schema;
+use Filament\Tables\Columns\TextColumn;
+use Filament\Tables\Table;
+use Illuminate\Support\Facades\Auth;
 
 class InvoicesRelationManager extends RelationManager
 {
@@ -35,20 +31,20 @@ class InvoicesRelationManager extends RelationManager
                     ->label('Invoice')
                     ->options(function () {
                         $user = Auth::user();
-                        if (!$user->current_tenant_id) {
+                        if (! $user->current_tenant_id) {
                             return [];
                         }
-                        
+
                         return Invoice::where('tenant_id', $user->current_tenant_id)
                             ->where('status', '!=', 'paid')
                             ->get()
                             ->mapWithKeys(function ($invoice) {
-                                return [$invoice->id => "{$invoice->number} - {$invoice->user->name} (RM" . number_format($invoice->total / 100, 2) . ")"];
+                                return [$invoice->id => "{$invoice->number} - {$invoice->user->name} (RM".number_format($invoice->total / 100, 2).')'];
                             });
                     })
                     ->searchable()
                     ->required(),
-                    
+
                 TextInput::make('amount')
                     ->label('Payment Amount')
                     ->required()
@@ -74,12 +70,12 @@ class InvoicesRelationManager extends RelationManager
                     ->label('Invoice Number')
                     ->searchable()
                     ->sortable(),
-                    
+
                 TextColumn::make('user.name')
                     ->label('User')
                     ->searchable()
                     ->sortable(),
-                    
+
                 TextColumn::make('status')
                     ->badge()
                     ->color(fn ($state): string => match ($state->value) {
@@ -90,19 +86,19 @@ class InvoicesRelationManager extends RelationManager
                         'cancelled' => 'gray',
                         default => 'gray',
                     }),
-                    
+
                 TextColumn::make('total')
                     ->label('Invoice Total')
                     ->money('MYR')
                     ->formatStateUsing(fn ($state) => $state / 100)
                     ->sortable(),
-                    
+
                 TextColumn::make('pivot.amount')
                     ->label('Payment Amount')
                     ->money('MYR')
                     ->formatStateUsing(fn ($state) => $state / 100)
                     ->sortable(),
-                    
+
                 TextColumn::make('date')
                     ->label('Invoice Date')
                     ->date('M d, Y')

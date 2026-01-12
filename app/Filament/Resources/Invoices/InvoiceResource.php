@@ -2,61 +2,56 @@
 
 namespace App\Filament\Resources\Invoices;
 
-use Filament\Schemas\Components\Section;
-use Filament\Resources\Pages\EditRecord;
-use Filament\Schemas\Components\Grid;
-use Filament\Forms\Components\Hidden;
-use Filament\Tables\Columns\TextColumn;
-use Filament\Forms\Components\DatePicker;
-use Filament\Actions\ActionGroup;
-use Filament\Actions\ViewAction;
-use Filament\Actions\EditAction;
-use Filament\Actions\DeleteAction;
-use Filament\Actions\BulkActionGroup;
-use Filament\Actions\DeleteBulkAction;
-use App\Filament\Resources\Invoices\RelationManagers\InvoiceItemsRelationManager;
-use App\Filament\Resources\Invoices\Pages\ListInvoices;
-use App\Filament\Resources\Invoices\Pages\CreateInvoice;
-use App\Filament\Resources\Invoices\Pages\ViewInvoice;
-use App\Filament\Resources\Invoices\Pages\EditInvoice;
-use App\Filament\Resources\InvoiceResource\Pages;
-use App\Filament\Resources\Invoices\Actions\MarkAsPaidAction;
-use App\Filament\Resources\Invoices\Actions\MakePaymentAction;
-use App\Filament\Resources\Invoices\Actions\ExportInvoicesAction;
-use App\Filament\Resources\Invoices\Actions\DownloadInvoicePdfAction;
-use App\Filament\Resources\Invoices\Actions\SendNotificationAction;
-use App\Filament\Resources\Invoices\Actions\SendBulkNotificationAction;
-use App\Filament\Resources\Invoices\Actions\SubmitToEInvoiceAction;
-use App\Filament\Resources\Invoices\Actions\SubmitBulkToEInvoiceAction;
-use App\Models\Invoice;
-use App\Models\Centre;
-use App\Models\User;
 use App\Enums\InvoiceStatus;
 use App\Enums\PaymentStatus;
-use Filament\Actions;
+use App\Filament\Resources\Invoices\Actions\BulkPayInvoicesBulkAction;
+use App\Filament\Resources\Invoices\Actions\DownloadInvoicePdfAction;
+use App\Filament\Resources\Invoices\Actions\ExportInvoicesAction;
+use App\Filament\Resources\Invoices\Actions\MakePaymentAction;
+use App\Filament\Resources\Invoices\Actions\MarkAsPaidAction;
+use App\Filament\Resources\Invoices\Actions\SendBulkNotificationAction;
+use App\Filament\Resources\Invoices\Actions\SendNotificationAction;
+use App\Filament\Resources\Invoices\Actions\SubmitBulkToEInvoiceAction;
+use App\Filament\Resources\Invoices\Actions\SubmitToEInvoiceAction;
+use App\Filament\Resources\Invoices\Pages\CreateInvoice;
+use App\Filament\Resources\Invoices\Pages\EditInvoice;
+use App\Filament\Resources\Invoices\Pages\ListInvoices;
+use App\Filament\Resources\Invoices\Pages\ViewInvoice;
+use App\Filament\Resources\Invoices\RelationManagers\InvoiceItemsRelationManager;
+use App\Models\Centre;
+use App\Models\Invoice;
+use App\Models\User;
+use Filament\Actions\ActionGroup;
+use Filament\Actions\BulkActionGroup;
+use Filament\Actions\DeleteAction;
+use Filament\Actions\DeleteBulkAction;
+use Filament\Actions\EditAction;
+use Filament\Actions\ViewAction;
 use Filament\Forms;
+use Filament\Forms\Components\DatePicker;
+use Filament\Forms\Components\DateTimePicker;
+use Filament\Forms\Components\Hidden;
+use Filament\Forms\Components\Select;
+use Filament\Forms\Components\TextInput;
+use Filament\Resources\Pages\EditRecord;
 use Filament\Resources\Resource;
-use Filament\Tables;
+use Filament\Schemas\Components\Grid;
+use Filament\Schemas\Components\Section;
+use Filament\Schemas\Schema;
+use Filament\Tables\Columns\TextColumn;
+use Filament\Tables\Filters\Filter;
+use Filament\Tables\Filters\SelectFilter;
 use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Facades\Auth;
-use BackedEnum;
-use UnitEnum;
-use Filament\Schemas\Schema;
-use Filament\Forms\Components\TextInput;
-use Filament\Forms\Components\Select;
-use Filament\Forms\Components\DateTimePicker;
-use Filament\Tables\Filters\SelectFilter;
-use Filament\Tables\Filters\Filter;
-use Illuminate\Database\Eloquent\SoftDeletingScope;
 
 class InvoiceResource extends Resource
 {
     protected static ?string $model = Invoice::class;
 
-    protected static string | \BackedEnum | null $navigationIcon = 'heroicon-o-document-text';
+    protected static string|\BackedEnum|null $navigationIcon = 'heroicon-o-document-text';
 
-    protected static string | \UnitEnum | null $navigationGroup = 'Finance';
+    protected static string|\UnitEnum|null $navigationGroup = 'Finance';
 
     protected static ?int $navigationSort = 10;
 
@@ -90,7 +85,7 @@ class InvoiceResource extends Resource
             },
             'user.children' => function ($query) {
                 $query->with('centres');
-            }
+            },
         ]);
     }
 
@@ -131,7 +126,7 @@ class InvoiceResource extends Resource
                                     ->label('Centre')
                                     ->options(function () {
                                         $user = Auth::user();
-                                        if (!$user->current_tenant_id) {
+                                        if (! $user->current_tenant_id) {
                                             return [];
                                         }
 
@@ -156,7 +151,7 @@ class InvoiceResource extends Resource
                                     ->label('Parent')
                                     ->options(function () {
                                         $user = Auth::user();
-                                        if (!$user->current_tenant_id) {
+                                        if (! $user->current_tenant_id) {
                                             return [];
                                         }
 
@@ -285,6 +280,7 @@ class InvoiceResource extends Resource
                         if ($children->isEmpty()) {
                             return null;
                         }
+
                         return $children->pluck('full_name')->join(', ');
                     }),
 
@@ -292,7 +288,7 @@ class InvoiceResource extends Resource
                     ->label('Billing Month')
                     ->date('M, Y')
                     ->sortable()
-                    ->description(fn (Invoice $record): string => 'Due: ' . $record->due_at->format('M d, Y')),
+                    ->description(fn (Invoice $record): string => 'Due: '.$record->due_at->format('M d, Y')),
 
                 TextColumn::make('status')
                     ->badge()
@@ -348,7 +344,7 @@ class InvoiceResource extends Resource
                     ->sortable(),
 
                 TextColumn::make('created_at')
-                    ->date()
+                    ->date(),
             ])
             ->filters([
                 SelectFilter::make('status')
@@ -430,6 +426,7 @@ class InvoiceResource extends Resource
             ])
             ->toolbarActions([
                 BulkActionGroup::make([
+                    BulkPayInvoicesBulkAction::make(),
                     SubmitBulkToEInvoiceAction::make(),
                     SendBulkNotificationAction::make(),
                     ExportInvoicesAction::make(),

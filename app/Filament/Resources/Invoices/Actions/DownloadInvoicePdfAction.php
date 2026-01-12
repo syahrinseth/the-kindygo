@@ -4,7 +4,6 @@ namespace App\Filament\Resources\Invoices\Actions;
 
 use App\Models\Invoice;
 use Filament\Actions\Action as HeaderAction;
-use Filament\Actions\Action;
 
 class DownloadInvoicePdfAction
 {

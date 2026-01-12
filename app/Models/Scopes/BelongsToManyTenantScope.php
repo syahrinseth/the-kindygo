@@ -22,8 +22,9 @@ class BelongsToManyTenantScope implements Scope
 
         $user = Auth::user();
 
-        if (!$user || !$user->current_tenant_id) {
+        if (! $user || ! $user->current_tenant_id) {
             $builder->whereRaw('1 = 0'); // Return empty result set if no current tenant
+
             return;
         }
 

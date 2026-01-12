@@ -2,14 +2,10 @@
 
 namespace App\Filament\Resources\Parents\Pages;
 
-use Filament\Actions\DeleteAction;
-use Illuminate\Database\Eloquent\Model;
 use App\Filament\Resources\Parents\ParentResource;
-use App\Models\UserProfile;
-use App\Models\UserAddress;
-use App\Models\UserOfficeInfo;
-use Filament\Actions;
+use Filament\Actions\DeleteAction;
 use Filament\Resources\Pages\EditRecord;
+use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Facades\Auth;
 
 class EditParent extends EditRecord
@@ -58,15 +54,15 @@ class EditParent extends EditRecord
         $record->update($data);
 
         // Update or create related models
-        if (!empty($profileData)) {
+        if (! empty($profileData)) {
             $record->profile()->updateOrCreate(['user_id' => $record->id], $profileData);
         }
 
-        if (!empty($addressData)) {
+        if (! empty($addressData)) {
             $record->userAddress()->updateOrCreate(['user_id' => $record->id], $addressData);
         }
 
-        if (!empty($officeData)) {
+        if (! empty($officeData)) {
             $record->officeInfo()->updateOrCreate(['user_id' => $record->id], $officeData);
         }
 

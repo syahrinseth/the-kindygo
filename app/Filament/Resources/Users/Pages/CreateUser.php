@@ -2,13 +2,9 @@
 
 namespace App\Filament\Resources\Users\Pages;
 
-use Illuminate\Database\Eloquent\Model;
 use App\Filament\Resources\Users\UserResource;
-use App\Models\UserProfile;
-use App\Models\UserAddress;
-use App\Models\UserOfficeInfo;
-use Filament\Actions;
 use Filament\Resources\Pages\CreateRecord;
+use Illuminate\Database\Eloquent\Model;
 
 class CreateUser extends CreateRecord
 {
@@ -28,15 +24,15 @@ class CreateUser extends CreateRecord
         $user = static::getModel()::create($data);
 
         // Create related models
-        if (!empty($profileData)) {
+        if (! empty($profileData)) {
             $user->profile()->create($profileData);
         }
 
-        if (!empty($addressData)) {
+        if (! empty($addressData)) {
             $user->userAddress()->create($addressData);
         }
 
-        if (!empty($officeData)) {
+        if (! empty($officeData)) {
             $user->officeInfo()->create($officeData);
         }
 

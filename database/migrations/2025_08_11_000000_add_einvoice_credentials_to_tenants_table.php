@@ -31,7 +31,7 @@ return new class extends Migration
             $table->dropColumn([
                 'einvoice_client_id',
                 'einvoice_client_secret',
-                'einvoice_environment'
+                'einvoice_environment',
             ]);
         });
     }

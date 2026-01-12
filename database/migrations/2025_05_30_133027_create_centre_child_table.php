@@ -16,7 +16,7 @@ return new class extends Migration
             $table->foreignId('centre_id')->constrained()->onDelete('cascade');
             $table->foreignId('child_id')->constrained('children')->onDelete('cascade');
             $table->timestamps();
-            
+
             // Ensure a child can only be associated with a centre once
             $table->unique(['centre_id', 'child_id']);
         });

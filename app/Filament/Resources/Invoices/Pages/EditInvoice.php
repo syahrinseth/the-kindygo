@@ -2,10 +2,9 @@
 
 namespace App\Filament\Resources\Invoices\Pages;
 
-use Filament\Actions\DeleteAction;
-use App\Filament\Resources\Invoices\InvoiceResource;
 use App\Enums\InvoiceStatus;
-use Filament\Actions;
+use App\Filament\Resources\Invoices\InvoiceResource;
+use Filament\Actions\DeleteAction;
 use Filament\Resources\Pages\EditRecord;
 use Illuminate\Support\Facades\Auth;
 
@@ -35,7 +34,7 @@ class EditInvoice extends EditRecord
         unset($data['tenant_id']);
 
         // Calculate the total if not specified
-        if (!isset($data['total']) || $data['total'] == 0) {
+        if (! isset($data['total']) || $data['total'] == 0) {
             $data['total'] = ($data['total_amount'] ?? 0) - ($data['total_discounts'] ?? 0);
         }
 

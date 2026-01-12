@@ -2,10 +2,9 @@
 
 namespace App\Filament\Resources\Payments\Pages;
 
-use Filament\Actions\ViewAction;
-use Filament\Actions\DeleteAction;
 use App\Filament\Resources\Payments\Payments\PaymentResource;
-use Filament\Actions;
+use Filament\Actions\DeleteAction;
+use Filament\Actions\ViewAction;
 use Filament\Resources\Pages\EditRecord;
 use Illuminate\Support\Facades\Auth;
 
@@ -22,15 +21,15 @@ class EditPayment extends EditRecord
                 ->visible(fn () => Auth::user()->can('delete', $this->record)),
         ];
     }
-    
+
     protected function mutateFormDataBeforeSave(array $data): array
     {
         // We don't allow changing tenant_id
         unset($data['tenant_id']);
-        
+
         return $data;
     }
-    
+
     protected function getRedirectUrl(): string
     {
         return $this->getResource()::getUrl('index');

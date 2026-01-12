@@ -8,7 +8,7 @@ use App\Models\User;
 use function Pest\Laravel\assertDatabaseHas;
 
 beforeEach(function () {
-    $this->action = new CreateChildrenForParentAction();
+    $this->action = new CreateChildrenForParentAction;
     $this->tenant = Tenant::factory()->create();
     $this->user = User::factory()->create();
 

@@ -31,7 +31,7 @@ class QuotationItemFactory extends Factory
             'Field Trip Fee',
             'Special Activity',
             'Holiday Care',
-            'Extra Curriculum'
+            'Extra Curriculum',
         ];
 
         return [

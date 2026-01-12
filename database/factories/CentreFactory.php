@@ -4,8 +4,8 @@ namespace Database\Factories;
 
 use App\Models\Campus;
 use App\Models\Tenant;
-use Illuminate\Support\Str;
 use Illuminate\Database\Eloquent\Factories\Factory;
+use Illuminate\Support\Str;
 
 /**
  * @extends \Illuminate\Database\Eloquent\Factories\Factory<\App\Models\Centre>
@@ -19,8 +19,8 @@ class CentreFactory extends Factory
      */
     public function definition(): array
     {
-        $name = fake()->company() . ' Centre';
-        
+        $name = fake()->company().' Centre';
+
         return [
             'tenant_id' => Tenant::factory(),
             'campus_id' => Campus::factory(),
@@ -36,7 +36,7 @@ class CentreFactory extends Factory
             'state' => fake()->state(),
         ];
     }
-    
+
     /**
      * Indicate that the centre belongs to a specific tenant.
      */
@@ -48,7 +48,7 @@ class CentreFactory extends Factory
             ];
         });
     }
-    
+
     /**
      * Indicate that the centre belongs to a specific campus.
      */

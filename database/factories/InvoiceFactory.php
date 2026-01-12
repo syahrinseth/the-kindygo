@@ -2,11 +2,11 @@
 
 namespace Database\Factories;
 
-use App\Models\User;
-use App\Models\Tenant;
+use App\Enums\InvoiceStatus;
 use App\Models\Centre;
 use App\Models\Invoice;
-use App\Enums\InvoiceStatus;
+use App\Models\Tenant;
+use App\Models\User;
 use Illuminate\Database\Eloquent\Factories\Factory;
 
 /**
@@ -25,9 +25,9 @@ class InvoiceFactory extends Factory
         $totalAmount = fake()->numberBetween(1000, 100000);
         $totalDiscounts = fake()->numberBetween(0, $totalAmount / 10);
         $total = $totalAmount - $totalDiscounts;
-        
+
         return [
-            'number' => 'INV-' . strtoupper(fake()->unique()->regexify('[A-Z0-9]{8}')),
+            'number' => 'INV-'.strtoupper(fake()->unique()->regexify('[A-Z0-9]{8}')),
             'tenant_id' => Tenant::factory(),
             'centre_id' => Centre::factory(),
             'user_id' => User::factory(),
@@ -43,8 +43,6 @@ class InvoiceFactory extends Factory
 
     /**
      * Indicate that the invoice is in draft status.
-     *
-     * @return \Illuminate\Database\Eloquent\Factories\Factory
      */
     public function draft(): Factory
     {
@@ -55,8 +53,6 @@ class InvoiceFactory extends Factory
 
     /**
      * Indicate that the invoice is in pending status.
-     *
-     * @return \Illuminate\Database\Eloquent\Factories\Factory
      */
     public function pending(): Factory
     {
@@ -67,8 +63,6 @@ class InvoiceFactory extends Factory
 
     /**
      * Indicate that the invoice is in paid status.
-     *
-     * @return \Illuminate\Database\Eloquent\Factories\Factory
      */
     public function paid(): Factory
     {
@@ -80,8 +74,6 @@ class InvoiceFactory extends Factory
 
     /**
      * Indicate that the invoice is in overdue status.
-     *
-     * @return \Illuminate\Database\Eloquent\Factories\Factory
      */
     public function overdue(): Factory
     {

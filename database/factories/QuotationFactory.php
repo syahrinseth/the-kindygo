@@ -29,7 +29,7 @@ class QuotationFactory extends Factory
         $date = Carbon::instance(fake()->dateTimeBetween('-30 days', 'now'));
 
         return [
-            'number' => 'QUO/' . strtoupper(fake()->unique()->regexify('[A-Z0-9]{8}')),
+            'number' => 'QUO/'.strtoupper(fake()->unique()->regexify('[A-Z0-9]{8}')),
             'tenant_id' => Tenant::factory(),
             'centre_id' => Centre::factory(),
             'user_id' => User::factory(),
@@ -48,8 +48,6 @@ class QuotationFactory extends Factory
 
     /**
      * Indicate that the quotation is in draft status.
-     *
-     * @return \Illuminate\Database\Eloquent\Factories\Factory
      */
     public function draft(): Factory
     {
@@ -60,8 +58,6 @@ class QuotationFactory extends Factory
 
     /**
      * Indicate that the quotation is in pending status.
-     *
-     * @return \Illuminate\Database\Eloquent\Factories\Factory
      */
     public function pending(): Factory
     {
@@ -72,8 +68,6 @@ class QuotationFactory extends Factory
 
     /**
      * Indicate that the quotation is in accepted status.
-     *
-     * @return \Illuminate\Database\Eloquent\Factories\Factory
      */
     public function accepted(): Factory
     {
@@ -84,8 +78,6 @@ class QuotationFactory extends Factory
 
     /**
      * Indicate that the quotation is in converted status.
-     *
-     * @return \Illuminate\Database\Eloquent\Factories\Factory
      */
     public function converted(): Factory
     {
@@ -97,8 +89,6 @@ class QuotationFactory extends Factory
 
     /**
      * Indicate that the quotation is in expired status.
-     *
-     * @return \Illuminate\Database\Eloquent\Factories\Factory
      */
     public function expired(): Factory
     {
@@ -110,8 +100,6 @@ class QuotationFactory extends Factory
 
     /**
      * Indicate that the quotation is in rejected status.
-     *
-     * @return \Illuminate\Database\Eloquent\Factories\Factory
      */
     public function rejected(): Factory
     {
@@ -122,8 +110,6 @@ class QuotationFactory extends Factory
 
     /**
      * Indicate that the quotation has a child.
-     *
-     * @return \Illuminate\Database\Eloquent\Factories\Factory
      */
     public function withChild(): Factory
     {

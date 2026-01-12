@@ -2,15 +2,14 @@
 
 namespace Database\Seeders;
 
+use App\Enums\ChildEnrolmentBilledEvery;
+use App\Enums\ChildEnrolmentStatus;
+use App\Enums\ChildEnrolmentType;
+use App\Models\Centre;
 use App\Models\Child;
+use App\Models\ChildEnrolment;
 use App\Models\Product;
 use App\Models\Tenant;
-use App\Models\Centre;
-use App\Models\ChildEnrolment;
-use App\Enums\ChildEnrolmentStatus;
-use App\Enums\ChildEnrolmentBilledEvery;
-use App\Enums\ChildEnrolmentType;
-use Illuminate\Database\Console\Seeds\WithoutModelEvents;
 use Illuminate\Database\Seeder;
 
 class ChildEnrolmentSeeder extends Seeder
@@ -28,6 +27,7 @@ class ChildEnrolmentSeeder extends Seeder
 
         if ($tenants->isEmpty() || $centres->isEmpty() || $children->isEmpty() || $products->isEmpty()) {
             $this->command->info('No tenants, centres, children or products found. Creating sample data...');
+
             return;
         }
 

@@ -2,13 +2,14 @@
 
 namespace App\Models;
 
-use Illuminate\Database\Eloquent\Builder;
 use App\Enums\InvoiceItemType;
 use App\Enums\InvoiceStatus;
+use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
-use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class InvoiceItem extends Model
 {
@@ -105,8 +106,6 @@ class InvoiceItem extends Model
 
     /**
      * Get the invoice that owns the invoice item.
-     *
-     * @return BelongsTo
      */
     public function invoice(): BelongsTo
     {
@@ -115,8 +114,6 @@ class InvoiceItem extends Model
 
     /**
      * Get the product associated with the invoice item.
-     *
-     * @return BelongsTo
      */
     public function product(): BelongsTo
     {
@@ -125,8 +122,6 @@ class InvoiceItem extends Model
 
     /**
      * Get the child associated with the invoice item.
-     *
-     * @return BelongsTo
      */
     public function child(): BelongsTo
     {
@@ -135,8 +130,6 @@ class InvoiceItem extends Model
 
     /**
      * Get the child enrolment associated with the invoice item.
-     *
-     * @return BelongsTo
      */
     public function childEnrolment(): BelongsTo
     {
@@ -145,8 +138,6 @@ class InvoiceItem extends Model
 
     /**
      * Get the child enrolments associated with this invoice item through a pivot table.
-     *
-     * @return BelongsToMany
      */
     public function childEnrolments(): BelongsToMany
     {
@@ -156,10 +147,16 @@ class InvoiceItem extends Model
     }
 
     /**
+     * Get the ledger entries for this invoice item.
+     */
+    public function ledgerEntries(): HasMany
+    {
+        return $this->hasMany(InvoiceItemsLedger::class, 'invoice_item_id');
+    }
+
+    /**
      * Calculate and set the total amount.
      * Discount is applied per unit and multiplied by quantity.
-     *
-     * @return void
      */
     public function calculateTotal(): void
     {
@@ -170,8 +167,6 @@ class InvoiceItem extends Model
 
     /**
      * Calculate and set the balance amount.
-     *
-     * @return void
      */
     public function calculateBalance(): void
     {
@@ -181,8 +176,6 @@ class InvoiceItem extends Model
 
     /**
      * Get the payment status.
-     *
-     * @return string
      */
     public function getPaymentStatus(): string
     {
@@ -199,8 +192,6 @@ class InvoiceItem extends Model
 
     /**
      * Get the subtotal before discount.
-     *
-     * @return int
      */
     public function getSubtotal(): int
     {
@@ -210,8 +201,7 @@ class InvoiceItem extends Model
     /**
      * Get the formatted price.
      *
-     * @param bool $includeCurrency Whether to include the currency symbol
-     * @return string
+     * @param  bool  $includeCurrency  Whether to include the currency symbol
      */
     public function getFormattedPrice(bool $includeCurrency = true): string
     {
@@ -220,8 +210,6 @@ class InvoiceItem extends Model
 
     /**
      * Get the total discount amount (discount per unit × quantity).
-     *
-     * @return int
      */
     public function getTotalDiscount(): int
     {
@@ -231,8 +219,7 @@ class InvoiceItem extends Model
     /**
      * Get the formatted discount per unit.
      *
-     * @param bool $includeCurrency Whether to include the currency symbol
-     * @return string
+     * @param  bool  $includeCurrency  Whether to include the currency symbol
      */
     public function getFormattedDiscount(bool $includeCurrency = true): string
     {
@@ -242,8 +229,7 @@ class InvoiceItem extends Model
     /**
      * Get the formatted total discount amount.
      *
-     * @param bool $includeCurrency Whether to include the currency symbol
-     * @return string
+     * @param  bool  $includeCurrency  Whether to include the currency symbol
      */
     public function getFormattedTotalDiscount(bool $includeCurrency = true): string
     {
@@ -253,8 +239,7 @@ class InvoiceItem extends Model
     /**
      * Get the formatted total.
      *
-     * @param bool $includeCurrency Whether to include the currency symbol
-     * @return string
+     * @param  bool  $includeCurrency  Whether to include the currency symbol
      */
     public function getFormattedTotal(bool $includeCurrency = true): string
     {
@@ -264,8 +249,7 @@ class InvoiceItem extends Model
     /**
      * Get the formatted subtotal.
      *
-     * @param bool $includeCurrency Whether to include the currency symbol
-     * @return string
+     * @param  bool  $includeCurrency  Whether to include the currency symbol
      */
     public function getFormattedSubtotal(bool $includeCurrency = true): string
     {
@@ -275,8 +259,7 @@ class InvoiceItem extends Model
     /**
      * Get the formatted paid amount.
      *
-     * @param bool $includeCurrency Whether to include the currency symbol
-     * @return string
+     * @param  bool  $includeCurrency  Whether to include the currency symbol
      */
     public function getFormattedPaidAmount(bool $includeCurrency = true): string
     {
@@ -286,8 +269,7 @@ class InvoiceItem extends Model
     /**
      * Get the formatted balance amount.
      *
-     * @param bool $includeCurrency Whether to include the currency symbol
-     * @return string
+     * @param  bool  $includeCurrency  Whether to include the currency symbol
      */
     public function getFormattedBalanceAmount(bool $includeCurrency = true): string
     {
@@ -296,8 +278,6 @@ class InvoiceItem extends Model
 
     /**
      * Check if the item has a discount.
-     *
-     * @return bool
      */
     public function hasDiscount(): bool
     {
@@ -306,8 +286,6 @@ class InvoiceItem extends Model
 
     /**
      * Check if the item is fully paid.
-     *
-     * @return bool
      */
     public function isFullyPaid(): bool
     {
@@ -316,18 +294,14 @@ class InvoiceItem extends Model
 
     /**
      * Check if the item is partially paid.
-     *
-     * @return bool
      */
     public function isPartiallyPaid(): bool
     {
-        return !$this->paid && $this->paid_amount > 0;
+        return ! $this->paid && $this->paid_amount > 0;
     }
 
     /**
      * Check if the item is unpaid.
-     *
-     * @return bool
      */
     public function isUnpaid(): bool
     {
@@ -337,8 +311,6 @@ class InvoiceItem extends Model
     /**
      * Get the discount percentage if applicable.
      * Based on discount per unit vs unit price.
-     *
-     * @return float|null
      */
     public function getDiscountPercentage(): ?float
     {
@@ -352,7 +324,7 @@ class InvoiceItem extends Model
     /**
      * Scope a query to only include items for a specific invoice.
      *
-     * @param Builder $query
+     * @param  Builder  $query
      * @param  int  $invoiceId
      * @return Builder
      */
@@ -364,7 +336,7 @@ class InvoiceItem extends Model
     /**
      * Scope a query to only include items for a specific child.
      *
-     * @param Builder $query
+     * @param  Builder  $query
      * @param  int  $childId
      * @return Builder
      */
@@ -376,7 +348,7 @@ class InvoiceItem extends Model
     /**
      * Scope a query to only include items with discounts.
      *
-     * @param Builder $query
+     * @param  Builder  $query
      * @return Builder
      */
     public function scopeWithDiscount($query)
@@ -387,7 +359,7 @@ class InvoiceItem extends Model
     /**
      * Scope a query to only include paid items.
      *
-     * @param Builder $query
+     * @param  Builder  $query
      * @return Builder
      */
     public function scopePaid($query)
@@ -398,7 +370,7 @@ class InvoiceItem extends Model
     /**
      * Scope a query to only include unpaid items.
      *
-     * @param Builder $query
+     * @param  Builder  $query
      * @return Builder
      */
     public function scopeUnpaid($query)
@@ -409,7 +381,7 @@ class InvoiceItem extends Model
     /**
      * Scope a query to only include partially paid items.
      *
-     * @param Builder $query
+     * @param  Builder  $query
      * @return Builder
      */
     public function scopePartiallyPaid($query)
@@ -420,7 +392,7 @@ class InvoiceItem extends Model
     /**
      * Scope a query to filter by type.
      *
-     * @param Builder $query
+     * @param  Builder  $query
      * @param  InvoiceItemType|string  $type
      * @return Builder
      */
@@ -436,7 +408,7 @@ class InvoiceItem extends Model
     /**
      * Scope a query to filter by effective date range.
      *
-     * @param Builder $query
+     * @param  Builder  $query
      * @param  string  $from
      * @param  string  $to
      * @return Builder
@@ -449,7 +421,7 @@ class InvoiceItem extends Model
     /**
      * Scope a query to filter by specific effective date.
      *
-     * @param Builder $query
+     * @param  Builder  $query
      * @param  string  $date
      * @return Builder
      */
@@ -461,7 +433,7 @@ class InvoiceItem extends Model
     /**
      * Scope a query to only include product items.
      *
-     * @param Builder $query
+     * @param  Builder  $query
      * @return Builder
      */
     public function scopeProducts($query)
@@ -472,7 +444,7 @@ class InvoiceItem extends Model
     /**
      * Scope a query to only include invoice discount items.
      *
-     * @param Builder $query
+     * @param  Builder  $query
      * @return Builder
      */
     public function scopeInvoiceDiscounts($query)
@@ -482,8 +454,6 @@ class InvoiceItem extends Model
 
     /**
      * Get the type label for display.
-     *
-     * @return string
      */
     public function getTypeLabel(): string
     {
@@ -492,8 +462,6 @@ class InvoiceItem extends Model
 
     /**
      * Check if the item is a product type.
-     *
-     * @return bool
      */
     public function isProduct(): bool
     {
@@ -502,8 +470,6 @@ class InvoiceItem extends Model
 
     /**
      * Check if the item is an invoice discount type.
-     *
-     * @return bool
      */
     public function isInvoiceDiscount(): bool
     {
@@ -512,12 +478,10 @@ class InvoiceItem extends Model
 
     /**
      * Update payment status based on invoice status.
-     *
-     * @return void
      */
     public function updatePaymentStatusFromInvoice(): void
     {
-        if (!$this->invoice) {
+        if (! $this->invoice) {
             return;
         }
 

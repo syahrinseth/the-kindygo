@@ -2,11 +2,10 @@
 
 namespace App\Models;
 
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
-use Illuminate\Database\Eloquent\Factories\HasFactory;
-use Carbon\Carbon;
 
 class ProductPrice extends Model
 {
@@ -48,7 +47,7 @@ class ProductPrice extends Model
      */
     public function getFormattedPriceAttribute(): string
     {
-        return 'RM' . number_format($this->price / 100, 2);
+        return 'RM'.number_format($this->price / 100, 2);
     }
 
     /**
@@ -57,12 +56,12 @@ class ProductPrice extends Model
     public function scopeActiveOn($query, $date = null)
     {
         $date = $date ?? now()->toDateString();
-        
+
         return $query->where('start_date', '<=', $date)
-                    ->where(function ($q) use ($date) {
-                        $q->whereNull('end_date')
-                          ->orWhere('end_date', '>=', $date);
-                    });
+            ->where(function ($q) use ($date) {
+                $q->whereNull('end_date')
+                    ->orWhere('end_date', '>=', $date);
+            });
     }
 
     /**
@@ -79,8 +78,8 @@ class ProductPrice extends Model
     public function isActive($date = null): bool
     {
         $date = $date ?? now()->toDateString();
-        
-        return $this->start_date <= $date && 
+
+        return $this->start_date <= $date &&
                ($this->end_date === null || $this->end_date >= $date);
     }
 
@@ -106,7 +105,7 @@ class ProductPrice extends Model
     public function centres(): BelongsToMany
     {
         return $this->belongsToMany(Centre::class, 'price_centre', 'product_price_id', 'centre_id')
-                    ->withTimestamps();
+            ->withTimestamps();
     }
 
     /**
@@ -117,7 +116,7 @@ class ProductPrice extends Model
         return $query->where(function ($q) use ($centreId) {
             // Include global prices (no centre assignment)
             $q->whereDoesntHave('centres');
-            
+
             // Include centre-specific prices if centre is specified
             if ($centreId) {
                 $q->orWhereHas('centres', function ($centreQuery) use ($centreId) {
@@ -144,12 +143,12 @@ class ProductPrice extends Model
         if ($this->centres->count() === 0) {
             return true;
         }
-        
+
         // If centre is specified, check if this price applies to that centre
         if ($centreId) {
             return $this->centres->contains('id', $centreId);
         }
-        
+
         return false;
     }
 
@@ -161,7 +160,7 @@ class ProductPrice extends Model
         if ($this->centres->count() === 0) {
             return 'Global';
         }
-        
+
         return $this->centres->pluck('name')->join(', ');
     }
 }

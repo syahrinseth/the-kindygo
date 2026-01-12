@@ -2,13 +2,11 @@
 
 namespace App\Providers;
 
-use Filament\Panel;
 use App\Models\Centre;
-use Illuminate\Support\Facades\File;
-use Illuminate\Support\Facades\View;
-use Illuminate\Support\ServiceProvider;
 use Filament\Navigation\NavigationGroup;
-use Filament\Support\Facades\FilamentView;
+use Filament\Panel;
+use Illuminate\Support\Facades\File;
+use Illuminate\Support\ServiceProvider;
 
 class AppServiceProvider extends ServiceProvider
 {
@@ -55,7 +53,7 @@ class AppServiceProvider extends ServiceProvider
     {
         $observersPath = app_path('Observers');
 
-        if (!File::isDirectory($observersPath)) {
+        if (! File::isDirectory($observersPath)) {
             return;
         }
 
@@ -66,7 +64,7 @@ class AppServiceProvider extends ServiceProvider
             $observerName = $file->getFilenameWithoutExtension();
 
             // Skip if it doesn't end with 'Observer'
-            if (!str_ends_with($observerName, 'Observer')) {
+            if (! str_ends_with($observerName, 'Observer')) {
                 continue;
             }
 

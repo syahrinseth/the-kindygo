@@ -22,12 +22,10 @@ enum InvoiceStatus: string
 
     /**
      * Get human-readable name for the status.
-     *
-     * @return string
      */
     public function label(): string
     {
-        return match($this) {
+        return match ($this) {
             self::DRAFT => 'Draft',
             self::PENDING => 'Pending',
             self::PAID => 'Paid',

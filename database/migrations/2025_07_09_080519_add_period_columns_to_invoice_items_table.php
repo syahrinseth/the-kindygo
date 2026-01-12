@@ -13,13 +13,13 @@ return new class extends Migration
     {
         Schema::table('invoice_items', function (Blueprint $table) {
             // Add columns that might be missing
-            if (!Schema::hasColumn('invoice_items', 'description')) {
+            if (! Schema::hasColumn('invoice_items', 'description')) {
                 $table->text('description')->nullable()->after('name');
             }
-            if (!Schema::hasColumn('invoice_items', 'period_start')) {
+            if (! Schema::hasColumn('invoice_items', 'period_start')) {
                 $table->datetime('period_start')->nullable()->after('total');
             }
-            if (!Schema::hasColumn('invoice_items', 'period_end')) {
+            if (! Schema::hasColumn('invoice_items', 'period_end')) {
                 $table->datetime('period_end')->nullable()->after('period_start');
             }
         });

@@ -1,15 +1,15 @@
 <?php
 
+use App\Actions\Invoice\CreateInvoiceItem;
+use App\Enums\InvoiceItemType;
+use App\Models\Centre;
+use App\Models\Child;
+use App\Models\ChildEnrolment;
 use App\Models\Invoice;
 use App\Models\Product;
 use App\Models\ProductPrice;
-use App\Models\ChildEnrolment;
-use App\Models\Child;
 use App\Models\Tenant;
-use App\Models\Centre;
 use App\Models\User;
-use App\Enums\InvoiceItemType;
-use App\Actions\Invoice\CreateInvoiceItem;
 use Carbon\Carbon;
 
 beforeEach(function () {
@@ -24,7 +24,7 @@ beforeEach(function () {
     $this->child = Child::factory()->create();
     $this->child->tenants()->attach($this->tenant->id);
 
-    $this->action = new CreateInvoiceItem();
+    $this->action = new CreateInvoiceItem;
 });
 
 afterEach(function () {

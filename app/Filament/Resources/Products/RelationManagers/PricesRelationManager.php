@@ -2,27 +2,23 @@
 
 namespace App\Filament\Resources\Products\RelationManagers;
 
-use Filament\Schemas\Components\Section;
-use Filament\Forms\Components\TextInput;
-use Filament\Schemas\Components\Grid;
+use App\Models\ProductPrice;
+use Filament\Actions\BulkActionGroup;
+use Filament\Actions\CreateAction;
+use Filament\Actions\DeleteAction;
+use Filament\Actions\DeleteBulkAction;
+use Filament\Actions\EditAction;
 use Filament\Forms\Components\DatePicker;
 use Filament\Forms\Components\Select;
+use Filament\Forms\Components\TextInput;
+use Filament\Resources\RelationManagers\RelationManager;
+use Filament\Schemas\Components\Section;
+use Filament\Schemas\Schema;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Filters\SelectFilter;
-use Filament\Actions\CreateAction;
-use Filament\Actions\EditAction;
-use Filament\Actions\DeleteAction;
-use Filament\Actions\BulkActionGroup;
-use Filament\Actions\DeleteBulkAction;
-use App\Models\ProductPrice;
-use Filament\Forms;
-use Filament\Actions;
-use Filament\Resources\RelationManagers\RelationManager;
-use Filament\Tables;
 use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Facades\Auth;
-use Filament\Schemas\Schema;
 
 class PricesRelationManager extends RelationManager
 {
@@ -85,7 +81,7 @@ class PricesRelationManager extends RelationManager
                             ->label('Apply to Centres')
                             ->relationship('centres', 'name', function (Builder $query) {
                                 $user = Auth::user();
-                                if (!$user->current_tenant_id) {
+                                if (! $user->current_tenant_id) {
                                     return $query->whereRaw('1 = 0');
                                 }
 
@@ -139,6 +135,7 @@ class PricesRelationManager extends RelationManager
                         if ($record->centres->count() === 0) {
                             return 'All Centres (Global)';
                         }
+
                         return $record->centres->pluck('name')->join(', ');
                     })
                     ->wrap()
@@ -149,6 +146,7 @@ class PricesRelationManager extends RelationManager
                             return 'Applies to all centres assigned with the product';
                         }
                         $count = $record->centres->count();
+
                         return $count === 1 ? '1 centre' : "{$count} centres";
                     }),
 

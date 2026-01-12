@@ -2,10 +2,10 @@
 
 namespace App\Filament\Widgets;
 
-use App\Filament\Pages\FinanceDashboard;
 use App\Enums\InvoiceStatus;
+use App\Filament\Pages\FinanceDashboard;
+use App\Filament\Resources\Invoices\InvoiceResource;
 use App\Models\Invoice;
-use App\Filament\Resources\Invoices\Invoices\InvoiceResource;
 use Filament\Actions\Action;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Table;
@@ -15,11 +15,11 @@ use Illuminate\Support\Facades\Auth;
 class InvoiceListWidget extends BaseWidget
 {
     protected static ?string $heading = 'Recent Invoices';
-    
-    protected int | string | array $columnSpan = 'full';
-    
+
+    protected int|string|array $columnSpan = 'full';
+
     protected static ?int $sort = 2;
-    
+
     public static function canView(): bool
     {
         return Auth::user()->can('viewInvoiceList', FinanceDashboard::class);

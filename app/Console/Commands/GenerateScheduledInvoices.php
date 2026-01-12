@@ -2,13 +2,11 @@
 
 namespace App\Console\Commands;
 
-use Exception;
+use App\Enums\ChildEnrolmentStatus;
 use App\Models\ChildEnrolment;
 use App\Services\ChildEnrolmentInvoiceService;
-use App\Enums\ChildEnrolmentStatus;
-use App\Enums\ChildEnrolmentBilledEvery;
+use Exception;
 use Illuminate\Console\Command;
-use Carbon\Carbon;
 
 class GenerateScheduledInvoices extends Command
 {
@@ -38,7 +36,7 @@ class GenerateScheduledInvoices extends Command
             ChildEnrolmentStatus::ACTIVE,
             ChildEnrolmentStatus::DRAFT,
             ChildEnrolmentStatus::PENDING,
-            ChildEnrolmentStatus::INACTIVE
+            ChildEnrolmentStatus::INACTIVE,
         ];
 
         $query = ChildEnrolment::whereIn('status', $allowedStatuses)
@@ -61,6 +59,7 @@ class GenerateScheduledInvoices extends Command
 
         if ($enrolmentsNeedingInvoices->isEmpty()) {
             $this->info('No enrolments need invoicing at this time.');
+
             return 0;
         }
 
@@ -91,6 +90,7 @@ class GenerateScheduledInvoices extends Command
             }
 
             $this->info("📊 Total invoices that would be generated: {$invoiceCount}");
+
             return 0;
         }
 
@@ -110,7 +110,8 @@ class GenerateScheduledInvoices extends Command
                 $this->info("  - Invoice #{$invoice->number} for {$parent->name} at {$centre->name} (Children: {$childNames})");
             });
         } catch (Exception $e) {
-            $this->error("Failed to generate invoices: " . $e->getMessage());
+            $this->error('Failed to generate invoices: '.$e->getMessage());
+
             return 1;
         }
 
@@ -124,14 +125,14 @@ class GenerateScheduledInvoices extends Command
         foreach ($enrolments as $enrolment) {
             // Get the parent/guardian user
             $parent = $enrolment->child->users()->first();
-            if (!$parent) {
+            if (! $parent) {
                 continue; // Skip if no parent found
             }
 
             // Group by tenant_id + user_id + centre_id
-            $groupKey = $enrolment->tenant_id . '_' . $parent->id . '_' . $enrolment->centre_id;
+            $groupKey = $enrolment->tenant_id.'_'.$parent->id.'_'.$enrolment->centre_id;
 
-            if (!isset($grouped[$groupKey])) {
+            if (! isset($grouped[$groupKey])) {
                 $grouped[$groupKey] = [
                     'parent' => $parent,
                     'centre' => $enrolment->centre,

@@ -2,12 +2,12 @@
 
 namespace App\Console\Commands;
 
-use Exception;
 use App\Enums\InvoiceStatus;
 use App\Models\Invoice;
 use App\Models\Tenant;
-use App\Notifications\InvoicePendingNotification;
 use App\Notifications\InvoiceOverdueNotification;
+use App\Notifications\InvoicePendingNotification;
+use Exception;
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\Log;
 
@@ -47,21 +47,21 @@ class SendInvoiceReminders extends Command
 
         // Validate and resolve tenant
         $tenant = $this->resolveTenant($tenantId, $tenantSlug);
-        
+
         $this->info('Starting invoice reminder process...');
-        
+
         if ($tenant) {
             $this->info("Processing invoices for tenant: {$tenant->name} (ID: {$tenant->id})");
         } else {
             $this->info('Processing invoices for ALL tenants');
         }
-        
+
         if ($isDryRun) {
             $this->warn('DRY RUN MODE - No emails will be sent');
         }
 
         // First, mark overdue invoices (unless dry-run)
-        if (!$isDryRun) {
+        if (! $isDryRun) {
             $this->info('Marking overdue invoices...');
             $overdueMarked = $this->markOverdueInvoices($tenant);
             if ($overdueMarked > 0) {
@@ -74,36 +74,36 @@ class SendInvoiceReminders extends Command
         $errorCount = 0;
 
         // Process overdue invoices (unless pending-only is specified)
-        if (!$pendingOnly) {
+        if (! $pendingOnly) {
             $this->info('Processing overdue invoices...');
-            
+
             $overdueQuery = Invoice::where('status', InvoiceStatus::OVERDUE)
                 ->with(['user', 'centre']);
-                
+
             // Filter by tenant if specified
             if ($tenant) {
                 $overdueQuery->where('tenant_id', $tenant->id);
             }
-            
+
             $overdueInvoices = $overdueQuery->get();
 
             foreach ($overdueInvoices as $invoice) {
                 try {
                     $daysOverdue = $invoice->due_at->diffInDays(now());
-                    
+
                     if ($isDryRun) {
                         $this->line("Would send overdue notification to {$invoice->user->email} for invoice #{$invoice->number} ({$daysOverdue} days overdue)");
                     } else {
                         $invoice->user->notify(new InvoiceOverdueNotification($invoice, $daysOverdue));
                         $this->line("Sent overdue notification to {$invoice->user->email} for invoice #{$invoice->number}");
                     }
-                    
+
                     $overdueCount++;
-                    
+
                 } catch (Exception $e) {
                     $errorCount++;
-                    $this->error("Failed to send overdue notification for invoice #{$invoice->number}: " . $e->getMessage());
-                    
+                    $this->error("Failed to send overdue notification for invoice #{$invoice->number}: ".$e->getMessage());
+
                     Log::error('Failed to send automated overdue notification', [
                         'invoice_id' => $invoice->id,
                         'error' => $e->getMessage(),
@@ -113,21 +113,21 @@ class SendInvoiceReminders extends Command
         }
 
         // Process pending invoices approaching due date (unless overdue-only is specified)
-        if (!$overdueOnly) {
+        if (! $overdueOnly) {
             $this->info("Processing pending invoices due within {$daysBefore} days...");
-            
+
             $reminderDate = now()->addDays($daysBefore);
-            
+
             $pendingQuery = Invoice::where('status', InvoiceStatus::PENDING)
                 ->whereDate('due_at', '<=', $reminderDate)
                 ->whereDate('due_at', '>=', now())
                 ->with(['user', 'centre']);
-                
+
             // Filter by tenant if specified
             if ($tenant) {
                 $pendingQuery->where('tenant_id', $tenant->id);
             }
-            
+
             $pendingInvoices = $pendingQuery->get();
 
             foreach ($pendingInvoices as $invoice) {
@@ -138,13 +138,13 @@ class SendInvoiceReminders extends Command
                         $invoice->user->notify(new InvoicePendingNotification($invoice));
                         $this->line("Sent pending notification to {$invoice->user->email} for invoice #{$invoice->number}");
                     }
-                    
+
                     $pendingCount++;
-                    
+
                 } catch (Exception $e) {
                     $errorCount++;
-                    $this->error("Failed to send pending notification for invoice #{$invoice->number}: " . $e->getMessage());
-                    
+                    $this->error("Failed to send pending notification for invoice #{$invoice->number}: ".$e->getMessage());
+
                     Log::error('Failed to send automated pending notification', [
                         'invoice_id' => $invoice->id,
                         'error' => $e->getMessage(),
@@ -165,7 +165,7 @@ class SendInvoiceReminders extends Command
             ]
         );
 
-        if (!$isDryRun) {
+        if (! $isDryRun) {
             Log::info('Automated invoice reminders sent', [
                 'tenant_id' => $tenant?->id,
                 'tenant_name' => $tenant?->name,
@@ -186,22 +186,24 @@ class SendInvoiceReminders extends Command
     {
         if ($tenantId) {
             $tenant = Tenant::find($tenantId);
-            if (!$tenant) {
+            if (! $tenant) {
                 $this->error("Tenant with ID '{$tenantId}' not found");
                 exit(1);
             }
+
             return $tenant;
         }
-        
+
         if ($tenantSlug) {
             $tenant = Tenant::where('slug', $tenantSlug)->first();
-            if (!$tenant) {
+            if (! $tenant) {
                 $this->error("Tenant with slug '{$tenantSlug}' not found");
                 exit(1);
             }
+
             return $tenant;
         }
-        
+
         return null;
     }
 
@@ -212,12 +214,12 @@ class SendInvoiceReminders extends Command
     {
         $overdueQuery = Invoice::where('status', InvoiceStatus::PENDING)
             ->where('due_at', '<', now());
-            
+
         // Filter by tenant if specified
         if ($tenant) {
             $overdueQuery->where('tenant_id', $tenant->id);
         }
-        
+
         $overdueInvoices = $overdueQuery->get();
 
         $count = 0;

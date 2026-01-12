@@ -20,7 +20,7 @@ return new class extends Migration
             $table->string('type');
             $table->string('priority');
             $table->timestamps();
-            
+
             $table->index('tenant_id');
         });
     }

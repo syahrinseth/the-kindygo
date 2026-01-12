@@ -20,7 +20,7 @@ return new class extends Migration
             $table->string('postal_code')->nullable()->comment('Customer postal code for e-invoice address');
             $table->string('state_code')->nullable()->comment('Malaysian state code for e-invoice (e.g., 14 for KL)');
             $table->timestamps();
-            
+
             // Add unique constraint to ensure one address per user
             $table->unique('user_id');
         });

@@ -10,8 +10,7 @@ class QuotationPdfController extends Controller
 {
     public function __construct(
         protected GenerateQuotationPdf $generatePdf
-    ) {
-    }
+    ) {}
 
     public function download(Quotation $quotation)
     {
@@ -30,7 +29,7 @@ class QuotationPdfController extends Controller
 
             // For Principal, check if quotation is from centres they're associated with
             if ($user->hasRole('Principal') && $quotation->centre_id) {
-                if (!$user->centres()->where('centres.id', $quotation->centre_id)->exists()) {
+                if (! $user->centres()->where('centres.id', $quotation->centre_id)->exists()) {
                     abort(403, 'Unauthorized access to quotation.');
                 }
             }
@@ -40,8 +39,7 @@ class QuotationPdfController extends Controller
             if ($quotation->user_id !== $user->id || $quotation->tenant_id !== $user->current_tenant_id) {
                 abort(403, 'Unauthorized access to quotation.');
             }
-        }
-        else {
+        } else {
             abort(403, 'Unauthorized access to quotation.');
         }
 

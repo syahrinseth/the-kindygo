@@ -19,7 +19,7 @@ return new class extends Migration
             $table->string('phone')->nullable()->comment('Primary contact phone number');
             $table->string('occupation')->nullable()->comment('User occupation');
             $table->timestamps();
-            
+
             // Add unique constraint to ensure one profile per user
             $table->unique('user_id');
         });

@@ -5,7 +5,6 @@ namespace App\Filament\Resources\Campuses;
 use App\Filament\Resources\Campuses\Pages\CreateCampus;
 use App\Filament\Resources\Campuses\Pages\EditCampus;
 use App\Filament\Resources\Campuses\Pages\ListCampuses;
-use App\Filament\Resources\Campuses\Pages\ViewCampus;
 use App\Filament\Resources\Campuses\Schemas\CampusForm;
 use App\Filament\Resources\Campuses\Schemas\CampusInfolist;
 use App\Filament\Resources\Campuses\Tables\CampusesTable;
@@ -22,7 +21,7 @@ class CampusResource extends Resource
 
     protected static string|BackedEnum|null $navigationIcon = Heroicon::OutlinedBuildingOffice2;
 
-    protected static string | \UnitEnum | null $navigationGroup = 'Campus Management';
+    protected static string|\UnitEnum|null $navigationGroup = 'Campus Management';
 
     protected static ?string $recordTitleAttribute = 'name';
 

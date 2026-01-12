@@ -2,25 +2,21 @@
 
 namespace App\Filament\Resources\Centres\RelationManagers;
 
-use Filament\Tables\Columns\TextColumn;
-use Filament\Tables\Filters\SelectFilter;
-use Filament\Actions\AttachAction;
-use Filament\Actions\ViewAction;
-use Filament\Actions\DetachAction;
-use Filament\Actions\BulkActionGroup;
-use Filament\Actions\DetachBulkAction;
 use App\Enums\ChildStatus;
 use App\Filament\Forms\ChildForm;
-use Filament\Forms;
-use Filament\Actions;
+use Filament\Actions\AttachAction;
+use Filament\Actions\BulkActionGroup;
+use Filament\Actions\DetachAction;
+use Filament\Actions\DetachBulkAction;
+use Filament\Actions\ViewAction;
 use Filament\Resources\RelationManagers\RelationManager;
-use Filament\Tables;
-use Filament\Tables\Table;
-use Filament\Tables\Columns\SpatieMediaLibraryImageColumn;
-use Illuminate\Database\Eloquent\Builder;
-use Illuminate\Database\Eloquent\SoftDeletingScope;
-use Illuminate\Support\Facades\Auth;
 use Filament\Schemas\Schema;
+use Filament\Tables\Columns\SpatieMediaLibraryImageColumn;
+use Filament\Tables\Columns\TextColumn;
+use Filament\Tables\Filters\SelectFilter;
+use Filament\Tables\Table;
+use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Support\Facades\Auth;
 
 class ChildrenRelationManager extends RelationManager
 {
@@ -69,6 +65,7 @@ class ChildrenRelationManager extends RelationManager
                         }
 
                         $status = $record->getStatusAtTenant($user->current_tenant_id);
+
                         return $status ? ucfirst($status->value) : 'Unknown';
                     })
                     ->colors([
@@ -79,6 +76,7 @@ class ChildrenRelationManager extends RelationManager
                             }
 
                             $status = $record->getStatusAtTenant($user->current_tenant_id);
+
                             return $status === ChildStatus::NEW;
                         },
                         'success' => function ($record): bool {
@@ -88,6 +86,7 @@ class ChildrenRelationManager extends RelationManager
                             }
 
                             $status = $record->getStatusAtTenant($user->current_tenant_id);
+
                             return $status === ChildStatus::ACTIVE;
                         },
                         'warning' => function ($record): bool {
@@ -97,6 +96,7 @@ class ChildrenRelationManager extends RelationManager
                             }
 
                             $status = $record->getStatusAtTenant($user->current_tenant_id);
+
                             return $status === ChildStatus::RETURN;
                         },
                         'gray' => function ($record): bool {
@@ -106,6 +106,7 @@ class ChildrenRelationManager extends RelationManager
                             }
 
                             $status = $record->getStatusAtTenant($user->current_tenant_id);
+
                             return $status === ChildStatus::ALUMNI;
                         },
                     ]),
@@ -121,15 +122,15 @@ class ChildrenRelationManager extends RelationManager
                         if (empty($data['value'])) {
                             return $query;
                         }
-                        
+
                         $user = Auth::user();
-                        if (!$user || !$user->current_tenant_id) {
+                        if (! $user || ! $user->current_tenant_id) {
                             return $query;
                         }
-                        
+
                         return $query->whereHas('tenants', function (Builder $subQuery) use ($data, $user) {
                             $subQuery->where('tenant_id', $user->current_tenant_id)
-                                     ->where('status', $data['value']);
+                                ->where('status', $data['value']);
                         });
                     }),
             ])

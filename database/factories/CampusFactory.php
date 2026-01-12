@@ -19,7 +19,7 @@ class CampusFactory extends Factory
     {
         return [
             'tenant_id' => Tenant::factory(),
-            'name' => fake()->company() . ' Campus',
+            'name' => fake()->company().' Campus',
             'phone' => fake()->phoneNumber(),
             'email' => fake()->companyEmail(),
             'address_1' => fake()->streetAddress(),

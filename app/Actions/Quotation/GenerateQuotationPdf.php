@@ -11,8 +11,7 @@ class GenerateQuotationPdf
 {
     public function __construct(
         protected PdfConfigurationService $pdfConfig
-    ) {
-    }
+    ) {}
 
     public function execute(Quotation $quotation)
     {

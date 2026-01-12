@@ -18,12 +18,12 @@ return new class extends Migration
             $table->date('start_date');
             $table->date('end_date')->nullable(); // Nullable for open-ended prices
             $table->timestamps();
-            
+
             // Add indexes for better performance
             $table->index('product_id');
             $table->index('start_date');
             $table->index('end_date');
-            
+
             // Add index for date range queries
             $table->index(['product_id', 'start_date', 'end_date']);
         });

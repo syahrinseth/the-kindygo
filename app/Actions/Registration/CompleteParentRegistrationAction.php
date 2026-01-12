@@ -4,7 +4,6 @@ namespace App\Actions\Registration;
 
 use App\Actions\Undertaking\GetActiveLetterForTenantAction;
 use App\Actions\Undertaking\RecordParentUndertakingAgreementAction;
-use App\Models\Tenant;
 use App\Models\User;
 use Illuminate\Http\Request;
 

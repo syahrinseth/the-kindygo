@@ -25,12 +25,12 @@ return new class extends Migration
             $table->string('race')->nullable();
             $table->string('religion')->nullable();
             $table->string('languages')->nullable();
-            
+
             $table->string('allergies')->nullable();
             $table->string('diseases')->nullable();
             $table->string('family_clinic')->nullable();
             $table->string('family_clinic_phone')->nullable();
-            
+
             $table->timestamps();
         });
     }

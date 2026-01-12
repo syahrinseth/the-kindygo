@@ -12,7 +12,7 @@ class ChildUser extends Pivot
      * @var bool
      */
     public $incrementing = true;
-    
+
     /**
      * The attributes that are mass assignable.
      *
@@ -23,7 +23,7 @@ class ChildUser extends Pivot
         'user_id',
         'relationship_type',
     ];
-    
+
     /**
      * The attributes that should be cast.
      *

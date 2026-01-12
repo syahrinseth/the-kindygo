@@ -22,7 +22,7 @@ class TenantFactory extends Factory
     public function definition(): array
     {
         $name = fake()->company();
-        
+
         return [
             'user_id' => User::factory(),
             'name' => $name,

@@ -61,7 +61,7 @@ test('centre scope forCurrentTenant filters by user current tenant', function ()
         $centre1ForTenant1->id,
         $centre2ForTenant1->id,
         $centre1ForTenant2->id,
-        $centre2ForTenant2->id
+        $centre2ForTenant2->id,
     ]);
 
     // Login as the user
@@ -128,7 +128,7 @@ test('centre scope forCurrentUser filters by user associations and current tenan
 
     // Associate user1 with centre1 only
     $user1->centres()->attach($centre1->id);
-    
+
     // Associate user2 with centre2 only
     $user2->centres()->attach($centre2->id);
 

@@ -61,7 +61,7 @@ test('user can only see centres for current tenant', function () {
         $centre1ForTenant1->id,
         $centre2ForTenant1->id,
         $centre1ForTenant2->id,
-        $centre2ForTenant2->id
+        $centre2ForTenant2->id,
     ]);
 
     // Login as the user and set current tenant to tenant 1

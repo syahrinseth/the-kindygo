@@ -34,44 +34,45 @@ class TestChipPaymentData extends Command
 
         if ($chipPayments->count() === 0) {
             $this->info('No CHIP payments found in the database.');
+
             return;
         }
 
         $this->info("Found {$chipPayments->count()} CHIP payments.");
 
         foreach ($chipPayments as $payment) {
-            $this->line("----------------------------------------");
+            $this->line('----------------------------------------');
             $this->line("Payment ID: {$payment->id}");
             $this->line("Reference: {$payment->reference_no}");
             $this->line("Gateway Payment ID: {$payment->gateway_payment_id}");
             $this->line("Status: {$payment->status->value}");
             $this->line("Amount: {$payment->getFormattedAmount()}");
-            
+
             if ($payment->isChipPayment()) {
-                $this->line("✓ Is CHIP payment");
-                
+                $this->line('✓ Is CHIP payment');
+
                 $chipData = $payment->getChipData();
                 if ($chipData) {
-                    $this->line("✓ Has CHIP data");
-                    $this->line("  - CHIP Status: " . ($payment->getChipStatus() ?? 'N/A'));
-                    $this->line("  - Payment Method: " . ($payment->getChipPaymentMethod() ?? 'N/A'));
-                    $this->line("  - Data stored at: " . ($payment->getChipInfo('stored_at') ?? 'N/A'));
-                    
+                    $this->line('✓ Has CHIP data');
+                    $this->line('  - CHIP Status: '.($payment->getChipStatus() ?? 'N/A'));
+                    $this->line('  - Payment Method: '.($payment->getChipPaymentMethod() ?? 'N/A'));
+                    $this->line('  - Data stored at: '.($payment->getChipInfo('stored_at') ?? 'N/A'));
+
                     if ($payment->getChipInfo('client.email')) {
-                        $this->line("  - Client Email: " . $payment->getChipInfo('client.email'));
+                        $this->line('  - Client Email: '.$payment->getChipInfo('client.email'));
                     }
-                    
+
                     if ($payment->getChipInfo('purchase.total')) {
-                        $this->line("  - Purchase Total: " . $payment->getChipInfo('purchase.total'));
+                        $this->line('  - Purchase Total: '.$payment->getChipInfo('purchase.total'));
                     }
                 } else {
-                    $this->line("✗ No CHIP data found");
+                    $this->line('✗ No CHIP data found');
                 }
             } else {
-                $this->line("✗ Not a CHIP payment");
+                $this->line('✗ Not a CHIP payment');
             }
         }
 
-        $this->info("Test completed.");
+        $this->info('Test completed.');
     }
 }

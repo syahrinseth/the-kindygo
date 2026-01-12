@@ -2,13 +2,13 @@
 
 namespace Database\Factories;
 
+use App\Enums\ChildEnrolmentBilledEvery;
+use App\Enums\ChildEnrolmentStatus;
+use App\Enums\ChildEnrolmentType;
+use App\Models\Centre;
 use App\Models\Child;
 use App\Models\Product;
 use App\Models\Tenant;
-use App\Models\Centre;
-use App\Enums\ChildEnrolmentStatus;
-use App\Enums\ChildEnrolmentBilledEvery;
-use App\Enums\ChildEnrolmentType;
 use Illuminate\Database\Eloquent\Factories\Factory;
 
 /**
@@ -44,7 +44,7 @@ class ChildEnrolmentFactory extends Factory
      */
     public function active(): static
     {
-        return $this->state(fn(array $attributes) => [
+        return $this->state(fn (array $attributes) => [
             'status' => ChildEnrolmentStatus::ACTIVE,
         ]);
     }
@@ -54,7 +54,7 @@ class ChildEnrolmentFactory extends Factory
      */
     public function inactive(): static
     {
-        return $this->state(fn(array $attributes) => [
+        return $this->state(fn (array $attributes) => [
             'status' => ChildEnrolmentStatus::INACTIVE,
         ]);
     }
@@ -64,7 +64,7 @@ class ChildEnrolmentFactory extends Factory
      */
     public function fullTime(): static
     {
-        return $this->state(fn(array $attributes) => [
+        return $this->state(fn (array $attributes) => [
             'type' => ChildEnrolmentType::FULL_TIME,
         ]);
     }
@@ -74,7 +74,7 @@ class ChildEnrolmentFactory extends Factory
      */
     public function partTime(): static
     {
-        return $this->state(fn(array $attributes) => [
+        return $this->state(fn (array $attributes) => [
             'type' => ChildEnrolmentType::PART_TIME,
         ]);
     }
@@ -84,7 +84,7 @@ class ChildEnrolmentFactory extends Factory
      */
     public function monthly(): static
     {
-        return $this->state(fn(array $attributes) => [
+        return $this->state(fn (array $attributes) => [
             'billed_every' => ChildEnrolmentBilledEvery::MONTHLY,
         ]);
     }

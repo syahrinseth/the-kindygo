@@ -4,11 +4,8 @@ namespace App\Http\Controllers;
 
 use App\Models\TenantInvitation;
 use App\Models\User;
-use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Hash;
-use Illuminate\Support\Facades\URL;
 
 class TenantInvitationController extends Controller
 {
@@ -24,10 +21,10 @@ class TenantInvitationController extends Controller
         }
 
         // If user is not logged in and the invited email exists
-        if (!Auth::check()) {
+        if (! Auth::check()) {
             $user = User::where('email', $invitation->email)->first();
             $invitationUrl = route('tenant-invitations.accept', $token);
-            
+
             if ($user) {
                 return redirect()->route('login', ['redirect' => $invitationUrl])
                     ->with('info', 'Please log in to accept the invitation.')
@@ -47,6 +44,7 @@ class TenantInvitationController extends Controller
         if ($user->email !== $invitation->email) {
             $invitationUrl = route('tenant-invitations.accept', $token);
             Auth::logout();
+
             return redirect()->route('login', ['redirect' => $invitationUrl])
                 ->with('error', 'Please log in with the invited email address.')
                 ->withInput(['email' => $invitation->email]);
@@ -55,10 +53,10 @@ class TenantInvitationController extends Controller
         DB::transaction(function () use ($invitation, $user) {
             // Add user to tenant
             $invitation->tenant->addUser($user);
-            
+
             // Assign role
             $user->assignRole($invitation->role);
-            
+
             // Mark invitation as accepted
             $invitation->accept();
         });

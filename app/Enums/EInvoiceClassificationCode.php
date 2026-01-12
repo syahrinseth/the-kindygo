@@ -55,7 +55,7 @@ enum EInvoiceClassificationCode: string
      */
     public function getDescription(): string
     {
-        return match($this) {
+        return match ($this) {
             self::BREASTFEEDING_EQUIPMENT => 'Breastfeeding equipment',
             self::CHILD_CARE_CENTRES_AND_KINDERGARTENS_FEES => 'Child care centres and kindergartens fees',
             self::COMPUTER_SMARTPHONE_OR_TABLET => 'Computer, smartphone or tablet',
@@ -111,8 +111,9 @@ enum EInvoiceClassificationCode: string
     {
         $options = [];
         foreach (self::cases() as $case) {
-            $options[$case->value] = $case->value . ' - ' . $case->getDescription();
+            $options[$case->value] = $case->value.' - '.$case->getDescription();
         }
+
         return $options;
     }
 

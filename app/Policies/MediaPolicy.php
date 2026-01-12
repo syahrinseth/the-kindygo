@@ -12,21 +12,17 @@ class MediaPolicy
 
     /**
      * Determine whether the user can view the media.
-     *
-     * @param User $user
-     * @param Media $media
-     * @return bool
      */
     public function view(User $user, Media $media): bool
     {
         // Get the model that owns this media
         $model = $media->model;
-        
+
         // If the media doesn't have an associated model, deny access
-        if (!$model) {
+        if (! $model) {
             return false;
         }
-        
+
         // Check based on the model type
         switch (get_class($model)) {
             case 'App\Models\Child':
@@ -35,13 +31,9 @@ class MediaPolicy
                 return false;
         }
     }
-    
+
     /**
      * Determine if user can view child media.
-     *
-     * @param User $user
-     * @param $child
-     * @return bool
      */
     private function canViewChildMedia(User $user, $child): bool
     {
@@ -49,16 +41,16 @@ class MediaPolicy
         if ($user->hasRole('Admin')) {
             return true;
         }
-        
+
         // Check if user is associated with this child
         if ($child->users()->where('user_id', $user->id)->exists()) {
             return true;
         }
-        
+
         // Check if user has access through tenants
         $userTenantIds = $user->tenants()->pluck('tenant_id')->toArray();
         $childTenantIds = $child->tenants()->pluck('tenant_id')->toArray();
-        
-        return !empty(array_intersect($userTenantIds, $childTenantIds));
+
+        return ! empty(array_intersect($userTenantIds, $childTenantIds));
     }
 }

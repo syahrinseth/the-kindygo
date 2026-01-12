@@ -21,7 +21,7 @@ return new class extends Migration
             $table->string('office_postal_code')->nullable()->comment('Office postal code');
             $table->string('office_state_code')->nullable()->comment('Office state code');
             $table->timestamps();
-            
+
             // Add unique constraint to ensure one office info per user
             $table->unique('user_id');
         });

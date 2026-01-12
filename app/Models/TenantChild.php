@@ -16,14 +16,14 @@ class TenantChild extends Pivot
     protected $casts = [
         'status' => ChildStatus::class,
     ];
-    
+
     /**
      * Indicates if the model should be timestamped.
      *
      * @var bool
      */
     public $timestamps = true;
-    
+
     /**
      * Get the tenant that the child belongs to.
      */
@@ -31,7 +31,7 @@ class TenantChild extends Pivot
     {
         return $this->belongsTo(Tenant::class);
     }
-    
+
     /**
      * Get the child that belongs to the tenant.
      */
@@ -39,19 +39,20 @@ class TenantChild extends Pivot
     {
         return $this->belongsTo(Child::class);
     }
-    
+
     /**
      * Update the status of this relationship.
      *
-     * @param ChildStatus $status The new status
+     * @param  ChildStatus  $status  The new status
      * @return bool Whether the update was successful
      */
     public function updateStatus(ChildStatus $status): bool
     {
         $this->status = $status;
+
         return $this->save();
     }
-    
+
     /**
      * Set the status to active.
      *
@@ -61,7 +62,7 @@ class TenantChild extends Pivot
     {
         return $this->updateStatus(ChildStatus::ACTIVE);
     }
-    
+
     /**
      * Set the status to return.
      *
@@ -71,7 +72,7 @@ class TenantChild extends Pivot
     {
         return $this->updateStatus(ChildStatus::RETURN);
     }
-    
+
     /**
      * Set the status to alumni.
      *

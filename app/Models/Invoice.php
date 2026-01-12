@@ -2,21 +2,20 @@
 
 namespace App\Models;
 
-use Exception;
-use App\Services\EInvoiceSDKService;
-use Illuminate\Database\Eloquent\Collection;
-use Illuminate\Database\Eloquent\Relations\BelongsToMany;
-use Illuminate\Database\Eloquent\Relations\HasMany;
-use Illuminate\Database\Eloquent\Relations\HasManyThrough;
+use App\Enums\EInvoiceClassificationCode;
 use App\Enums\InvoiceStatus;
 use App\Enums\PaymentStatus;
 use App\Models\Scopes\TenantScope;
-use Illuminate\Support\Facades\Log;
-use Illuminate\Database\Eloquent\Model;
-use App\Enums\EInvoiceClassificationCode;
+use App\Services\EInvoiceSDKService;
+use Exception;
 use Illuminate\Database\Eloquent\Builder;
-use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\BelongsToMany;
+use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\HasManyThrough;
 use Illuminate\Support\Facades\Auth;
 
 class Invoice extends Model
@@ -64,8 +63,6 @@ class Invoice extends Model
 
     /**
      * Generate a unique invoice number using format: KG{centre_code}/{year}/{running_number}
-     *
-     * @return string
      */
     public function generateInvoiceNumber(): string
     {
@@ -92,17 +89,16 @@ class Invoice extends Model
     /**
      * Generate a preschool-friendly centre code.
      *
-     * @param Centre|null $centre
-     * @return string
+     * @param  Centre|null  $centre
      */
     private function generatePreschoolCentreCode($centre): string
     {
-        if (!$centre) {
+        if (! $centre) {
             return 'PS01'; // Default preschool code
         }
 
         // If centre has a dedicated code field, use it
-        if (!empty($centre->code)) {
+        if (! empty($centre->code)) {
             return strtoupper($centre->code);
         }
 
@@ -153,7 +149,7 @@ class Invoice extends Model
         $suffix = '';
         foreach ($words as $word) {
             $word = strtoupper($word);
-            if (strlen($word) >= 2 && !in_array(strtolower($word), array_keys($preschoolKeywords))) {
+            if (strlen($word) >= 2 && ! in_array(strtolower($word), array_keys($preschoolKeywords))) {
                 $suffix .= substr($word, 0, 2);
                 if (strlen($suffix) >= 4) {
                     break;
@@ -165,7 +161,7 @@ class Invoice extends Model
         if (strlen($suffix) < 2) {
             $suffix = '';
             foreach ($words as $word) {
-                if (!empty($word) && !in_array(strtolower($word), array_keys($preschoolKeywords))) {
+                if (! empty($word) && ! in_array(strtolower($word), array_keys($preschoolKeywords))) {
                     $suffix .= strtoupper($word[0]);
                     if (strlen($suffix) >= 3) {
                         break;
@@ -181,15 +177,12 @@ class Invoice extends Model
             $suffix = substr($suffix, 0, 3); // Limit to 3 characters
         }
 
-        return $prefix . $suffix;
+        return $prefix.$suffix;
     }
 
     /**
      * Get the next sequential number for invoice generation.
      * Numbers are unique based on tenant_id, centre_id, and year.
-     *
-     * @param string $year
-     * @return int
      */
     private function getNextSequentialNumber(string $year): int
     {
@@ -200,14 +193,14 @@ class Invoice extends Model
             ->orderBy('created_at', 'desc')
             ->first();
 
-        if (!$lastInvoice) {
+        if (! $lastInvoice) {
             return 1;
         }
 
         // Extract number from the last invoice using the new format #{CODE}/{YEAR}/{NUMBER}
         preg_match('/[A-Z0-9]+\/\d{4}\/(\d+)$/', $lastInvoice->number, $matches);
 
-        $lastNumber = isset($matches[1]) ? (int)$matches[1] : 0;
+        $lastNumber = isset($matches[1]) ? (int) $matches[1] : 0;
 
         return $lastNumber + 1;
     }
@@ -230,8 +223,6 @@ class Invoice extends Model
 
     /**
      * Get the tenant that owns the invoice.
-     *
-     * @return BelongsTo
      */
     public function tenant(): BelongsTo
     {
@@ -240,8 +231,6 @@ class Invoice extends Model
 
     /**
      * Get the centre that owns the invoice.
-     *
-     * @return BelongsTo
      */
     public function centre(): BelongsTo
     {
@@ -250,8 +239,6 @@ class Invoice extends Model
 
     /**
      * Get the user that owns the invoice.
-     *
-     * @return BelongsTo
      */
     public function user(): BelongsTo
     {
@@ -260,8 +247,6 @@ class Invoice extends Model
 
     /**
      * Get the child that owns the invoice.
-     *
-     * @return BelongsTo
      */
     public function child(): BelongsTo
     {
@@ -296,8 +281,6 @@ class Invoice extends Model
 
     /**
      * Check if the invoice is paid.
-     *
-     * @return bool
      */
     public function isPaid(): bool
     {
@@ -306,8 +289,6 @@ class Invoice extends Model
 
     /**
      * Check if the invoice is overdue.
-     *
-     * @return bool
      */
     public function isOverdue(): bool
     {
@@ -318,7 +299,7 @@ class Invoice extends Model
     /**
      * Scope a query to only include invoices for a specific tenant.
      *
-     * @param Builder $query
+     * @param  Builder  $query
      * @param  int  $tenantId
      * @return Builder
      */
@@ -330,7 +311,7 @@ class Invoice extends Model
     /**
      * Scope a query to only include invoices for a specific centre.
      *
-     * @param Builder $query
+     * @param  Builder  $query
      * @param  int  $centreId
      * @return Builder
      */
@@ -342,7 +323,7 @@ class Invoice extends Model
     /**
      * Scope a query to only include overdue invoices.
      *
-     * @param Builder $query
+     * @param  Builder  $query
      * @return Builder
      */
     public function scopeOverdue($query)
@@ -359,8 +340,7 @@ class Invoice extends Model
     /**
      * Scope a query to only include invoices with a specific status.
      *
-     * @param Builder $query
-     * @param InvoiceStatus $status
+     * @param  Builder  $query
      * @return Builder
      */
     public function scopeWithStatus($query, InvoiceStatus $status)
@@ -371,16 +351,15 @@ class Invoice extends Model
     /**
      * Scope a query to filter invoices based on current user's role and permissions.
      *
-     * @param Builder $query
-     * @param User|null $user
+     * @param  Builder  $query
+     * @param  User|null  $user
      * @return Builder
      */
     public function scopeForCurrentUser($query)
     {
         $user = Auth::user();
 
-
-        if (!$user || !$user->current_tenant_id) {
+        if (! $user || ! $user->current_tenant_id) {
             return $query->whereRaw('1 = 0'); // Return empty result if no user or tenant
         }
 
@@ -409,8 +388,6 @@ class Invoice extends Model
     /**
      * Update the status based on the due date.
      * This is useful for automatically marking invoices as overdue.
-     *
-     * @return void
      */
     public function updateStatusBasedOnDueDate(): void
     {
@@ -438,21 +415,20 @@ class Invoice extends Model
     /**
      * Format a monetary amount for display.
      *
-     * @param int $amount The amount in cents
-     * @param bool $includeCurrency Whether to include the currency symbol
-     * @return string
+     * @param  int  $amount  The amount in cents
+     * @param  bool  $includeCurrency  Whether to include the currency symbol
      */
     public static function formatMoney(int $amount, bool $includeCurrency = true): string
     {
         $formatted = number_format($amount / 100, 2);
-        return $includeCurrency ? '$' . $formatted : $formatted;
+
+        return $includeCurrency ? '$'.$formatted : $formatted;
     }
 
     /**
      * Get the formatted total amount.
      *
-     * @param bool $includeCurrency Whether to include the currency symbol
-     * @return string
+     * @param  bool  $includeCurrency  Whether to include the currency symbol
      */
     public function getFormattedTotal(bool $includeCurrency = true): string
     {
@@ -528,8 +504,6 @@ class Invoice extends Model
     /**
      * Calculate totals based on invoice items and update the invoice.
      * Discount is now applied per unit and multiplied by quantity.
-     *
-     * @return void
      */
     public function calculateAndUpdateTotals(): void
     {
@@ -556,8 +530,6 @@ class Invoice extends Model
     /**
      * Recalculate totals from invoice items.
      * Discount is now applied per unit and multiplied by quantity.
-     *
-     * @return array
      */
     public function recalculateTotals(): array
     {
@@ -582,8 +554,6 @@ class Invoice extends Model
 
     /**
      * Get the total amount paid for this invoice (only from 'paid' payments).
-     *
-     * @return int
      */
     public function getTotalPaid(): int
     {
@@ -594,8 +564,6 @@ class Invoice extends Model
 
     /**
      * Get the remaining balance for this invoice.
-     *
-     * @return int
      */
     public function getRemainingBalance(): int
     {
@@ -604,8 +572,6 @@ class Invoice extends Model
 
     /**
      * Get the balance attribute (alias for getRemainingBalance for Filament usage).
-     *
-     * @return int
      */
     public function getBalanceAttribute(): int
     {
@@ -629,7 +595,6 @@ class Invoice extends Model
     /**
      * Submit invoice to LHDN e-Invoice system.
      *
-     * @return array
      * @throws Exception
      */
     public function submitToEInvoice(): array
@@ -656,7 +621,7 @@ class Invoice extends Model
         try {
             $response = $eInvoiceService->submitInvoice($invoiceData);
         } catch (Exception $e) {
-            throw new Exception('Failed to submit invoice to e-Invoice system: ' . $e->getMessage());
+            throw new Exception('Failed to submit invoice to e-Invoice system: '.$e->getMessage());
         }
 
         // Update invoice with e-Invoice details
@@ -673,8 +638,6 @@ class Invoice extends Model
 
     /**
      * Convert invoice to e-Invoice format (UBL 2.1 format).
-     *
-     * @return array
      */
     public function toEInvoiceFormat(): array
     {
@@ -689,7 +652,7 @@ class Invoice extends Model
                 'DueDate' => $this->due_at->format('Y-m-d'),
                 'InvoiceTypeCode' => [
                     '_' => config('einvoice.invoice_types.standard', '01'),
-                    'listVersionID' => '1.0'
+                    'listVersionID' => '1.0',
                 ],
                 'DocumentCurrencyCode' => config('einvoice.default_currency', 'MYR'),
                 'AccountingSupplierParty' => $this->getSupplierPartyData(),
@@ -698,25 +661,23 @@ class Invoice extends Model
                 'LegalMonetaryTotal' => [
                     'TaxExclusiveAmount' => [
                         '_' => number_format($this->total_amount / 100, 2, '.', ''),
-                        'currencyID' => config('einvoice.default_currency', 'MYR')
+                        'currencyID' => config('einvoice.default_currency', 'MYR'),
                     ],
                     'TaxInclusiveAmount' => [
                         '_' => number_format($this->total / 100, 2, '.', ''),
-                        'currencyID' => config('einvoice.default_currency', 'MYR')
+                        'currencyID' => config('einvoice.default_currency', 'MYR'),
                     ],
                     'PayableAmount' => [
                         '_' => number_format($this->total / 100, 2, '.', ''),
-                        'currencyID' => config('einvoice.default_currency', 'MYR')
-                    ]
-                ]
-            ]
+                        'currencyID' => config('einvoice.default_currency', 'MYR'),
+                    ],
+                ],
+            ],
         ];
     }
 
     /**
      * Get supplier party data for e-Invoice.
-     *
-     * @return array
      */
     private function getSupplierPartyData(): array
     {
@@ -727,40 +688,40 @@ class Invoice extends Model
             'Party' => [
                 'IndustryClassificationCode' => [
                     'ID' => config('einvoice.supplier_business_activity_code', '85100'),
-                    'Description' => config('einvoice.supplier_business_activity_description', 'Child day-care activities')
+                    'Description' => config('einvoice.supplier_business_activity_description', 'Child day-care activities'),
                 ],
                 'PartyIdentification' => $this->getTenantPartyIdentification($tenant),
                 'PartyName' => [
-                    'Name' => $tenant->name
+                    'Name' => $tenant->name,
                 ],
                 'PostalAddress' => [
                     'CityName' => $tenant->city,
                     'PostalZone' => $tenant->postal_code,
                     'CountrySubentityCode' => $tenant->state_code,
                     'AddressLine' => [
-                        'Line' => ($tenant->address_1) .
-                            ($tenant->address_2 ? ', ' . $tenant->address_2 : '')
+                        'Line' => ($tenant->address_1).
+                            ($tenant->address_2 ? ', '.$tenant->address_2 : ''),
                     ],
                     'Country' => [
                         'IdentificationCode' => [
                             '_' => $tenant->country,
                             'listID' => 'ISO3166-1',
-                            'listAgencyID' => '6'
-                        ]
-                    ]
+                            'listAgencyID' => '6',
+                        ],
+                    ],
                 ],
                 'PartyTaxScheme' => [
                     'CompanyID' => [
                         '_' => $tenant->tax_identification_number,
-                        'schemeID' => 'TIN'
+                        'schemeID' => 'TIN',
                     ],
                     'TaxScheme' => [
                         'ID' => [
                             '_' => 'OTH',
                             'schemeID' => 'UN/ECE 5153',
-                            'schemeAgencyID' => '6'
-                        ]
-                    ]
+                            'schemeAgencyID' => '6',
+                        ],
+                    ],
                 ],
                 'PartyLegalEntity' => [
                     'RegistrationName' => $tenant->name,
@@ -771,16 +732,14 @@ class Invoice extends Model
                 ],
                 'Contact' => [
                     'Telephone' => $tenant->phone ?? config('einvoice.supplier_phone', '+60123456789'),
-                    'ElectronicMail' => $tenant->email ?? config('einvoice.supplier_email', 'info@kindygo.com')
-                ]
-            ]
+                    'ElectronicMail' => $tenant->email ?? config('einvoice.supplier_email', 'info@kindygo.com'),
+                ],
+            ],
         ];
     }
 
     /**
      * Get customer party data for e-Invoice.
-     *
-     * @return array
      */
     private function getCustomerPartyData(): array
     {
@@ -792,55 +751,55 @@ class Invoice extends Model
                     [
                         'ID' => [
                             '_' => $user->getEInvoiceTIN(),
-                            'schemeID' => 'TIN'
-                        ]
+                            'schemeID' => 'TIN',
+                        ],
                     ],
                     [
                         'ID' => [
                             '_' => $user->getEInvoiceIdentification(),
-                            'schemeID' => $user->getEInvoiceSchemeId()
-                        ]
-                    ]
+                            'schemeID' => $user->getEInvoiceSchemeId(),
+                        ],
+                    ],
                 ],
                 'PartyName' => [
-                    'Name' => $user->name
+                    'Name' => $user->name,
                 ],
                 'PostalAddress' => [
                     'CityName' => $user->userAddress?->city ?? config('einvoice.default_city', 'Kuala Lumpur'),
                     'PostalZone' => $user->userAddress?->postal_code ?? config('einvoice.default_postal_code', '50000'),
                     'CountrySubentityCode' => $user->userAddress?->state_code ?? config('einvoice.default_state_code', '14'),
                     'AddressLine' => [
-                        'Line' => $user->userAddress?->address ?? 'Address not provided'
+                        'Line' => $user->userAddress?->address ?? 'Address not provided',
                     ],
                     'Country' => [
                         'IdentificationCode' => [
                             '_' => config('einvoice.default_country_code', 'MYS'),
                             'listID' => 'ISO3166-1',
-                            'listAgencyID' => '6'
-                        ]
-                    ]
+                            'listAgencyID' => '6',
+                        ],
+                    ],
                 ],
                 'PartyLegalEntity' => [
-                    'RegistrationName' => $user->name
+                    'RegistrationName' => $user->name,
                 ],
                 'PartyTaxScheme' => [
                     'CompanyID' => [
                         '_' => $user->getEInvoiceIdentification(),
-                        'schemeID' => $user->getEInvoiceSchemeId()
+                        'schemeID' => $user->getEInvoiceSchemeId(),
                     ],
                     'TaxScheme' => [
                         'ID' => [
                             '_' => 'OTH',
                             'schemeID' => 'UN/ECE 5153',
-                            'schemeAgencyID' => '6'
-                        ]
-                    ]
+                            'schemeAgencyID' => '6',
+                        ],
+                    ],
                 ],
                 'Contact' => [
                     'Telephone' => $user->profile?->phone ?? $user->phone ?? '+60123456789',
-                    'ElectronicMail' => $user->email ?? 'noemail@example.com'
-                ]
-            ]
+                    'ElectronicMail' => $user->email ?? 'noemail@example.com',
+                ],
+            ],
         ];
     }
 
@@ -848,8 +807,6 @@ class Invoice extends Model
      * Get invoice lines for e-Invoice.
      * This creates a single line item for childcare services.
      * You can expand this to handle multiple line items if needed.
-     *
-     * @return array
      */
     private function getInvoiceLines(): array
     {
@@ -858,19 +815,19 @@ class Invoice extends Model
                 'ID' => '1',
                 'InvoicedQuantity' => [
                     '_' => '1',
-                    'unitCode' => config('einvoice.unit_codes.service', 'C62')
+                    'unitCode' => config('einvoice.unit_codes.service', 'C62'),
                 ],
                 'LineExtensionAmount' => [
                     '_' => number_format($this->total_amount / 100, 2, '.', ''),
-                    'currencyID' => config('einvoice.default_currency', 'MYR')
+                    'currencyID' => config('einvoice.default_currency', 'MYR'),
                 ],
                 'Item' => [
-                    'Description' => 'Childcare Services - ' . ($this->centre->name ?? 'KindyGo Services'),
+                    'Description' => 'Childcare Services - '.($this->centre->name ?? 'KindyGo Services'),
                     'CommodityClassification' => [
                         'ItemClassificationCode' => [
                             '_' => EInvoiceClassificationCode::CHILD_CARE_CENTRES_AND_KINDERGARTENS_FEES->value, // Child day-care activities
-                            'listID' => 'CLASS'
-                        ]
+                            'listID' => 'CLASS',
+                        ],
                     ],
                     'ClassifiedTaxCategory' => [
                         'ID' => config('einvoice.tax_categories.exempt', 'E'), // Exempt from tax
@@ -878,41 +835,37 @@ class Invoice extends Model
                             'ID' => [
                                 '_' => 'OTH',
                                 'schemeID' => 'UN/ECE 5153',
-                                'schemeAgencyID' => '6'
-                            ]
-                        ]
-                    ]
+                                'schemeAgencyID' => '6',
+                            ],
+                        ],
+                    ],
                 ],
                 'Price' => [
                     'PriceAmount' => [
                         '_' => number_format($this->total_amount / 100, 2, '.', ''),
-                        'currencyID' => config('einvoice.default_currency', 'MYR')
-                    ]
+                        'currencyID' => config('einvoice.default_currency', 'MYR'),
+                    ],
                 ],
                 'ItemPriceExtension' => [
                     'Amount' => [
                         '_' => number_format($this->total_amount / 100, 2, '.', ''),
-                        'currencyID' => config('einvoice.default_currency', 'MYR')
-                    ]
-                ]
-            ]
+                        'currencyID' => config('einvoice.default_currency', 'MYR'),
+                    ],
+                ],
+            ],
         ];
     }
 
     /**
      * Check if invoice is submitted to e-Invoice system.
-     *
-     * @return bool
      */
     public function isEInvoiceSubmitted(): bool
     {
-        return !empty($this->einvoice_uuid);
+        return ! empty($this->einvoice_uuid);
     }
 
     /**
      * Get e-Invoice validation URL.
-     *
-     * @return string|null
      */
     public function getEInvoiceValidationUrl(): ?string
     {
@@ -921,8 +874,6 @@ class Invoice extends Model
 
     /**
      * Get e-Invoice status with human-readable description.
-     *
-     * @return array
      */
     public function getEInvoiceStatus(): array
     {
@@ -933,27 +884,25 @@ class Invoice extends Model
             'valid' => 'Validated by LHDN',
             'invalid' => 'Rejected by LHDN',
             'cancelled' => 'Cancelled',
-            'pending' => 'Pending Validation'
+            'pending' => 'Pending Validation',
         ];
 
         return [
             'status' => $status,
             'description' => $statusMap[$status] ?? 'Unknown Status',
             'submitted_at' => $this->einvoice_submitted_at?->format('Y-m-d H:i:s'),
-            'validation_url' => $this->einvoice_validation_url
+            'validation_url' => $this->einvoice_validation_url,
         ];
     }
 
     /**
      * Cancel the e-Invoice if it was submitted.
      *
-     * @param string $reason
-     * @return array
      * @throws Exception
      */
     public function cancelEInvoice(string $reason): array
     {
-        if (!$this->einvoice_uuid) {
+        if (! $this->einvoice_uuid) {
             throw new Exception('Invoice not submitted to e-Invoice system');
         }
 
@@ -967,7 +916,7 @@ class Invoice extends Model
 
         // Update invoice status
         $this->update([
-            'einvoice_status' => 'cancelled'
+            'einvoice_status' => 'cancelled',
         ]);
 
         return $response;
@@ -976,12 +925,11 @@ class Invoice extends Model
     /**
      * Refresh e-Invoice status from LHDN.
      *
-     * @return array
      * @throws Exception
      */
     public function refreshEInvoiceStatus(): array
     {
-        if (!$this->einvoice_uuid) {
+        if (! $this->einvoice_uuid) {
             throw new Exception('Invoice not submitted to e-Invoice system');
         }
 
@@ -996,7 +944,7 @@ class Invoice extends Model
         // Update invoice with latest status
         if (isset($response['status'])) {
             $this->update([
-                'einvoice_status' => $response['status']
+                'einvoice_status' => $response['status'],
             ]);
         }
 
@@ -1008,21 +956,21 @@ class Invoice extends Model
         $data = [];
         $tenant = $tenant ?? $this->tenant;
 
-        if (!empty($tenant->tax_identification_number)) {
+        if (! empty($tenant->tax_identification_number)) {
             $data[] = [
                 'ID' => [
                     '_' => $tenant->tax_identification_number,
-                    'schemeID' => 'TIN'
-                ]
+                    'schemeID' => 'TIN',
+                ],
             ];
         }
 
-        if (!empty($tenant->business_id_type) && !empty($tenant->business_id_value)) {
+        if (! empty($tenant->business_id_type) && ! empty($tenant->business_id_value)) {
             $data[] = [
                 'ID' => [
                     '_' => $tenant->business_id_value,
-                    'schemeID' => $tenant->business_id_type
-                ]
+                    'schemeID' => $tenant->business_id_type,
+                ],
             ];
         }
 

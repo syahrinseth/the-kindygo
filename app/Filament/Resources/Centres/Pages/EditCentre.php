@@ -2,9 +2,8 @@
 
 namespace App\Filament\Resources\Centres\Pages;
 
-use Filament\Actions\DeleteAction;
 use App\Filament\Resources\Centres\CentreResource;
-use Filament\Actions;
+use Filament\Actions\DeleteAction;
 use Filament\Resources\Pages\EditRecord;
 
 class EditCentre extends EditRecord

@@ -3,8 +3,8 @@
 namespace App\Filament\Widgets;
 
 use App\Filament\Pages\FinanceDashboard;
+use App\Filament\Resources\Invoices\InvoiceResource;
 use App\Models\Invoice;
-use App\Filament\Resources\Invoices\Invoices\InvoiceResource;
 use Filament\Actions\Action;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Table;
@@ -14,11 +14,11 @@ use Illuminate\Support\Facades\Auth;
 class UpcomingPaymentsWidget extends BaseWidget
 {
     protected static ?string $heading = 'Upcoming Payments';
-    
-    protected int | string | array $columnSpan = 'full';
-    
+
+    protected int|string|array $columnSpan = 'full';
+
     protected static ?int $sort = 1;
-    
+
     public static function canView(): bool
     {
         return Auth::user()->can('viewUpcomingPayments', FinanceDashboard::class);
@@ -48,9 +48,10 @@ class UpcomingPaymentsWidget extends BaseWidget
                     ->state(function (Invoice $record): string {
                         $daysUntilDue = now()->diffInDays($record->due_at, false);
                         if ($daysUntilDue < 0) {
-                            return 'Overdue ' . abs($daysUntilDue) . ' days';
+                            return 'Overdue '.abs($daysUntilDue).' days';
                         }
-                        return $daysUntilDue . ' days';
+
+                        return $daysUntilDue.' days';
                     })
                     ->label('Due In')
                     ->color(function (Invoice $record): string {
@@ -60,6 +61,7 @@ class UpcomingPaymentsWidget extends BaseWidget
                         } elseif ($daysUntilDue <= 3) {
                             return 'warning'; // Due soon
                         }
+
                         return 'success'; // Normal
                     }),
             ])

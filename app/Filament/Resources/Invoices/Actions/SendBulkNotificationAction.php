@@ -2,17 +2,17 @@
 
 namespace App\Filament\Resources\Invoices\Actions;
 
-use Exception;
-use Closure;
-use Illuminate\Support\Facades\Log;
 use App\Enums\InvoiceStatus;
 use App\Models\Invoice;
-use App\Notifications\InvoicePendingNotification;
 use App\Notifications\InvoiceOverdueNotification;
-use Filament\Notifications\Notification;
+use App\Notifications\InvoicePendingNotification;
+use Closure;
+use Exception;
 use Filament\Actions\BulkAction;
+use Filament\Notifications\Notification;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Log;
 
 class SendBulkNotificationAction
 {
@@ -37,7 +37,7 @@ class SendBulkNotificationAction
             ->deselectRecordsAfterCompletion()
             ->visible(function () {
                 $user = Auth::user();
-                
+
                 // Check if user can perform bulk operations on invoices
                 // We'll use the 'updateAny' permission which is typically used for bulk operations
                 try {
@@ -47,6 +47,7 @@ class SendBulkNotificationAction
                     if (method_exists($user, 'hasAnyRole')) {
                         return $user->hasAnyRole(['Super Admin', 'Admin', 'Principal']);
                     }
+
                     // Final fallback - check if user can view any invoices
                     return $user->can('viewAny', Invoice::class);
                 }
@@ -66,23 +67,25 @@ class SendBulkNotificationAction
             foreach ($records as $invoice) {
                 try {
                     // Skip if invoice is not pending or overdue
-                    if (!in_array($invoice->status, [InvoiceStatus::PENDING, InvoiceStatus::OVERDUE])) {
+                    if (! in_array($invoice->status, [InvoiceStatus::PENDING, InvoiceStatus::OVERDUE])) {
                         $skippedCount++;
+
                         continue;
                     }
 
                     // Check if user can update this specific invoice
-                    if (!Auth::user()->can('update', $invoice)) {
+                    if (! Auth::user()->can('update', $invoice)) {
                         $skippedCount++;
+
                         continue;
                     }
 
                     $isOverdue = $invoice->due_at->isPast();
-                    
+
                     if ($isOverdue) {
                         // Calculate days overdue
                         $daysOverdue = $invoice->due_at->diffInDays(now());
-                        
+
                         // Send overdue notification
                         $invoice->user->notify(new InvoiceOverdueNotification($invoice, $daysOverdue));
                     } else {
@@ -105,7 +108,7 @@ class SendBulkNotificationAction
 
                 } catch (Exception $e) {
                     $errorCount++;
-                    
+
                     Log::error('Failed to send bulk invoice notification', [
                         'invoice_id' => $invoice->id,
                         'error' => $e->getMessage(),

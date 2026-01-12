@@ -2,14 +2,14 @@
 
 namespace App\Filament\Resources\Campuses\Tables;
 
-use Filament\Tables\Table;
+use Filament\Actions\ActionGroup;
+use Filament\Actions\BulkActionGroup;
+use Filament\Actions\DeleteAction;
+use Filament\Actions\DeleteBulkAction;
 use Filament\Actions\EditAction;
 use Filament\Actions\ViewAction;
-use Filament\Actions\ActionGroup;
-use Filament\Actions\DeleteAction;
-use Filament\Actions\BulkActionGroup;
-use Filament\Actions\DeleteBulkAction;
 use Filament\Tables\Columns\TextColumn;
+use Filament\Tables\Table;
 
 class CampusesTable
 {
@@ -32,9 +32,10 @@ class CampusesTable
                         $parts = array_filter([
                             $record->address_1,
                             $record->address_2,
-                            $record->postal_code . ' ' . $record->city,
+                            $record->postal_code.' '.$record->city,
                             $record->state,
                         ]);
+
                         return implode(', ', $parts);
                     })
                     ->searchable(['address_1', 'address_2', 'postal_code', 'city', 'state'])

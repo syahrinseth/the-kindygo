@@ -4,9 +4,6 @@ namespace App\Filament\Pages\Tenancy;
 
 use App\Filament\Forms\TenantForm;
 use App\Models\Tenant;
-use App\Models\Website;
-use Filament\Forms\Components\TextInput;
-use Filament\Forms\Components\Toggle;
 use Filament\Pages\Tenancy\RegisterTenant;
 use Filament\Schemas\Schema;
 use Illuminate\Support\Facades\Auth;

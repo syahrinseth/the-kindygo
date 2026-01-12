@@ -2,46 +2,37 @@
 
 namespace App\Filament\Resources\Users;
 
-use UnitEnum;
-use BackedEnum;
-use Filament\Forms;
-use App\Models\User;
-use Filament\Tables;
-use Filament\Actions;
-use Filament\Tables\Table;
-use Filament\Schemas\Schema;
 use App\Filament\Forms\UserForm;
+use App\Filament\Resources\Users\Actions\InviteUserToTenantAction;
+use App\Filament\Resources\Users\Pages\CreateUser;
+use App\Filament\Resources\Users\Pages\EditUser;
+use App\Filament\Resources\Users\Pages\ListUsers;
+use App\Filament\Resources\Users\RelationManagers\InvoicesRelationManager;
+use App\Models\User;
+use Filament\Actions\ActionGroup;
+use Filament\Actions\BulkActionGroup;
+use Filament\Actions\DeleteAction;
+use Filament\Actions\DeleteBulkAction;
 use Filament\Actions\EditAction;
 use Filament\Actions\ViewAction;
 use Filament\Resources\Resource;
-use Filament\Actions\ActionGroup;
-use Filament\Actions\DeleteAction;
-use Filament\Tables\Filters\Filter;
-use Illuminate\Support\Facades\Auth;
-use Filament\Actions\BulkActionGroup;
-use Filament\Actions\DeleteBulkAction;
+use Filament\Schemas\Schema;
 use Filament\Tables\Columns\IconColumn;
-use Filament\Tables\Columns\TextColumn;
-use Filament\Tables\Filters\SelectFilter;
-use Illuminate\Database\Eloquent\Builder;
-use App\Filament\Resources\UserResource\Pages;
-use App\Models\Scopes\BelongsToManyTenantScope;
-use App\Filament\Resources\Users\Pages\EditUser;
-use App\Filament\Resources\Users\Pages\ListUsers;
-use App\Filament\Resources\Users\Pages\CreateUser;
-use Illuminate\Database\Eloquent\SoftDeletingScope;
-use App\Filament\Resources\UserResource\RelationManagers;
 use Filament\Tables\Columns\SpatieMediaLibraryImageColumn;
-use App\Filament\Resources\Users\Actions\InviteUserToTenantAction;
-use App\Filament\Resources\Users\RelationManagers\InvoicesRelationManager;
+use Filament\Tables\Columns\TextColumn;
+use Filament\Tables\Filters\Filter;
+use Filament\Tables\Filters\SelectFilter;
+use Filament\Tables\Table;
+use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Support\Facades\Auth;
 
 class UserResource extends Resource
 {
     protected static ?string $model = User::class;
 
-    protected static string | \BackedEnum | null $navigationIcon = 'heroicon-o-users';
+    protected static string|\BackedEnum|null $navigationIcon = 'heroicon-o-users';
 
-    protected static string | \UnitEnum | null $navigationGroup = 'User Management';
+    protected static string|\UnitEnum|null $navigationGroup = 'User Management';
 
     protected static ?string $tenantOwnershipRelationshipName = 'tenants';
 
@@ -130,10 +121,10 @@ class UserResource extends Resource
                     ->toggleable(isToggledHiddenByDefault: true)
                     ->placeholder('Not set')
                     ->formatStateUsing(function (?string $state): string {
-                        return $state ? '***' . substr($state, -4) : 'Not set';
+                        return $state ? '***'.substr($state, -4) : 'Not set';
                     })
                     ->tooltip(function (?string $state): string {
-                        return $state ? 'TIN: ' . $state : 'TIN not provided';
+                        return $state ? 'TIN: '.$state : 'TIN not provided';
                     }),
                 TextColumn::make('profile.phone')
                     ->label('Phone')
@@ -161,7 +152,8 @@ class UserResource extends Resource
                         }
 
                         $missing = $record->getEInvoiceMissingRequirements();
-                        return 'Missing: ' . implode(', ', $missing);
+
+                        return 'Missing: '.implode(', ', $missing);
                     })
                     ->toggleable(),
                 TextColumn::make('created_at')
@@ -184,26 +176,22 @@ class UserResource extends Resource
                     ->preload(),
                 Filter::make('einvoice_ready')
                     ->label('E-Invoice Ready')
-                    ->query(fn (Builder $query): Builder =>
-                        $query->eInvoiceReady()
+                    ->query(fn (Builder $query): Builder => $query->eInvoiceReady()
                     )
                     ->toggle(),
                 Filter::make('missing_identification')
                     ->label('Missing ID (NRIC/Passport)')
-                    ->query(fn (Builder $query): Builder =>
-                        $query->missingIdentification()
+                    ->query(fn (Builder $query): Builder => $query->missingIdentification()
                     )
                     ->toggle(),
                 Filter::make('missing_tin')
                     ->label('Missing TIN')
-                    ->query(fn (Builder $query): Builder =>
-                        $query->missingTin()
+                    ->query(fn (Builder $query): Builder => $query->missingTin()
                     )
                     ->toggle(),
                 Filter::make('missing_address')
                     ->label('Missing Complete Address')
-                    ->query(fn (Builder $query): Builder =>
-                        $query->missingCompleteAddress()
+                    ->query(fn (Builder $query): Builder => $query->missingCompleteAddress()
                     )
                     ->toggle(),
             ])

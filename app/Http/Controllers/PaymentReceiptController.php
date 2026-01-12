@@ -4,14 +4,12 @@ namespace App\Http\Controllers;
 
 use App\Models\Payment;
 use App\Services\PaymentReceiptPdfService;
-use Illuminate\Http\Request;
-use Illuminate\Http\Response;
-use Illuminate\Support\Facades\Auth;
 use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
 
 class PaymentReceiptController extends Controller
 {
     use AuthorizesRequests;
+
     protected PaymentReceiptPdfService $pdfService;
 
     public function __construct(PaymentReceiptPdfService $pdfService)
@@ -22,7 +20,6 @@ class PaymentReceiptController extends Controller
     /**
      * Download payment receipt as PDF.
      *
-     * @param Payment $payment
      * @return mixed
      */
     public function downloadReceipt(Payment $payment)
@@ -36,7 +33,6 @@ class PaymentReceiptController extends Controller
     /**
      * Stream payment receipt as PDF.
      *
-     * @param Payment $payment
      * @return mixed
      */
     public function streamReceipt(Payment $payment)

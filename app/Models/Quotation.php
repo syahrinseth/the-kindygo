@@ -79,8 +79,6 @@ class Quotation extends Model
 
     /**
      * Generate a unique quotation number using format: QUO/{centre_code}/{year}/{running_number}
-     *
-     * @return string
      */
     public function generateQuotationNumber(): string
     {
@@ -106,17 +104,16 @@ class Quotation extends Model
     /**
      * Generate a preschool-friendly centre code.
      *
-     * @param Centre|null $centre
-     * @return string
+     * @param  Centre|null  $centre
      */
     private function generatePreschoolCentreCode($centre): string
     {
-        if (!$centre) {
+        if (! $centre) {
             return 'PS01'; // Default preschool code
         }
 
         // If centre has a dedicated code field, use it
-        if (!empty($centre->code)) {
+        if (! empty($centre->code)) {
             return strtoupper($centre->code);
         }
 
@@ -167,7 +164,7 @@ class Quotation extends Model
         $suffix = '';
         foreach ($words as $word) {
             $word = strtoupper($word);
-            if (strlen($word) >= 2 && !in_array(strtolower($word), array_keys($preschoolKeywords))) {
+            if (strlen($word) >= 2 && ! in_array(strtolower($word), array_keys($preschoolKeywords))) {
                 $suffix .= substr($word, 0, 2);
                 if (strlen($suffix) >= 4) {
                     break;
@@ -179,7 +176,7 @@ class Quotation extends Model
         if (strlen($suffix) < 2) {
             $suffix = '';
             foreach ($words as $word) {
-                if (!empty($word) && !in_array(strtolower($word), array_keys($preschoolKeywords))) {
+                if (! empty($word) && ! in_array(strtolower($word), array_keys($preschoolKeywords))) {
                     $suffix .= strtoupper($word[0]);
                     if (strlen($suffix) >= 3) {
                         break;
@@ -195,15 +192,12 @@ class Quotation extends Model
             $suffix = substr($suffix, 0, 3); // Limit to 3 characters
         }
 
-        return $prefix . $suffix;
+        return $prefix.$suffix;
     }
 
     /**
      * Get the next sequential number for quotation generation.
      * Numbers are unique based on tenant_id, centre_id, and year.
-     *
-     * @param string $year
-     * @return int
      */
     private function getNextSequentialNumber(string $year): int
     {
@@ -214,22 +208,20 @@ class Quotation extends Model
             ->orderBy('created_at', 'desc')
             ->first();
 
-        if (!$lastQuotation) {
+        if (! $lastQuotation) {
             return 1;
         }
 
         // Extract number from the last quotation using the format QUO{CODE}/{YEAR}/{NUMBER}
         preg_match('/[A-Z0-9]+\/\d{4}\/(\d+)$/', $lastQuotation->number, $matches);
 
-        $lastNumber = isset($matches[1]) ? (int)$matches[1] : 0;
+        $lastNumber = isset($matches[1]) ? (int) $matches[1] : 0;
 
         return $lastNumber + 1;
     }
 
     /**
      * Calculate and update the totals for this quotation.
-     *
-     * @return void
      */
     public function calculateAndUpdateTotals(): void
     {
@@ -245,8 +237,6 @@ class Quotation extends Model
 
     /**
      * Check if the quotation is expired.
-     *
-     * @return bool
      */
     public function isExpired(): bool
     {
@@ -255,8 +245,6 @@ class Quotation extends Model
 
     /**
      * Get the tenant that owns the quotation.
-     *
-     * @return BelongsTo
      */
     public function tenant(): BelongsTo
     {
@@ -265,8 +253,6 @@ class Quotation extends Model
 
     /**
      * Get the centre that owns the quotation.
-     *
-     * @return BelongsTo
      */
     public function centre(): BelongsTo
     {
@@ -275,8 +261,6 @@ class Quotation extends Model
 
     /**
      * Get the user that owns the quotation.
-     *
-     * @return BelongsTo
      */
     public function user(): BelongsTo
     {
@@ -285,8 +269,6 @@ class Quotation extends Model
 
     /**
      * Get the child that owns the quotation.
-     *
-     * @return BelongsTo
      */
     public function child(): BelongsTo
     {
@@ -295,8 +277,6 @@ class Quotation extends Model
 
     /**
      * Get the invoice this quotation was converted to.
-     *
-     * @return BelongsTo
      */
     public function convertedInvoice(): BelongsTo
     {
@@ -305,8 +285,6 @@ class Quotation extends Model
 
     /**
      * Get the quotation items for this quotation.
-     *
-     * @return HasMany
      */
     public function quotationItems(): HasMany
     {
@@ -315,8 +293,6 @@ class Quotation extends Model
 
     /**
      * Alias for quotationItems relationship.
-     *
-     * @return HasMany
      */
     public function items(): HasMany
     {
@@ -325,15 +301,12 @@ class Quotation extends Model
 
     /**
      * Scope a query to filter by current user role.
-     *
-     * @param Builder $query
-     * @return Builder
      */
     public function scopeForCurrentUser(Builder $query): Builder
     {
         $user = Auth::user();
 
-        if (!$user) {
+        if (! $user) {
             return $query->whereRaw('1 = 0');
         }
 
@@ -354,10 +327,6 @@ class Quotation extends Model
 
     /**
      * Scope a query to filter by tenant.
-     *
-     * @param Builder $query
-     * @param int $tenantId
-     * @return Builder
      */
     public function scopeForTenant(Builder $query, int $tenantId): Builder
     {
@@ -366,10 +335,6 @@ class Quotation extends Model
 
     /**
      * Scope a query to filter by centre.
-     *
-     * @param Builder $query
-     * @param int $centreId
-     * @return Builder
      */
     public function scopeForCentre(Builder $query, int $centreId): Builder
     {
@@ -378,10 +343,6 @@ class Quotation extends Model
 
     /**
      * Scope a query to filter by status.
-     *
-     * @param Builder $query
-     * @param QuotationStatus $status
-     * @return Builder
      */
     public function scopeWithStatus(Builder $query, QuotationStatus $status): Builder
     {
@@ -390,9 +351,6 @@ class Quotation extends Model
 
     /**
      * Scope a query to get expired quotations.
-     *
-     * @param Builder $query
-     * @return Builder
      */
     public function scopeExpired(Builder $query): Builder
     {

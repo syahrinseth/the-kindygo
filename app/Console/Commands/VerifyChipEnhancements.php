@@ -2,13 +2,13 @@
 
 namespace App\Console\Commands;
 
-use Exception;
-use App\Http\Controllers\ChipPaymentController;
-use ReflectionClass;
 use App\Enums\Gateway;
+use App\Http\Controllers\ChipPaymentController;
 use App\Models\Payment;
+use Exception;
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\Schema;
+use ReflectionClass;
 
 class VerifyChipEnhancements extends Command
 {
@@ -36,16 +36,16 @@ class VerifyChipEnhancements extends Command
 
         // Check if Payment model has the new methods
         $this->info('1. Checking Payment Model Methods...');
-        $payment = new Payment();
-        
+        $payment = new Payment;
+
         $methods = [
             'getNestedChipData',
-            'getChipPaymentMethod', 
+            'getChipPaymentMethod',
             'getChipStatus',
             'getChipClientEmail',
             'getChipTransactionId',
             'getChipBankName',
-            'getChipReference'
+            'getChipReference',
         ];
 
         foreach ($methods as $method) {
@@ -68,7 +68,7 @@ class VerifyChipEnhancements extends Command
                 $this->error('   ✗ gateway_payment_data column missing - run migration');
             }
         } catch (Exception $e) {
-            $this->error('   ✗ Database check failed: ' . $e->getMessage());
+            $this->error('   ✗ Database check failed: '.$e->getMessage());
         }
 
         $this->newLine();
@@ -95,9 +95,9 @@ class VerifyChipEnhancements extends Command
         // Check controller enhancements
         $this->info('4. Checking Controller Enhancements...');
         try {
-            $controller = new ChipPaymentController();
+            $controller = new ChipPaymentController;
             $reflection = new ReflectionClass($controller);
-            
+
             $methods = [
                 'fetchAndPrepareChipData',
                 'extractPaymentMethod',
@@ -107,7 +107,7 @@ class VerifyChipEnhancements extends Command
                 'extractClientName',
                 'extractTransactionId',
                 'extractBankName',
-                'extractFpxTransactionId'
+                'extractFpxTransactionId',
             ];
 
             foreach ($methods as $method) {
@@ -118,7 +118,7 @@ class VerifyChipEnhancements extends Command
                 }
             }
         } catch (Exception $e) {
-            $this->error('   ✗ Controller check failed: ' . $e->getMessage());
+            $this->error('   ✗ Controller check failed: '.$e->getMessage());
         }
 
         $this->newLine();
@@ -135,34 +135,34 @@ class VerifyChipEnhancements extends Command
                         'client_email' => 'test@example.com',
                         'transaction_id' => 'txn_123',
                         'bank_name' => 'Test Bank',
-                        'reference' => 'REF123'
+                        'reference' => 'REF123',
                     ],
                     'payment_method' => 'legacy_fpx', // Legacy fallback
-                    'status' => 'legacy_paid'
-                ]
+                    'status' => 'legacy_paid',
+                ],
             ]);
 
-            $this->info("   Payment Method (chip_data): " . ($mockPayment->getChipPaymentMethod() ?: 'N/A'));
-            $this->info("   Status (chip_data): " . ($mockPayment->getChipStatus() ?: 'N/A'));
-            $this->info("   Client Email: " . ($mockPayment->getChipClientEmail() ?: 'N/A'));
-            $this->info("   Transaction ID: " . ($mockPayment->getChipTransactionId() ?: 'N/A'));
-            $this->info("   Bank Name: " . ($mockPayment->getChipBankName() ?: 'N/A'));
-            $this->info("   Reference: " . ($mockPayment->getChipReference() ?: 'N/A'));
+            $this->info('   Payment Method (chip_data): '.($mockPayment->getChipPaymentMethod() ?: 'N/A'));
+            $this->info('   Status (chip_data): '.($mockPayment->getChipStatus() ?: 'N/A'));
+            $this->info('   Client Email: '.($mockPayment->getChipClientEmail() ?: 'N/A'));
+            $this->info('   Transaction ID: '.($mockPayment->getChipTransactionId() ?: 'N/A'));
+            $this->info('   Bank Name: '.($mockPayment->getChipBankName() ?: 'N/A'));
+            $this->info('   Reference: '.($mockPayment->getChipReference() ?: 'N/A'));
 
             // Test fallback behavior
             $legacyPayment = new Payment([
                 'gateway' => Gateway::CHIP,
                 'gateway_payment_data' => [
                     'payment_method' => 'legacy_card',
-                    'status' => 'legacy_pending'
-                ]
+                    'status' => 'legacy_pending',
+                ],
             ]);
 
-            $this->info("   Legacy Payment Method: " . ($legacyPayment->getChipPaymentMethod() ?: 'N/A'));
-            $this->info("   Legacy Status: " . ($legacyPayment->getChipStatus() ?: 'N/A'));
+            $this->info('   Legacy Payment Method: '.($legacyPayment->getChipPaymentMethod() ?: 'N/A'));
+            $this->info('   Legacy Status: '.($legacyPayment->getChipStatus() ?: 'N/A'));
 
         } catch (Exception $e) {
-            $this->error('   ✗ Helper method test failed: ' . $e->getMessage());
+            $this->error('   ✗ Helper method test failed: '.$e->getMessage());
         }
 
         $this->newLine();
@@ -171,18 +171,18 @@ class VerifyChipEnhancements extends Command
         $this->info('=== Verification Summary ===');
         if ($totalPayments > 0 && $chipPayments > 0) {
             if ($paymentsWithChipData < $chipPayments) {
-                $this->warn("Consider running: php artisan chip:populate-payment-data");
-                $this->warn("To enhance existing CHIP payments with the new structure.");
+                $this->warn('Consider running: php artisan chip:populate-payment-data');
+                $this->warn('To enhance existing CHIP payments with the new structure.');
             } else {
-                $this->info("✓ All CHIP payments have the enhanced data structure!");
+                $this->info('✓ All CHIP payments have the enhanced data structure!');
             }
         } else {
-            $this->info("ℹ No CHIP payments found. Structure ready for new payments.");
+            $this->info('ℹ No CHIP payments found. Structure ready for new payments.');
         }
 
         $this->newLine();
         $this->info('Enhancement verification completed!');
-        
+
         return 0;
     }
 }

@@ -1,9 +1,11 @@
 {
     "agents": [
         "codex",
-        "copilot"
+        "copilot",
+        "opencode"
     ],
     "editors": [
+        "opencode",
         "vscode"
     ],
     "guidelines": [

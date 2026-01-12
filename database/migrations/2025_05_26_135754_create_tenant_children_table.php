@@ -17,7 +17,7 @@ return new class extends Migration
             $table->foreignId('child_id')->constrained('children')->onDelete('cascade');
             $table->string('status')->default(\App\Enums\ChildStatus::NEW->value);
             $table->timestamps();
-            
+
             // Make sure a child can only be associated with a tenant once
             $table->unique(['tenant_id', 'child_id']);
         });

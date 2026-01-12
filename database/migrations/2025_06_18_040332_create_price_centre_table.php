@@ -16,10 +16,10 @@ return new class extends Migration
             $table->foreignId('product_price_id')->constrained('product_prices')->onDelete('cascade');
             $table->foreignId('centre_id')->constrained()->onDelete('cascade');
             $table->timestamps();
-            
+
             // Add unique constraint to prevent duplicate relationships
             $table->unique(['product_price_id', 'centre_id']);
-            
+
             // Add indexes for better performance
             $table->index('product_price_id');
             $table->index('centre_id');

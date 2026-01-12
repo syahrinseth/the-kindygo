@@ -2,20 +2,20 @@
 
 namespace App\Filament\Resources\ChildEnrolments;
 
-use Filament\Tables\Table;
-use Filament\Schemas\Schema;
-use App\Models\ChildEnrolment;
-use Filament\Resources\Resource;
-use Illuminate\Support\Facades\Auth;
-use App\Policies\ChildEnrolmentPolicy;
-use Illuminate\Database\Eloquent\Builder;
-use App\Filament\Resources\ChildEnrolments\Pages\EditChildEnrolment;
-use App\Filament\Resources\ChildEnrolments\Pages\ViewChildEnrolment;
-use App\Filament\Resources\ChildEnrolments\Pages\ListChildEnrolments;
 use App\Filament\Resources\ChildEnrolments\Pages\CreateChildEnrolment;
+use App\Filament\Resources\ChildEnrolments\Pages\EditChildEnrolment;
+use App\Filament\Resources\ChildEnrolments\Pages\ListChildEnrolments;
+use App\Filament\Resources\ChildEnrolments\Pages\ViewChildEnrolment;
+use App\Filament\Resources\ChildEnrolments\RelationManagers\InvoiceItemsRelationManager;
 use App\Filament\Resources\ChildEnrolments\Schemas\ChildEnrolmentForm;
 use App\Filament\Resources\ChildEnrolments\Tables\ChildEnrolmentsTable;
-use App\Filament\Resources\ChildEnrolments\RelationManagers\InvoiceItemsRelationManager;
+use App\Models\ChildEnrolment;
+use App\Policies\ChildEnrolmentPolicy;
+use Filament\Resources\Resource;
+use Filament\Schemas\Schema;
+use Filament\Tables\Table;
+use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Support\Facades\Auth;
 
 class ChildEnrolmentResource extends Resource
 {

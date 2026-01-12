@@ -40,8 +40,7 @@ class QuotationsTable
                     ->date('M d, Y')
                     ->sortable()
                     ->badge()
-                    ->color(fn (Quotation $record): string =>
-                        $record->isExpired() ? 'danger' : 'success'
+                    ->color(fn (Quotation $record): string => $record->isExpired() ? 'danger' : 'success'
                     ),
 
                 TextColumn::make('status')
@@ -82,8 +81,7 @@ class QuotationsTable
 
                 TextColumn::make('convertedInvoice.number')
                     ->label('Invoice')
-                    ->url(fn (Quotation $record): ?string =>
-                        $record->converted_invoice_id
+                    ->url(fn (Quotation $record): ?string => $record->converted_invoice_id
                             ? route('filament.app.resources.invoices.view', $record->converted_invoice_id)
                             : null
                     )
@@ -96,13 +94,12 @@ class QuotationsTable
                     ->multiple(),
 
                 Filter::make('expired')
-                    ->query(fn (Builder $query): Builder =>
-                        $query->where('valid_until', '<', now())
-                            ->whereNotIn('status', [
-                                QuotationStatus::CONVERTED->value,
-                                QuotationStatus::EXPIRED->value,
-                                QuotationStatus::REJECTED->value,
-                            ])
+                    ->query(fn (Builder $query): Builder => $query->where('valid_until', '<', now())
+                        ->whereNotIn('status', [
+                            QuotationStatus::CONVERTED->value,
+                            QuotationStatus::EXPIRED->value,
+                            QuotationStatus::REJECTED->value,
+                        ])
                     )
                     ->toggle(),
 
@@ -118,8 +115,7 @@ class QuotationsTable
                     Action::make('download_pdf')
                         ->label('Download PDF')
                         ->icon('heroicon-o-arrow-down-tray')
-                        ->url(fn (Quotation $record): string =>
-                            route('quotation.download-pdf', $record)
+                        ->url(fn (Quotation $record): string => route('quotation.download-pdf', $record)
                         )
                         ->openUrlInNewTab(),
 
@@ -128,8 +124,7 @@ class QuotationsTable
                     Action::make('convert_to_invoice')
                         ->label('Convert to Invoice')
                         ->icon('heroicon-o-document-text')
-                        ->visible(fn (Quotation $record): bool =>
-                            $record->status !== QuotationStatus::CONVERTED && !$record->isExpired()
+                        ->visible(fn (Quotation $record): bool => $record->status !== QuotationStatus::CONVERTED && ! $record->isExpired()
                         )
                         ->requiresConfirmation()
                         ->modalHeading('Convert Quotation to Invoice')
@@ -137,8 +132,7 @@ class QuotationsTable
                         ->form([
                             CheckboxList::make('selected_items')
                                 ->label('Items to Convert')
-                                ->options(fn (Quotation $record): array =>
-                                    $record->quotationItems->pluck('name', 'id')->toArray()
+                                ->options(fn (Quotation $record): array => $record->quotationItems->pluck('name', 'id')->toArray()
                                 )
                                 ->required()
                                 ->columns(1),
@@ -156,8 +150,7 @@ class QuotationsTable
                         }),
 
                     DeleteAction::make()
-                        ->visible(fn (Quotation $record): bool =>
-                            $record->status === QuotationStatus::DRAFT
+                        ->visible(fn (Quotation $record): bool => $record->status === QuotationStatus::DRAFT
                         ),
                 ])
                     ->label('Actions')

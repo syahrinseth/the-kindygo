@@ -8,7 +8,7 @@ use Illuminate\Support\Facades\Storage;
 use function Pest\Laravel\assertDatabaseHas;
 
 beforeEach(function () {
-    $this->action = new UpdateParentDetailsAction();
+    $this->action = new UpdateParentDetailsAction;
     $this->user = User::factory()->create();
 
     Storage::fake('public');

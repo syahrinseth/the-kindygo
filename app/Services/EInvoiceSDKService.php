@@ -2,24 +2,26 @@
 
 namespace App\Services;
 
+use App\Models\Tenant;
+use Carbon\Carbon;
+use DOMDocument;
+use DOMElement;
 use Exception;
 use GuzzleHttp\Client;
 use GuzzleHttp\Exception\ClientException;
-use DOMDocument;
 use GuzzleHttp\Exception\ConnectException;
 use GuzzleHttp\Exception\ServerException;
-use DOMElement;
-use Carbon\Carbon;
-use App\Models\Tenant;
 use Illuminate\Support\Facades\Log;
 use Klsheng\Myinvois\MyInvoisClient;
-use Klsheng\Myinvois\Helper\MyInvoisHelper;
 
 class EInvoiceSDKService
 {
     private MyInvoisClient $client;
+
     private ?string $accessToken = null;
+
     private $prodMode;
+
     private ?Tenant $tenant;
 
     public function __construct(Tenant $tenant)
@@ -43,8 +45,6 @@ class EInvoiceSDKService
     /**
      * Create a new instance for a specific tenant.
      *
-     * @param Tenant $tenant
-     * @return static
      * @throws Exception
      */
     public static function forTenant(Tenant $tenant): static
@@ -54,8 +54,6 @@ class EInvoiceSDKService
 
     /**
      * Get the current tenant.
-     *
-     * @return Tenant|null
      */
     public function getTenant(): ?Tenant
     {
@@ -65,14 +63,15 @@ class EInvoiceSDKService
     /**
      * Set the tenant for this service instance.
      *
-     * @param Tenant $tenant
      * @return $this
+     *
      * @throws Exception
      */
     public function setTenant(Tenant $tenant): self
     {
         $this->tenant = $tenant;
         $this->validateTenantEInvoiceData();
+
         return $this;
     }
 
@@ -83,7 +82,7 @@ class EInvoiceSDKService
      */
     private function validateTenantEInvoiceData(): void
     {
-        if (!$this->tenant) {
+        if (! $this->tenant) {
             throw new Exception('Tenant is required for e-Invoice operations');
         }
 
@@ -112,12 +111,12 @@ class EInvoiceSDKService
             $missingFields[] = 'E-Invoice Client Secret';
         }
 
-        if (!empty($missingFields)) {
-            throw new Exception('Tenant is missing required e-Invoice configuration: ' . implode(', ', $missingFields));
+        if (! empty($missingFields)) {
+            throw new Exception('Tenant is missing required e-Invoice configuration: '.implode(', ', $missingFields));
         }
 
         // Validate TIN format (basic validation)
-        if (!preg_match('/^[A-Z0-9]{10,20}$/', $this->tenant->tax_identification_number)) {
+        if (! preg_match('/^[A-Z0-9]{10,20}$/', $this->tenant->tax_identification_number)) {
             throw new Exception('Invalid TIN format. TIN should be 10-20 alphanumeric characters.');
         }
 
@@ -132,39 +131,38 @@ class EInvoiceSDKService
      */
     private function validateTenantBusinessId(): void
     {
-        if (!$this->tenant->business_id_type || !$this->tenant->business_id_value) {
+        if (! $this->tenant->business_id_type || ! $this->tenant->business_id_value) {
             return; // Already validated in validateTenantEInvoiceData
         }
 
         switch ($this->tenant->business_id_type) {
             case 'NRIC':
-                if (!preg_match('/^[0-9]{12}$/', $this->tenant->business_id_value)) {
+                if (! preg_match('/^[0-9]{12}$/', $this->tenant->business_id_value)) {
                     throw new Exception('Invalid NRIC format. NRIC must be exactly 12 digits without dashes.');
                 }
                 break;
             case 'BRN':
-                if (!preg_match('/^[0-9A-Z\-]{5,20}$/', $this->tenant->business_id_value)) {
+                if (! preg_match('/^[0-9A-Z\-]{5,20}$/', $this->tenant->business_id_value)) {
                     throw new Exception('Invalid BRN format. BRN should be 5-20 characters long.');
                 }
                 break;
             case 'PASSPORT':
-                if (!preg_match('/^[A-Z0-9]{5,15}$/', $this->tenant->business_id_value)) {
+                if (! preg_match('/^[A-Z0-9]{5,15}$/', $this->tenant->business_id_value)) {
                     throw new Exception('Invalid Passport format. Passport should be 5-15 alphanumeric characters.');
                 }
                 break;
-            // Add more validation for other ID types as needed
+                // Add more validation for other ID types as needed
         }
     }
 
     /**
      * Get tenant's TIN for e-Invoice operations.
      *
-     * @return string
      * @throws Exception
      */
     public function getTenantTIN(): string
     {
-        if (!$this->tenant || !$this->tenant->tax_identification_number) {
+        if (! $this->tenant || ! $this->tenant->tax_identification_number) {
             throw new Exception('Tenant TIN not configured');
         }
 
@@ -174,30 +172,28 @@ class EInvoiceSDKService
     /**
      * Get tenant's business ID type and value for LHDN validation.
      *
-     * @return array
      * @throws Exception
      */
     public function getTenantBusinessId(): array
     {
-        if (!$this->tenant || !$this->tenant->business_id_type || !$this->tenant->business_id_value) {
+        if (! $this->tenant || ! $this->tenant->business_id_type || ! $this->tenant->business_id_value) {
             throw new Exception('Tenant business ID not configured');
         }
 
         return [
             'type' => $this->tenant->business_id_type,
-            'value' => $this->tenant->business_id_value
+            'value' => $this->tenant->business_id_value,
         ];
     }
 
     /**
      * Get tenant's business information for supplier data in e-Invoice.
      *
-     * @return array
      * @throws Exception
      */
     public function getTenantSupplierData(): array
     {
-        if (!$this->tenant) {
+        if (! $this->tenant) {
             throw new Exception('Tenant not configured');
         }
 
@@ -223,7 +219,6 @@ class EInvoiceSDKService
     /**
      * Get access token by authenticating directly with LHDN API.
      *
-     * @return string
      * @throws Exception
      */
     private function getAccessToken(): string
@@ -241,28 +236,29 @@ class EInvoiceSDKService
             $clientId = $this->tenant?->getEInvoiceClientId() ?? config('einvoice.client_id');
             $clientSecret = $this->tenant?->getEInvoiceClientSecret() ?? config('einvoice.client_secret');
 
-            $guzzle = new Client();
+            $guzzle = new Client;
             $response = $guzzle->post($tokenUrl, [
                 'form_params' => [
                     'grant_type' => 'client_credentials',
                     'client_id' => $clientId,
                     'client_secret' => $clientSecret,
-                    'scope' => 'InvoicingAPI'
+                    'scope' => 'InvoicingAPI',
                 ],
                 'headers' => [
                     'Content-Type' => 'application/x-www-form-urlencoded',
-                    'onbehalfof' => $this->tenant->tax_identification_number
-                ]
+                    'onbehalfof' => $this->tenant->tax_identification_number,
+                ],
             ]);
 
             $body = $response->getBody()->getContents();
             $data = json_decode($body, true);
 
-            if (!isset($data['access_token'])) {
+            if (! isset($data['access_token'])) {
                 throw new Exception('Failed to get access token from LHDN API');
             }
 
             $this->accessToken = $data['access_token'];
+
             return $this->accessToken;
 
         } catch (ClientException $e) {
@@ -280,8 +276,6 @@ class EInvoiceSDKService
     /**
      * Submit invoice to LHDN e-Invoice API using the official SDK.
      *
-     * @param array $invoiceData
-     * @return array
      * @throws Exception
      */
     public function submitInvoice(array $invoiceData): array
@@ -293,8 +287,8 @@ class EInvoiceSDKService
                 'tenant_name' => $this->tenant->name ?? 'unknown',
                 'client_id' => $this->tenant?->getEInvoiceClientId() ?? config('einvoice.client_id'),
                 'environment' => $this->tenant?->getEInvoiceEnvironment() ?? config('einvoice.environment'),
-                'has_client_secret' => !empty($this->tenant?->getEInvoiceClientSecret() ?? config('einvoice.client_secret')),
-                'using_tenant_credentials' => $this->tenant?->hasEInvoiceCredentials() ?? false
+                'has_client_secret' => ! empty($this->tenant?->getEInvoiceClientSecret() ?? config('einvoice.client_secret')),
+                'using_tenant_credentials' => $this->tenant?->hasEInvoiceCredentials() ?? false,
             ]);
 
             // Extract and validate supplier TIN
@@ -312,7 +306,7 @@ class EInvoiceSDKService
             $ublXml = $this->convertToUBLXml($invoiceData);
 
             // Log a portion of the generated XML for debugging
-            $dom = new DOMDocument();
+            $dom = new DOMDocument;
             $dom->loadXML($ublXml);
             $dom->formatOutput = true;
             $formattedXml = $dom->saveXML();
@@ -320,7 +314,7 @@ class EInvoiceSDKService
             // Extract supplier information from XML for verification
             if (preg_match('/<cac:AccountingSupplierParty>.*?<\/cac:AccountingSupplierParty>/s', $formattedXml, $supplierMatches)) {
                 Log::info('E-Invoice XML supplier section', [
-                    'supplier_xml' => $supplierMatches[0]
+                    'supplier_xml' => $supplierMatches[0],
                 ]);
             }
 
@@ -332,7 +326,7 @@ class EInvoiceSDKService
 
             Log::info('E-Invoice submission response for tenant', [
                 'tenant_id' => $this->tenant->id ?? 'unknown',
-                'response' => $response
+                'response' => $response,
             ]);
 
             // Check for different types of errors in response
@@ -340,7 +334,7 @@ class EInvoiceSDKService
                 $error = $response['error'];
                 Log::error('E-Invoice API error', [
                     'error' => $error,
-                    'invoice_id' => $invoiceData['Invoice']['ID'] ?? 'unknown'
+                    'invoice_id' => $invoiceData['Invoice']['ID'] ?? 'unknown',
                 ]);
 
                 // Format error message based on error type
@@ -349,25 +343,25 @@ class EInvoiceSDKService
             }
 
             // Check for submission errors (when submission fails)
-            if (isset($response['rejectedDocuments']) && !empty($response['rejectedDocuments'])) {
+            if (isset($response['rejectedDocuments']) && ! empty($response['rejectedDocuments'])) {
                 $rejectedDoc = $response['rejectedDocuments'][0];
                 Log::error('E-Invoice document rejected', [
                     'rejected_document' => $rejectedDoc,
-                    'invoice_id' => $invoiceData['Invoice']['ID'] ?? 'unknown'
+                    'invoice_id' => $invoiceData['Invoice']['ID'] ?? 'unknown',
                 ]);
 
                 $errorMessage = "Invoice was rejected by LHDN:\n";
                 if (isset($rejectedDoc['error'])) {
                     $errorMessage .= $this->formatValidationError($rejectedDoc['error']);
                 } else {
-                    $errorMessage .= "Document rejected for unknown reasons. Please check the invoice data.";
+                    $errorMessage .= 'Document rejected for unknown reasons. Please check the invoice data.';
                 }
                 throw new Exception($errorMessage);
             }
 
-            if (!$response || !isset($response['submissionUid'])) {
+            if (! $response || ! isset($response['submissionUid'])) {
                 Log::error('E-Invoice submission failed using direct API', [
-                    'response' => $response
+                    'response' => $response,
                 ]);
                 throw new Exception('Failed to submit invoice: Invalid response from LHDN');
             }
@@ -376,10 +370,9 @@ class EInvoiceSDKService
 
         } catch (ConnectException $e) {
             Log::error('E-Invoice connection error', [
-                'message' => $e->getMessage()
+                'message' => $e->getMessage(),
             ]);
             throw new Exception('Unable to connect to LHDN e-Invoice system. Please check your internet connection and try again.');
-
         } catch (ClientException $e) {
             $response = $e->getResponse();
             $statusCode = $response->getStatusCode();
@@ -388,7 +381,7 @@ class EInvoiceSDKService
             Log::error('E-Invoice client error', [
                 'status_code' => $statusCode,
                 'response_body' => $body,
-                'message' => $e->getMessage()
+                'message' => $e->getMessage(),
             ]);
 
             // Handle specific HTTP error codes
@@ -406,25 +399,24 @@ class EInvoiceSDKService
                     $responseData = json_decode($body, true);
                     if ($responseData && isset($responseData['error'])) {
                         $errorMessage = $this->formatValidationError($responseData['error']);
-                        throw new Exception('Validation Error: ' . $errorMessage);
+                        throw new Exception('Validation Error: '.$errorMessage);
                     }
                     throw new Exception('Validation Error: The invoice data failed LHDN validation. Please check your invoice details.');
                 case 429:
                     throw new Exception('Rate Limit Exceeded: Too many requests. Please wait a moment and try again.');
                 default:
-                    throw new Exception('LHDN API Error (Code: ' . $statusCode . '): ' . $e->getMessage());
+                    throw new Exception('LHDN API Error (Code: '.$statusCode.'): '.$e->getMessage());
             }
 
         } catch (ServerException $e) {
             Log::error('E-Invoice server error', [
-                'message' => $e->getMessage()
+                'message' => $e->getMessage(),
             ]);
             throw new Exception('LHDN Server Error: The e-Invoice system is experiencing technical difficulties. Please try again later.');
-
         } catch (Exception $e) {
             Log::error('E-Invoice SDK submission error', [
                 'message' => $e->getMessage(),
-                'trace' => $e->getTraceAsString()
+                'trace' => $e->getTraceAsString(),
             ]);
 
             // If it's already a formatted error message, don't wrap it
@@ -434,15 +426,12 @@ class EInvoiceSDKService
                 throw $e;
             }
 
-            throw new Exception('E-Invoice submission failed: ' . $e->getMessage());
+            throw new Exception('E-Invoice submission failed: '.$e->getMessage());
         }
     }
 
     /**
      * Convert invoice data array to proper UBL 2.1 XML format.
-     *
-     * @param array $invoiceData
-     * @return string
      */
     private function convertToUBLXml(array $invoiceData): string
     {
@@ -519,10 +508,6 @@ class EInvoiceSDKService
 
     /**
      * Recursively convert array to XML elements.
-     *
-     * @param array $data
-     * @param DOMElement $parent
-     * @param DOMDocument $xml
      */
     private function arrayToXml(array $data, DOMElement $parent, DOMDocument $xml): void
     {
@@ -540,10 +525,10 @@ class EInvoiceSDKService
                     // Handle special attributes
                     if (isset($value['_'])) {
                         // This is a value with attributes
-                        $element->nodeValue = htmlspecialchars((string)$value['_']);
+                        $element->nodeValue = htmlspecialchars((string) $value['_']);
                         foreach ($value as $attrKey => $attrValue) {
-                            if ($attrKey !== '_' && !is_array($attrValue)) {
-                                $element->setAttribute($attrKey, (string)$attrValue);
+                            if ($attrKey !== '_' && ! is_array($attrValue)) {
+                                $element->setAttribute($attrKey, (string) $attrValue);
                             }
                         }
                     } else {
@@ -553,7 +538,7 @@ class EInvoiceSDKService
             } else {
                 // Create leaf element
                 $elementName = $this->getProperElementName($key);
-                $element = $xml->createElement($elementName, htmlspecialchars((string)$value));
+                $element = $xml->createElement($elementName, htmlspecialchars((string) $value));
                 $parent->appendChild($element);
             }
         }
@@ -561,9 +546,6 @@ class EInvoiceSDKService
 
     /**
      * Get proper element name with correct namespace prefix.
-     *
-     * @param string $key
-     * @return string
      */
     private function getProperElementName(string $key): string
     {
@@ -574,7 +556,7 @@ class EInvoiceSDKService
             'PartyName', 'PostalAddress', 'Country', 'PartyTaxScheme',
             'PartyLegalEntity', 'Contact', 'TaxScheme', 'LegalMonetaryTotal',
             'TaxTotal', 'TaxSubtotal', 'AllowanceCharge', 'Party',
-            'PartyIdentification', 'CommodityClassification', 'ItemPriceExtension'
+            'PartyIdentification', 'CommodityClassification', 'ItemPriceExtension',
         ];
 
         // Basic components (simple elements)
@@ -586,16 +568,16 @@ class EInvoiceSDKService
             'Percent', 'InvoicedQuantity', 'PriceAmount', 'Description',
             'BaseQuantity', 'ChargeIndicator', 'AllowanceChargeReason', 'Amount',
             'Telephone', 'ElectronicMail', 'RegistrationName', 'AllowanceTotalAmount',
-            'ItemClassificationCode', 'CountrySubentityCode', 'IndustryClassificationCode'
+            'ItemClassificationCode', 'CountrySubentityCode', 'IndustryClassificationCode',
         ];
 
         if (in_array($key, $aggregateComponents)) {
-            return 'cac:' . $key;
+            return 'cac:'.$key;
         } elseif (in_array($key, $basicComponents)) {
-            return 'cbc:' . $key;
+            return 'cbc:'.$key;
         } else {
             // Default to basic component
-            return 'cbc:' . $key;
+            return 'cbc:'.$key;
         }
     }
 
@@ -641,25 +623,25 @@ class EInvoiceSDKService
             $addressParts = [];
 
             // City name (required by LHDN)
-            if (!empty($partyData['PostalAddress']['CityName'])) {
+            if (! empty($partyData['PostalAddress']['CityName'])) {
                 $cityName = $xml->createElement('cbc:CityName', $partyData['PostalAddress']['CityName']);
                 $postalAddress->appendChild($cityName);
             }
 
             // Postal zone
-            if (!empty($partyData['PostalAddress']['PostalZone'])) {
+            if (! empty($partyData['PostalAddress']['PostalZone'])) {
                 $postalZone = $xml->createElement('cbc:PostalZone', $partyData['PostalAddress']['PostalZone']);
                 $postalAddress->appendChild($postalZone);
             }
 
             // State/country subentity
-            if (!empty($partyData['PostalAddress']['CountrySubentityCode'])) {
+            if (! empty($partyData['PostalAddress']['CountrySubentityCode'])) {
                 $countrySubentity = $xml->createElement('cbc:CountrySubentityCode', $partyData['PostalAddress']['CountrySubentityCode']);
                 $postalAddress->appendChild($countrySubentity);
             }
 
             // Main address line
-            if (!empty($partyData['PostalAddress']['AddressLine']['Line'])) {
+            if (! empty($partyData['PostalAddress']['AddressLine']['Line'])) {
                 $addressParts[] = $partyData['PostalAddress']['AddressLine']['Line'];
             }
 
@@ -787,7 +769,7 @@ class EInvoiceSDKService
     private function addLegalMonetaryTotalData(DOMDocument $xml, DOMElement $parent, array $monetaryData): void
     {
         foreach ($monetaryData as $key => $value) {
-            $element = $xml->createElement('cbc:' . $key, $value['_']);
+            $element = $xml->createElement('cbc:'.$key, $value['_']);
             $element->setAttribute('currencyID', $value['currencyID']);
             $parent->appendChild($element);
         }
@@ -894,9 +876,6 @@ class EInvoiceSDKService
     /**
      * Submit document directly to LHDN API (bypassing SDK authentication issues).
      *
-     * @param string $invoiceId
-     * @param string $ublXml
-     * @return array
      * @throws Exception
      */
     private function submitDirectly(string $invoiceId, string $ublXml): array
@@ -910,7 +889,7 @@ class EInvoiceSDKService
                 'format' => 'XML',
                 'codeNumber' => $invoiceId,
                 'document' => base64_encode($ublXml),
-                'documentHash' => hash('sha256', $ublXml)
+                'documentHash' => hash('sha256', $ublXml),
             ];
 
             // Submit to LHDN API
@@ -918,18 +897,19 @@ class EInvoiceSDKService
                 ? 'https://api.myinvois.hasil.gov.my/api/v1.0/documentsubmissions'
                 : 'https://preprod-api.myinvois.hasil.gov.my/api/v1.0/documentsubmissions';
 
-            $guzzle = new Client();
+            $guzzle = new Client;
             $response = $guzzle->post($apiUrl, [
                 'json' => [
-                    'documents' => [$document]
+                    'documents' => [$document],
                 ],
                 'headers' => [
-                    'Authorization' => 'Bearer ' . $accessToken,
-                    'Content-Type' => 'application/json'
-                ]
+                    'Authorization' => 'Bearer '.$accessToken,
+                    'Content-Type' => 'application/json',
+                ],
             ]);
 
             $body = $response->getBody()->getContents();
+
             return json_decode($body, true);
 
         } catch (ClientException $e) {
@@ -939,41 +919,39 @@ class EInvoiceSDKService
 
             Log::error('Direct API submission failed', [
                 'status_code' => $statusCode,
-                'response_body' => $body
+                'response_body' => $body,
             ]);
 
             // Parse the error response
             $errorData = json_decode($body, true);
             if ($errorData && isset($errorData['error'])) {
                 if (is_array($errorData['error'])) {
-                    throw new Exception('LHDN API Error: ' . $this->formatValidationError($errorData['error']));
+                    throw new Exception('LHDN API Error: '.$this->formatValidationError($errorData['error']));
                 } else {
-                    throw new Exception('LHDN API Error: ' . $errorData['error']);
+                    throw new Exception('LHDN API Error: '.$errorData['error']);
                 }
             }
 
-            throw new Exception('LHDN API Error (Code: ' . $statusCode . '): ' . $body);
+            throw new Exception('LHDN API Error (Code: '.$statusCode.'): '.$body);
         }
     }
 
     /**
      * Get document status from LHDN using the official SDK.
      *
-     * @param string $uuid
-     * @return array
      * @throws Exception
      */
     public function getDocumentStatus(string $uuid): array
     {
         try {
             // Ensure we have access token
-            if (!$this->client->getAccessToken()) {
+            if (! $this->client->getAccessToken()) {
                 $this->client->login();
             }
 
             $response = $this->client->getDocument($uuid);
 
-            if (!$response) {
+            if (! $response) {
                 throw new Exception('Failed to get document status: Invalid response from LHDN');
             }
 
@@ -982,7 +960,7 @@ class EInvoiceSDKService
         } catch (Exception $e) {
             Log::error('E-Invoice SDK status check error', [
                 'uuid' => $uuid,
-                'message' => $e->getMessage()
+                'message' => $e->getMessage(),
             ]);
             throw $e;
         }
@@ -991,22 +969,19 @@ class EInvoiceSDKService
     /**
      * Cancel an e-Invoice document using the official SDK.
      *
-     * @param string $uuid
-     * @param string $reason
-     * @return array
      * @throws Exception
      */
     public function cancelDocument(string $uuid, string $reason): array
     {
         try {
             // Ensure we have access token
-            if (!$this->client->getAccessToken()) {
+            if (! $this->client->getAccessToken()) {
                 $this->client->login();
             }
 
             $response = $this->client->cancelDocument($uuid, $reason);
 
-            if (!$response) {
+            if (! $response) {
                 throw new Exception('Failed to cancel document: Invalid response from LHDN');
             }
 
@@ -1016,7 +991,7 @@ class EInvoiceSDKService
             Log::error('E-Invoice SDK cancel error', [
                 'uuid' => $uuid,
                 'reason' => $reason,
-                'message' => $e->getMessage()
+                'message' => $e->getMessage(),
             ]);
             throw $e;
         }
@@ -1025,22 +1000,19 @@ class EInvoiceSDKService
     /**
      * Get recent submitted documents using the official SDK.
      *
-     * @param int $pageNo
-     * @param int $pageSize
-     * @return array
      * @throws Exception
      */
     public function getRecentDocuments(int $pageNo = 1, int $pageSize = 20): array
     {
         try {
             // Ensure we have access token
-            if (!$this->client->getAccessToken()) {
+            if (! $this->client->getAccessToken()) {
                 $this->client->login();
             }
 
             $response = $this->client->getRecentDocuments($pageNo, $pageSize);
 
-            if (!$response) {
+            if (! $response) {
                 throw new Exception('Failed to get recent documents: Invalid response from LHDN');
             }
 
@@ -1048,7 +1020,7 @@ class EInvoiceSDKService
 
         } catch (Exception $e) {
             Log::error('E-Invoice SDK recent documents error', [
-                'message' => $e->getMessage()
+                'message' => $e->getMessage(),
             ]);
             throw $e;
         }
@@ -1057,10 +1029,10 @@ class EInvoiceSDKService
     /**
      * Validate taxpayer TIN using the official SDK with tenant data.
      *
-     * @param string|null $tin Override TIN (optional, uses tenant TIN if not provided)
-     * @param string|null $idType Override ID type (optional, uses tenant business_id_type if not provided)
-     * @param string|null $idValue Override ID value (optional, uses tenant business_id_value if not provided)
-     * @return array
+     * @param  string|null  $tin  Override TIN (optional, uses tenant TIN if not provided)
+     * @param  string|null  $idType  Override ID type (optional, uses tenant business_id_type if not provided)
+     * @param  string|null  $idValue  Override ID value (optional, uses tenant business_id_value if not provided)
+     *
      * @throws Exception
      */
     public function validateTaxpayerTin(?string $tin = null, ?string $idType = null, ?string $idValue = null): array
@@ -1069,20 +1041,20 @@ class EInvoiceSDKService
             // Use tenant data if parameters not provided
             $tin = $tin ?? $this->getTenantTIN();
 
-            if (!$idType || !$idValue) {
+            if (! $idType || ! $idValue) {
                 $businessId = $this->getTenantBusinessId();
                 $idType = $idType ?? $businessId['type'];
                 $idValue = $idValue ?? $businessId['value'];
             }
 
             // Ensure we have access token
-            if (!$this->client->getAccessToken()) {
+            if (! $this->client->getAccessToken()) {
                 $this->client->login();
             }
 
             $response = $this->client->validateTaxPayerTin($tin, $idType, $idValue);
 
-            if (!$response) {
+            if (! $response) {
                 throw new Exception('Failed to validate taxpayer TIN: Invalid response from LHDN');
             }
 
@@ -1094,7 +1066,7 @@ class EInvoiceSDKService
                 'tin' => $tin ?? 'unknown',
                 'id_type' => $idType ?? 'unknown',
                 'id_value' => $idValue ?? 'unknown',
-                'message' => $e->getMessage()
+                'message' => $e->getMessage(),
             ]);
             throw $e;
         }
@@ -1103,10 +1075,10 @@ class EInvoiceSDKService
     /**
      * Validate taxpayer TIN using direct API authentication with tenant data.
      *
-     * @param string|null $tin Override TIN (optional, uses tenant TIN if not provided)
-     * @param string|null $idType Override ID type (optional, uses tenant business_id_type if not provided)
-     * @param string|null $idValue Override ID value (optional, uses tenant business_id_value if not provided)
-     * @return bool
+     * @param  string|null  $tin  Override TIN (optional, uses tenant TIN if not provided)
+     * @param  string|null  $idType  Override ID type (optional, uses tenant business_id_type if not provided)
+     * @param  string|null  $idValue  Override ID value (optional, uses tenant business_id_value if not provided)
+     *
      * @throws Exception
      */
     public function validateTaxpayerTinDirect(?string $tin = null, ?string $idType = null, ?string $idValue = null): bool
@@ -1114,7 +1086,7 @@ class EInvoiceSDKService
         // Use tenant data if parameters not provided
         $tin = $tin ?? $this->getTenantTIN();
 
-        if (!$idType || !$idValue) {
+        if (! $idType || ! $idValue) {
             $businessId = $this->getTenantBusinessId();
             $idType = $idType ?? $businessId['type'];
             $idValue = $idValue ?? $businessId['value'];
@@ -1125,48 +1097,48 @@ class EInvoiceSDKService
             ? 'https://api.myinvois.hasil.gov.my/api/v1.0/taxpayer/validate'
             : 'https://preprod-api.myinvois.hasil.gov.my/api/v1.0/taxpayer/validate';
 
-        $guzzle = new Client();
+        $guzzle = new Client;
         try {
-            $response = $guzzle->get($apiUrl . "/$tin", [
+            $response = $guzzle->get($apiUrl."/$tin", [
                 'query' => [
                     'tin' => $tin,
                     'idType' => $idType,
-                    'idValue' => $idValue
+                    'idValue' => $idValue,
                 ],
                 'headers' => [
-                    'Authorization' => 'Bearer ' . $accessToken,
-                    'Content-Type' => 'application/json'
-                ]
+                    'Authorization' => 'Bearer '.$accessToken,
+                    'Content-Type' => 'application/json',
+                ],
             ]);
             $body = $response->getBody()->getContents();
+
             return $body ? false : true;
         } catch (ClientException $e) {
             $response = $e->getResponse();
             $statusCode = $response->getStatusCode();
             $body = $response->getBody()->getContents();
-            throw new Exception('TIN validation failed (HTTP ' . $statusCode . '): ' . $body);
+            throw new Exception('TIN validation failed (HTTP '.$statusCode.'): '.$body);
         } catch (Exception $e) {
-            throw new Exception('TIN validation failed: ' . $e->getMessage());
+            throw new Exception('TIN validation failed: '.$e->getMessage());
         }
     }
 
     /**
      * Get document types available in the system.
      *
-     * @return array
      * @throws Exception
      */
     public function getDocumentTypes(): array
     {
         try {
             // Ensure we have access token
-            if (!$this->client->getAccessToken()) {
+            if (! $this->client->getAccessToken()) {
                 $this->client->login();
             }
 
             $response = $this->client->getAllDocumentTypes();
 
-            if (!$response) {
+            if (! $response) {
                 throw new Exception('Failed to get document types: Invalid response from LHDN');
             }
 
@@ -1174,7 +1146,7 @@ class EInvoiceSDKService
 
         } catch (Exception $e) {
             Log::error('E-Invoice SDK document types error', [
-                'message' => $e->getMessage()
+                'message' => $e->getMessage(),
             ]);
             throw $e;
         }
@@ -1182,8 +1154,6 @@ class EInvoiceSDKService
 
     /**
      * Get the raw MyInvoisClient for advanced operations.
-     *
-     * @return MyInvoisClient
      */
     public function getClient(): MyInvoisClient
     {
@@ -1192,9 +1162,6 @@ class EInvoiceSDKService
 
     /**
      * Format LHDN validation error for user-friendly display.
-     *
-     * @param array $error
-     * @return string
      */
     private function formatValidationError(array $error): string
     {
@@ -1202,13 +1169,13 @@ class EInvoiceSDKService
         if (isset($error['code'])) {
             switch ($error['code']) {
                 case '401':
-                    return "Authentication Error: Invalid credentials or expired token. Please check your LHDN API configuration.";
+                    return 'Authentication Error: Invalid credentials or expired token. Please check your LHDN API configuration.';
                 case '403':
                     return "Access Denied: You don't have permission to submit invoices. Please check your LHDN account permissions.";
                 case '429':
-                    return "Rate Limit Exceeded: Too many requests sent to LHDN. Please wait a moment and try again.";
+                    return 'Rate Limit Exceeded: Too many requests sent to LHDN. Please wait a moment and try again.';
                 case '500':
-                    return "LHDN Server Error: The LHDN system is experiencing technical difficulties. Please try again later.";
+                    return 'LHDN Server Error: The LHDN system is experiencing technical difficulties. Please try again later.';
             }
         }
 
@@ -1216,15 +1183,15 @@ class EInvoiceSDKService
 
         // Main error message
         if (isset($error['message'])) {
-            $message .= "Error: " . $error['message'] . "\n";
+            $message .= 'Error: '.$error['message']."\n";
         }
 
         if (isset($error['code'])) {
-            $message .= "Code: " . $error['code'] . "\n";
+            $message .= 'Code: '.$error['code']."\n";
         }
 
         if (isset($error['target'])) {
-            $message .= "Target: " . $error['target'] . "\n";
+            $message .= 'Target: '.$error['target']."\n";
         }
 
         // Handle detailed validation errors
@@ -1244,9 +1211,11 @@ class EInvoiceSDKService
                         switch ($detail['code']) {
                             case 'CF358':
                                 $message .= "Supplier TIN Validation Failed:\n   {$detailMessage}\n   Please ensure your supplier TIN is correctly configured and registered with LHDN.";
+
                                 continue 2;
                             case 'CF359':
                                 $message .= "Customer TIN Validation Failed:\n   {$detailMessage}\n   Please verify the customer's identification number (TIN/NRIC/Passport).";
+
                                 continue 2;
                         }
                     }
@@ -1258,7 +1227,8 @@ class EInvoiceSDKService
                         $message .= "Check:\n";
                         $message .= "   - Supplier TIN is set in .env (EINVOICE_SUPPLIER_TIN)\n";
                         $message .= "   - TIN is registered with LHDN MyInvois\n";
-                        $message .= "   - TIN matches your LHDN account credentials";
+                        $message .= '   - TIN matches your LHDN account credentials';
+
                         continue;
                     }
 
@@ -1274,13 +1244,13 @@ class EInvoiceSDKService
                             'in namespace \'urn:oasis:names:specification:ubl:schema:xsd:CommonAggregateComponents-2\'',
                             'in namespace \'urn:oasis:names:specification:ubl:schema:xsd:CommonBasicComponents-2\'',
                             'List of possible elements expected:',
-                            'has invalid child element'
+                            'has invalid child element',
                         ],
                         [
                             '',
                             '',
                             'Expected elements:',
-                            'contains invalid element'
+                            'contains invalid element',
                         ],
                         $detailMessage
                     );
@@ -1289,11 +1259,11 @@ class EInvoiceSDKService
                 }
 
                 if (isset($detail['target'])) {
-                    $message .= "\n   Field: " . $detail['target'];
+                    $message .= "\n   Field: ".$detail['target'];
                 }
 
                 if (isset($detail['propertyPath'])) {
-                    $message .= "\n   Path: " . $detail['propertyPath'];
+                    $message .= "\n   Path: ".$detail['propertyPath'];
                 }
             }
         }
@@ -1307,7 +1277,6 @@ class EInvoiceSDKService
     /**
      * Validate invoice data before submission.
      *
-     * @param array $data
      * @throws Exception
      */
     private function validateInvoiceData(array $data): void
@@ -1323,7 +1292,7 @@ class EInvoiceSDKService
                 'IssueTime' => 'Issue time',
                 'AccountingSupplierParty' => 'Supplier information',
                 'AccountingCustomerParty' => 'Customer information',
-                'InvoiceLine' => 'Invoice line items'
+                'InvoiceLine' => 'Invoice line items',
             ];
 
             foreach ($required as $field => $label) {
@@ -1339,7 +1308,7 @@ class EInvoiceSDKService
                 'issue_time' => 'Issue time',
                 'supplier' => 'Supplier information',
                 'customer' => 'Customer information',
-                'invoice_lines' => 'Invoice line items'
+                'invoice_lines' => 'Invoice line items',
             ];
 
             foreach ($required as $field => $label) {
@@ -1363,7 +1332,7 @@ class EInvoiceSDKService
                 throw new Exception('Missing customer party information');
             }
 
-            if (empty($invoiceData['InvoiceLine']) || !is_array($invoiceData['InvoiceLine'])) {
+            if (empty($invoiceData['InvoiceLine']) || ! is_array($invoiceData['InvoiceLine'])) {
                 throw new Exception('Invoice must have at least one line item');
             }
 
@@ -1372,13 +1341,13 @@ class EInvoiceSDKService
                 $date = Carbon::parse($invoiceData['IssueDate']);
                 $today = Carbon::today();
                 if ($date->gt($today)) {
-                    throw new Exception('Invoice date cannot be in the future (issue date: ' . $date->format('Y-m-d') . ', today: ' . $today->format('Y-m-d') . ')');
+                    throw new Exception('Invoice date cannot be in the future (issue date: '.$date->format('Y-m-d').', today: '.$today->format('Y-m-d').')');
                 }
             } catch (Exception $e) {
                 if (strpos($e->getMessage(), 'Invoice date cannot be in the future') !== false) {
                     throw $e; // Re-throw our custom message
                 }
-                throw new Exception('Invalid issue date format: ' . $e->getMessage());
+                throw new Exception('Invalid issue date format: '.$e->getMessage());
             }
 
             return; // Skip legacy validation for UBL format
@@ -1402,15 +1371,15 @@ class EInvoiceSDKService
         }
 
         // Validate invoice lines
-        if (empty($data['invoice_lines']) || !is_array($data['invoice_lines'])) {
+        if (empty($data['invoice_lines']) || ! is_array($data['invoice_lines'])) {
             throw new Exception('Invoice must have at least one line item');
         }
 
         foreach ($data['invoice_lines'] as $index => $line) {
             $lineRequired = ['description', 'quantity', 'unit_price', 'line_total'];
             foreach ($lineRequired as $field) {
-                if (!isset($line[$field])) {
-                    throw new Exception("Missing required field '{$field}' in invoice line " . ($index + 1));
+                if (! isset($line[$field])) {
+                    throw new Exception("Missing required field '{$field}' in invoice line ".($index + 1));
                 }
             }
         }
@@ -1420,20 +1389,21 @@ class EInvoiceSDKService
             $date = Carbon::parse($data['issue_date']);
             $today = Carbon::today();
             if ($date->gt($today)) {
-                throw new Exception('Invoice date cannot be in the future (issue date: ' . $date->format('Y-m-d') . ', today: ' . $today->format('Y-m-d') . ')');
+                throw new Exception('Invoice date cannot be in the future (issue date: '.$date->format('Y-m-d').', today: '.$today->format('Y-m-d').')');
             }
         } catch (Exception $e) {
             if (strpos($e->getMessage(), 'Invoice date cannot be in the future') !== false) {
                 throw $e; // Re-throw our custom message
             }
-            throw new Exception('Invalid issue date format: ' . $e->getMessage());
+            throw new Exception('Invalid issue date format: '.$e->getMessage());
         }
     }
 
     /**
      * Validate supplier TIN before submission using tenant data.
      *
-     * @param string|null $tin Override TIN (optional, uses tenant TIN if not provided)
+     * @param  string|null  $tin  Override TIN (optional, uses tenant TIN if not provided)
+     *
      * @throws Exception
      */
     private function validateSupplierTIN(?string $tin = null): void
@@ -1452,20 +1422,20 @@ class EInvoiceSDKService
             // For production, validate with LHDN using tenant's business ID
             $isValid = $this->validateTaxpayerTinDirect($tin, $businessId['type'], $businessId['value']);
 
-            if (!$isValid) {
+            if (! $isValid) {
                 throw new Exception("TIN {$tin} with {$businessId['type']} {$businessId['value']} is not registered or not active in LHDN MyInvois system");
             }
 
             Log::info('Supplier TIN validation successful for tenant', [
                 'tenant_id' => $this->tenant->id,
-                'tin' => $tin
+                'tin' => $tin,
             ]);
 
         } catch (Exception $e) {
             Log::error('Supplier TIN validation failed for tenant', [
                 'tenant_id' => $this->tenant->id ?? 'unknown',
                 'tin' => $tin ?? 'unknown',
-                'error' => $e->getMessage()
+                'error' => $e->getMessage(),
             ]);
             throw new Exception("TIN Validation Failed: {$e->getMessage()}");
         }
@@ -1474,10 +1444,10 @@ class EInvoiceSDKService
     /**
      * Test TIN validation directly using tenant data.
      *
-     * @param string|null $tin Override TIN (optional, uses tenant TIN if not provided)
-     * @param string|null $idType Override ID type (optional, uses tenant business_id_type if not provided)
-     * @param string|null $idValue Override ID value (optional, uses tenant business_id_value if not provided)
-     * @return bool
+     * @param  string|null  $tin  Override TIN (optional, uses tenant TIN if not provided)
+     * @param  string|null  $idType  Override ID type (optional, uses tenant business_id_type if not provided)
+     * @param  string|null  $idValue  Override ID value (optional, uses tenant business_id_value if not provided)
+     *
      * @throws Exception
      */
     public function testTINValidation(?string $tin = null, ?string $idType = null, ?string $idValue = null): bool
@@ -1486,7 +1456,7 @@ class EInvoiceSDKService
             // Use tenant data if parameters not provided
             $tin = $tin ?? $this->getTenantTIN();
 
-            if (!$idType || !$idValue) {
+            if (! $idType || ! $idValue) {
                 $businessId = $this->getTenantBusinessId();
                 $idType = $idType ?? $businessId['type'];
                 $idValue = $idValue ?? $businessId['value'];
@@ -1498,16 +1468,16 @@ class EInvoiceSDKService
                 ? 'https://api.myinvois.hasil.gov.my/api/v1.0/taxpayer/validate'
                 : 'https://preprod-api.myinvois.hasil.gov.my/api/v1.0/taxpayer/validate';
 
-            $guzzle = new Client();
-            $response = $guzzle->get($apiUrl . "/{$tin}", [
+            $guzzle = new Client;
+            $response = $guzzle->get($apiUrl."/{$tin}", [
                 'query' => [
                     'idType' => $idType,
-                    'idValue' => $idValue
+                    'idValue' => $idValue,
                 ],
                 'headers' => [
-                    'Authorization' => 'Bearer ' . $accessToken,
-                    'Content-Type' => 'application/json'
-                ]
+                    'Authorization' => 'Bearer '.$accessToken,
+                    'Content-Type' => 'application/json',
+                ],
             ]);
 
             $body = $response->getBody()->getContents();
@@ -1518,7 +1488,7 @@ class EInvoiceSDKService
                 'tenant_name' => $this->tenant->name ?? 'unknown',
                 'tin' => $tin,
                 'id_type' => $idType,
-                'response' => $result
+                'response' => $result,
             ]);
 
             return $result;
@@ -1527,7 +1497,7 @@ class EInvoiceSDKService
             Log::error('TIN Validation Test Failed for tenant', [
                 'tenant_id' => $this->tenant->id ?? 'unknown',
                 'tin' => $tin ?? 'unknown',
-                'error' => $e->getMessage()
+                'error' => $e->getMessage(),
             ]);
 
             throw $e;

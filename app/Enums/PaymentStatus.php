@@ -24,12 +24,10 @@ enum PaymentStatus: string
 
     /**
      * Get human-readable name for the status.
-     *
-     * @return string
      */
     public function label(): string
     {
-        return match($this) {
+        return match ($this) {
             self::PENDING => 'Pending',
             self::PAID => 'Paid',
             self::FAILED => 'Failed',
@@ -42,13 +40,11 @@ enum PaymentStatus: string
 
     /**
      * Get all enum cases with their labels.
-     *
-     * @return array
      */
     public static function options(): array
     {
-        return collect(self::cases())->mapWithKeys(fn($case) => [
-            $case->value => $case->label()
+        return collect(self::cases())->mapWithKeys(fn ($case) => [
+            $case->value => $case->label(),
         ])->toArray();
     }
 }

@@ -1,17 +1,15 @@
 <?php
 
-use Carbon\Carbon;
-use App\Models\User;
-use App\Models\Child;
-use App\Models\Centre;
-use App\Models\Tenant;
-use App\Models\Product;
-use App\Models\ChildEnrolment;
-use App\Enums\ChildEnrolmentStatus;
-use App\Enums\ChildEnrolmentBilledEvery;
-use App\Models\Scopes\BelongsToManyTenantScope;
-use Illuminate\Foundation\Testing\RefreshDatabase;
 use App\Actions\ChildEnrolment\GetRelatedEnrolments;
+use App\Enums\ChildEnrolmentBilledEvery;
+use App\Enums\ChildEnrolmentStatus;
+use App\Models\Centre;
+use App\Models\Child;
+use App\Models\ChildEnrolment;
+use App\Models\Tenant;
+use App\Models\User;
+use Carbon\Carbon;
+use Illuminate\Foundation\Testing\RefreshDatabase;
 
 uses(RefreshDatabase::class);
 
@@ -33,7 +31,7 @@ beforeEach(function () {
     ]);
 
     // Setup Action instance
-    $this->action = new GetRelatedEnrolments();
+    $this->action = new GetRelatedEnrolments;
 
     // Attach user to tenant (without role parameter)
     $tenant->users()->attach($user->id);

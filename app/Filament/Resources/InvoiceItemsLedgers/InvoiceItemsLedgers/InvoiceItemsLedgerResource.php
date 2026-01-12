@@ -2,59 +2,48 @@
 
 namespace App\Filament\Resources\InvoiceItemsLedgers\InvoiceItemsLedgers;
 
-use App\Filament\Resources\InvoiceItemsLedgers\InvoiceItemsLedgers\InvoiceItemsLedgerResource;
-use Filament\Forms\Components\TextInput;
-use Filament\Forms\Components\Select;
-use Filament\Forms\Components\Toggle;
-use Filament\Forms\Components\DatePicker;
-use Filament\Actions\ActionGroup;
-use Filament\Actions\ViewAction;
-use App\Filament\Resources\InvoiceItemsLedgers\Pages\ListInvoiceItemsLedgers;
-use App\Filament\Resources\InvoiceItemsLedgers\Pages\ViewInvoiceItemsLedger;
-use App\Filament\Resources\InvoiceItemsLedgerResource\Pages;
-use App\Filament\Resources\InvoiceItemsLedgerResource\RelationManagers;
-use App\Models\InvoiceItem;
-use App\Models\Scopes\TenantScope;
-use App\Models\Scopes\BelongsToManyTenantScope;
-use App\Policies\InvoiceItemsLedgerPolicy;
 use App\Enums\InvoiceItemType;
 use App\Enums\InvoiceStatus;
 use App\Enums\PaymentStatus;
+use App\Filament\Resources\InvoiceItemsLedgers\Pages\ListInvoiceItemsLedgers;
+use App\Filament\Resources\InvoiceItemsLedgers\Pages\ViewInvoiceItemsLedger;
+use App\Models\InvoiceItem;
+use App\Policies\InvoiceItemsLedgerPolicy;
 use Filament\Actions;
-use Filament\Forms;
+use Filament\Actions\ActionGroup;
+use Filament\Actions\ViewAction;
+use Filament\Forms\Components\DatePicker;
+use Filament\Forms\Components\Select;
+use Filament\Forms\Components\TextInput;
+use Filament\Forms\Components\Toggle;
 use Filament\Resources\Resource;
-use Filament\Tables;
-use Filament\Tables\Table;
-use Filament\Tables\Columns\TextColumn;
-use Filament\Tables\Columns\BooleanColumn;
-use Filament\Tables\Filters\SelectFilter;
-use Filament\Tables\Filters\Filter;
-use Illuminate\Database\Eloquent\Builder;
-use Illuminate\Database\Eloquent\SoftDeletingScope;
-use Illuminate\Support\Facades\Auth;
-use BackedEnum;
-use UnitEnum;
 use Filament\Schemas\Schema;
+use Filament\Tables\Columns\TextColumn;
+use Filament\Tables\Filters\Filter;
+use Filament\Tables\Filters\SelectFilter;
+use Filament\Tables\Table;
+use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Support\Facades\Auth;
 
 class InvoiceItemsLedgerResource extends Resource
 {
     protected static ?string $model = InvoiceItem::class;
-    
+
     protected static ?string $policy = InvoiceItemsLedgerPolicy::class;
-    
+
     // Disable tenant ownership relationship for this resource
     protected static ?string $tenantOwnershipRelationshipName = null;
 
-    protected static string | \BackedEnum | null $navigationIcon = 'heroicon-o-document-text';
-    
+    protected static string|\BackedEnum|null $navigationIcon = 'heroicon-o-document-text';
+
     protected static ?string $navigationLabel = 'Invoice Items Ledger';
-    
+
     protected static ?string $modelLabel = 'Invoice Item';
-    
+
     protected static ?string $pluralModelLabel = 'Invoice Items Ledger';
-    
-    protected static string | \UnitEnum | null $navigationGroup = 'Financial Management';
-    
+
+    protected static string|\UnitEnum|null $navigationGroup = 'Financial Management';
+
     protected static ?int $navigationSort = 3;
 
     protected static bool $isScopedToTenant = false;
@@ -68,34 +57,34 @@ class InvoiceItemsLedgerResource extends Resource
                 TextInput::make('name')
                     ->label('Item Name')
                     ->disabled(),
-                    
+
                 Select::make('type')
                     ->options(InvoiceItemType::options())
                     ->disabled(),
-                    
+
                 TextInput::make('price')
                     ->label('Unit Price')
                     ->disabled(),
-                    
+
                 TextInput::make('quantity')
                     ->disabled(),
-                    
+
                 TextInput::make('total')
                     ->label('Total Amount')
                     ->disabled(),
-                    
+
                 TextInput::make('paid_amount')
                     ->label('Paid Amount')
                     ->disabled(),
-                    
+
                 TextInput::make('balance_amount')
                     ->label('Balance Amount')
                     ->disabled(),
-                    
+
                 Toggle::make('paid')
                     ->label('Fully Paid')
                     ->disabled(),
-                    
+
                 DatePicker::make('effective_date')
                     ->label('Effective Date')
                     ->disabled(),
@@ -104,7 +93,7 @@ class InvoiceItemsLedgerResource extends Resource
 
     // Policy handles access control - canViewAny, view, etc.
     // Custom methods for additional functionality
-    
+
     public static function canViewAny(): bool
     {
         return Auth::user()?->can('viewAny', InvoiceItemsLedgerResource::class) ?? false;
@@ -114,7 +103,7 @@ class InvoiceItemsLedgerResource extends Resource
     {
         return Auth::user()?->can('view', [InvoiceItemsLedgerResource::class, $record]) ?? false;
     }
-    
+
     public static function canExport(): bool
     {
         return Auth::user()?->can('export', InvoiceItemsLedgerResource::class);
@@ -134,20 +123,20 @@ class InvoiceItemsLedgerResource extends Resource
                 'child',
                 'product',
             ]);
-        
+
         $user = Auth::user();
 
         // Filter data based on user role
         if ($user && $user->hasRole(['Principal', 'Teacher'])) {
             // Get user's assigned centre IDs
             $userCentreIds = $user->centres->pluck('id')->toArray();
-            
+
             // Filter invoice items to only show those from assigned centres
             $query->whereHas('invoice', function (Builder $query) use ($userCentreIds) {
                 $query->whereIn('centre_id', $userCentreIds);
             });
         }
-        
+
         return $query;
     }
 
@@ -171,7 +160,7 @@ class InvoiceItemsLedgerResource extends Resource
                     ->searchable()
                     ->sortable()
                     ->description(fn ($record) => "Invoice #{$record->invoice?->number}"),
-                    
+
                 TextColumn::make('name')
                     ->label('Description')
                     ->searchable()
@@ -211,7 +200,7 @@ class InvoiceItemsLedgerResource extends Resource
                     ->sortable()
                     ->weight('bold')
                     ->color('danger'),
-                    
+
                 TextColumn::make('paid_amount')
                     ->label('Credit Amount')
                     ->money('MYR', 100)
@@ -219,7 +208,7 @@ class InvoiceItemsLedgerResource extends Resource
                     ->sortable()
                     ->weight('bold')
                     ->color('success'),
-                    
+
                 TextColumn::make('balance_amount')
                     ->label('Outstanding Balance')
                     ->money('MYR', 100)
@@ -239,8 +228,13 @@ class InvoiceItemsLedgerResource extends Resource
                         default => 'danger',
                     })
                     ->formatStateUsing(function ($state, $record) {
-                        if ($state) return 'PAID';
-                        if ($record->paid_amount > 0) return 'PARTIAL';
+                        if ($state) {
+                            return 'PAID';
+                        }
+                        if ($record->paid_amount > 0) {
+                            return 'PARTIAL';
+                        }
+
                         return 'UNPAID';
                     }),
 
@@ -262,10 +256,10 @@ class InvoiceItemsLedgerResource extends Resource
                     ->relationship('invoice.centre', 'name')
                     ->searchable()
                     ->preload(),
-                    
+
                 SelectFilter::make('type')
                     ->options(InvoiceItemType::options()),
-                    
+
                 SelectFilter::make('payment_status')
                     ->label('Payment Status')
                     ->options([
@@ -289,13 +283,13 @@ class InvoiceItemsLedgerResource extends Resource
                             fn (Builder $query) => $query->where('paid', false),
                         );
                     }),
-                    
+
                 // SelectFilter::make('invoice.status')
                 //     ->label('Invoice Status')
                 //     ->options(collect(InvoiceStatus::cases())->mapWithKeys(fn($case) => [
                 //         $case->value => $case->label()
                 //     ])->toArray()),
-                    
+
                 Filter::make('effective_date')
                     ->schema([
                         DatePicker::make('from'),

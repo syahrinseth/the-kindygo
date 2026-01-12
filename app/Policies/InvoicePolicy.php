@@ -5,7 +5,6 @@ namespace App\Policies;
 use App\Enums\InvoiceStatus;
 use App\Models\Invoice;
 use App\Models\User;
-use Illuminate\Auth\Access\Response;
 
 class InvoicePolicy
 {
@@ -29,29 +28,29 @@ class InvoicePolicy
             // Super Admin and Admin can view any invoice in their tenant
             return $invoice->tenant_id === $user->current_tenant_id;
         }
-        
+
         // Principal can only view invoices for their centres
         if ($user->hasRole('Principal')) {
-            return $invoice->tenant_id === $user->current_tenant_id && 
+            return $invoice->tenant_id === $user->current_tenant_id &&
                    $user->centres()->where('centres.id', $invoice->centre_id)->exists();
         }
-        
+
         // Parents can only view invoices that are directly related to them
         if ($user->hasRole('Parent')) {
             // Direct invoices where user_id matches
             if ($invoice->user_id === $user->id) {
                 return true;
             }
-            
+
             // Check if any of the user's children have invoices related to their centre
             // This is a simplified check - you might need to adjust based on your exact data model
-            return $invoice->tenant_id === $user->current_tenant_id && 
+            return $invoice->tenant_id === $user->current_tenant_id &&
                    $user->children()
-                        ->whereHas('tenants', function ($query) use ($invoice) {
-                            $query->where('tenant_id', $invoice->tenant_id);
-                        })->exists();
+                       ->whereHas('tenants', function ($query) use ($invoice) {
+                           $query->where('tenant_id', $invoice->tenant_id);
+                       })->exists();
         }
-        
+
         return false;
     }
 
@@ -73,14 +72,14 @@ class InvoicePolicy
         if ($user->hasAnyRole(['Super Admin', 'Admin'])) {
             return $invoice->tenant_id === $user->current_tenant_id;
         }
-        
+
         // Principal can only update draft invoices for their centres
         if ($user->hasRole('Principal')) {
-            return $invoice->tenant_id === $user->current_tenant_id && 
+            return $invoice->tenant_id === $user->current_tenant_id &&
                    $user->centres()->where('centres.id', $invoice->centre_id)->exists() &&
                    $invoice->status === InvoiceStatus::DRAFT;
         }
-        
+
         return false;
     }
 
@@ -93,18 +92,18 @@ class InvoicePolicy
         if ($invoice->status !== InvoiceStatus::DRAFT) {
             return false;
         }
-        
+
         // Super Admin and Admin can delete any draft invoice in their tenant
         if ($user->hasAnyRole(['Super Admin', 'Admin'])) {
             return $invoice->tenant_id === $user->current_tenant_id;
         }
-        
+
         // Principal can only delete draft invoices for their centres
         if ($user->hasRole('Principal')) {
-            return $invoice->tenant_id === $user->current_tenant_id && 
+            return $invoice->tenant_id === $user->current_tenant_id &&
                    $user->centres()->where('centres.id', $invoice->centre_id)->exists();
         }
-        
+
         return false;
     }
 
@@ -114,7 +113,7 @@ class InvoicePolicy
     public function deleteAny(User $user): bool
     {
         // Only Super Admin and Admin can bulk delete invoices
-        return $user->hasAnyRole(['Super Admin', 'Admin']) && 
+        return $user->hasAnyRole(['Super Admin', 'Admin']) &&
                $user->current_tenant_id !== null;
     }
 
@@ -124,7 +123,7 @@ class InvoicePolicy
     public function forceDelete(User $user, Invoice $invoice): bool
     {
         // Only Super Admin can permanently delete invoices
-        return $user->hasRole('Super Admin') && 
+        return $user->hasRole('Super Admin') &&
                $invoice->tenant_id === $user->current_tenant_id;
     }
 }

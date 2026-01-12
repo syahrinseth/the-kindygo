@@ -9,7 +9,7 @@ use App\Models\Tenant;
 use App\Models\User;
 use Carbon\Carbon;
 
-use function Pest\Laravel\{actingAs};
+use function Pest\Laravel\actingAs;
 
 beforeEach(function () {
     Carbon::setTestNow('2026-01-08');
@@ -31,7 +31,7 @@ beforeEach(function () {
         'total' => 0,
     ]);
 
-    $this->action = new UpdateQuotationTotals();
+    $this->action = new UpdateQuotationTotals;
 });
 
 afterEach(function () {

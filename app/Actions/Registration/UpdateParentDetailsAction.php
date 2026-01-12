@@ -32,7 +32,7 @@ class UpdateParentDetailsAction
         );
 
         // Create or update UserOfficeInfo if any office data provided
-        if (!empty($validated['office_address'])) {
+        if (! empty($validated['office_address'])) {
             $user->officeInfo()->updateOrCreate(
                 ['user_id' => $user->id],
                 [

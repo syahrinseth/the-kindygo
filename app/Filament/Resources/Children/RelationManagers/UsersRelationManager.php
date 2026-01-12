@@ -2,25 +2,20 @@
 
 namespace App\Filament\Resources\Children\RelationManagers;
 
-use Filament\Forms\Components\TextInput;
-use Filament\Forms\Components\Select;
-use Filament\Tables\Columns\TextColumn;
-use Filament\Actions\CreateAction;
-use Filament\Actions\EditAction;
-use Filament\Actions\DeleteAction;
-use Filament\Actions\BulkActionGroup;
-use Filament\Actions\DeleteBulkAction;
 use App\Models\User;
-use Filament\Forms;
-use Filament\Actions;
+use Filament\Actions\BulkActionGroup;
+use Filament\Actions\CreateAction;
+use Filament\Actions\DeleteAction;
+use Filament\Actions\DeleteBulkAction;
+use Filament\Actions\EditAction;
+use Filament\Forms\Components\Select;
+use Filament\Forms\Components\TextInput;
 use Filament\Resources\RelationManagers\RelationManager;
-use Filament\Tables;
-use Filament\Tables\Table;
-use Illuminate\Database\Eloquent\Builder;
-use Illuminate\Database\Eloquent\Model;
-use Illuminate\Database\Eloquent\SoftDeletingScope;
-use Illuminate\Support\Facades\Hash;
 use Filament\Schemas\Schema;
+use Filament\Tables\Columns\TextColumn;
+use Filament\Tables\Table;
+use Illuminate\Database\Eloquent\Model;
+use Illuminate\Support\Facades\Hash;
 
 class UsersRelationManager extends RelationManager
 {
@@ -100,7 +95,7 @@ class UsersRelationManager extends RelationManager
                             'email' => $data['email'],
                             'password' => Hash::make($data['password']),
                         ]);
-                        
+
                         // Return the user
                         return $user;
                     })
@@ -135,18 +130,19 @@ class UsersRelationManager extends RelationManager
                         // Get the relationship type from pivot
                         $pivotData = $record->pivot;
                         $data['relationship_type'] = $pivotData->relationship_type;
+
                         return $data;
                     })
                     ->mutateFormDataBeforeSave(function (array $data, Model $record): array {
                         // Remove relationship_type from data before saving user
                         $relationshipType = $data['relationship_type'];
                         unset($data['relationship_type']);
-                        
+
                         // Update the pivot table separately
                         $record->pivot->update([
                             'relationship_type' => $relationshipType,
                         ]);
-                        
+
                         return $data;
                     }),
                 DeleteAction::make(),

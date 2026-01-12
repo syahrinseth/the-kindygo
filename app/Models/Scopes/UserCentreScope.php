@@ -16,12 +16,13 @@ class UserCentreScope implements Scope
     public function apply(Builder $builder, Model $model): void
     {
         $user = Auth::user();
-        
-        if (!$user || !$user->current_tenant_id) {
+
+        if (! $user || ! $user->current_tenant_id) {
             $builder->whereRaw('1 = 0'); // Return empty result set if no current tenant
+
             return;
         }
-        
+
         $builder->where('tenant_id', $user->current_tenant_id)
             ->whereHas('users', function (Builder $query) use ($user) {
                 $query->where('users.id', $user->id);

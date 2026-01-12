@@ -28,16 +28,16 @@ class CheckInvoices extends Command
     {
         $count = Invoice::count();
         $this->info("Total invoices: {$count}");
-        
+
         $statuses = Invoice::selectRaw('status, COUNT(*) as count')
             ->groupBy('status')
             ->get();
-            
-        $this->info("Invoice counts by status:");
+
+        $this->info('Invoice counts by status:');
         foreach ($statuses as $status) {
             $this->info("- {$status->status}: {$status->count}");
         }
-        
+
         return Command::SUCCESS;
     }
 }

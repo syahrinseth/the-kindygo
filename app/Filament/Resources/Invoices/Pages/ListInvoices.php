@@ -2,10 +2,9 @@
 
 namespace App\Filament\Resources\Invoices\Pages;
 
-use Filament\Actions\CreateAction;
-use App\Models\Invoice;
 use App\Filament\Resources\Invoices\InvoiceResource;
-use Filament\Actions;
+use App\Models\Invoice;
+use Filament\Actions\CreateAction;
 use Filament\Resources\Pages\ListRecords;
 use Illuminate\Support\Facades\Auth;
 

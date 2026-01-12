@@ -2,10 +2,10 @@
 
 namespace App\Filament\Resources\Invoices\Pages;
 
+use App\Enums\InvoiceStatus;
 use App\Filament\Resources\Invoices\InvoiceResource;
 use Filament\Resources\Pages\CreateRecord;
 use Illuminate\Support\Facades\Auth;
-use App\Enums\InvoiceStatus;
 
 class CreateInvoice extends CreateRecord
 {

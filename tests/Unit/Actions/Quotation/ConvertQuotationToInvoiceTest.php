@@ -12,7 +12,8 @@ use App\Models\Tenant;
 use App\Models\User;
 use Carbon\Carbon;
 
-use function Pest\Laravel\{actingAs, assertDatabaseHas};
+use function Pest\Laravel\actingAs;
+use function Pest\Laravel\assertDatabaseHas;
 
 beforeEach(function () {
     Carbon::setTestNow('2026-01-08');

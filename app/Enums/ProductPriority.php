@@ -11,8 +11,6 @@ enum ProductPriority: int
 
     /**
      * Get all values as an array.
-     *
-     * @return array
      */
     public static function values(): array
     {
@@ -21,12 +19,10 @@ enum ProductPriority: int
 
     /**
      * Get display name for the enum value.
-     *
-     * @return string
      */
     public function getDisplayName(): string
     {
-        return match($this) {
+        return match ($this) {
             self::CRITICAL => 'Critical',
             self::HIGH => 'High',
             self::MEDIUM => 'Medium',
@@ -36,12 +32,10 @@ enum ProductPriority: int
 
     /**
      * Get description for the enum value.
-     *
-     * @return string
      */
     public function getDescription(): string
     {
-        return match($this) {
+        return match ($this) {
             self::CRITICAL => 'Highest priority items requiring immediate attention',
             self::HIGH => 'High priority items that should be addressed soon',
             self::MEDIUM => 'Medium priority items for normal processing',
@@ -51,12 +45,10 @@ enum ProductPriority: int
 
     /**
      * Get badge color for the enum value.
-     *
-     * @return string
      */
     public function getBadgeColor(): string
     {
-        return match($this) {
+        return match ($this) {
             self::CRITICAL => 'danger',
             self::HIGH => 'warning',
             self::MEDIUM => 'info',
@@ -66,11 +58,9 @@ enum ProductPriority: int
 
     /**
      * Get options array for forms.
-     *
-     * @return array
      */
     public static function getOptions(): array
     {
-        return collect(self::cases())->mapWithKeys(fn($case) => [$case->value => $case->getDisplayName()])->toArray();
+        return collect(self::cases())->mapWithKeys(fn ($case) => [$case->value => $case->getDisplayName()])->toArray();
     }
 }

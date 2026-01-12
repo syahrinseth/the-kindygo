@@ -35,12 +35,12 @@ class User extends Authenticatable implements FilamentUser, HasAvatar, HasDefaul
 
     public function canAccessPanel(Panel $panel): bool
     {
-        // Parent panel - only accessible by users with Parent role
+        // Parent panel - accessible by all authenticated users
         if ($panel->getId() === 'parent') {
-            return $this->hasRole('Parent');
+            return true;
         }
 
-        // App panel - accessible by all authenticated users except pure parents
+        // App panel - accessible by all authenticated users
         if ($panel->getId() === 'app') {
             return true;
         }

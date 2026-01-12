@@ -2,9 +2,8 @@
 
 namespace App\Filament\Resources\Centres\Pages;
 
-use Filament\Actions\CreateAction;
 use App\Filament\Resources\Centres\CentreResource;
-use Filament\Actions;
+use Filament\Actions\CreateAction;
 use Filament\Resources\Pages\ListRecords;
 
 class ListCentres extends ListRecords

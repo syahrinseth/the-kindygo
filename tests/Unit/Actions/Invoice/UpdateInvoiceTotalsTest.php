@@ -1,11 +1,11 @@
 <?php
 
+use App\Actions\Invoice\UpdateInvoiceTotals;
+use App\Models\Centre;
 use App\Models\Invoice;
 use App\Models\InvoiceItem;
 use App\Models\Tenant;
-use App\Models\Centre;
 use App\Models\User;
-use App\Actions\Invoice\UpdateInvoiceTotals;
 use Carbon\Carbon;
 
 beforeEach(function () {
@@ -17,7 +17,7 @@ beforeEach(function () {
     $this->actingAs($this->user);
 
     $this->centre = Centre::factory()->create(['tenant_id' => $this->tenant->id]);
-    $this->action = new UpdateInvoiceTotals();
+    $this->action = new UpdateInvoiceTotals;
 });
 
 afterEach(function () {

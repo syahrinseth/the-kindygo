@@ -3,35 +3,29 @@
 namespace App\Filament\Resources\Parents;
 
 use App\Enums\NavigationGroup;
-use Filament\Tables\Columns\TextColumn;
-use Filament\Tables\Columns\IconColumn;
-use Filament\Tables\Filters\SelectFilter;
-use Filament\Actions\ActionGroup;
-use Filament\Actions\ViewAction;
-use Filament\Actions\EditAction;
-use Filament\Actions\DeleteAction;
-use Filament\Actions\BulkActionGroup;
-use Filament\Actions\DeleteBulkAction;
-use App\Filament\Resources\Parents\RelationManagers\CentresRelationManager;
-use App\Filament\Resources\Parents\RelationManagers\ChildrenRelationManager;
-use App\Filament\Resources\Parents\Pages\ListParents;
+use App\Filament\Forms\UserForm;
 use App\Filament\Resources\Parents\Pages\CreateParent;
 use App\Filament\Resources\Parents\Pages\EditParent;
-use App\Filament\Resources\ParentResource\Pages;
-use App\Filament\Resources\ParentResource\RelationManagers;
+use App\Filament\Resources\Parents\Pages\ListParents;
+use App\Filament\Resources\Parents\RelationManagers\CentresRelationManager;
+use App\Filament\Resources\Parents\RelationManagers\ChildrenRelationManager;
 use App\Models\User;
-use Filament\Actions;
-use Filament\Forms;
-use Illuminate\Support\Facades\Auth;
+use BackedEnum;
+use Filament\Actions\ActionGroup;
+use Filament\Actions\BulkActionGroup;
+use Filament\Actions\DeleteAction;
+use Filament\Actions\DeleteBulkAction;
+use Filament\Actions\EditAction;
+use Filament\Actions\ViewAction;
 use Filament\Resources\Resource;
-use Filament\Tables;
+use Filament\Schemas\Schema;
+use Filament\Tables\Columns\IconColumn;
+use Filament\Tables\Columns\TextColumn;
+use Filament\Tables\Filters\SelectFilter;
 use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Builder;
-use Illuminate\Database\Eloquent\SoftDeletingScope;
-use App\Filament\Forms\UserForm;
-use BackedEnum;
+use Illuminate\Support\Facades\Auth;
 use UnitEnum;
-use Filament\Schemas\Schema;
 
 class ParentResource extends Resource
 {
@@ -39,7 +33,7 @@ class ParentResource extends Resource
 
     protected static BackedEnum|string|null $navigationIcon = 'heroicon-o-user-group';
 
-    protected static string | UnitEnum | null $navigationGroup = NavigationGroup::USER_MANAGEMENT->value;
+    protected static string|UnitEnum|null $navigationGroup = NavigationGroup::USER_MANAGEMENT->value;
 
     protected static ?string $navigationLabel = 'Parents';
 
@@ -67,8 +61,7 @@ class ParentResource extends Resource
     {
         $query = parent::getEloquentQuery()
             ->with(['profile', 'userAddress', 'officeInfo'])
-            ->whereHas('roles', fn (Builder $query) =>
-                $query->where('name', 'Parent')
+            ->whereHas('roles', fn (Builder $query) => $query->where('name', 'Parent')
             );
 
         $user = Auth::user();
@@ -127,7 +120,7 @@ class ParentResource extends Resource
                         return $record->profile &&
                                $record->userAddress &&
                                $record->userAddress->isComplete() &&
-                               (!empty($record->profile->nric) || !empty($record->profile->passport));
+                               (! empty($record->profile->nric) || ! empty($record->profile->passport));
                     })
                     ->trueIcon('heroicon-o-check-circle')
                     ->falseIcon('heroicon-o-x-circle')

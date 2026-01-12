@@ -3,10 +3,8 @@
 namespace App\Filament\Pages\Tenancy;
 
 use App\Filament\Forms\TenantForm;
-use Filament\Forms\Components\TextInput;
 use Filament\Pages\Tenancy\EditTenantProfile;
 use Filament\Schemas\Schema;
-
 
 class EditTenantProfilePage extends EditTenantProfile
 {
@@ -14,7 +12,7 @@ class EditTenantProfilePage extends EditTenantProfile
     {
         return 'Company profile';
     }
-    
+
     public function hasLogo(): bool
     {
         return false;

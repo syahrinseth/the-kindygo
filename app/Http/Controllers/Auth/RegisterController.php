@@ -2,8 +2,8 @@
 
 namespace App\Http\Controllers\Auth;
 
-use App\Models\Scopes\TenantScope;
 use App\Http\Controllers\Controller;
+use App\Models\Scopes\TenantScope;
 use App\Models\Tenant;
 use App\Models\User;
 use Illuminate\Http\Request;
@@ -20,7 +20,7 @@ class RegisterController extends Controller
         if ($request->has('redirect')) {
             session(['url.intended' => $request->redirect]);
         }
-        
+
         return view('auth.register');
     }
 
@@ -47,7 +47,7 @@ class RegisterController extends Controller
             // Create a personal tenant for the user
             $tenant = Tenant::create([
                 'name' => "{$user->name}'s Company",
-                'slug' => str($user->name)->slug() . '-company',
+                'slug' => str($user->name)->slug().'-company',
                 'user_id' => $user->id,
                 'personal_tenant' => true,
                 'email' => $user->email,
@@ -68,13 +68,13 @@ class RegisterController extends Controller
         return redirect()->intended(route('filament.app.tenant'))
             ->with('success', 'Registration successful! Welcome to the platform.');
     }
-    
+
     public function showTenantRegistrationForm($tenantSlug)
     {
         $tenant = Tenant::where('slug', $tenantSlug)->firstOrFail();
         // Use withoutGlobalScope to bypass TenantScope since user is not authenticated yet
         $centres = $tenant->centres()->withoutGlobalScope(TenantScope::class)->get();
-        
+
         return view('auth.tenant-register', compact('tenant', 'centres'));
     }
 
@@ -92,8 +92,8 @@ class RegisterController extends Controller
                 'required',
                 'integer',
                 function ($attribute, $value, $fail) use ($tenant) {
-                    if (!$tenant->centres()->withoutGlobalScope(TenantScope::class)
-                    ->where('id', $value)->exists()) {
+                    if (! $tenant->centres()->withoutGlobalScope(TenantScope::class)
+                        ->where('id', $value)->exists()) {
                         $fail('The selected centre does not belong to this tenant.');
                     }
                 },
@@ -112,7 +112,7 @@ class RegisterController extends Controller
 
             // Check if Parent role exists, if not create it
             $parentRole = Role::firstOrCreate(['name' => 'Parent']);
-            
+
             // Assign the Parent role to the new user
             $user->assignRole($parentRole);
 

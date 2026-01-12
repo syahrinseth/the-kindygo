@@ -4,7 +4,6 @@ namespace App\Policies;
 
 use App\Models\Centre;
 use App\Models\User;
-use Illuminate\Auth\Access\Response;
 
 class CentrePolicy
 {
@@ -18,10 +17,10 @@ class CentrePolicy
     public function view(User $user, Centre $centre): bool
     {
         // Check role-based permissions first
-        if (!$user->hasAnyRole(['Super Admin', 'Admin', 'Principal', 'Teacher'])) {
+        if (! $user->hasAnyRole(['Super Admin', 'Admin', 'Principal', 'Teacher'])) {
             return false;
         }
-        
+
         // Check tenant-based permission
         return $centre->tenant_id === $user->current_tenant_id;
     }
@@ -39,13 +38,13 @@ class CentrePolicy
         if ($user->hasAnyRole(['Super Admin', 'Admin'])) {
             return $centre->tenant_id === $user->current_tenant_id;
         }
-        
+
         // Principal can only update centres they are assigned to
         if ($user->hasRole('Principal')) {
-            return $centre->tenant_id === $user->current_tenant_id && 
+            return $centre->tenant_id === $user->current_tenant_id &&
                    $user->centres()->where('centres.id', $centre->id)->exists();
         }
-        
+
         return false;
     }
 
@@ -55,7 +54,7 @@ class CentrePolicy
         if ($user->hasAnyRole(['Super Admin', 'Admin'])) {
             return $centre->tenant_id === $user->current_tenant_id;
         }
-        
+
         return false;
     }
 
@@ -65,7 +64,7 @@ class CentrePolicy
         if ($user->hasAnyRole(['Super Admin', 'Admin'])) {
             return $centre->tenant_id === $user->current_tenant_id;
         }
-        
+
         return false;
     }
 
@@ -75,7 +74,7 @@ class CentrePolicy
         if ($user->hasRole('Super Admin')) {
             return $centre->tenant_id === $user->current_tenant_id;
         }
-        
+
         return false;
     }
 }

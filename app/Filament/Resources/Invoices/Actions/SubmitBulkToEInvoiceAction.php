@@ -2,9 +2,8 @@
 
 namespace App\Filament\Resources\Invoices\Actions;
 
-use Exception;
 use App\Enums\InvoiceStatus;
-use App\Models\Invoice;
+use Exception;
 use Filament\Actions\BulkAction;
 use Filament\Notifications\Notification;
 use Illuminate\Database\Eloquent\Collection;
@@ -41,38 +40,41 @@ class SubmitBulkToEInvoiceAction extends BulkAction
                         // Skip if already submitted
                         if ($invoice->einvoice_uuid) {
                             $skippedCount++;
+
                             continue;
                         }
-                        
+
                         // Skip if not eligible (draft or cancelled)
                         if ($invoice->status === InvoiceStatus::DRAFT || $invoice->status === InvoiceStatus::CANCELLED) {
                             $skippedCount++;
+
                             continue;
                         }
-                        
+
                         // Check permission
-                        if (!Auth::user()->can('update', $invoice)) {
+                        if (! Auth::user()->can('update', $invoice)) {
                             $skippedCount++;
+
                             continue;
                         }
-                        
+
                         $response = $invoice->submitToEInvoice();
-                        
+
                         // The submitToEInvoice method returns a response array directly or throws an exception
                         // If we reach this point, it means the submission was successful
                         $successCount++;
                     } catch (Exception $e) {
                         $failedCount++;
-                        $errors[] = "Invoice {$invoice->number}: " . $e->getMessage();
-                        
+                        $errors[] = "Invoice {$invoice->number}: ".$e->getMessage();
+
                         Log::error('Bulk E-Invoice submission error', [
                             'invoice_id' => $invoice->id,
                             'error' => $e->getMessage(),
-                            'trace' => $e->getTraceAsString()
+                            'trace' => $e->getTraceAsString(),
                         ]);
                     }
                 }
-                
+
                 // Create summary notification
                 $message = [];
                 if ($successCount > 0) {
@@ -84,10 +86,10 @@ class SubmitBulkToEInvoiceAction extends BulkAction
                 if ($skippedCount > 0) {
                     $message[] = "{$skippedCount} invoice(s) skipped";
                 }
-                
+
                 $notification = Notification::make()
                     ->title('E-Invoice Bulk Submission Complete');
-                
+
                 if ($failedCount === 0) {
                     $notification->success();
                 } elseif ($successCount === 0) {
@@ -95,15 +97,15 @@ class SubmitBulkToEInvoiceAction extends BulkAction
                 } else {
                     $notification->warning();
                 }
-                
+
                 $notification->body(implode(', ', $message))
                     ->send();
-                
+
                 // Show detailed errors if any
-                if (!empty($errors)) {
+                if (! empty($errors)) {
                     Notification::make()
                         ->title('E-Invoice Submission Errors')
-                        ->body(implode("\n", array_slice($errors, 0, 5)) . (count($errors) > 5 ? "\n... and " . (count($errors) - 5) . " more" : ''))
+                        ->body(implode("\n", array_slice($errors, 0, 5)).(count($errors) > 5 ? "\n... and ".(count($errors) - 5).' more' : ''))
                         ->danger()
                         ->persistent()
                         ->send();

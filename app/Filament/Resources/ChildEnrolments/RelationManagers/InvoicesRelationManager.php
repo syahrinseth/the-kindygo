@@ -2,28 +2,23 @@
 
 namespace App\Filament\Resources\ChildEnrolments\RelationManagers;
 
-use Filament\Schemas\Components\Section;
-use Filament\Forms\Components\TextInput;
-use Filament\Forms\Components\Select;
+use App\Enums\InvoiceStatus;
+use Filament\Actions;
+use Filament\Actions\BulkActionGroup;
+use Filament\Actions\DeleteAction;
+use Filament\Actions\DeleteBulkAction;
+use Filament\Actions\EditAction;
+use Filament\Actions\ViewAction;
 use Filament\Forms\Components\DateTimePicker;
+use Filament\Forms\Components\Select;
+use Filament\Forms\Components\TextInput;
+use Filament\Resources\RelationManagers\RelationManager;
+use Filament\Schemas\Components\Section;
+use Filament\Schemas\Schema;
+use Filament\Support\Enums\FontWeight;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Filters\SelectFilter;
-use Filament\Actions\ViewAction;
-use Filament\Actions\EditAction;
-use Filament\Actions\DeleteAction;
-use Filament\Actions\BulkActionGroup;
-use Filament\Actions\DeleteBulkAction;
-use Filament\Forms;
-use Filament\Actions;
-use Filament\Resources\RelationManagers\RelationManager;
-use Filament\Tables;
 use Filament\Tables\Table;
-use Filament\Support\Enums\FontWeight;
-use App\Enums\InvoiceStatus;
-use App\Enums\PaymentStatus;
-use Illuminate\Database\Eloquent\Builder;
-use Illuminate\Database\Eloquent\SoftDeletingScope;
-use Filament\Schemas\Schema;
 
 class InvoicesRelationManager extends RelationManager
 {
@@ -95,7 +90,7 @@ class InvoicesRelationManager extends RelationManager
 
                 TextColumn::make('status')
                     ->badge()
-                    ->color(fn(string $state): string => match ($state) {
+                    ->color(fn (string $state): string => match ($state) {
                         'draft' => 'gray',
                         'pending' => 'warning',
                         'paid' => 'success',
@@ -103,7 +98,7 @@ class InvoicesRelationManager extends RelationManager
                         'cancelled' => 'gray',
                         default => 'gray',
                     })
-                    ->formatStateUsing(fn($state): string => ucfirst($state))
+                    ->formatStateUsing(fn ($state): string => ucfirst($state))
                     ->sortable(),
 
                 TextColumn::make('date')
@@ -141,13 +136,13 @@ class InvoicesRelationManager extends RelationManager
                         }
                     })
                     ->badge()
-                    ->color(fn(string $state): string => match ($state) {
+                    ->color(fn (string $state): string => match ($state) {
                         'paid' => 'success',
                         'partial' => 'warning',
                         'unpaid' => 'danger',
                         default => 'gray',
                     })
-                    ->formatStateUsing(fn($state): string => ucfirst($state)),
+                    ->formatStateUsing(fn ($state): string => ucfirst($state)),
 
                 TextColumn::make('created_at')
                     ->label('Created')

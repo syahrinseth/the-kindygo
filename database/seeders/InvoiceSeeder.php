@@ -2,11 +2,11 @@
 
 namespace Database\Seeders;
 
-use App\Models\User;
-use App\Models\Tenant;
+use App\Enums\InvoiceStatus;
 use App\Models\Centre;
 use App\Models\Invoice;
-use App\Enums\InvoiceStatus;
+use App\Models\Tenant;
+use App\Models\User;
 use Illuminate\Database\Seeder;
 
 class InvoiceSeeder extends Seeder
@@ -21,6 +21,7 @@ class InvoiceSeeder extends Seeder
 
         if ($tenants->isEmpty()) {
             $this->command->warn('No tenants found. Please run UserSeeder first.');
+
             return;
         }
 
@@ -46,6 +47,7 @@ class InvoiceSeeder extends Seeder
 
             if ($users->isEmpty()) {
                 $this->command->warn("No users found for tenant: {$tenant->name}");
+
                 continue;
             }
 

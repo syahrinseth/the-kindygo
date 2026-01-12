@@ -1,12 +1,12 @@
 <?php
 
-use App\Models\User;
-use App\Models\Tenant;
-use Illuminate\Support\Str;
 use App\Actions\Registration\CompleteParentRegistrationAction;
+use App\Models\Tenant;
+use App\Models\User;
+use Illuminate\Support\Str;
 
 beforeEach(function () {
-    $this->action = new CompleteParentRegistrationAction();
+    $this->action = new CompleteParentRegistrationAction;
     $this->tenant = Tenant::factory()->create();
     $this->user = User::factory()->create([
         'current_tenant_id' => $this->tenant->id,

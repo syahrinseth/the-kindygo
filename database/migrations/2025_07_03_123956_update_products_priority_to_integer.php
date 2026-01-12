@@ -2,8 +2,8 @@
 
 use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
-use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Schema;
 
 return new class extends Migration
 {
@@ -17,7 +17,7 @@ return new class extends Migration
         DB::table('products')->where('priority', 'high')->update(['priority' => '3']);
         DB::table('products')->where('priority', 'medium')->update(['priority' => '2']);
         DB::table('products')->where('priority', 'low')->update(['priority' => '1']);
-        
+
         // Then change the column type to integer
         Schema::table('products', function (Blueprint $table) {
             $table->integer('priority')->change();
@@ -33,7 +33,7 @@ return new class extends Migration
         Schema::table('products', function (Blueprint $table) {
             $table->string('priority')->change();
         });
-        
+
         // Convert numeric values back to strings
         DB::table('products')->where('priority', '4')->update(['priority' => 'critical']);
         DB::table('products')->where('priority', '3')->update(['priority' => 'high']);

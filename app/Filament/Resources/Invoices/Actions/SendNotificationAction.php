@@ -2,18 +2,18 @@
 
 namespace App\Filament\Resources\Invoices\Actions;
 
-use Closure;
-use Illuminate\Support\Facades\Log;
-use Symfony\Component\Mailer\Exception\TransportException;
-use Illuminate\Mail\MailManager;
-use Exception;
 use App\Enums\InvoiceStatus;
 use App\Models\Invoice;
-use App\Notifications\InvoicePendingNotification;
 use App\Notifications\InvoiceOverdueNotification;
-use Filament\Notifications\Notification;
+use App\Notifications\InvoicePendingNotification;
+use Closure;
+use Exception;
 use Filament\Actions\Action;
+use Filament\Notifications\Notification;
+use Illuminate\Mail\MailManager;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Log;
+use Symfony\Component\Mailer\Exception\TransportException;
 
 class SendNotificationAction
 {
@@ -36,6 +36,7 @@ class SendNotificationAction
             ->modalDescription(function (Invoice $record) {
                 $isOverdue = $record->due_at->isPast();
                 $type = $isOverdue ? 'overdue' : 'pending payment';
+
                 return "Are you sure you want to send a {$type} notification to {$record->user->name}?";
             })
             ->action(static::getActionCallback())
@@ -43,7 +44,7 @@ class SendNotificationAction
                 $user = Auth::user();
 
                 // Only show for pending or overdue invoices
-                if (!in_array($record->status, [InvoiceStatus::PENDING, InvoiceStatus::OVERDUE])) {
+                if (! in_array($record->status, [InvoiceStatus::PENDING, InvoiceStatus::OVERDUE])) {
                     return false;
                 }
 
@@ -60,14 +61,14 @@ class SendNotificationAction
         return function (Invoice $record) {
             try {
                 $isOverdue = $record->due_at->isPast();
-                
+
                 if ($isOverdue) {
                     // Calculate days overdue
                     $daysOverdue = $record->due_at->diffInDays(now());
-                    
+
                     // Send overdue notification
                     $record->user->notify(new InvoiceOverdueNotification($record, $daysOverdue));
-                    
+
                     Notification::make()
                         ->title('Overdue notification sent successfully')
                         ->body("Overdue notification sent to {$record->user->name} for invoice #{$record->number}")
@@ -76,7 +77,7 @@ class SendNotificationAction
                 } else {
                     // Send pending payment notification
                     $record->user->notify(new InvoicePendingNotification($record));
-                    
+
                     Notification::make()
                         ->title('Payment reminder sent successfully')
                         ->body("Payment reminder sent to {$record->user->name} for invoice #{$record->number}")
@@ -108,7 +109,7 @@ class SendNotificationAction
                     ->body('Email service is not properly configured. Please contact the system administrator.')
                     ->danger()
                     ->send();
-                    
+
             } catch (MailManager $e) {
                 // Handle Laravel mail manager issues
                 Log::error('Mail manager error while sending invoice notification', [
@@ -122,13 +123,13 @@ class SendNotificationAction
                     ->body('Email service configuration issue. Please contact the system administrator.')
                     ->danger()
                     ->send();
-                    
+
             } catch (Exception $e) {
                 // Handle any other exceptions
                 Log::error('Failed to send invoice notification', [
                     'invoice_id' => $record->id,
                     'error' => $e->getMessage(),
-                    'trace' => $e->getTraceAsString()
+                    'trace' => $e->getTraceAsString(),
                 ]);
 
                 Notification::make()

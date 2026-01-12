@@ -2,48 +2,40 @@
 
 namespace App\Filament\Resources\Products;
 
-use Filament\Schemas\Components\Section;
-use Filament\Forms\Components\TextInput;
-use Filament\Forms\Components\Select;
-use Filament\Forms\Components\Hidden;
-use Filament\Tables\Columns\TextColumn;
-use Filament\Tables\Filters\SelectFilter;
-use Filament\Actions\ActionGroup;
-use Filament\Actions\ViewAction;
-use Filament\Actions\EditAction;
-use Filament\Actions\DeleteAction;
-use Filament\Actions\BulkActionGroup;
-use Filament\Actions\DeleteBulkAction;
-use App\Filament\Resources\Products\RelationManagers\InvoiceItemsRelationManager;
-use App\Filament\Resources\Products\RelationManagers\PricesRelationManager;
-use App\Filament\Resources\Products\Pages\ListProducts;
-use App\Filament\Resources\Products\Pages\CreateProduct;
-use App\Filament\Resources\Products\Pages\EditProduct;
+use App\Enums\ProductPriority;
 use App\Enums\ProductStatus;
 use App\Enums\ProductType;
-use App\Enums\ProductPriority;
-use App\Filament\Resources\ProductResource\Pages;
-use App\Filament\Resources\ProductResource\RelationManagers;
+use App\Filament\Resources\Products\Pages\CreateProduct;
+use App\Filament\Resources\Products\Pages\EditProduct;
+use App\Filament\Resources\Products\Pages\ListProducts;
+use App\Filament\Resources\Products\RelationManagers\InvoiceItemsRelationManager;
+use App\Filament\Resources\Products\RelationManagers\PricesRelationManager;
 use App\Models\Product;
-use Filament\Actions;
-use Filament\Forms;
+use Filament\Actions\ActionGroup;
+use Filament\Actions\BulkActionGroup;
+use Filament\Actions\DeleteAction;
+use Filament\Actions\DeleteBulkAction;
+use Filament\Actions\EditAction;
+use Filament\Actions\ViewAction;
+use Filament\Forms\Components\Hidden;
+use Filament\Forms\Components\Select;
+use Filament\Forms\Components\TextInput;
 use Filament\Resources\Resource;
-use Filament\Tables;
-use Filament\Tables\Table;
-use BackedEnum;
-use Illuminate\Database\Eloquent\Builder;
-use Illuminate\Database\Eloquent\SoftDeletingScope;
-use Illuminate\Support\Facades\Auth;
-use UnitEnum;
+use Filament\Schemas\Components\Section;
 use Filament\Schemas\Schema;
+use Filament\Tables\Columns\TextColumn;
+use Filament\Tables\Filters\SelectFilter;
+use Filament\Tables\Table;
+use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Support\Facades\Auth;
 
 class ProductResource extends Resource
 {
     protected static ?string $model = Product::class;
 
-    protected static string | \BackedEnum | null $navigationIcon = 'heroicon-o-cube';
+    protected static string|\BackedEnum|null $navigationIcon = 'heroicon-o-cube';
 
-    protected static string | \UnitEnum | null $navigationGroup = 'Inventory';
+    protected static string|\UnitEnum|null $navigationGroup = 'Inventory';
 
     protected static ?int $navigationSort = 1;
 
@@ -82,14 +74,14 @@ class ProductResource extends Resource
                     ->schema([
                         Select::make('type')
                             ->required()
-                            ->options(collect(ProductType::cases())->mapWithKeys(fn($case) => [$case->value => $case->getDisplayName()]))
+                            ->options(collect(ProductType::cases())->mapWithKeys(fn ($case) => [$case->value => $case->getDisplayName()]))
                             ->default(ProductType::SERVICE->value)
                             ->native(false)
                             ->helperText('Select the type of product or service'),
 
                         Select::make('status')
                             ->required()
-                            ->options(collect(ProductStatus::cases())->mapWithKeys(fn($case) => [$case->value => $case->label()]))
+                            ->options(collect(ProductStatus::cases())->mapWithKeys(fn ($case) => [$case->value => $case->label()]))
                             ->default(ProductStatus::ACTIVE->value)
                             ->native(false)
                             ->helperText('Set the current status of the product'),
@@ -103,7 +95,7 @@ class ProductResource extends Resource
                             ->label('Available at Centres')
                             ->relationship('centres', 'name', function (Builder $query) {
                                 $user = Auth::user();
-                                if (!$user->current_tenant_id) {
+                                if (! $user->current_tenant_id) {
                                     return $query->whereRaw('1 = 0'); // Return empty query
                                 }
 
@@ -184,6 +176,7 @@ class ProductResource extends Resource
                     ->label('Current Price')
                     ->getStateUsing(function ($record) {
                         $currentPrice = $record->currentPrice;
+
                         return $currentPrice ? $currentPrice->price : null;
                     })
                     ->money('MYR', 100)
@@ -202,10 +195,10 @@ class ProductResource extends Resource
             ])
             ->filters([
                 SelectFilter::make('status')
-                    ->options(collect(ProductStatus::cases())->mapWithKeys(fn($case) => [$case->value => $case->label()])),
+                    ->options(collect(ProductStatus::cases())->mapWithKeys(fn ($case) => [$case->value => $case->label()])),
 
                 SelectFilter::make('type')
-                    ->options(collect(ProductType::cases())->mapWithKeys(fn($case) => [$case->value => $case->getDisplayName()])),
+                    ->options(collect(ProductType::cases())->mapWithKeys(fn ($case) => [$case->value => $case->getDisplayName()])),
 
                 SelectFilter::make('priority')
                     ->options(ProductPriority::getOptions()),

@@ -21,7 +21,7 @@ enum ProductStatus: string
      */
     public function label(): string
     {
-        return match($this) {
+        return match ($this) {
             self::ACTIVE => 'Active',
             self::INACTIVE => 'Inactive',
             self::DRAFT => 'Draft',
@@ -33,7 +33,7 @@ enum ProductStatus: string
      */
     public function color(): string
     {
-        return match($this) {
+        return match ($this) {
             self::ACTIVE => 'success',
             self::INACTIVE => 'danger',
             self::DRAFT => 'warning',

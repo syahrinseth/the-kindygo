@@ -32,7 +32,7 @@ class QuotationForm
                                     ->relationship('centre', 'name')
                                     ->options(function () {
                                         $user = Auth::user();
-                                        if (!$user->current_tenant_id) {
+                                        if (! $user->current_tenant_id) {
                                             return [];
                                         }
 
@@ -57,7 +57,7 @@ class QuotationForm
                                     ->relationship('user', 'name')
                                     ->options(function () {
                                         $user = Auth::user();
-                                        if (!$user->current_tenant_id) {
+                                        if (! $user->current_tenant_id) {
                                             return [];
                                         }
 
@@ -76,7 +76,7 @@ class QuotationForm
                                     ->relationship('child', 'full_name')
                                     ->options(function () {
                                         $user = Auth::user();
-                                        if (!$user->current_tenant_id) {
+                                        if (! $user->current_tenant_id) {
                                             return [];
                                         }
 

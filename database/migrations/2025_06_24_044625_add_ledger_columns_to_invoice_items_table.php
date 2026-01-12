@@ -31,7 +31,7 @@ return new class extends Migration
                 'paid_amount',
                 'balance_amount',
                 'paid',
-                'effective_date'
+                'effective_date',
             ]);
         });
     }

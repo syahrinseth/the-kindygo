@@ -12,8 +12,7 @@ class ConvertQuotationToInvoice
 {
     public function __construct(
         protected UpdateQuotationTotals $updateQuotationTotals,
-    ) {
-    }
+    ) {}
 
     public function execute(Quotation $quotation, array $selectedItemIds): Invoice
     {
