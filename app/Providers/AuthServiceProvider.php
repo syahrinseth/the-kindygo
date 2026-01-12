@@ -2,7 +2,7 @@
 
 namespace App\Providers;
 
-use App\Filament\Pages\FinanceDashboard;
+use App\Filament\Admin\Pages\FinanceDashboard;
 use App\Models\Centre;
 use App\Models\Child;
 use App\Models\ChildEnrolment;
@@ -39,7 +39,7 @@ class AuthServiceProvider extends ServiceProvider
         Product::class => ProductPolicy::class,
         FinanceDashboard::class => FinanceDashboardPolicy::class,
         // InvoiceItemsLedgerResource uses InvoiceItem model but with InvoiceItemsLedgerPolicy for ledger-specific permissions
-        'App\Filament\Resources\InvoiceItemsLedgerResource' => InvoiceItemsLedgerPolicy::class,
+        'App\Filament\Admin\Resources\InvoiceItemsLedgers\InvoiceItemsLedgerResource' => InvoiceItemsLedgerPolicy::class,
     ];
 
     /**

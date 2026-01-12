@@ -10,16 +10,23 @@ use App\Http\Controllers\SecureMediaController;
 use App\Http\Controllers\TenantDirectoryController;
 use App\Http\Controllers\TenantInvitationController;
 use App\Livewire\TenantRegistrationWizard;
-use Filament\Facades\Filament;
 use Illuminate\Support\Facades\Route;
 
-// Authenticated users: redirect to dashboard
+// Authenticated users: redirect based on role
 Route::middleware('auth')->get('/', function () {
+    $user = auth()->user();
+
+    // Admin roles redirect to /admin panel
+    if ($user->isAdmin()) {
+        return redirect('/admin');
+    }
+
+    // Parents stay on root panel (dashboard)
     return redirect('/dashboard');
 });
 
 // Guests: go to login
-Route::middleware('guest')->get('/', function () {
+Route::middleware('guest')->get('/login-redirect', function () {
     return redirect('/login');
 });
 
@@ -51,10 +58,15 @@ Route::get('/register/{tenant:slug}', TenantRegistrationWizard::class)
     ->middleware('allow.incomplete.registration')
     ->name('tenant.register.form');
 
+// Logout routes for different contexts
 Route::post('/logout', [LoginController::class, 'logout'])->name('logout')->middleware('auth');
-
-// Alias route for Filament logout links
 Route::post('/filament/logout', [LoginController::class, 'logout'])->name('filament.app.auth.logout')->middleware('auth');
+Route::post('/admin/logout', [LoginController::class, 'logout'])->name('filament.admin.auth.logout')->middleware('auth');
+
+// Parent panel logout - use a closure to redirect to the main logout route
+Route::match(['get', 'post'], '/parent/logout', function () {
+    return app(\App\Http\Controllers\Auth\LoginController::class)->logout(request());
+})->name('filament.parent.auth.logout')->middleware('auth');
 
 // Profile completion routes
 Route::middleware('auth')->group(function () {

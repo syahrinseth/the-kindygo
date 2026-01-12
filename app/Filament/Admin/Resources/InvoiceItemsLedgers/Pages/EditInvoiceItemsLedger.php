@@ -1,0 +1,21 @@
+<?php
+
+namespace App\Filament\Admin\Resources\InvoiceItemsLedgers\Pages;
+
+use App\Filament\Admin\Resources\InvoiceItemsLedgers\InvoiceItemsLedgers\InvoiceItemsLedgerResource;
+use Filament\Actions\DeleteAction;
+use Filament\Actions\ViewAction;
+use Filament\Resources\Pages\EditRecord;
+
+class EditInvoiceItemsLedger extends EditRecord
+{
+    protected static string $resource = InvoiceItemsLedgerResource::class;
+
+    protected function getHeaderActions(): array
+    {
+        return [
+            ViewAction::make(),
+            DeleteAction::make(),
+        ];
+    }
+}

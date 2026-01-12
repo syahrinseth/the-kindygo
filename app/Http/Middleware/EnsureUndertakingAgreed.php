@@ -25,8 +25,8 @@ class EnsureUndertakingAgreed
 
         // Skip for specific routes
         $exemptPaths = [
-            'parent/agreement/*',
-            'parent/logout',
+            'agreement/*',
+            'logout',
             '*/media/*',
             'filament/*/logout',
         ];
@@ -49,7 +49,7 @@ class EnsureUndertakingAgreed
 
         if ($pendingLetter) {
             // Redirect to agreement page if pending letter exists
-            return redirect()->to('/parent/agreement/pending');
+            return redirect()->to('/agreement/pending');
         }
 
         return $next($request);

@@ -1,0 +1,21 @@
+<?php
+
+namespace App\Filament\Admin\Resources\Users\Pages;
+
+use App\Filament\Admin\Resources\Users\UserResource;
+use Filament\Actions\CreateAction;
+use Filament\Resources\Pages\ListRecords;
+use Illuminate\Support\Facades\Auth;
+
+class ListUsers extends ListRecords
+{
+    protected static string $resource = UserResource::class;
+
+    protected function getHeaderActions(): array
+    {
+        return [
+            CreateAction::make()
+                ->visible(fn () => Auth::user()->can('create', UserResource::getModel())),
+        ];
+    }
+}

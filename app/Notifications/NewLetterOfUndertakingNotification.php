@@ -35,7 +35,7 @@ class NewLetterOfUndertakingNotification extends Notification implements ShouldQ
     public function toMail(object $notifiable): MailMessage
     {
         $tenant = $this->letter->tenant;
-        $agreementUrl = url('/parent/agreement/pending');
+        $agreementUrl = url('/agreement/pending');
 
         return (new MailMessage)
             ->subject("New Agreement Required for {$tenant->name}")

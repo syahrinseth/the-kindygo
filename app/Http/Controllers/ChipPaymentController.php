@@ -46,7 +46,7 @@ class ChipPaymentController extends Controller
         $invoiceCount = $invoices->count();
 
         if ($invoiceCount === 0) {
-            return redirect()->route('filament.app.pages.dashboard', ['tenant' => $payment->tenant])
+            return $this->redirectToDashboard($payment->user)
                 ->with('error', 'No invoices found for this payment.');
         }
 
@@ -80,11 +80,7 @@ class ChipPaymentController extends Controller
         // Redirect to first invoice
         $firstInvoice = $invoices->first();
 
-        return redirect()
-            ->route('filament.app.resources.invoices.view', [
-                'tenant' => $firstInvoice->tenant,
-                'record' => $firstInvoice->id,
-            ])
+        return $this->redirectToInvoice($payment->user, $firstInvoice)
             ->with('success', $message);
     }
 
@@ -116,18 +112,14 @@ class ChipPaymentController extends Controller
         $invoiceCount = $invoices->count();
 
         if ($invoiceCount === 0) {
-            return redirect()->route('filament.app.pages.dashboard', ['tenant' => $payment->tenant])
+            return $this->redirectToDashboard($payment->user)
                 ->with('error', 'No invoices found for this payment.');
         }
 
         $firstInvoice = $invoices->first();
         $message = "Payment failed for {$invoiceCount} invoice(s).";
 
-        return redirect()
-            ->route('filament.app.resources.invoices.view', [
-                'tenant' => $firstInvoice->tenant,
-                'record' => $firstInvoice->id,
-            ])
+        return $this->redirectToInvoice($payment->user, $firstInvoice)
             ->with('error', $message);
     }
 
@@ -159,18 +151,14 @@ class ChipPaymentController extends Controller
         $invoiceCount = $invoices->count();
 
         if ($invoiceCount === 0) {
-            return redirect()->route('filament.app.pages.dashboard', ['tenant' => $payment->tenant])
+            return $this->redirectToDashboard($payment->user)
                 ->with('error', 'No invoices found for this payment.');
         }
 
         $firstInvoice = $invoices->first();
         $message = "Payment was cancelled for {$invoiceCount} invoice(s).";
 
-        return redirect()
-            ->route('filament.app.resources.invoices.view', [
-                'tenant' => $firstInvoice->tenant,
-                'record' => $firstInvoice->id,
-            ])
+        return $this->redirectToInvoice($payment->user, $firstInvoice)
             ->with('warning', $message);
     }
 
@@ -427,5 +415,33 @@ class ChipPaymentController extends Controller
     private function extractFpxTransactionId($chipPurchase): ?string
     {
         return $chipPurchase->transaction_data?->fpx_transaction_id ?? null;
+    }
+
+    /**
+     * Redirect to appropriate dashboard based on user role
+     */
+    private function redirectToDashboard($user)
+    {
+        if ($user && $user->isAdmin()) {
+            return redirect()->route('filament.admin.pages.dashboard');
+        }
+
+        return redirect()->route('filament.parent.pages.dashboard');
+    }
+
+    /**
+     * Redirect to appropriate invoice view based on user role
+     */
+    private function redirectToInvoice($user, $invoice)
+    {
+        if ($user && $user->isAdmin()) {
+            return redirect()->route('filament.admin.resources.invoices.view', [
+                'tenant' => $invoice->tenant,
+                'record' => $invoice->id,
+            ]);
+        }
+
+        // For parents, redirect to parent dashboard since they don't have invoice detail view
+        return redirect()->route('filament.parent.pages.dashboard');
     }
 }

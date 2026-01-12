@@ -56,12 +56,17 @@ class LoginController extends Controller
                 }
             }
 
-            // Redirect to the intended URL if it exists, otherwise go to dashboard
+            // Redirect to the intended URL if it exists, otherwise redirect based on role
             if (session()->has('url.intended')) {
                 $redirectUrl = session('url.intended');
                 session()->forget('url.intended');
 
                 return redirect()->to($redirectUrl);
+            }
+
+            // Redirect based on user role: admin roles go to /admin, parents go to /dashboard
+            if ($user->isAdmin()) {
+                return redirect('/admin');
             }
 
             return redirect('/dashboard');

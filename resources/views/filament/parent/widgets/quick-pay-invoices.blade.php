@@ -81,7 +81,7 @@
                                 x-bind:disabled="selected.length === 0 || selected.length > 10"
                                 x-on:click="
                                     if (selected.length > 0 && selected.length <= 10) {
-                                        window.location.href = '/parent/make-payment?preselect=' + selected.join(',');
+                                        window.location.href = '/make-payment?preselect=' + selected.join(',');
                                     }
                                 "
                             >
