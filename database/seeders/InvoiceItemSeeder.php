@@ -35,6 +35,12 @@ class InvoiceItemSeeder extends Seeder
             // Get products for the same tenant
             $tenantProducts = $products->where('tenant_id', $invoice->tenant_id);
 
+            if ($tenantProducts->isEmpty()) {
+                $this->command->warn("No products found for tenant ID: {$invoice->tenant_id}. Skipping invoice ID: {$invoice->id}");
+
+                continue;
+            }
+
             // Get children for the same tenant (if any)
             $tenantChildren = $children->filter(function ($child) use ($invoice) {
                 return $child->tenants->contains('id', $invoice->tenant_id);

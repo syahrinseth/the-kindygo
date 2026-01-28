@@ -20,6 +20,7 @@ beforeEach(function () {
 it('redirects admin user to /admin after login', function () {
     $user = User::factory()->create([
         'password' => bcrypt('password'),
+        'profile_completed' => true,
     ]);
     $user->assignRole('Admin');
 
@@ -45,6 +46,7 @@ it('redirects admin user to /admin after login', function () {
 it('redirects parent user to /dashboard after login', function () {
     $user = User::factory()->create([
         'password' => bcrypt('password'),
+        'profile_completed' => true,
     ]);
     $user->assignRole('Parent');
 
@@ -68,7 +70,9 @@ it('redirects parent user to /dashboard after login', function () {
 });
 
 it('redirects admin user from root to /admin', function () {
-    $user = User::factory()->create();
+    $user = User::factory()->create([
+        'profile_completed' => true,
+    ]);
     $user->assignRole('Admin');
 
     // Create tenant for the user
@@ -88,7 +92,9 @@ it('redirects admin user from root to /admin', function () {
 });
 
 it('parent user stays on root panel', function () {
-    $user = User::factory()->create();
+    $user = User::factory()->create([
+        'profile_completed' => true,
+    ]);
     $user->assignRole('Parent');
 
     // Create tenant for the user
@@ -157,6 +163,7 @@ it('parent user can access parent panel', function () {
 it('user with both admin and parent role defaults to admin panel on login', function () {
     $user = User::factory()->create([
         'password' => bcrypt('password'),
+        'profile_completed' => true,
     ]);
     $user->assignRole(['Admin', 'Parent']);
 

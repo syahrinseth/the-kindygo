@@ -39,6 +39,7 @@ class ParentPanelProvider extends PanelProvider
                 AgreementPage::class,
                 MakePayment::class,
             ])
+            ->discoverResources(in: app_path('Filament/Parent/Resources'), for: 'App\\Filament\\Parent\\Resources')
             ->discoverWidgets(in: app_path('Filament/Parent/Widgets'), for: 'App\\Filament\\Parent\\Widgets')
             ->middleware([
                 EncryptCookies::class,

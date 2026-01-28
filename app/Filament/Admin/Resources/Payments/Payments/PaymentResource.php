@@ -334,7 +334,7 @@ class PaymentResource extends Resource
                         ->label('Download Receipt')
                         ->icon('heroicon-o-document-arrow-down')
                         ->color('success')
-                        ->url(fn (Payment $record): string => route('payment.download-receipt', $record))
+                        ->url(fn (Payment $record): string => route('payments.receipt.download', $record))
                         ->openUrlInNewTab()
                         ->visible(fn (Payment $record) => Auth::user()->can('view', $record) && $record->status === PaymentStatus::PAID),
 
@@ -372,7 +372,7 @@ class PaymentResource extends Resource
                                 return;
                             }
 
-                            return redirect()->route('payment.download-receipt', $paidRecord);
+                            return redirect()->route('payments.receipt.download', $paidRecord);
                         })
                         ->requiresConfirmation()
                         ->modalHeading('Download Payment Receipt')

@@ -89,7 +89,7 @@ class Quotation extends Model
         $centre = $this->centre ?? Centre::find($this->centre_id);
 
         // Generate preschool-friendly centre code
-        $centreCode = $this->generatePreschoolCentreCode($centre);
+        $centreCode = Centre::generateCentreCode($centre);
 
         // Generate sequential number unique to tenant_id, centre_id, and year
         $sequentialNumber = $this->getNextSequentialNumber($year);
@@ -99,100 +99,6 @@ class Quotation extends Model
         $number = "QUO/{$centreCode}/{$year}/{$runningNumber}";
 
         return $number;
-    }
-
-    /**
-     * Generate a preschool-friendly centre code.
-     *
-     * @param  Centre|null  $centre
-     */
-    private function generatePreschoolCentreCode($centre): string
-    {
-        if (! $centre) {
-            return 'PS01'; // Default preschool code
-        }
-
-        // If centre has a dedicated code field, use it
-        if (! empty($centre->code)) {
-            return strtoupper($centre->code);
-        }
-
-        // Generate code from centre name with preschool context
-        $name = $centre->name ?? 'Preschool';
-
-        // Common preschool/childcare name patterns
-        $preschoolKeywords = [
-            'kindergarten' => 'KG',
-            'preschool' => 'PS',
-            'childcare' => 'CC',
-            'nursery' => 'NR',
-            'daycare' => 'DC',
-            'montessori' => 'MT',
-            'academy' => 'AC',
-            'learning' => 'LC',
-            'centre' => 'CT',
-            'center' => 'CT',
-            'kids' => 'KD',
-            'children' => 'CH',
-            'little' => 'LT',
-            'tiny' => 'TN',
-            'bright' => 'BR',
-            'smart' => 'SM',
-            'happy' => 'HP',
-            'sunny' => 'SN',
-            'rainbow' => 'RB',
-            'star' => 'ST',
-            'golden' => 'GD',
-        ];
-
-        $nameLower = strtolower($name);
-        $prefix = 'PS'; // Default to Preschool
-
-        // Check for keywords in the name to determine appropriate prefix
-        foreach ($preschoolKeywords as $keyword => $code) {
-            if (strpos($nameLower, $keyword) !== false) {
-                $prefix = $code;
-                break;
-            }
-        }
-
-        // Extract meaningful parts from the name
-        $cleanName = preg_replace('/[^A-Za-z0-9\s]/', '', $name);
-        $words = explode(' ', $cleanName);
-
-        // Try to create a meaningful suffix from the name
-        $suffix = '';
-        foreach ($words as $word) {
-            $word = strtoupper($word);
-            if (strlen($word) >= 2 && ! in_array(strtolower($word), array_keys($preschoolKeywords))) {
-                $suffix .= substr($word, 0, 2);
-                if (strlen($suffix) >= 4) {
-                    break;
-                }
-            }
-        }
-
-        // If we couldn't generate a good suffix, use first letters of each word
-        if (strlen($suffix) < 2) {
-            $suffix = '';
-            foreach ($words as $word) {
-                if (! empty($word) && ! in_array(strtolower($word), array_keys($preschoolKeywords))) {
-                    $suffix .= strtoupper($word[0]);
-                    if (strlen($suffix) >= 3) {
-                        break;
-                    }
-                }
-            }
-        }
-
-        // Ensure we have at least 2 characters for suffix
-        if (strlen($suffix) < 2) {
-            $suffix = '01';
-        } else {
-            $suffix = substr($suffix, 0, 3); // Limit to 3 characters
-        }
-
-        return $prefix.$suffix;
     }
 
     /**

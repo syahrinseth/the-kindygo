@@ -2,17 +2,12 @@
 
 namespace App\Filament\Admin\Resources\Invoices\Actions;
 
+use App\Actions\Payment\MakePaymentAction as MakePaymentActionClass;
 use App\Enums\Gateway;
 use App\Enums\InvoiceStatus;
-use App\Enums\PaymentStatus;
 use App\Models\Invoice;
-use App\Models\Payment;
 use App\Policies\PaymentPolicy;
-use Carbon\Carbon;
-use Chip\Model\Product;
 use Closure;
-use Exception;
-use Filament\Actions\Action;
 use Filament\Actions\Action as FilamentAction;
 use Filament\Forms\Components\DateTimePicker;
 use Filament\Forms\Components\FileUpload;
@@ -23,9 +18,7 @@ use Filament\Notifications\Notification;
 use Filament\Schemas\Components\Grid;
 use Filament\Schemas\Components\Utilities\Get;
 use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
-use SyahrinSeth\ChipLaravel\ChipService;
 
 class MakePaymentAction
 {
@@ -297,7 +290,9 @@ class MakePaymentAction
             $user = Auth::user();
             $policy = new PaymentPolicy;
 
-            if ($data['gateway'] === Gateway::BANK_TRANSFER->value && ! $policy->useBankTransferGateway($user)) {
+            $gateway = Gateway::from($data['gateway']);
+
+            if ($gateway === Gateway::BANK_TRANSFER && ! $policy->useBankTransferGateway($user)) {
                 Notification::make()
                     ->title('Unauthorized Payment Gateway')
                     ->body('You are not authorized to use Bank Transfer gateway.')
@@ -307,185 +302,63 @@ class MakePaymentAction
                 return;
             }
 
-            if ($data['gateway'] === Gateway::CHIP->value) {
-                static::handleChipPayment($data, $record);
-            } else {
-                static::handleBankTransferPayment($data, $record);
+            // Convert amount from decimal to cents
+            $totalAmount = (int) ($data['amount'] * 100);
+
+            // Prepare invoice data
+            $invoices = [['id' => $record->id]];
+
+            // Prepare additional data
+            $additionalData = [];
+            if (isset($data['reference_no'])) {
+                $additionalData['reference_no'] = $data['reference_no'];
             }
-        };
-    }
+            if (isset($data['payment_proof'])) {
+                $additionalData['payment_proof'] = $data['payment_proof'];
+            }
+            if (isset($data['paid_at'])) {
+                $additionalData['paid_at'] = $data['paid_at'];
+            }
+            if (isset($data['description'])) {
+                $additionalData['description'] = $data['description'];
+            }
 
-    /**
-     * Handle CHIP payment gateway using syahrinseth/chip-laravel
-     */
-    protected static function handleChipPayment(array $data, Invoice $record): void
-    {
-        try {
-            // Generate unique reference for CHIP payment
-            $referenceNo = 'CHIP-'.$record->id.'-'.time();
+            // Execute payment through unified action
+            $makePayment = app(MakePaymentActionClass::class);
 
-            // Convert amount to cents
-            $amountInCents = (int) ($data['amount'] * 100);
-
-            // Create payment record first with pending status
-            $payment = Payment::create([
-                'tenant_id' => $record->tenant_id,
-                'centre_id' => $record->centre_id,
-                'user_id' => $record->user_id,
-                'gateway' => Gateway::CHIP,
-                'reference_no' => $referenceNo,
-                'status' => PaymentStatus::PENDING,
-                'amount' => $amountInCents,
-                'description' => $data['description'] ?? null,
-                'paid_at' => null,
-            ]);
-
-            // Link payment to invoice
-            $record->payments()->attach($payment->id, [
-                'amount' => $amountInCents,
-            ]);
-
-            // Create CHIP product
-            $product = new Product;
-            $product->name = 'Payment for Invoice #'.$record->invoice_number;
-            $product->price = $amountInCents; // in cents
-
-            // Create CHIP payment using the service
-            $chipService = new ChipService;
-            $purchaseResult = $chipService->createPurchase(
-                $record->user->email,
-                [$product],
-                route('chip.success', ['payment' => $payment->id]),
-                route('chip.failure', ['payment' => $payment->id]),
-                route('chip.webhook'),
-                route('chip.cancel', ['payment' => $payment->id]),
-                false, // send_receipt
-                $record->user->name
+            $result = $makePayment->execute(
+                user: $user,
+                gateway: $gateway,
+                totalAmount: $totalAmount,
+                invoices: $invoices,
+                userAllocation: null,
+                additionalData: $additionalData
             );
 
-            if ($purchaseResult && isset($purchaseResult->checkout_url)) {
-                // Store the CHIP purchase ID and comprehensive payment data
-                $payment->update([
-                    'gateway_payment_id' => $purchaseResult->id,
-                    'gateway_payment_data' => [
-                        // Main chip_data structure with comprehensive information
-                        'chip_data' => [
-                            'id' => $purchaseResult->id,
-                            'status' => $purchaseResult->status ?? 'pending',
-                            'payment_method' => $purchaseResult->transaction_data?->payment_method ??
-                                              $purchaseResult->payment_method ?? null,
-                            'checkout_url' => $purchaseResult->checkout_url,
-                            'created_on' => $purchaseResult->created_on ?? now()->toISOString(),
-                            'updated_on' => $purchaseResult->updated_on ?? now()->toISOString(),
-                            'brand_id' => $purchaseResult->brand_id ?? null,
-                            'currency' => $purchaseResult->purchase?->currency ?? 'MYR',
-                            'total' => $purchaseResult->purchase?->total ?? $amountInCents,
-                            'client_email' => $record->user->email,
-                            'client_name' => $record->user->name,
-                            'reference' => $referenceNo,
-                        ],
-                        // Legacy support - keep some root level data for backward compatibility
-                        'id' => $purchaseResult->id,
-                        'status' => $purchaseResult->status ?? 'pending',
-                        'checkout_url' => $purchaseResult->checkout_url,
-                        'payment_method' => $purchaseResult->transaction_data?->payment_method ??
-                                          $purchaseResult->payment_method ?? null,
-                        'created_on' => $purchaseResult->created_on ?? now()->toISOString(),
-                        'updated_on' => $purchaseResult->updated_on ?? now()->toISOString(),
-                        'brand_id' => $purchaseResult->brand_id ?? null,
-                        'client' => [
-                            'email' => $record->user->email,
-                            'full_name' => $record->user->name,
-                        ],
-                        'purchase' => [
-                            'total' => $purchaseResult->purchase?->total ?? $amountInCents,
-                            'currency' => $purchaseResult->purchase?->currency ?? 'MYR',
-                            'products' => $purchaseResult->purchase?->products ?? [],
-                        ],
-                        'stored_at' => now()->toISOString(),
-                    ],
-                ]);
+            // Handle result
+            if (! $result->success) {
+                Notification::make()
+                    ->title('Payment Failed')
+                    ->body($result->message)
+                    ->danger()
+                    ->send();
 
-                // Redirect to CHIP checkout
-                redirect()->away($purchaseResult->checkout_url);
-
-            } else {
-                // Clean up failed payment
-                $payment->delete();
-                throw new Exception('Failed to create CHIP payment session');
+                return;
             }
 
-        } catch (Exception $e) {
+            // Handle CHIP redirect
+            if ($result->requiresRedirect && $result->checkoutUrl) {
+                redirect()->away($result->checkoutUrl);
+
+                return;
+            }
+
+            // Success notification for bank transfer
             Notification::make()
-                ->title('Error creating CHIP payment')
-                ->body($e->getMessage())
-                ->danger()
-                ->send();
-        }
-    }
-
-    /**
-     * Handle bank transfer payment (existing logic)
-     */
-    protected static function handleBankTransferPayment(array $data, Invoice $record): void
-    {
-        DB::beginTransaction();
-        try {
-            // Convert amount from decimal to cents
-            $amountInCents = (int) ($data['amount'] * 100);
-
-            // Create payment record
-            $payment = Payment::create([
-                'tenant_id' => $record->tenant_id,
-                'centre_id' => $record->centre_id,
-                'user_id' => $record->user_id,
-                'gateway' => Gateway::BANK_TRANSFER,
-                'reference_no' => $data['reference_no'],
-                'status' => PaymentStatus::PAID,
-                'amount' => $amountInCents,
-                'description' => $data['description'] ?? null,
-                'paid_at' => Carbon::parse($data['paid_at']),
-            ]);
-
-            // Handle payment proof upload if provided
-            if (isset($data['payment_proof']) && ! empty($data['payment_proof'])) {
-                $filePaths = is_array($data['payment_proof']) ? $data['payment_proof'] : [$data['payment_proof']];
-
-                foreach ($filePaths as $filePath) {
-                    if ($filePath) {
-                        $payment->addMediaFromDisk($filePath, 'private')
-                            ->toMediaCollection('payment_proof', 'private');
-                    }
-                }
-            }
-
-            // Link payment to invoice
-            $record->payments()->attach($payment->id, [
-                'amount' => $amountInCents,
-            ]);
-
-            // Update invoice status if full payment was made
-            $totalPaid = $record->getTotalPaid() + $amountInCents;
-
-            if ($totalPaid >= $record->total) {
-                $record->update([
-                    'status' => InvoiceStatus::PAID,
-                ]);
-            }
-
-            DB::commit();
-
-            Notification::make()
-                ->title('Payment recorded successfully')
+                ->title('Payment Recorded Successfully')
+                ->body('Payment has been successfully processed.')
                 ->success()
                 ->send();
-        } catch (Exception $e) {
-            DB::rollBack();
-            Notification::make()
-                ->title('Error recording payment')
-                ->body($e->getMessage())
-                ->danger()
-                ->send();
-        }
+        };
     }
 }

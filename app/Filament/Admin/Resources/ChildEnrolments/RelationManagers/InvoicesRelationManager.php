@@ -93,12 +93,13 @@ class InvoicesRelationManager extends RelationManager
                     ->color(fn (string $state): string => match ($state) {
                         'draft' => 'gray',
                         'pending' => 'warning',
+                        'partially_paid' => 'info',
                         'paid' => 'success',
                         'overdue' => 'danger',
                         'cancelled' => 'gray',
                         default => 'gray',
                     })
-                    ->formatStateUsing(fn ($state): string => ucfirst($state))
+                    ->formatStateUsing(fn ($state): string => ucfirst(str_replace('_', ' ', $state)))
                     ->sortable(),
 
                 TextColumn::make('date')

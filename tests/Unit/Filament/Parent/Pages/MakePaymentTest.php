@@ -56,15 +56,17 @@ it('calculates centre totals correctly', function () {
     $user->current_tenant_id = $tenant->id;
     $user->save();
 
-    $centre1 = Centre::factory()->create(['tenant_id' => $tenant->id, 'name' => 'Centre A']);
-    $centre2 = Centre::factory()->create(['tenant_id' => $tenant->id, 'name' => 'Centre B']);
+    $centre1 = Centre::factory()->create(['tenant_id' => $tenant->id, 'name' => 'Centre A', 'code' => 'CA']);
+    $centre2 = Centre::factory()->create(['tenant_id' => $tenant->id, 'name' => 'Centre B', 'code' => 'CB']);
 
+    // Use different dates to ensure unique invoice numbers per centre
     $invoice1 = Invoice::factory()->create([
         'user_id' => $user->id,
         'tenant_id' => $tenant->id,
         'centre_id' => $centre1->id,
         'status' => InvoiceStatus::PENDING,
         'total' => 10000, // 100.00 in cents
+        'date' => now()->subDays(3),
     ]);
 
     $invoice2 = Invoice::factory()->create([
@@ -73,6 +75,7 @@ it('calculates centre totals correctly', function () {
         'centre_id' => $centre1->id,
         'status' => InvoiceStatus::PENDING,
         'total' => 5000, // 50.00 in cents
+        'date' => now()->subDays(2),
     ]);
 
     $invoice3 = Invoice::factory()->create([
@@ -81,6 +84,7 @@ it('calculates centre totals correctly', function () {
         'centre_id' => $centre2->id,
         'status' => InvoiceStatus::PENDING,
         'total' => 20000, // 200.00 in cents
+        'date' => now()->subDays(1),
     ]);
 
     test()->actingAs($user);
@@ -115,15 +119,17 @@ it('groups invoices by centre correctly', function () {
     $user->current_tenant_id = $tenant->id;
     $user->save();
 
-    $centre1 = Centre::factory()->create(['tenant_id' => $tenant->id, 'name' => 'Centre X']);
-    $centre2 = Centre::factory()->create(['tenant_id' => $tenant->id, 'name' => 'Centre Y']);
+    $centre1 = Centre::factory()->create(['tenant_id' => $tenant->id, 'name' => 'Centre X', 'code' => 'CX']);
+    $centre2 = Centre::factory()->create(['tenant_id' => $tenant->id, 'name' => 'Centre Y', 'code' => 'CY']);
 
+    // Use different dates to ensure unique invoice numbers per centre
     $invoice1 = Invoice::factory()->create([
         'user_id' => $user->id,
         'tenant_id' => $tenant->id,
         'centre_id' => $centre1->id,
         'status' => InvoiceStatus::PENDING,
         'total' => 10000,
+        'date' => now()->subDays(5),
     ]);
 
     $invoice2 = Invoice::factory()->create([
@@ -132,6 +138,7 @@ it('groups invoices by centre correctly', function () {
         'centre_id' => $centre2->id,
         'status' => InvoiceStatus::PENDING,
         'total' => 10000,
+        'date' => now()->subDays(4),
     ]);
 
     $invoice3 = Invoice::factory()->create([
@@ -140,6 +147,7 @@ it('groups invoices by centre correctly', function () {
         'centre_id' => $centre1->id,
         'status' => InvoiceStatus::PENDING,
         'total' => 10000,
+        'date' => now()->subDays(3),
     ]);
 
     test()->actingAs($user);

@@ -2,7 +2,8 @@
 
 namespace App\Filament\Admin\Resources\Payments\Pages;
 
-use App\Actions\Payment\ProcessMultiInvoicePaymentAction;
+use App\Actions\Payment\MakePaymentAction;
+use App\Enums\Gateway;
 use App\Filament\Admin\Resources\Payments\Payments\PaymentResource;
 use App\Models\Invoice;
 use App\Models\Payment;
@@ -163,18 +164,70 @@ class CreateMultiInvoicePayment extends CreateRecord
 
     protected function handleRecordCreation(array $data): Payment
     {
-        $processPayment = app(ProcessMultiInvoicePaymentAction::class);
+        $makePayment = app(MakePaymentAction::class);
 
-        return $processPayment->execute(Auth::user(), $data);
+        // Transform data for new action
+        $gateway = Gateway::from($data['gateway']);
+        $totalAmount = $data['payment_amount'];
+        $invoices = array_map(fn ($id) => ['id' => $id], $data['invoice_ids']);
+
+        // Prepare additional data for gateway
+        $additionalData = [];
+        if (isset($data['reference_no'])) {
+            $additionalData['reference_no'] = $data['reference_no'];
+        }
+        if (isset($data['payment_proof'])) {
+            $additionalData['payment_proof'] = $data['payment_proof'];
+        }
+
+        // Execute payment
+        $result = $makePayment->execute(
+            user: Auth::user(),
+            gateway: $gateway,
+            totalAmount: $totalAmount,
+            invoices: $invoices,
+            userAllocation: null, // FIFO by default
+            additionalData: $additionalData
+        );
+
+        // Handle failure
+        if (! $result->success) {
+            Notification::make()
+                ->danger()
+                ->title('Payment Failed')
+                ->body($result->message)
+                ->send();
+
+            $this->halt();
+        }
+
+        // Handle redirect for CHIP
+        if ($result->requiresRedirect && $result->checkoutUrl) {
+            session()->flash('chip_checkout_url', $result->checkoutUrl);
+        }
+
+        return $result->payment;
     }
 
     protected function getRedirectUrl(): string
     {
+        // Check if CHIP payment requires redirect
+        if (session()->has('chip_checkout_url')) {
+            $checkoutUrl = session()->pull('chip_checkout_url');
+
+            return $checkoutUrl;
+        }
+
         return $this->getResource()::getUrl('view', ['record' => $this->record]);
     }
 
     protected function getCreatedNotification(): ?Notification
     {
+        // Don't show notification for CHIP payments (user is being redirected)
+        if ($this->data['gateway'] === 'chip') {
+            return null;
+        }
+
         $invoiceCount = count($this->data['invoice_ids'] ?? []);
 
         return Notification::make()

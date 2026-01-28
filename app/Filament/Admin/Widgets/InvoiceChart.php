@@ -54,6 +54,7 @@ class InvoiceChart extends ChartWidget
 
         // Get monthly totals for different statuses
         $pendingData = [];
+        $partiallyPaidData = [];
         $paidData = [];
         $overdueData = [];
 
@@ -64,6 +65,12 @@ class InvoiceChart extends ChartWidget
             // Pending invoices for this month
             $pendingData[] = (clone $baseQuery)
                 ->where('status', InvoiceStatus::PENDING)
+                ->whereBetween('date', [$startOfMonth, $endOfMonth])
+                ->sum('total') / 100; // Convert to dollars
+
+            // Partially paid invoices for this month
+            $partiallyPaidData[] = (clone $baseQuery)
+                ->where('status', InvoiceStatus::PARTIALLY_PAID)
                 ->whereBetween('date', [$startOfMonth, $endOfMonth])
                 ->sum('total') / 100; // Convert to dollars
 
@@ -87,6 +94,13 @@ class InvoiceChart extends ChartWidget
                     'data' => $paidData,
                     'backgroundColor' => 'rgba(40, 167, 69, 0.2)',
                     'borderColor' => 'rgba(40, 167, 69, 1)',
+                    'borderWidth' => 2,
+                ],
+                [
+                    'label' => 'Partially Paid',
+                    'data' => $partiallyPaidData,
+                    'backgroundColor' => 'rgba(23, 162, 184, 0.2)',
+                    'borderColor' => 'rgba(23, 162, 184, 1)',
                     'borderWidth' => 2,
                 ],
                 [

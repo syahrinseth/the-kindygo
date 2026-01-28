@@ -17,6 +17,7 @@ it('redirects authenticated admin user to /admin after login', function () {
 
     $user = User::factory()->create([
         'password' => bcrypt($password),
+        'profile_completed' => true,
     ]);
     $user->assignRole('Admin');
 
@@ -44,6 +45,7 @@ it('redirects authenticated parent user to /dashboard after login', function () 
 
     $user = User::factory()->create([
         'password' => bcrypt($password),
+        'profile_completed' => true,
     ]);
     $user->assignRole('Parent');
 
@@ -67,7 +69,9 @@ it('redirects authenticated parent user to /dashboard after login', function () 
 });
 
 it('admin panel is accessible to authenticated admin user', function () {
-    $user = User::factory()->create();
+    $user = User::factory()->create([
+        'profile_completed' => true, // Mark profile as completed
+    ]);
     $user->assignRole('Admin');
 
     // Give the user a tenant so Filament has a valid home URL

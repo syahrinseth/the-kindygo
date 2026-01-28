@@ -244,6 +244,7 @@ class InvoiceItemsLedgerResource extends Resource
                     ->alignCenter()
                     ->colors([
                         'success' => InvoiceStatus::PAID,
+                        'info' => InvoiceStatus::PARTIALLY_PAID,
                         'warning' => InvoiceStatus::PENDING,
                         'danger' => InvoiceStatus::OVERDUE,
                         'gray' => InvoiceStatus::DRAFT,

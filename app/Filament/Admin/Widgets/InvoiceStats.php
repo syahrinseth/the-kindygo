@@ -38,12 +38,17 @@ class InvoiceStats extends BaseWidget
         // Get stats for different invoice statuses
         $draftCount = (clone $query)->where('status', InvoiceStatus::DRAFT)->count();
         $pendingCount = (clone $query)->where('status', InvoiceStatus::PENDING)->count();
+        $partiallyPaidCount = (clone $query)->where('status', InvoiceStatus::PARTIALLY_PAID)->count();
         $paidCount = (clone $query)->where('status', InvoiceStatus::PAID)->count();
         $overdueCount = (clone $query)->where('status', InvoiceStatus::OVERDUE)->count();
 
         // Get total amounts
         $totalPending = (clone $query)
             ->where('status', InvoiceStatus::PENDING)
+            ->sum('total');
+
+        $totalPartiallyPaid = (clone $query)
+            ->where('status', InvoiceStatus::PARTIALLY_PAID)
             ->sum('total');
 
         $totalOverdue = (clone $query)
@@ -62,6 +67,11 @@ class InvoiceStats extends BaseWidget
                 ->description('Total: '.$formatMoney($totalPending))
                 ->color('warning')
                 ->chart([2, 3, 3, 4, 3, 2, 1, $pendingCount]),
+
+            Stat::make('Partially Paid Invoices', $partiallyPaidCount)
+                ->description('Total: '.$formatMoney($totalPartiallyPaid))
+                ->color('info')
+                ->chart([1, 1, 2, 2, 1, 2, 1, $partiallyPaidCount]),
 
             Stat::make('Overdue Invoices', $overdueCount)
                 ->description('Total: '.$formatMoney($totalOverdue))

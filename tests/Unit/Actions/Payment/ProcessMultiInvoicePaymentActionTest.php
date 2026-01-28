@@ -2,6 +2,7 @@
 
 use App\Actions\Payment\AllocatePaymentToInvoicesAction;
 use App\Actions\Payment\ProcessMultiInvoicePaymentAction;
+use App\Actions\Payment\ProcessPaymentAllocationAction;
 use App\Actions\Payment\RecordLedgerEntriesAction;
 use App\Enums\Gateway;
 use App\Enums\InvoiceStatus;
@@ -39,7 +40,8 @@ beforeEach(function () {
 
     test()->action = new ProcessMultiInvoicePaymentAction(
         new AllocatePaymentToInvoicesAction,
-        new RecordLedgerEntriesAction
+        new RecordLedgerEntriesAction,
+        new ProcessPaymentAllocationAction(new AllocatePaymentToInvoicesAction, new RecordLedgerEntriesAction)
     );
 });
 
@@ -200,7 +202,7 @@ it('records ledger entries for bank transfer immediately', function () {
 
     // Verify ledger entries were created (1 debit from observer + 1 credit from payment)
     expect(InvoiceItemsLedger::count())->toBe(2);
-    
+
     $ledger = InvoiceItemsLedger::where('invoice_item_id', $item->id)
         ->where('credit_amount', '>', 0)
         ->first();
@@ -466,7 +468,8 @@ it('rolls back transaction on failure', function () {
 
     $action = new ProcessMultiInvoicePaymentAction(
         $mockAllocateAction,
-        new RecordLedgerEntriesAction
+        new RecordLedgerEntriesAction,
+        new ProcessPaymentAllocationAction(new AllocatePaymentToInvoicesAction, new RecordLedgerEntriesAction)
     );
 
     expect(fn () => $action->execute(test()->user, $validated))

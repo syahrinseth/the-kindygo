@@ -44,8 +44,8 @@ class SubmitBulkToEInvoiceAction extends BulkAction
                             continue;
                         }
 
-                        // Skip if not eligible (draft or cancelled)
-                        if ($invoice->status === InvoiceStatus::DRAFT || $invoice->status === InvoiceStatus::CANCELLED) {
+                        // Skip if not eligible (draft, cancelled, or partially paid)
+                        if (in_array($invoice->status, [InvoiceStatus::DRAFT, InvoiceStatus::CANCELLED, InvoiceStatus::PARTIALLY_PAID])) {
                             $skippedCount++;
 
                             continue;

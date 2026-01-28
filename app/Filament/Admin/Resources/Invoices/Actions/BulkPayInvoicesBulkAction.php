@@ -53,8 +53,8 @@ class BulkPayInvoicesBulkAction
 
             // Validate each invoice
             foreach ($records as $invoice) {
-                // Skip if invoice is not pending or overdue
-                if (! in_array($invoice->status, [InvoiceStatus::PENDING, InvoiceStatus::OVERDUE])) {
+                // Skip if invoice is not pending, partially paid, or overdue
+                if (! in_array($invoice->status, [InvoiceStatus::PENDING, InvoiceStatus::PARTIALLY_PAID, InvoiceStatus::OVERDUE])) {
                     $skippedCount++;
 
                     continue;

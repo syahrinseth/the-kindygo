@@ -1,9 +1,10 @@
 <?php
 
-namespace App\Http\Controllers;
+namespace App\Http\Controllers\Payment;
 
 use App\Actions\Payment\ProcessPaymentAllocationAction;
 use App\Enums\PaymentStatus;
+use App\Http\Controllers\Controller;
 use App\Models\Payment;
 use Exception;
 use Illuminate\Http\Request;
@@ -19,7 +20,8 @@ class ChipPaymentController extends Controller
 
     public function success(Payment $payment)
     {
-        // Try to fetch the latest CHIP payment data
+        // 1. Fetch CHIP data FIRST (without updating status yet)
+        $gatewayData = null;
         try {
             $gatewayData = $this->fetchAndPrepareChipData($payment);
 
@@ -30,18 +32,15 @@ class ChipPaymentController extends Controller
                     'callback_type' => 'success',
                 ];
             }
-
-            $this->updatePaymentStatus($payment, PaymentStatus::PAID, $gatewayData);
         } catch (Exception $e) {
-            // Fallback to just updating status if CHIP API fails
+            // Log but continue - we'll update without CHIP data if needed
             Log::warning('Failed to fetch CHIP data on success callback', [
                 'payment_id' => $payment->id,
                 'error' => $e->getMessage(),
             ]);
-            $this->updatePaymentStatus($payment, PaymentStatus::PAID);
         }
 
-        // Get invoices and process allocation
+        // 2. Get invoices and allocation data
         $invoices = $payment->invoices;
         $invoiceCount = $invoices->count();
 
@@ -53,6 +52,8 @@ class ChipPaymentController extends Controller
         // Check for user-defined allocation from payment record first, then fallback to session
         $userAllocation = $payment->gateway_payment_data['user_allocation'] ?? session('payment_allocation');
 
+        // 3. Process allocation WHILE payment is still PENDING
+        $message = 'Payment received but allocation processing encountered an error. Please contact support.';
         try {
             // Process payment allocation with the new action
             $result = $this->processPaymentAllocation->execute(
@@ -61,23 +62,24 @@ class ChipPaymentController extends Controller
                 userAllocation: $userAllocation
             );
 
-            // Clear session data after successful processing
-            session()->forget(['payment_allocation', 'payment_total', 'payment_invoice_ids']);
-
             // Generate success message
             $message = $this->processPaymentAllocation->getAllocationMessage(
                 $result['allocation_summary']
             );
+
+            // Clear session data after successful processing
+            session()->forget(['payment_allocation', 'payment_total', 'payment_invoice_ids']);
         } catch (Exception $e) {
             Log::error('Failed to process payment allocation', [
                 'payment_id' => $payment->id,
                 'error' => $e->getMessage(),
             ]);
-
-            $message = 'Payment received but allocation processing encountered an error. Please contact support.';
         }
 
-        // Redirect to first invoice
+        // 4. NOW update payment status to PAID (triggers observer with all data ready)
+        $this->updatePaymentStatus($payment, PaymentStatus::PAID, $gatewayData);
+
+        // 5. Redirect to first invoice
         $firstInvoice = $invoices->first();
 
         return $this->redirectToInvoice($payment->user, $firstInvoice)
@@ -107,6 +109,9 @@ class ChipPaymentController extends Controller
             ]);
             $this->updatePaymentStatus($payment, PaymentStatus::FAILED);
         }
+
+        // Clear any session data
+        session()->forget(['payment_allocation', 'payment_total', 'payment_invoice_ids']);
 
         $invoices = $payment->invoices;
         $invoiceCount = $invoices->count();
@@ -146,6 +151,9 @@ class ChipPaymentController extends Controller
             ]);
             $this->updatePaymentStatus($payment, PaymentStatus::CANCELLED);
         }
+
+        // Clear any session data
+        session()->forget(['payment_allocation', 'payment_total', 'payment_invoice_ids']);
 
         $invoices = $payment->invoices;
         $invoiceCount = $invoices->count();
@@ -188,6 +196,32 @@ class ChipPaymentController extends Controller
                     $status = $request->input('status', 'paid');
 
                     if ($status === 'paid') {
+                        // Get invoices and process allocation FIRST (before changing status)
+                        $payment->load('invoices');
+
+                        if ($payment->invoices->isNotEmpty()) {
+                            $userAllocation = $payment->gateway_payment_data['user_allocation'] ?? null;
+
+                            try {
+                                $this->processPaymentAllocation->execute(
+                                    payment: $payment,
+                                    invoices: $payment->invoices,
+                                    userAllocation: $userAllocation
+                                );
+
+                                Log::info('Payment allocation processed via webhook', [
+                                    'payment_id' => $payment->id,
+                                    'invoice_count' => $payment->invoices->count(),
+                                ]);
+                            } catch (Exception $e) {
+                                Log::error('Failed to process payment allocation in webhook', [
+                                    'payment_id' => $payment->id,
+                                    'error' => $e->getMessage(),
+                                ]);
+                            }
+                        }
+
+                        // NOW update status to PAID
                         $this->updatePaymentStatus($payment, PaymentStatus::PAID, $updatedData);
                     } elseif ($status === 'failed') {
                         $this->updatePaymentStatus($payment, PaymentStatus::FAILED, $updatedData);

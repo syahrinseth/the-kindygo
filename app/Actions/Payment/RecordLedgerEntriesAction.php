@@ -4,6 +4,7 @@ namespace App\Actions\Payment;
 
 use App\Models\InvoiceItemsLedger;
 use App\Models\Payment;
+use App\Models\Scopes\TenantScope;
 use Illuminate\Support\Facades\DB;
 
 class RecordLedgerEntriesAction
@@ -19,7 +20,10 @@ class RecordLedgerEntriesAction
         $ledgerEntries = [];
 
         // Load payment with invoices and their items
-        $payment->load(['invoices.invoiceItems.product']);
+        $payment->load([
+            'invoices' => fn ($query) => $query->withoutGlobalScope(TenantScope::class),
+            'invoices.invoiceItems.product',
+        ]);
 
         foreach ($payment->invoices as $invoice) {
             // Find allocation details for this invoice

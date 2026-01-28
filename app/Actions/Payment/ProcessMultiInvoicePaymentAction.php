@@ -14,6 +14,7 @@ class ProcessMultiInvoicePaymentAction
     public function __construct(
         protected AllocatePaymentToInvoicesAction $allocatePaymentToInvoices,
         protected RecordLedgerEntriesAction $recordLedgerEntries,
+        protected ProcessPaymentAllocationAction $processPaymentAllocation,
     ) {}
 
     /**
@@ -63,12 +64,15 @@ class ProcessMultiInvoicePaymentAction
                 $paymentAmount
             );
 
+            // Update invoice statuses based on allocation
+            $this->processPaymentAllocation->updateInvoiceStatuses($payment, $invoices);
+
             // Attach centres from invoices that received payment
             $centreAllocations = [];
             foreach ($allocationSummary['allocation_details'] as $detail) {
                 $invoice = $invoices->firstWhere('id', $detail['invoice_id']);
                 if ($invoice && $invoice->centre_id) {
-                    if (!isset($centreAllocations[$invoice->centre_id])) {
+                    if (! isset($centreAllocations[$invoice->centre_id])) {
                         $centreAllocations[$invoice->centre_id] = 0;
                     }
                     $centreAllocations[$invoice->centre_id] += $detail['allocated_amount'];

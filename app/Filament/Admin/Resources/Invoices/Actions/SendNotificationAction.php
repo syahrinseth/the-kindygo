@@ -43,8 +43,8 @@ class SendNotificationAction
             ->visible(function (Invoice $record) {
                 $user = Auth::user();
 
-                // Only show for pending or overdue invoices
-                if (! in_array($record->status, [InvoiceStatus::PENDING, InvoiceStatus::OVERDUE])) {
+                // Only show for pending, partially paid, or overdue invoices
+                if (! in_array($record->status, [InvoiceStatus::PENDING, InvoiceStatus::PARTIALLY_PAID, InvoiceStatus::OVERDUE])) {
                     return false;
                 }
 

@@ -2,7 +2,8 @@
 
 namespace App\Filament\Parent\Pages;
 
-use App\Actions\Payment\CreateChipPaymentAction;
+use App\Actions\Payment\MakePaymentAction;
+use App\Enums\Gateway;
 use App\Enums\InvoiceStatus;
 use App\Models\Invoice;
 use BackedEnum;
@@ -68,7 +69,7 @@ class MakePayment extends Page
         $user = Auth::user();
 
         $this->invoices = Invoice::where('user_id', $user->id)
-            ->whereIn('status', [InvoiceStatus::DRAFT, InvoiceStatus::PENDING, InvoiceStatus::OVERDUE])
+            ->whereIn('status', [InvoiceStatus::DRAFT, InvoiceStatus::PENDING, InvoiceStatus::PARTIALLY_PAID, InvoiceStatus::OVERDUE])
             ->where('total', '>', 0)
             ->with(['centre', 'invoiceItems.product'])
             ->orderBy('due_at')
@@ -266,15 +267,38 @@ class MakePayment extends Page
         }
 
         try {
-            // Create CHIP payment and get checkout URL
-            $result = app(CreateChipPaymentAction::class)->execute(
-                user: Auth::user(),
-                totalAmount: $this->totalAmount,
-                allocation: $allocation
+            // Transform allocation data to invoice array format
+            $invoices = array_map(
+                fn ($invoiceId) => ['id' => $invoiceId],
+                array_keys($allocation)
             );
 
+            // Execute payment through MakePaymentAction (gateway pattern)
+            $makePayment = app(MakePaymentAction::class);
+            $result = $makePayment->execute(
+                user: Auth::user(),
+                gateway: Gateway::CHIP,
+                totalAmount: $this->totalAmount,
+                invoices: $invoices,
+                userAllocation: $allocation,
+                additionalData: []
+            );
+
+            // Handle failure
+            if (! $result->success) {
+                Notification::make()
+                    ->danger()
+                    ->title('Payment Failed')
+                    ->body($result->message)
+                    ->send();
+
+                return;
+            }
+
             // Redirect to CHIP checkout
-            $this->redirect($result['checkout_url']);
+            if ($result->requiresRedirect && $result->checkoutUrl) {
+                $this->redirect($result->checkoutUrl);
+            }
 
         } catch (Exception $e) {
             Log::error('Failed to create CHIP payment', [

@@ -57,6 +57,7 @@ class InvoicesRelationManager extends RelationManager
                     ->color(fn (InvoiceStatus $state): string => match ($state) {
                         InvoiceStatus::DRAFT => 'gray',
                         InvoiceStatus::PENDING => 'warning',
+                        InvoiceStatus::PARTIALLY_PAID => 'info',
                         InvoiceStatus::PAID => 'success',
                         InvoiceStatus::OVERDUE => 'danger',
                         InvoiceStatus::CANCELLED => 'gray',
@@ -110,6 +111,7 @@ class InvoicesRelationManager extends RelationManager
                                     ->color(fn (InvoiceStatus $state): string => match ($state) {
                                         InvoiceStatus::DRAFT => 'gray',
                                         InvoiceStatus::PENDING => 'warning',
+                                        InvoiceStatus::PARTIALLY_PAID => 'info',
                                         InvoiceStatus::PAID => 'success',
                                         InvoiceStatus::OVERDUE => 'danger',
                                         InvoiceStatus::CANCELLED => 'gray',

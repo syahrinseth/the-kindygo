@@ -81,6 +81,7 @@ class InvoicesRelationManager extends RelationManager
                     ->color(fn ($state): string => match ($state->value) {
                         'draft' => 'gray',
                         'pending' => 'warning',
+                        'partially_paid' => 'info',
                         'paid' => 'success',
                         'overdue' => 'danger',
                         'cancelled' => 'gray',

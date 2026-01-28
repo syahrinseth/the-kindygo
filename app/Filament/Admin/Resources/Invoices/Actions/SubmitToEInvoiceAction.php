@@ -34,8 +34,8 @@ class SubmitToEInvoiceAction extends Action
                     return false;
                 }
 
-                // Only show for paid or pending invoices (not drafts)
-                if ($record->status === InvoiceStatus::DRAFT || $record->status === InvoiceStatus::CANCELLED) {
+                // Only show for paid or pending invoices (not drafts, cancelled, or partially paid)
+                if (in_array($record->status, [InvoiceStatus::DRAFT, InvoiceStatus::CANCELLED, InvoiceStatus::PARTIALLY_PAID])) {
                     return false;
                 }
 
@@ -85,8 +85,8 @@ class SubmitToEInvoiceAction extends Action
                     return false;
                 }
 
-                // Only show for paid or pending invoices (not drafts)
-                if ($record->status === InvoiceStatus::DRAFT || $record->status === InvoiceStatus::CANCELLED) {
+                // Only show for paid or pending invoices (not drafts, cancelled, or partially paid)
+                if (in_array($record->status, [InvoiceStatus::DRAFT, InvoiceStatus::CANCELLED, InvoiceStatus::PARTIALLY_PAID])) {
                     return false;
                 }
 

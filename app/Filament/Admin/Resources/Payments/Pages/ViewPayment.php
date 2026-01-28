@@ -392,7 +392,7 @@ class ViewPayment extends ViewRecord
                 ->label('Download Receipt')
                 ->icon('heroicon-o-document-arrow-down')
                 ->color('success')
-                ->url(fn (): string => route('payment.download-receipt', $this->record))
+                ->url(fn (): string => route('payments.receipt.download', $this->record))
                 ->openUrlInNewTab()
                 ->visible(fn () => Auth::user()->can('view', $this->record) && $this->record->status === PaymentStatus::PAID),
 
