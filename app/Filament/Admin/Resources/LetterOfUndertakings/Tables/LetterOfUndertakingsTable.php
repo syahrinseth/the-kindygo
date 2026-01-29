@@ -30,13 +30,11 @@ class LetterOfUndertakingsTable
                     ->numeric()
                     ->sortable(),
                 TextColumn::make('created_at')
-                    ->dateTime()
-                    ->sortable()
-                    ->toggleable(isToggledHiddenByDefault: true),
+                    ->dateTime('M d, Y h:i A')
+                    ->sortable(),
                 TextColumn::make('updated_at')
-                    ->dateTime()
-                    ->sortable()
-                    ->toggleable(isToggledHiddenByDefault: true),
+                    ->dateTime('M d, Y h:i A')
+                    ->sortable(),
             ])
             ->filters([
                 //

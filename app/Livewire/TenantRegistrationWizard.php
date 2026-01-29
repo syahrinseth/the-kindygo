@@ -108,6 +108,12 @@ class TenantRegistrationWizard extends Component implements HasForms
         // Load saved registration data if user is authenticated
         if (Auth::check()) {
             $user = Auth::user();
+
+            // Check if email verification is required (after Step 1, before Step 2)
+            if ($user->getCurrentRegistrationStep() >= 1 && ! $user->hasVerifiedEmail()) {
+                $this->redirect(route('verification.notice'), navigate: false);
+            }
+
             $this->loadSavedRegistrationData($user);
             $this->currentStep = $step ?? $user->getCurrentRegistrationStep() ?? 1;
         } elseif ($step) {
@@ -535,6 +541,20 @@ class TenantRegistrationWizard extends Component implements HasForms
                 Auth::login($result['user']);
             }
 
+            // Get the user (newly created or existing)
+            $user = $result['user'];
+
+            // Send email verification notification if email is not verified
+            if (! $user->hasVerifiedEmail()) {
+                $user->sendEmailVerificationNotification();
+
+                // Redirect to verification notice
+                $this->redirect(route('verification.notice'), navigate: false);
+
+                return;
+            }
+
+            // If email is already verified, proceed to next step
             $this->nextStep();
         } catch (\Exception $e) {
             // Log the exception or handle it as needed
@@ -644,7 +664,7 @@ class TenantRegistrationWizard extends Component implements HasForms
             );
 
             // Redirect to parent dashboard
-            return redirect()->route('filament.app.pages.dashboard');
+            return redirect()->route('filament.admin.pages.dashboard');
         } catch (\Exception $e) {
             // Log the exception or handle it as needed
             \Log::error('Error in Step 4 submission: '.$e->getMessage());
@@ -654,6 +674,13 @@ class TenantRegistrationWizard extends Component implements HasForms
     public function nextStep(): void
     {
         if ($this->currentStep < 4) {
+            // If moving from Step 1 to Step 2, check email verification
+            if ($this->currentStep === 1 && Auth::check() && ! Auth::user()->hasVerifiedEmail()) {
+                $this->redirect(route('verification.notice'), navigate: false);
+
+                return;
+            }
+
             $this->currentStep++;
             $this->dispatch('step-changed', step: $this->currentStep);
         }
@@ -670,6 +697,13 @@ class TenantRegistrationWizard extends Component implements HasForms
     public function goToStep(int $step): void
     {
         if ($step >= 1 && $step <= 4) {
+            // If trying to access Step 2 or beyond, check email verification
+            if ($step >= 2 && Auth::check() && ! Auth::user()->hasVerifiedEmail()) {
+                $this->redirect(route('verification.notice'), navigate: false);
+
+                return;
+            }
+
             // Only allow going back or to current step
             if (Auth::check() && $step <= Auth::user()->getCurrentRegistrationStep()) {
                 $this->currentStep = $step;

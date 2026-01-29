@@ -29,7 +29,7 @@ beforeEach(function () {
         'current_tenant_id' => $this->tenant->id,
         'profile_completed' => true,
     ]);
-    
+
     // Assign Parent role
     \Spatie\Permission\Models\Role::firstOrCreate(['name' => 'Parent']);
     $this->parent->assignRole('Parent');

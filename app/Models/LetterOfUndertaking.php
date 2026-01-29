@@ -35,6 +35,7 @@ class LetterOfUndertaking extends Model
     protected $fillable = [
         'tenant_id',
         'title',
+        'description',
         'content',
         'version',
         'is_active',

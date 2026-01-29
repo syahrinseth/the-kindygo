@@ -706,6 +706,9 @@
                                     <div class="flex-1">
                                         <h4 class="text-lg font-bold text-gray-900">{{ $activeLetter->title }}</h4>
                                         <p class="text-sm text-gray-600 mt-1">Version {{ $activeLetter->version }} • {{ $tenant->name }}</p>
+                                        @if($activeLetter->description)
+                                            <p class="text-sm text-gray-700 mt-3 leading-relaxed">{{ $activeLetter->description }}</p>
+                                        @endif
                                     </div>
                                 </div>
                             </div>

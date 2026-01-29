@@ -78,6 +78,37 @@ Route::get('/register/{tenant:slug}', TenantRegistrationWizard::class)
     ->middleware('allow.incomplete.registration')
     ->name('tenant.register.form');
 
+// Email Verification Routes
+Route::middleware('auth')->group(function () {
+    Route::get('/email/verify', function () {
+        return view('auth.verify-email');
+    })->name('verification.notice');
+
+    Route::get('/email/verify/{id}/{hash}', function (\Illuminate\Foundation\Auth\EmailVerificationRequest $request) {
+        $request->fulfill();
+
+        // If user is in registration flow, redirect back to wizard to continue to Step 2
+        $user = auth()->user();
+        if (! $user->profile_completed && $user->current_tenant_id) {
+            $tenant = $user->currentTenant();
+            if ($tenant) {
+                return redirect()->route('tenant.register.form', [
+                    'tenant' => $tenant->slug,
+                ]);
+            }
+        }
+
+        // Otherwise redirect to dashboard
+        return redirect('/dashboard')->with('status', 'Email verified successfully!');
+    })->middleware(['signed'])->name('verification.verify');
+
+    Route::post('/email/verification-notification', function (\Illuminate\Http\Request $request) {
+        $request->user()->sendEmailVerificationNotification();
+
+        return back()->with('status', 'verification-link-sent');
+    })->middleware(['throttle:6,1'])->name('verification.send');
+});
+
 // Logout routes for different contexts
 Route::post('/logout', [LoginController::class, 'logout'])->name('logout')->middleware('auth');
 Route::post('/filament/logout', [LoginController::class, 'logout'])->name('filament.app.auth.logout')->middleware('auth');

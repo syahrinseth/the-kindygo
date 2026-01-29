@@ -34,7 +34,7 @@ it('allows parent users to access make payment page', function () {
 
     // Authenticate first, then set tenant
     actingAs($parent);
-    
+
     // Set current panel to parent
     Filament::setCurrentPanel(Filament::getPanel('parent'));
     Filament::setTenant($tenant);
@@ -96,7 +96,7 @@ it('displays unpaid invoices for parent', function () {
             'status' => InvoiceStatus::PENDING,
             'total' => 50000, // RM 500.00
         ]);
-    
+
     // Create invoice item
     InvoiceItem::factory()->create([
         'invoice_id' => $invoice->id,

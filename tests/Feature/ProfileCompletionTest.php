@@ -2,8 +2,8 @@
 
 use App\Models\Tenant;
 use App\Models\User;
-use App\Models\UserProfile;
 use App\Models\UserAddress;
+use App\Models\UserProfile;
 use Spatie\Permission\Models\Role;
 
 test('parent with incomplete profile is redirected to profile completion', function () {
@@ -49,7 +49,7 @@ test('parent with complete profile can access profile page', function () {
     ]);
     $user->assignRole($parentRole);
     $tenant->addUser($user);
-    
+
     // Create user profile and address
     UserProfile::create([
         'user_id' => $user->id,

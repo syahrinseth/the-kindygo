@@ -5,6 +5,7 @@ namespace App\Filament\Admin\Resources\LetterOfUndertakings\Schemas;
 use App\Models\User;
 use Filament\Forms\Components\RichEditor;
 use Filament\Forms\Components\Select;
+use Filament\Forms\Components\Textarea;
 use Filament\Forms\Components\TextInput;
 use Filament\Forms\Components\Toggle;
 use Filament\Schemas\Components\Section;
@@ -26,6 +27,13 @@ class LetterOfUndertakingForm
                             ->required()
                             ->maxLength(255)
                             ->placeholder('Enter letter title')
+                            ->columnSpanFull(),
+                        Textarea::make('description')
+                            ->label('Description')
+                            ->placeholder('Enter a brief summary or description of this letter...')
+                            ->rows(3)
+                            ->maxLength(500)
+                            ->helperText('Optional summary that will be displayed before the letter content.')
                             ->columnSpanFull(),
                         RichEditor::make('content')
                             ->label('Content')

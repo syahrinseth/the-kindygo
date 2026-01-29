@@ -19,6 +19,7 @@ class LetterOfUndertakingFactory extends Factory
         return [
             'tenant_id' => \App\Models\Tenant::factory(),
             'title' => fake()->sentence(),
+            'description' => fake()->optional(0.7)->sentence(10),
             'content' => fake()->paragraphs(3, true),
             'version' => 1,
             'is_active' => false,

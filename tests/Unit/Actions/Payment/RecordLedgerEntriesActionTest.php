@@ -343,7 +343,7 @@ it('does not create entries for items with zero paid amount', function () {
     $paidItemEntry = InvoiceItemsLedger::where('invoice_item_id', $paidItem->id)
         ->where('payment_id', $payment->id)
         ->first();
-    
+
     $unpaidItemEntry = InvoiceItemsLedger::where('invoice_item_id', $unpaidItem->id)
         ->where('payment_id', $payment->id)
         ->first();
@@ -485,7 +485,7 @@ it('sets correct ledger_type for payment allocation', function () {
     test()->action->execute($payment, $allocationSummary);
 
     $creditEntry = InvoiceItemsLedger::where('payment_id', $payment->id)->first();
-    
+
     expect($creditEntry->ledger_type)->toBe('payment_allocation');
 });
 
