@@ -19,23 +19,34 @@ class ChildEnrolmentSeeder extends Seeder
      */
     public function run(): void
     {
-        // Get existing tenants, centres, children and products
+        // Get existing tenants
         $tenants = Tenant::take(2)->get();
-        $centres = Centre::take(3)->get();
-        $children = Child::take(5)->get();
-        $products = Product::take(3)->get();
 
-        if ($tenants->isEmpty() || $centres->isEmpty() || $children->isEmpty() || $products->isEmpty()) {
-            $this->command->info('No tenants, centres, children or products found. Creating sample data...');
+        if ($tenants->isEmpty()) {
+            $this->command->info('No tenants found. Please run UserSeeder first.');
 
             return;
         }
 
-        // Create sample enrolments
+        // Create sample enrolments for each tenant
         foreach ($tenants as $tenant) {
+            // Get tenant-scoped centres, children and products
+            $centres = $tenant->centres()->take(3)->get();
+            $children = Child::whereHas('tenants', function ($query) use ($tenant) {
+                $query->where('tenants.id', $tenant->id);
+            })->take(5)->get();
+            $products = Product::where('tenant_id', $tenant->id)->take(3)->get();
+
+            if ($centres->isEmpty() || $children->isEmpty() || $products->isEmpty()) {
+                $this->command->info("Skipping tenant {$tenant->name}: missing centres, children or products.");
+
+                continue;
+            }
+
+            // Create enrolments with proper tenant isolation
             foreach ($centres as $centre) {
-                foreach ($children->random(3) as $child) {
-                    foreach ($products->random(2) as $product) {
+                foreach ($children->random(min(3, $children->count())) as $child) {
+                    foreach ($products->random(min(2, $products->count())) as $product) {
                         ChildEnrolment::create([
                             'tenant_id' => $tenant->id,
                             'centre_id' => $centre->id,
@@ -50,8 +61,8 @@ class ChildEnrolmentSeeder extends Seeder
                     }
                 }
             }
-        }
 
-        $this->command->info('Child enrolments created successfully!');
+            $this->command->info("Child enrolments created successfully for tenant: {$tenant->name}");
+        }
     }
 }

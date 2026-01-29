@@ -69,6 +69,14 @@ class Tenant extends Model
     }
 
     /**
+     * Get the campuses belonging to the tenant.
+     */
+    public function campuses(): HasMany
+    {
+        return $this->hasMany(Campus::class);
+    }
+
+    /**
      * Get the users belonging to the tenant.
      */
     public function users(): BelongsToMany

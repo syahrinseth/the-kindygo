@@ -27,19 +27,13 @@ class InvoiceSeeder extends Seeder
 
         // For each tenant, ensure they have centres and create invoices
         foreach ($tenants as $tenant) {
-            // Get or create centres for this tenant
+            // Get centres for this tenant
             $centres = Centre::where('tenant_id', $tenant->id)->get();
 
             if ($centres->isEmpty()) {
-                // Create 2 centres for this tenant
-                $centres = collect();
-                for ($i = 0; $i < 2; $i++) {
-                    $centres->push(
-                        Centre::factory()->create([
-                            'tenant_id' => $tenant->id,
-                        ])
-                    );
-                }
+                $this->command->warn("No centres found for tenant: {$tenant->name}. Please run CentreSeeder first. Skipping.");
+
+                continue;
             }
 
             // Get users that belong to this tenant
@@ -77,6 +71,8 @@ class InvoiceSeeder extends Seeder
                     }
                 }
             }
+
+            $this->command->info("Created invoices for tenant: {$tenant->name}");
         }
     }
 }

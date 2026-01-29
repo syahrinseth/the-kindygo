@@ -18,24 +18,33 @@ class ProductSeeder extends Seeder
         $tenants = Tenant::all();
 
         if ($tenants->isEmpty()) {
-            $this->command->info('No tenants found. Please create tenants first.');
+            $this->command->info('No tenants found. Please run UserSeeder first.');
 
             return;
         }
 
         foreach ($tenants as $tenant) {
+            // Get centres for this tenant
             $centres = $tenant->centres;
+
+            if ($centres->isEmpty()) {
+                $this->command->warn("Tenant {$tenant->name} has no centres. Skipping centre-specific products. Run CentreSeeder first.");
+            }
 
             // Create some global products (not tied to specific centre)
             $globalProducts = Product::factory()->count(5)->create([
                 'tenant_id' => $tenant->id,
             ]);
 
+            $this->command->info("Created 5 global products for tenant: {$tenant->name}");
+
             // If there are centres, attach global products to all centres
             if ($centres->isNotEmpty()) {
                 foreach ($globalProducts as $product) {
                     $product->centres()->attach($centres->pluck('id'));
                 }
+
+                $this->command->info("Attached global products to {$centres->count()} centres for tenant: {$tenant->name}");
             }
 
             // Create centre-specific products
@@ -48,6 +57,8 @@ class ProductSeeder extends Seeder
                 foreach ($centreProducts as $product) {
                     $product->centres()->attach($centre->id);
                 }
+
+                $this->command->info("Created 3 centre-specific products for centre: {$centre->name}");
             }
         }
 
