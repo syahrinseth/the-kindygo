@@ -22,6 +22,12 @@ class CampusesTable
                     ->sortable()
                     ->wrap(),
 
+                TextColumn::make('description')
+                    ->searchable()
+                    ->limit(50)
+                    ->wrap()
+                    ->toggleable(isToggledHiddenByDefault: true),
+
                 TextColumn::make('phone')
                     ->searchable()
                     ->sortable(),

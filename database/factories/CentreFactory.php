@@ -13,6 +13,11 @@ use Illuminate\Support\Str;
 class CentreFactory extends Factory
 {
     /**
+     * Counter to ensure unique slugs within a factory batch.
+     */
+    protected static int $counter = 0;
+
+    /**
      * Define the model's default state.
      *
      * @return array<string, mixed>
@@ -20,11 +25,13 @@ class CentreFactory extends Factory
     public function definition(): array
     {
         $name = fake()->company().' Centre';
+        static::$counter++;
+        $slug = Str::slug($name).'-'.static::$counter;
 
         return [
             'tenant_id' => Tenant::factory(),
             'campus_id' => Campus::factory(),
-            'slug' => Str::slug($name),
+            'slug' => $slug,
             'name' => $name,
             'status' => 'active',
             'phone' => fake()->phoneNumber(),

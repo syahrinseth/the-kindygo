@@ -28,6 +28,7 @@ class Campus extends Model
     protected $fillable = [
         'tenant_id',
         'name',
+        'description',
         'phone',
         'email',
         'address_1',

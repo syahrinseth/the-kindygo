@@ -14,6 +14,9 @@ class CampusInfolist
                 TextEntry::make('tenant.name')
                     ->label('Tenant'),
                 TextEntry::make('name'),
+                TextEntry::make('description')
+                    ->placeholder('-')
+                    ->columnSpanFull(),
                 TextEntry::make('phone')
                     ->placeholder('-'),
                 TextEntry::make('email')

@@ -2,6 +2,7 @@
 
 namespace App\Filament\Admin\Resources\Campuses\Schemas;
 
+use Filament\Forms\Components\Textarea;
 use Filament\Forms\Components\TextInput;
 use Filament\Schemas\Components\Section;
 use Filament\Schemas\Schema;
@@ -23,6 +24,13 @@ class CampusForm
                             ->suffixIcon('heroicon-m-building-office-2')
                             ->columnSpanFull()
                             ->autofocus(),
+
+                        Textarea::make('description')
+                            ->label('Description')
+                            ->rows(3)
+                            ->maxLength(1000)
+                            ->placeholder('Brief description of the campus (optional)')
+                            ->columnSpanFull(),
 
                         TextInput::make('phone')
                             ->label('Phone Number')
@@ -96,6 +104,13 @@ class CampusForm
                         ->suffixIcon('heroicon-m-building-office-2')
                         ->columnSpanFull()
                         ->autofocus(),
+
+                    Textarea::make('description')
+                        ->label('Description')
+                        ->rows(3)
+                        ->maxLength(1000)
+                        ->placeholder('Brief description of the campus (optional)')
+                        ->columnSpanFull(),
 
                     TextInput::make('phone')
                         ->label('Phone Number')
