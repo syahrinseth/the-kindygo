@@ -275,6 +275,13 @@ class PaymentResource extends Resource
                         PaymentStatus::CANCELLED => 'gray',
                         PaymentStatus::REFUNDED => 'info',
                     })
+                    ->formatStateUsing(fn (PaymentStatus $state): string => match ($state) {
+                        PaymentStatus::PENDING => 'Pending',
+                        PaymentStatus::PAID => 'Paid',
+                        PaymentStatus::FAILED => 'Failed',
+                        PaymentStatus::CANCELLED => 'Cancelled',
+                        PaymentStatus::REFUNDED => 'Refunded',
+                    })
                     ->searchable()
                     ->sortable(),
 

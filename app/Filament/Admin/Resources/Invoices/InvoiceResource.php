@@ -300,6 +300,14 @@ class InvoiceResource extends Resource
                         InvoiceStatus::OVERDUE => 'danger',
                         InvoiceStatus::CANCELLED => 'gray',
                     })
+                    ->formatStateUsing(fn (InvoiceStatus $state): string => match ($state) {
+                        InvoiceStatus::DRAFT => 'Draft',
+                        InvoiceStatus::PENDING => 'Pending',
+                        InvoiceStatus::PARTIALLY_PAID => 'Partially Paid',
+                        InvoiceStatus::PAID => 'Paid',
+                        InvoiceStatus::OVERDUE => 'Overdue',
+                        InvoiceStatus::CANCELLED => 'Cancelled',
+                    })
                     ->searchable()
                     ->sortable(),
 
