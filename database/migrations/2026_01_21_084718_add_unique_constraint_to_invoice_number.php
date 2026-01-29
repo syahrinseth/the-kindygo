@@ -14,7 +14,7 @@ return new class extends Migration
         Schema::table('invoices', function (Blueprint $table) {
             // Add unique constraint: invoice numbers must be unique per tenant
             // This prevents duplicates at the database level
-            $table->unique(['tenant_id', 'number'], 'invoices_tenant_number_unique');
+            $table->unique(['tenant_id', 'number', 'centre_id'], 'invoices_tenant_number_centre_unique');
         });
     }
 
@@ -24,7 +24,7 @@ return new class extends Migration
     public function down(): void
     {
         Schema::table('invoices', function (Blueprint $table) {
-            $table->dropUnique('invoices_tenant_number_unique');
+            $table->dropUnique('invoices_tenant_number_centre_unique');
         });
     }
 };

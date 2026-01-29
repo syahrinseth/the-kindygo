@@ -112,10 +112,10 @@ it('displays unpaid invoices for parent', function () {
     Filament::setTenant($tenant);
 
     Livewire::test(MakePayment::class)
-        ->assertSet('invoices', function ($invoices) {
-            return count($invoices) >= 1;
+        ->assertSet('selectedInvoices', function ($selectedInvoices) {
+            return count(array_filter($selectedInvoices)) >= 1;
         })
-        ->assertSee('Select Invoices to Pay');
+        ->assertSee($invoice->number);
 });
 
 it('prevents non-parent users from accessing the page', function () {

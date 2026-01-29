@@ -90,12 +90,15 @@ class User extends Authenticatable implements FilamentUser, HasAvatar, HasDefaul
         parent::boot();
 
         static::creating(function ($user) {
-            $tenant = Filament::getTenant();
-            $user->current_tenant_id = $tenant ? $tenant->id : null;
+            // Only set current_tenant_id if not already set (allow factory/explicit override)
+            if (is_null($user->current_tenant_id)) {
+                $tenant = $user->tenants()->first();
+                $user->current_tenant_id = $tenant ? $tenant->id : null;
+            }
         });
 
         static::created(function ($user) {
-            $tenant = Filament::getTenant();
+            $tenant = $user->tenants()->first();
             if (! empty($tenant)) {
                 $user->tenants()->attach($tenant);
             }
