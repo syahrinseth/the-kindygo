@@ -39,6 +39,12 @@ class ProductResource extends Resource
 
     protected static ?int $navigationSort = 1;
 
+    protected static ?string $navigationLabel = 'Products & Services';
+
+    protected static ?string $modelLabel = 'Product & Service';
+
+    protected static ?string $pluralModelLabel = 'Products & Services';
+
     public static function form(Schema $schema): Schema
     {
         return $schema
@@ -66,20 +72,9 @@ class ProductResource extends Resource
                             ->default(ProductPriority::MEDIUM->value)
                             ->native(false)
                             ->helperText('Set the display priority for this product'),
-                    ])
-                    ->columns(2),
-
-                Section::make('Classification')
-                    ->description('Define the product type and status')
-                    ->schema([
-                        Select::make('type')
-                            ->required()
-                            ->options(collect(ProductType::cases())->mapWithKeys(fn ($case) => [$case->value => $case->getDisplayName()]))
-                            ->default(ProductType::SERVICE->value)
-                            ->native(false)
-                            ->helperText('Select the type of product or service'),
 
                         Select::make('status')
+                            ->label('Status')
                             ->required()
                             ->options(collect(ProductStatus::cases())->mapWithKeys(fn ($case) => [$case->value => $case->label()]))
                             ->default(ProductStatus::ACTIVE->value)
@@ -87,6 +82,18 @@ class ProductResource extends Resource
                             ->helperText('Set the current status of the product'),
                     ])
                     ->columns(2),
+
+                Section::make('Classification')
+                    ->description('Define the product type')
+                    ->schema([
+                        Select::make('type')
+                            ->required()
+                            ->options(collect(ProductType::cases())->mapWithKeys(fn ($case) => [$case->value => $case->getDisplayName()]))
+                            ->default(ProductType::SERVICE->value)
+                            ->native(false)
+                            ->helperText('Select the type of product or service')
+                            ->columnSpanFull(),
+                    ]),
 
                 Section::make('Centre Availability')
                     ->description('Control which centres can use this product')
@@ -143,6 +150,7 @@ class ProductResource extends Resource
                         ProductStatus::INACTIVE => 'warning',
                         ProductStatus::ACTIVE => 'success',
                     })
+                    ->formatStateUsing(fn (ProductStatus $state): string => $state->label())
                     ->sortable(),
 
                 TextColumn::make('type')
@@ -151,9 +159,9 @@ class ProductResource extends Resource
                         ProductType::SERVICE => 'primary',
                         ProductType::PRODUCT => 'secondary',
                         ProductType::FEE => 'info',
-                        ProductType::SUBSCRIPTION => 'warning',
                         ProductType::PROGRAMME => 'success',
                         ProductType::ANNUAL_FEE => 'danger',
+                        ProductType::OTHERS => 'gray',
                     })
                     ->formatStateUsing(fn (ProductType $state): string => $state->getDisplayName())
                     ->sortable(),
@@ -236,8 +244,8 @@ class ProductResource extends Resource
     public static function getRelations(): array
     {
         return [
-            InvoiceItemsRelationManager::class,
             PricesRelationManager::class,
+            InvoiceItemsRelationManager::class,
         ];
     }
 

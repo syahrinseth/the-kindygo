@@ -66,6 +66,9 @@ class Child extends Model implements HasMedia
     protected $casts = [
         'date_of_birth' => 'date',
         'position_of_child' => 'integer',
+        'languages' => 'json',
+        'allergies' => 'json',
+        'diseases' => 'json',
     ];
 
     /**

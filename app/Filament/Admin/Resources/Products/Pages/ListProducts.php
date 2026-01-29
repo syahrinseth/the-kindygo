@@ -2,7 +2,9 @@
 
 namespace App\Filament\Admin\Resources\Products\Pages;
 
+use App\Enums\ProductType;
 use App\Filament\Admin\Resources\Products\ProductResource;
+use Filament\Actions\ActionGroup;
 use Filament\Actions\CreateAction;
 use Filament\Resources\Pages\ListRecords;
 

@@ -2,6 +2,7 @@
 
 namespace App\Filament\Admin\Resources\Products\Pages;
 
+use App\Enums\ProductStatus;
 use App\Filament\Admin\Resources\Products\ProductResource;
 use Filament\Actions\DeleteAction;
 use Filament\Resources\Pages\EditRecord;

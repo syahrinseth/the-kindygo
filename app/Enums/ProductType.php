@@ -7,9 +7,9 @@ enum ProductType: string
     case SERVICE = 'service';
     case FEE = 'fee';
     case PRODUCT = 'product';
-    case SUBSCRIPTION = 'subscription';
     case PROGRAMME = 'programme';
     case ANNUAL_FEE = 'annual_fee';
+    case OTHERS = 'others';
 
     /**
      * Get all values as an array.
@@ -28,9 +28,9 @@ enum ProductType: string
             self::SERVICE => 'Service',
             self::FEE => 'Fee',
             self::PRODUCT => 'Product',
-            self::SUBSCRIPTION => 'Subscription',
             self::PROGRAMME => 'Programme',
             self::ANNUAL_FEE => 'Annual Fee',
+            self::OTHERS => 'Others',
         };
     }
 
@@ -43,9 +43,9 @@ enum ProductType: string
             self::SERVICE => 'General service offerings',
             self::FEE => 'Administrative or processing fees',
             self::PRODUCT => 'Physical or digital products',
-            self::SUBSCRIPTION => 'Recurring subscription services',
             self::PROGRAMME => 'Educational or structured programmes',
             self::ANNUAL_FEE => 'Yearly fees charged annually',
+            self::OTHERS => 'Miscellaneous products and services',
         };
     }
 
@@ -56,12 +56,12 @@ enum ProductType: string
     public function getDefaultPriority(): ProductPriority
     {
         return match ($this) {
-            self::SUBSCRIPTION => ProductPriority::CRITICAL,  // Recurring tuition fees - highest priority
             self::ANNUAL_FEE => ProductPriority::CRITICAL,    // Annual registration - must be paid
             self::FEE => ProductPriority::HIGH,               // Admin/processing fees - important
             self::PROGRAMME => ProductPriority::MEDIUM,       // Special programmes - standard
             self::SERVICE => ProductPriority::MEDIUM,         // General services - standard
             self::PRODUCT => ProductPriority::LOW,            // Physical products - optional
+            self::OTHERS => ProductPriority::LOW,             // Miscellaneous items - optional
         };
     }
 
@@ -71,12 +71,12 @@ enum ProductType: string
     public function getPriorityExplanation(): string
     {
         return match ($this) {
-            self::SUBSCRIPTION => 'Recurring tuition fees are prioritised to ensure continuous enrolment',
             self::ANNUAL_FEE => 'Annual fees must be paid to maintain active registration',
             self::FEE => 'Administrative fees are important for processing services',
             self::PROGRAMME => 'Programme fees are allocated after critical fees',
             self::SERVICE => 'Service fees are allocated after critical fees',
             self::PRODUCT => 'Physical products are allocated last from available payment',
+            self::OTHERS => 'Miscellaneous items are allocated from remaining payment',
         };
     }
 }
