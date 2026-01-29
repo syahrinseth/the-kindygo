@@ -23,11 +23,11 @@ class ChildEnrolmentResource extends Resource
 
     protected static string|\BackedEnum|null $navigationIcon = 'heroicon-o-academic-cap';
 
-    protected static ?string $navigationLabel = 'Child Enrolments';
+    protected static ?string $navigationLabel = 'Enrolments';
 
-    protected static ?string $modelLabel = 'Child Enrolment';
+    protected static ?string $modelLabel = 'Enrolment';
 
-    protected static ?string $pluralModelLabel = 'Child Enrolments';
+    protected static ?string $pluralModelLabel = 'Enrolments';
 
     protected static string|\UnitEnum|null $navigationGroup = 'Child Management';
 
