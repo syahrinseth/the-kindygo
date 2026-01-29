@@ -36,8 +36,8 @@ class ParentPanelProvider extends PanelProvider
             ->profile(page: EditProfile::class, isSimple: true)
             ->pages([
                 Dashboard::class,
-                AgreementPage::class,
                 MakePayment::class,
+                AgreementPage::class,
             ])
             ->discoverResources(in: app_path('Filament/Parent/Resources'), for: 'App\\Filament\\Parent\\Resources')
             ->discoverWidgets(in: app_path('Filament/Parent/Widgets'), for: 'App\\Filament\\Parent\\Widgets')

@@ -38,7 +38,7 @@ class MakePayment extends Page implements HasActions, HasSchemas, HasTable
 
     protected static ?string $navigationLabel = 'Make Payment';
 
-    protected static ?int $navigationSort = 2;
+    protected static ?int $navigationSort = 1;
 
     protected string $view = 'filament.parent.pages.make-payment';
 
