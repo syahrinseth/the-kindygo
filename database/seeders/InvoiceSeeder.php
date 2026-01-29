@@ -53,10 +53,22 @@ class InvoiceSeeder extends Seeder
 
             // Create invoices for each centre and user in this tenant
             foreach ($centres as $centre) {
+                // Track invoice counter per centre to avoid unique constraint violations
+                // The counter must be per centre because invoice numbers are unique per tenant+centre
+                $invoiceCounter = 1;
+
+                // Get centre code for invoice numbering
+                $centreCode = Centre::generateCentreCode($centre);
+                $year = now()->format('Y');
+
                 foreach ($users as $user) {
                     // Create one invoice in each status
                     foreach (InvoiceStatus::cases() as $status) {
+                        // Manually generate unique invoice number to avoid race conditions
+                        $number = "KG{$centreCode}/{$year}/".str_pad($invoiceCounter++, 4, '0', STR_PAD_LEFT);
+
                         Invoice::factory()->create([
+                            'number' => $number, // Explicitly set to avoid auto-generation
                             'tenant_id' => $tenant->id,
                             'centre_id' => $centre->id,
                             'user_id' => $user->id,

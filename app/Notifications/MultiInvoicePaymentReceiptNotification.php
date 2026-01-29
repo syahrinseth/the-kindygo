@@ -3,6 +3,7 @@
 namespace App\Notifications;
 
 use App\Models\Payment;
+use Filament\Facades\Filament;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Notifications\Messages\MailMessage;
@@ -35,10 +36,20 @@ class MultiInvoicePaymentReceiptNotification extends Notification implements Sho
      */
     public function toMail(object $notifiable): MailMessage
     {
-        $paymentUrl = route('filament.app.resources.payments.view', [
-            'tenant' => $this->payment->tenant,
-            'record' => $this->payment->id,
-        ]);
+        // Detect user's panel based on role
+        // Parents (who are ONLY parents, not admins) use parent panel, others use admin panel
+        $isOnlyParent = $notifiable->hasRole('Parent') &&
+                        ! $notifiable->hasAnyRole(['Super Admin', 'Admin', 'Principal', 'Teacher']);
+
+        $panelId = $isOnlyParent ? 'parent' : 'admin';
+        $resourceClass = $isOnlyParent
+            ? \App\Filament\Parent\Resources\PaymentResource::class
+            : \App\Filament\Admin\Resources\Payments\Payments\PaymentResource::class;
+
+        // Set the current panel context before generating URL
+        Filament::setCurrentPanel(Filament::getPanel($panelId));
+
+        $paymentUrl = $resourceClass::getUrl('view', ['record' => $this->payment]);
 
         $totalInvoices = $this->allocationSummary['total_invoices'] ?? 0;
         $fullyPaidCount = $this->allocationSummary['fully_paid_count'] ?? 0;
@@ -59,7 +70,7 @@ class MultiInvoicePaymentReceiptNotification extends Notification implements Sho
         $message->line('Payment Amount: RM '.number_format($this->payment->amount / 100, 2));
         $message->line("Payment Reference: {$this->payment->reference_no}");
         $message->line('Payment Date: '.($this->payment->paid_at ?? $this->payment->created_at)->format('M d, Y h:i A'));
-        $message->line('Payment Method: '.strtoupper($this->payment->gateway));
+        $message->line('Payment Method: '.strtoupper($this->payment->gateway->value));
 
         // Invoice summary
         $message->line('**Invoice Summary:**');

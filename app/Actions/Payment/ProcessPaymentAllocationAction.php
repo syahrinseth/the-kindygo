@@ -58,6 +58,7 @@ class ProcessPaymentAllocationAction
 
                 Log::info('Ledger entries recorded', [
                     'payment_id' => $payment->id,
+                    'invoice_count' => $invoices->count(),
                 ]);
 
                 // Step 3: Update invoice statuses
@@ -81,28 +82,63 @@ class ProcessPaymentAllocationAction
     }
 
     /**
-     * Update invoice statuses after payment allocation.
-     * Only updates invoices that are fully paid.
+     * Update invoice statuses based on payment allocations.
+     *
+     * This method is called both during payment allocation processing and
+     * by the PaymentObserver when a payment status changes to PAID.
+     * It's safe to call multiple times as it only updates statuses when they change.
+     *
+     * @param  Payment  $payment  The payment being processed
+     * @param  Collection  $invoices  Collection of invoices to update
      */
-    protected function updateInvoiceStatuses(Payment $payment, Collection $invoices): void
+    public function updateInvoiceStatuses(Payment $payment, Collection $invoices): void
     {
         foreach ($invoices as $invoice) {
             // Reload invoice to get fresh data after allocation
             $invoice->refresh();
 
             $totalPaid = $invoice->getTotalPaid();
+            $remainingBalance = $invoice->total - $totalPaid;
 
-            // Update to PAID status if fully paid
-            if ($totalPaid >= $invoice->total && $invoice->status !== InvoiceStatus::PAID) {
+            // Determine the correct status
+            $newStatus = null;
+
+            Log::info('Evaluating invoice status update', [
+                'invoice_id' => $invoice->id,
+                'invoice_number' => $invoice->number,
+                'current_status' => $invoice->status,
+                'total' => $invoice->total,
+                'total_paid' => $totalPaid,
+                'remaining_balance' => $remainingBalance,
+            ]);
+
+            if ($totalPaid >= $invoice->total) {
+                // Fully paid
+                if ($invoice->status !== InvoiceStatus::PAID) {
+                    $newStatus = InvoiceStatus::PAID;
+                }
+            } elseif ($totalPaid > 0) {
+                // Partially paid
+                if ($invoice->status !== InvoiceStatus::PARTIALLY_PAID) {
+                    $newStatus = InvoiceStatus::PARTIALLY_PAID;
+                }
+            }
+            // else: No payment made, keep current status (PENDING/OVERDUE)
+
+            // Update status if changed
+            if ($newStatus !== null) {
                 $invoice->update([
-                    'status' => InvoiceStatus::PAID,
+                    'status' => $newStatus,
                 ]);
 
-                Log::info('Invoice marked as fully paid', [
+                Log::info('Invoice status updated', [
                     'invoice_id' => $invoice->id,
                     'invoice_number' => $invoice->number,
+                    'old_status' => $invoice->getOriginal('status'),
+                    'new_status' => $newStatus->value,
                     'total' => $invoice->total,
                     'total_paid' => $totalPaid,
+                    'remaining_balance' => $remainingBalance,
                 ]);
             }
         }

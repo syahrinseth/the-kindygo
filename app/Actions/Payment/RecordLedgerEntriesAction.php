@@ -4,6 +4,7 @@ namespace App\Actions\Payment;
 
 use App\Models\InvoiceItemsLedger;
 use App\Models\Payment;
+use App\Models\Scopes\TenantScope;
 use Illuminate\Support\Facades\DB;
 
 class RecordLedgerEntriesAction
@@ -19,7 +20,10 @@ class RecordLedgerEntriesAction
         $ledgerEntries = [];
 
         // Load payment with invoices and their items
-        $payment->load(['invoices.invoiceItems.product']);
+        $payment->load([
+            'invoices' => fn ($query) => $query->withoutGlobalScope(TenantScope::class),
+            'invoices.invoiceItems.product',
+        ]);
 
         foreach ($payment->invoices as $invoice) {
             // Find allocation details for this invoice
@@ -44,7 +48,9 @@ class RecordLedgerEntriesAction
                     $creditAmount = $item->paid_amount; // This is cumulative, we need the delta
 
                     // Better approach: Get the latest ledger balance and calculate delta
+                    // Only look at credit entries (payment allocations) to get the previous balance
                     $previousBalance = InvoiceItemsLedger::where('invoice_item_id', $item->id)
+                        ->where('credit_amount', '>', 0)
                         ->latest('recorded_at')
                         ->value('balance_amount') ?? $item->total;
 

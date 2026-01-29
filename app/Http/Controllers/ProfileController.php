@@ -13,7 +13,7 @@ class ProfileController extends Controller
 
         // Redirect if profile is already completed
         if ($user->profile_completed) {
-            return redirect('/app')->with('info', 'Your profile is already completed.');
+            return redirect('/dashboard')->with('info', 'Your profile is already completed.');
         }
 
         return view('profile.complete', compact('user'));
@@ -25,7 +25,7 @@ class ProfileController extends Controller
 
         // Redirect if profile is already completed
         if ($user->profile_completed) {
-            return redirect('/app')->with('info', 'Your profile is already completed.');
+            return redirect('/dashboard')->with('info', 'Your profile is already completed.');
         }
 
         $request->validate([
@@ -106,6 +106,6 @@ class ProfileController extends Controller
         // Mark profile as completed
         $user->update(['profile_completed' => true]);
 
-        return redirect('/app')->with('success', 'Profile completed successfully! Welcome to the platform.');
+        return redirect('/dashboard')->with('success', 'Profile completed successfully! Welcome to the platform.');
     }
 }

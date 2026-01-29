@@ -2,11 +2,12 @@
 
 namespace App\Actions\Payment;
 
-use App\Enums\InvoiceStatus;
 use App\Models\Invoice;
 use App\Models\Payment;
+use App\Models\Scopes\TenantScope;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 
 class AllocatePaymentToInvoicesAction
 {
@@ -116,21 +117,44 @@ class AllocatePaymentToInvoicesAction
      */
     protected function processInvoiceAllocation(Payment $payment, Invoice $invoice, int $allocatedAmount): array
     {
-        // Attach payment to invoice with allocated amount
-        $payment->invoices()->attach($invoice->id, [
-            'amount' => $allocatedAmount,
-        ]);
+        // Check if the invoice is already attached (e.g., from ChipGatewayAction with amount=0)
+        $existingPivot = $payment->invoices()
+            ->withoutGlobalScope(TenantScope::class)
+            ->wherePivot('invoice_id', $invoice->id)
+            ->exists();
+
+        if ($existingPivot) {
+            // Update existing pivot record (handles idempotency and pre-attached invoices)
+            $payment->invoices()
+                ->withoutGlobalScope(TenantScope::class)
+                ->updateExistingPivot($invoice->id, [
+                    'amount' => $allocatedAmount,
+                    'updated_at' => now(),
+                ]);
+        } else {
+            // Attach new pivot record
+            $payment->invoices()
+                ->withoutGlobalScope(TenantScope::class)
+                ->attach($invoice->id, [
+                    'amount' => $allocatedAmount,
+                ]);
+        }
 
         // Allocate payment to invoice items by priority
         $this->allocatePaymentToInvoiceItemsByPriority($invoice, $allocatedAmount);
 
-        // Update invoice status if fully paid
+        // Calculate payment totals for return value
         $totalPaid = $invoice->getTotalPaid();
         $fullyPaid = ($totalPaid >= $invoice->total);
 
-        if ($fullyPaid) {
-            $invoice->update(['status' => InvoiceStatus::PAID]);
-        }
+        Log::info('Allocated payment to invoice', [
+            'invoice_id' => $invoice->id,
+            'invoice_number' => $invoice->number,
+            'allocated_amount' => $allocatedAmount,
+            'fully_paid' => $fullyPaid,
+            'total_paid' => $totalPaid,
+            'remaining_balance' => $invoice->total - $totalPaid,
+        ]);
 
         return [
             'invoice_id' => $invoice->id,
@@ -155,7 +179,7 @@ class AllocatePaymentToInvoicesAction
             ->with('product')
             ->leftJoin('products', 'invoice_items.product_id', '=', 'products.id')
             ->orderByRaw('
-                CASE 
+                CASE
                     WHEN products.priority IS NOT NULL THEN products.priority
                     ELSE 2
                 END DESC

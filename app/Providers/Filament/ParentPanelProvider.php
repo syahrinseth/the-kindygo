@@ -7,7 +7,6 @@ use App\Filament\Parent\Pages\AgreementPage;
 use App\Filament\Parent\Pages\Dashboard;
 use App\Filament\Parent\Pages\MakePayment;
 use App\Http\Middleware\EnsureProfileCompleted;
-use App\Http\Middleware\EnsureUndertakingAgreed;
 use Filament\Http\Middleware\Authenticate;
 use Filament\Http\Middleware\AuthenticateSession;
 use Filament\Http\Middleware\DisableBladeIconComponents;
@@ -27,8 +26,9 @@ class ParentPanelProvider extends PanelProvider
     public function panel(Panel $panel): Panel
     {
         return $panel
+            ->default()
             ->id('parent')
-            ->path('parent')
+            ->path('')
             ->viteTheme('resources/css/filament/parent/theme.css')
             ->colors([
                 'primary' => Color::Amber,
@@ -39,6 +39,7 @@ class ParentPanelProvider extends PanelProvider
                 AgreementPage::class,
                 MakePayment::class,
             ])
+            ->discoverResources(in: app_path('Filament/Parent/Resources'), for: 'App\\Filament\\Parent\\Resources')
             ->discoverWidgets(in: app_path('Filament/Parent/Widgets'), for: 'App\\Filament\\Parent\\Widgets')
             ->middleware([
                 EncryptCookies::class,
@@ -51,7 +52,6 @@ class ParentPanelProvider extends PanelProvider
                 DisableBladeIconComponents::class,
                 DispatchServingFilamentEvent::class,
                 EnsureProfileCompleted::class,
-                // EnsureUndertakingAgreed::class,
             ])
             ->authMiddleware([
                 Authenticate::class,

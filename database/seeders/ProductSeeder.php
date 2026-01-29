@@ -27,17 +27,27 @@ class ProductSeeder extends Seeder
             $centres = $tenant->centres;
 
             // Create some global products (not tied to specific centre)
-            Product::factory()->count(5)->create([
+            $globalProducts = Product::factory()->count(5)->create([
                 'tenant_id' => $tenant->id,
-                'centre_id' => null, // Global products
             ]);
+
+            // If there are centres, attach global products to all centres
+            if ($centres->isNotEmpty()) {
+                foreach ($globalProducts as $product) {
+                    $product->centres()->attach($centres->pluck('id'));
+                }
+            }
 
             // Create centre-specific products
             foreach ($centres as $centre) {
-                Product::factory()->count(3)->create([
+                $centreProducts = Product::factory()->count(3)->create([
                     'tenant_id' => $tenant->id,
-                    'centre_id' => $centre->id,
                 ]);
+
+                // Attach each centre-specific product to its centre
+                foreach ($centreProducts as $product) {
+                    $product->centres()->attach($centre->id);
+                }
             }
         }
 

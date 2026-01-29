@@ -54,6 +54,68 @@ class Centre extends Model
     ];
 
     /**
+     * Generate a centre code from centre name by taking first letter(s) of each word.
+     * Used for invoice and quotation numbering.
+     *
+     * Examples:
+     * - "Happy Kids Centre" → "HKC"
+     * - "Sunny Preschool" → "SP"
+     * - "Little Stars Kindergarten" → "LSK"
+     * - "ABC" → "ABC"
+     *
+     * @return string Centre code (2-4 characters, e.g., 'HKC', 'SP', 'MB')
+     */
+    public static function generateCentreCode(?Centre $centre): string
+    {
+        if (! $centre) {
+            return 'CTR'; // Default centre code
+        }
+
+        // If centre has a dedicated code field, use it
+        if (! empty($centre->code)) {
+            return strtoupper($centre->code);
+        }
+
+        // Generate code from centre name
+        $name = $centre->name ?? 'Centre';
+
+        // Remove special characters, keep only letters, numbers, and spaces
+        $cleanName = preg_replace('/[^A-Za-z0-9\s]/', '', $name);
+
+        // Split into words and filter empty strings
+        $words = array_filter(explode(' ', $cleanName), fn ($word) => ! empty($word));
+
+        if (empty($words)) {
+            return 'CTR'; // Fallback if no valid words
+        }
+
+        $code = '';
+
+        // Strategy 1: Take first letter of each word (up to 4 letters)
+        foreach ($words as $word) {
+            $code .= strtoupper($word[0]);
+            if (strlen($code) >= 4) {
+                break;
+            }
+        }
+
+        // Strategy 2: If we only have 1 letter, take first 2-3 letters from first word
+        if (strlen($code) === 1 && strlen($words[0]) >= 2) {
+            $code = strtoupper(substr($words[0], 0, min(3, strlen($words[0]))));
+        }
+
+        // Ensure minimum 2 characters
+        if (strlen($code) < 2) {
+            $code = str_pad($code, 2, '0', STR_PAD_RIGHT);
+        }
+
+        // Limit to 4 characters maximum
+        $code = substr($code, 0, 4);
+
+        return $code;
+    }
+
+    /**
      * Get the tenant that owns the centre.
      */
     public function tenant(): BelongsTo

@@ -33,6 +33,12 @@ class User extends Authenticatable implements FilamentUser, HasAvatar, HasDefaul
     /** @use HasFactory<UserFactory> */
     use HasFactory, HasRoles, InteractsWithMedia, Notifiable;
 
+    /**
+     * Determine if the user can access the given Filament panel.
+     *
+     * - Parent panel: accessible by all authenticated users
+     * - Admin panel: only accessible by users with admin roles (Super Admin, Admin, Principal, Teacher)
+     */
     public function canAccessPanel(Panel $panel): bool
     {
         // Parent panel - accessible by all authenticated users
@@ -40,12 +46,20 @@ class User extends Authenticatable implements FilamentUser, HasAvatar, HasDefaul
             return true;
         }
 
-        // App panel - accessible by all authenticated users
-        if ($panel->getId() === 'app') {
-            return true;
+        // Admin panel - only accessible by users with admin roles
+        if ($panel->getId() === 'admin') {
+            return $this->hasAnyRole(['Super Admin', 'Admin', 'Principal', 'Teacher']);
         }
 
-        return $this->can('accessPanel', $this);
+        return false;
+    }
+
+    /**
+     * Check if the user has any admin role.
+     */
+    public function isAdmin(): bool
+    {
+        return $this->hasAnyRole(['Super Admin', 'Admin', 'Principal', 'Teacher']);
     }
 
     /**
@@ -76,12 +90,15 @@ class User extends Authenticatable implements FilamentUser, HasAvatar, HasDefaul
         parent::boot();
 
         static::creating(function ($user) {
-            $tenant = Filament::getTenant();
-            $user->current_tenant_id = $tenant ? $tenant->id : null;
+            // Only set current_tenant_id if not already set (allow factory/explicit override)
+            if (is_null($user->current_tenant_id)) {
+                $tenant = $user->tenants()->first();
+                $user->current_tenant_id = $tenant ? $tenant->id : null;
+            }
         });
 
         static::created(function ($user) {
-            $tenant = Filament::getTenant();
+            $tenant = $user->tenants()->first();
             if (! empty($tenant)) {
                 $user->tenants()->attach($tenant);
             }

@@ -109,10 +109,6 @@ it('returns collection of related enrolments needing invoices', function () {
         'date_end' => null,
         'billed_every' => ChildEnrolmentBilledEvery::MONTHLY,
     ]);
-    $enrolment1->setRelations([
-        'child' => $child1,
-        'child.users' => collect([$this->parent]),
-    ]);
 
     $enrolment2 = ChildEnrolment::factory()->create([
         'child_id' => $child2->id,
@@ -123,10 +119,6 @@ it('returns collection of related enrolments needing invoices', function () {
         'date_start' => '2026-01-01',
         'date_end' => null,
         'billed_every' => ChildEnrolmentBilledEvery::MONTHLY,
-    ]);
-    $enrolment2->setRelations([
-        'child' => $child2,
-        'child.users' => collect([$this->parent]),
     ]);
 
     $result = $this->action->execute($enrolment1, now());
@@ -150,13 +142,9 @@ it('excludes enrolments from different centres', function () {
         'tenant_id' => $this->tenant->id,
         'status' => ChildEnrolmentStatus::ACTIVE,
         'date_start' => '2026-01-01',
+        'date_end' => null,
         'billed_every' => ChildEnrolmentBilledEvery::MONTHLY,
     ]);
-    $enrolment1->setRelations([
-        'child' => $child,
-        'child.users' => collect([$this->parent]),
-    ]);
-
     ChildEnrolment::factory()->create([
         'child_id' => $child->id,
         'centre_id' => $centre2->id,
@@ -169,7 +157,9 @@ it('excludes enrolments from different centres', function () {
 
     $result = $this->action->execute($enrolment1, now());
 
-    expect($result->count())->toBe(1)
+    // Should return only enrolment1 and exclude enrolment from different centre
+    expect($result)->not->toBeNull()
+        ->and($result->count())->toBe(1)
         ->and($result->first()->id)->toBe($enrolment1->id);
 });
 
@@ -185,11 +175,8 @@ it('excludes inactive enrolments', function () {
         'tenant_id' => $this->tenant->id,
         'status' => ChildEnrolmentStatus::ACTIVE,
         'date_start' => '2026-01-01',
+        'date_end' => null,
         'billed_every' => ChildEnrolmentBilledEvery::MONTHLY,
-    ]);
-    $enrolment1->setRelations([
-        'child' => $child,
-        'child.users' => collect([$this->parent]),
     ]);
 
     ChildEnrolment::factory()->create([
@@ -204,7 +191,8 @@ it('excludes inactive enrolments', function () {
 
     $result = $this->action->execute($enrolment1, now());
 
-    expect($result->count())->toBe(1)
+    expect($result)->not->toBeNull()
+        ->and($result->count())->toBe(1)
         ->and($result->first()->id)->toBe($enrolment1->id);
 });
 

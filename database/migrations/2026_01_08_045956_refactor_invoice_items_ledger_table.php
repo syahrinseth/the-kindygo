@@ -18,7 +18,7 @@ return new class extends Migration
             $table->foreignId('invoice_id')->constrained()->cascadeOnDelete();
             $table->foreignId('invoice_item_id')->nullable()->constrained()->nullOnDelete();
             $table->foreignId('payment_id')->nullable()->constrained()->nullOnDelete();
-            $table->foreignId('child_id')->constrained()->cascadeOnDelete();
+            $table->foreignId('child_id')->nullable()->constrained()->cascadeOnDelete();
             $table->foreignId('product_id')->nullable()->constrained()->nullOnDelete();
             $table->text('description')->nullable();
             $table->integer('debit_amount')->default(0)->comment('Item total or invoice amount in cents');

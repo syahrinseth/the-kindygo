@@ -24,12 +24,15 @@ class AllowIncompleteRegistration
             return $next($request);
         }
 
+        $user = auth()->user();
+
         // Allow authenticated users with incomplete profiles to continue registration
-        if (! auth()->user()->profile_completed) {
+        if (! $user->profile_completed) {
             return $next($request);
         }
 
-        // Redirect authenticated users with completed profiles to dashboard
-        return redirect()->route('filament.app.pages.dashboard');
+        // Redirect authenticated users with completed profiles to appropriate dashboard
+        // Let the root route middleware handle role-based routing logic
+        return redirect('/');
     }
 }
