@@ -5,6 +5,16 @@ namespace App\Http\Requests\API\V1;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rules\Password;
 
+/**
+ * Form request for the deprecated single-step registration endpoint.
+ *
+ * @deprecated This request class is used by the deprecated POST /api/v1/auth/register
+ *             endpoint which now returns 410 Gone. For new parent registrations,
+ *             use the multi-step registration flow starting at POST /api/v1/auth/register/step-1
+ *             with RegisterStep1Request instead.
+ * @see \App\Http\Requests\API\V1\RegisterStep1Request For the current registration flow
+ * @see \App\Http\Controllers\API\V1\RegistrationController For the multi-step registration controller
+ */
 class RegisterRequest extends FormRequest
 {
     /**

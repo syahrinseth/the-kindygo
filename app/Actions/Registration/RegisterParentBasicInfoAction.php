@@ -58,7 +58,7 @@ class RegisterParentBasicInfoAction
         $user->profile()->updateOrCreate(
             ['user_id' => $user->id],
             [
-                'nric' => $validated['mykad_number'],
+                'nric' => $validated['mykad_number'] ?? null,
                 'phone' => $validated['phone'],
             ]
         );
@@ -76,7 +76,7 @@ class RegisterParentBasicInfoAction
         $user->updateRegistrationData(1, [
             'name' => $validated['name'],
             'email' => $validated['email'],
-            'mykad_number' => $validated['mykad_number'],
+            'mykad_number' => $validated['mykad_number'] ?? null,
             'phone' => $validated['phone'],
             'centre_ids' => $validated['centre_ids'],
             'tenant_id' => $tenant->id,

@@ -191,7 +191,7 @@ describe('POST /api/v1/auth/logout-all', function () {
 });
 
 describe('POST /api/v1/auth/register', function () {
-    it('returns not implemented for registration', function () {
+    it('returns 410 Gone for deprecated registration endpoint', function () {
         $response = $this->postJson('/api/v1/auth/register', [
             'name' => 'Test User',
             'email' => 'newuser@example.com',
@@ -201,8 +201,34 @@ describe('POST /api/v1/auth/register', function () {
             'device_name' => 'Test Device',
         ]);
 
-        // Registration is not yet implemented
-        $response->assertStatus(501);
+        $response->assertStatus(410)
+            ->assertJson([
+                'success' => false,
+                'error_code' => 'endpoint_deprecated',
+                'redirect_to' => '/api/v1/auth/register/step-1',
+            ])
+            ->assertJsonStructure([
+                'success',
+                'message',
+                'error_code',
+                'redirect_to',
+                'documentation',
+            ]);
+    });
+
+    it('provides helpful deprecation message', function () {
+        $response = $this->postJson('/api/v1/auth/register', [
+            'name' => 'Test User',
+            'email' => 'newuser@example.com',
+            'password' => 'Password123!',
+            'password_confirmation' => 'Password123!',
+        ]);
+
+        $response->assertStatus(410);
+
+        $json = $response->json();
+        expect($json['message'])->toContain('deprecated');
+        expect($json['message'])->toContain('/api/v1/auth/register/step-1');
     });
 });
 

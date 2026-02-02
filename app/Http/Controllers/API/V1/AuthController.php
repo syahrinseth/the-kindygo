@@ -74,22 +74,31 @@ class AuthController extends Controller
     }
 
     /**
-     * Register a new user.
+     * Register a new user (DEPRECATED).
      *
-     * Creates a new parent user account and associates them with the specified tenant.
-     * An email verification code will be sent to the provided email address.
+     * This endpoint has been deprecated and is no longer available.
+     * Please use the multi-step registration flow instead:
+     *
+     * - POST /api/v1/auth/register/step-1 - Start registration with basic info
+     * - POST /api/v1/auth/register/verify-email - Verify email with code
+     * - POST /api/v1/auth/register/step-2 - Complete profile details
+     * - POST /api/v1/auth/register/step-3 - Add children (optional)
+     * - POST /api/v1/auth/register/step-4 - Accept terms and complete
      *
      * @unauthenticated
+     *
+     * @deprecated Use POST /api/v1/auth/register/step-1 instead
      */
-    #[Endpoint(operationId: 'auth.register', title: 'Register')]
+    #[Endpoint(operationId: 'auth.register', title: 'Register (Deprecated)')]
     public function register(RegisterRequest $request): JsonResponse
     {
-        // Registration logic will be implemented with RegisterUserAction
-        // For now, return a placeholder response
         return response()->json([
             'success' => false,
-            'message' => 'Registration endpoint not yet implemented.',
-        ], 501);
+            'message' => 'This endpoint has been deprecated. Please use the multi-step registration flow at POST /api/v1/auth/register/step-1 instead.',
+            'error_code' => 'endpoint_deprecated',
+            'redirect_to' => '/api/v1/auth/register/step-1',
+            'documentation' => 'The multi-step registration flow provides a better experience for parent registration. See API documentation for details.',
+        ], 410);
     }
 
     /**
