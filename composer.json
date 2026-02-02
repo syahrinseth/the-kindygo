@@ -37,6 +37,7 @@
     },
     "require-dev": {
         "barryvdh/laravel-debugbar": "^3.16",
+        "dedoc/scramble": "^0.13.11",
         "fakerphp/faker": "^1.23",
         "filament/upgrade": "^4.0",
         "laravel/boost": "*",

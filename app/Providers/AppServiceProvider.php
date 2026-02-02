@@ -3,6 +3,9 @@
 namespace App\Providers;
 
 use App\Models\Centre;
+use Dedoc\Scramble\Scramble;
+use Dedoc\Scramble\Support\Generator\OpenApi;
+use Dedoc\Scramble\Support\Generator\SecurityScheme;
 use Filament\Navigation\NavigationGroup;
 use Filament\Panel;
 use Illuminate\Auth\Notifications\VerifyEmail;
@@ -37,6 +40,14 @@ class AppServiceProvider extends ServiceProvider
                 ->line('If you did not create an account, no further action is required.')
                 ->salutation('Best regards, The '.config('app.name').' Team');
         });
+
+        // Configure Scramble API documentation with Bearer token authentication
+        Scramble::configure()
+            ->withDocumentTransformers(function (OpenApi $openApi) {
+                $openApi->secure(
+                    SecurityScheme::http('bearer', 'JWT')
+                );
+            });
 
         // Configure Filament panels
         Panel::configureUsing(function (Panel $panel): void {

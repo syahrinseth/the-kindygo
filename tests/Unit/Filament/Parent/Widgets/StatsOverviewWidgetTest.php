@@ -100,7 +100,7 @@ it('calculates paid this month correctly', function () {
         'tenant_id' => $this->tenant->id,
         'status' => PaymentStatus::PAID,
         'amount' => 15000,
-        'paid_at' => now()->subDays(5),
+        'paid_at' => now(),
     ]);
 
     // Create payment last month (should not be included)

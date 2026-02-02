@@ -17,6 +17,9 @@ return Application::configure(basePath: dirname(__DIR__))
             'update.current_tenant' => \App\Http\Middleware\UpdateCurrentTenant::class,
             'allow.incomplete.registration' => \App\Http\Middleware\AllowIncompleteRegistration::class,
             'redirect.role' => \App\Http\Middleware\RedirectBasedOnRole::class,
+            // API middleware
+            'ability' => \App\Http\Middleware\EnsureTokenHasAbility::class,
+            'tenant.access' => \App\Http\Middleware\EnsureTenantAccess::class,
         ]);
     })
     ->withExceptions(function (Exceptions $exceptions) {

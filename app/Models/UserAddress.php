@@ -69,6 +69,10 @@ class UserAddress extends Model
      */
     public function getStateName(): string
     {
+        if ($this->state_code instanceof MalaysianState) {
+            return $this->state_code->label();
+        }
+
         return MalaysianState::getNameFromCode($this->state_code);
     }
 }
