@@ -17,6 +17,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\HasManyThrough;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Log;
 
 class Invoice extends Model
 {
@@ -527,6 +528,12 @@ class Invoice extends Model
             throw new Exception('Invoice date cannot be in the future. Please update the invoice date before submitting to e-Invoice system.');
         }
 
+        // Validate customer has required identification (NRIC/Passport) for e-Invoice submission
+        $user = $this->user;
+        if (! $user->hasValidIdentification()) {
+            throw new Exception("Customer '{$user->name}' must have a valid identification (NRIC or Passport) for e-Invoice submission. Please update the customer's profile.");
+        }
+
         // Get tenant's TIN for authentication
         $tenant = $this->tenant;
 
@@ -560,6 +567,14 @@ class Invoice extends Model
      */
     public function toEInvoiceFormat(): array
     {
+        Log::info('Converting invoice to e-Invoice format', [
+            'invoice_id' => $this->id,
+            'invoice_number' => $this->number,
+            'AccountingSupplierParty' => $this->getSupplierPartyData(),
+            'AccountingCustomerParty' => $this->getCustomerPartyData(),
+            'InvoiceLines' => $this->getInvoiceLines(),
+        ]);
+
         return [
             '_D' => 'urn:oasis:names:specification:ubl:schema:xsd:Invoice-2',
             '_A' => 'urn:oasis:names:specification:ubl:schema:xsd:CommonAggregateComponents-2',
@@ -606,8 +621,8 @@ class Invoice extends Model
         return [
             'Party' => [
                 'IndustryClassificationCode' => [
-                    'ID' => config('einvoice.supplier_business_activity_code', '85100'),
-                    'Description' => config('einvoice.supplier_business_activity_description', 'Child day-care activities'),
+                    'ID' => $tenant->business_activity_code, // Default to 8899 if not set
+                    'Description' => $tenant->business_activity_description ?? 'Child day-care activities',
                 ],
                 'PartyIdentification' => $this->getTenantPartyIdentification($tenant),
                 'PartyName' => [
@@ -659,34 +674,63 @@ class Invoice extends Model
 
     /**
      * Get customer party data for e-Invoice.
+     * TIN is mandatory for LHDN e-Invoice submission.
+     * Uses fallback TIN 'EI00000000010' for individual consumers without TIN.
      */
     private function getCustomerPartyData(): array
     {
         $user = $this->user;
 
+        // Build PartyIdentification array
+        $partyIdentification = [];
+
+        // Get TIN, use fallback for consumers without TIN (LHDN requires TIN for all buyers)
+        $tin = $user->getEInvoiceTIN();
+        $usingFallbackTin = false;
+
+        if ($tin === null) {
+            // Use fallback TIN for consumers/individuals without TIN
+            $tin = config('einvoice.default_consumer_tin', 'EI00000000010');
+            $usingFallbackTin = true;
+
+            // Log warning for audit purposes
+            Log::warning('E-Invoice: Using fallback TIN for buyer without TIN', [
+                'invoice_id' => $this->id,
+                'invoice_number' => $this->number,
+                'buyer_id' => $user->id,
+                'buyer_name' => $user->name,
+                'fallback_tin' => $tin,
+                'buyer_identification' => $user->getEInvoiceIdentification(),
+                'buyer_identification_type' => $user->getEInvoiceSchemeId(),
+            ]);
+        }
+
+        // Always include TIN (mandatory for LHDN, with fallback if not provided)
+        $partyIdentification[] = [
+            'ID' => [
+                '_' => $tin,
+                'schemeID' => 'TIN',
+            ],
+        ];
+
+        // Always include primary identification (NRIC/Passport) - this is required
+        $partyIdentification[] = [
+            'ID' => [
+                '_' => $user->getEInvoiceIdentification(),
+                'schemeID' => $user->getEInvoiceSchemeId(),
+            ],
+        ];
+
         return [
             'Party' => [
-                'PartyIdentification' => [
-                    [
-                        'ID' => [
-                            '_' => $user->getEInvoiceTIN(),
-                            'schemeID' => 'TIN',
-                        ],
-                    ],
-                    [
-                        'ID' => [
-                            '_' => $user->getEInvoiceIdentification(),
-                            'schemeID' => $user->getEInvoiceSchemeId(),
-                        ],
-                    ],
-                ],
+                'PartyIdentification' => $partyIdentification,
                 'PartyName' => [
                     'Name' => $user->name,
                 ],
                 'PostalAddress' => [
                     'CityName' => $user->userAddress?->city ?? config('einvoice.default_city', 'Kuala Lumpur'),
                     'PostalZone' => $user->userAddress?->postal_code ?? config('einvoice.default_postal_code', '50000'),
-                    'CountrySubentityCode' => $user->userAddress?->state_code ?? config('einvoice.default_state_code', '14'),
+                    'CountrySubentityCode' => $user->userAddress?->state_code?->value ?? config('einvoice.default_state_code', '14'),
                     'AddressLine' => [
                         'Line' => $user->userAddress?->address ?? 'Address not provided',
                     ],

@@ -466,14 +466,19 @@ class User extends Authenticatable implements FilamentUser, HasAvatar, HasDefaul
         throw new Exception("Customer '{$this->name}' must have a valid profile with NRIC or Passport number for e-Invoice submission.");
     }
 
-    public function getEInvoiceTIN(): string
+    /**
+     * Get the TIN for e-invoice.
+     * TIN is optional for individual customers (B2C).
+     * Returns null if TIN is not available.
+     */
+    public function getEInvoiceTIN(): ?string
     {
         if ($this->profile) {
             return $this->profile->getEInvoiceTIN();
         }
 
-        // If no profile available, throw exception
-        throw new Exception("Customer '{$this->name}' must have a valid profile with TIN for e-Invoice submission.");
+        // TIN is optional for individual customers - return null instead of throwing exception
+        return null;
     }
 
     /**
@@ -503,17 +508,18 @@ class User extends Authenticatable implements FilamentUser, HasAvatar, HasDefaul
 
     /**
      * Check if the user is ready for e-invoice generation.
-     * Requires: complete address, valid identification (NRIC/Passport), and TIN.
+     * For individual customers (B2C): Requires complete address and valid identification (NRIC/Passport).
+     * TIN is optional for individual customers.
      */
     public function eInvoiceReady(): bool
     {
         return $this->hasCompleteAddress() &&
-               $this->hasValidIdentification() &&
-               $this->hasValidTin();
+               $this->hasValidIdentification();
     }
 
     /**
      * Get a list of missing e-invoice requirements.
+     * For individual customers (B2C), TIN is optional and not included in requirements.
      */
     public function getEInvoiceMissingRequirements(): array
     {
@@ -521,10 +527,6 @@ class User extends Authenticatable implements FilamentUser, HasAvatar, HasDefaul
 
         if (! $this->hasValidIdentification()) {
             $missing[] = 'NRIC or Passport';
-        }
-
-        if (! $this->hasValidTin()) {
-            $missing[] = 'TIN (Tax ID)';
         }
 
         if (! $this->hasCompleteAddress()) {

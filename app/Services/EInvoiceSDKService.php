@@ -591,6 +591,11 @@ class EInvoiceSDKService
         // Industry Classification Code (MSIC) - required for supplier
         if (isset($partyData['IndustryClassificationCode'])) {
             $industryCode = $xml->createElement('cbc:IndustryClassificationCode', $partyData['IndustryClassificationCode']['ID']);
+            // Add name attribute from Description if available (LHDN requirement for CF701)
+            // Note: LHDN schema uses lowercase 'name' attribute per documentation
+            if (isset($partyData['IndustryClassificationCode']['Description'])) {
+                $industryCode->setAttribute('name', $partyData['IndustryClassificationCode']['Description']);
+            }
             $party->appendChild($industryCode);
         }
 

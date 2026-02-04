@@ -44,6 +44,19 @@ return [
 
     /*
     |--------------------------------------------------------------------------
+    | Default Consumer TIN
+    |--------------------------------------------------------------------------
+    |
+    | Fallback TIN used for individual consumers (B2C) who don't have a TIN.
+    | LHDN requires TIN for all buyers, so this value is used when buyer
+    | only has NRIC/Passport identification without a personal TIN.
+    |
+    */
+
+    'default_consumer_tin' => env('EINVOICE_DEFAULT_CONSUMER_TIN', 'EI00000000010'),
+
+    /*
+    |--------------------------------------------------------------------------
     | Invoice Type Codes
     |--------------------------------------------------------------------------
     |

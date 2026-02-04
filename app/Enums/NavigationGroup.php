@@ -10,6 +10,7 @@ enum NavigationGroup: string
     case FINANCIAL_MANAGEMENT = 'Financial Management';
     case USER_MANAGEMENT = 'User Management';
     case INVENTORY = 'Inventory';
+    case SETTINGS = 'Settings';
 
     /**
      * Get all values as an array.

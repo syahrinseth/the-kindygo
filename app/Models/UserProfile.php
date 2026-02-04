@@ -73,13 +73,18 @@ class UserProfile extends Model
         throw new Exception("Customer '{$this->user->name}' must have a valid NRIC or Passport number for e-Invoice submission.");
     }
 
-    public function getEInvoiceTIN(): string
+    /**
+     * Get the TIN for e-invoice.
+     * TIN is optional for individual customers (B2C).
+     * Returns null if TIN is not available.
+     */
+    public function getEInvoiceTIN(): ?string
     {
         if (! empty($this->tin)) {
             return $this->tin;
         }
 
-        // If no TIN available, throw exception
-        throw new Exception("Customer '{$this->user->name}' must have a valid TIN for e-Invoice submission.");
+        // TIN is optional for individual customers - return null instead of throwing exception
+        return null;
     }
 }
