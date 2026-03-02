@@ -10,6 +10,7 @@ enum InvoiceStatus: string
     case PAID = 'paid';
     case OVERDUE = 'overdue';
     case CANCELLED = 'cancelled';
+    case REFUNDED = 'refunded';
 
     /**
      * Get all values as an array.

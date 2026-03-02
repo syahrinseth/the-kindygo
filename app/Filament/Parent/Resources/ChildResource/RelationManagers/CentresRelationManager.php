@@ -2,6 +2,8 @@
 
 namespace App\Filament\Parent\Resources\ChildResource\RelationManagers;
 
+use Filament\Actions\AttachAction;
+use Filament\Actions\DetachAction;
 use Filament\Resources\RelationManagers\RelationManager;
 use Filament\Schemas\Schema;
 use Filament\Tables\Columns\TextColumn;
@@ -11,11 +13,16 @@ class CentresRelationManager extends RelationManager
 {
     protected static string $relationship = 'centres';
 
+    public function isReadOnly(): bool
+    {
+        return false;
+    }
+
     public function form(Schema $schema): Schema
     {
         return $schema
             ->components([
-                // No form needed for read-only view
+                //
             ]);
     }
 
@@ -48,13 +55,15 @@ class CentresRelationManager extends RelationManager
                 //
             ])
             ->headerActions([
-                // Parents cannot attach/detach centres
+                AttachAction::make()
+                    ->preloadRecordSelect()
+                    ->recordSelectSearchColumns(['name', 'code']),
             ])
             ->recordActions([
-                // Parents cannot detach centres
+                DetachAction::make(),
             ])
             ->toolbarActions([
-                // No bulk actions for parents
+                //
             ]);
     }
 }

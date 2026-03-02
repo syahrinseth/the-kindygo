@@ -5,6 +5,7 @@ namespace App\Filament\Admin\Resources\ChildEnrolments\Schemas;
 use App\Enums\ChildEnrolmentBilledEvery;
 use App\Enums\ChildEnrolmentStatus;
 use App\Enums\ChildEnrolmentType;
+use App\Models\Centre;
 use App\Models\Child;
 use App\Models\Product;
 use Closure;
@@ -50,21 +51,7 @@ class ChildEnrolmentForm
                             $set('product_id', null); // Reset product when centre changes
                         })
                         ->options(function (callable $get) {
-                            $childId = $get('child_id');
-                            if (! $childId) {
-                                return [];
-                            }
-
-                            // Get centres associated with the selected child
-                            $child = Child::find($childId);
-                            if (! $child) {
-                                return [];
-                            }
-
-                            $centres = $child->centres()->pluck('centres.name', 'centres.id')->toArray();
-
-                            // If no centres associated, return empty array (will show placeholder)
-                            return $centres;
+                            return Centre::pluck('name', 'id')->toArray();
                         })
                         ->placeholder(function (callable $get) {
                             $childId = $get('child_id');
@@ -96,32 +83,6 @@ class ChildEnrolmentForm
 
                             return 'Only centres associated with the selected child are shown';
                         })
-                        ->disabled(function (callable $get, string $operation): bool {
-                            if ($operation === 'edit') {
-                                return true;
-                            }
-
-                            if (! $get('child_id')) {
-                                return true;
-                            }
-
-                            $child = Child::find($get('child_id'));
-
-                            return $child && $child->centres()->count() === 0;
-                        })
-                        ->rules([
-                            function (callable $get) {
-                                return function (string $attribute, $value, Closure $fail) use ($get) {
-                                    $childId = $get('child_id');
-                                    if ($childId && $value) {
-                                        $child = Child::find($childId);
-                                        if ($child && ! $child->centres()->where('centres.id', $value)->exists()) {
-                                            $fail('The selected centre is not associated with the selected child.');
-                                        }
-                                    }
-                                };
-                            },
-                        ])
                         ->columnSpan(1),
 
                     Select::make('product_id')

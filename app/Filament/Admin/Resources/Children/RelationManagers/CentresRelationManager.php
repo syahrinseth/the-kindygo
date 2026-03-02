@@ -58,10 +58,6 @@ class CentresRelationManager extends RelationManager
             ->headerActions([
                 AttachAction::make()
                     ->preloadRecordSelect()
-                    ->recordSelectOptionsQuery(fn (Builder $query) => $query->whereHas('users', function (Builder $subQuery) {
-                        $user = Auth::user();
-                        $subQuery->where('users.id', $user->id);
-                    }))
                     ->visible(fn () => Auth::user()->can('manageCentres', $this->getOwnerRecord())),
             ])
             ->recordActions([

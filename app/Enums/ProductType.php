@@ -10,6 +10,11 @@ enum ProductType: string
     case PROGRAMME = 'programme';
     case ANNUAL_FEE = 'annual_fee';
     case OTHERS = 'others';
+    case EVENT = 'event';
+    case MERCHANDISE = 'merchandise';
+    case OVERTIME = 'overtime';
+    case STAYIN = 'stayin';
+    case DEPOSIT = 'deposit';
 
     /**
      * Get all values as an array.

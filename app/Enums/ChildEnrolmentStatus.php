@@ -10,6 +10,12 @@ enum ChildEnrolmentStatus: string
     case PENDING = 'pending';
     case COMPLETED = 'completed';
     case CANCELLED = 'cancelled';
+    case LEGACY_FUTURE_RETURN = 'legacy_future_return';
+    case LEGACY_SUSPENDED = 'legacy_suspended';
+    case LEGACY_REGISTERED = 'legacy_registered';
+    case LEGACY_UNREGISTERED = 'legacy_unregistered';
+    case LEGACY_TRAIL_1_MONTH = 'legacy_trial_1_month';
+    case LEGACY_TRAIL_5_DAYS = 'legacy_trial_5_days';
 
     /**
      * Get all values as an array.
