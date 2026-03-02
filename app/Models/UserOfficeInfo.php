@@ -18,6 +18,7 @@ class UserOfficeInfo extends Model
      */
     protected $fillable = [
         'user_id',
+        'office_name',
         'office_phone',
         'office_address',
         'office_address_2',

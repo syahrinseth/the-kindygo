@@ -34,6 +34,7 @@ enum InvoiceStatus: string
             self::PAID => 'Paid',
             self::OVERDUE => 'Overdue',
             self::CANCELLED => 'Cancelled',
+            self::REFUNDED => 'Refunded',
         };
     }
 

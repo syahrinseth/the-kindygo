@@ -74,6 +74,7 @@ class User extends Authenticatable implements FilamentUser, HasAvatar, HasDefaul
         'password',
         'current_tenant_id',
         'profile_completed',
+        'meta_data',
     ];
 
     /**
@@ -120,6 +121,7 @@ class User extends Authenticatable implements FilamentUser, HasAvatar, HasDefaul
             'registration_step' => 'integer',
             'registration_data' => 'array',
             'registration_token_expires_at' => 'datetime',
+            'meta_data' => 'array',
         ];
     }
 
@@ -359,6 +361,14 @@ class User extends Authenticatable implements FilamentUser, HasAvatar, HasDefaul
     public function officeInfo(): HasOne
     {
         return $this->hasOne(UserOfficeInfo::class);
+    }
+
+    /**
+     * Get the family members associated with this user.
+     */
+    public function familyMembers(): HasMany
+    {
+        return $this->hasMany(FamilyMember::class);
     }
 
     /**

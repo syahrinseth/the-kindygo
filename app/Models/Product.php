@@ -27,6 +27,7 @@ class Product extends Model
         'tenant_id',
         'code',
         'name',
+        'description',
         'status',
         'type',
         'priority',

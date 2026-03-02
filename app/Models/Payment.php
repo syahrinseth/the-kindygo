@@ -33,6 +33,7 @@ class Payment extends Model implements HasMedia
         'amount',
         'description',
         'paid_at',
+        'meta',
     ];
 
     /**
@@ -46,6 +47,7 @@ class Payment extends Model implements HasMedia
         'amount' => 'integer',
         'paid_at' => 'datetime',
         'gateway_payment_data' => 'array',
+        'meta' => 'array',
     ];
 
     protected static function booted()

@@ -42,6 +42,7 @@ class Centre extends Model
         'postal_code',
         'city',
         'state',
+        'meta_data',
     ];
 
     /**
@@ -51,6 +52,7 @@ class Centre extends Model
      */
     protected $casts = [
         'status' => 'string',
+        'meta_data' => 'array',
     ];
 
     /**

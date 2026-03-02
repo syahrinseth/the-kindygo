@@ -6,6 +6,7 @@ enum ChildStatus: string
 {
     case NEW = 'new';
     case FUTURE = 'future';
+    case FUTURE_RETURN = 'future_return';
     case ACTIVE = 'active';
     case RETURN = 'return';
     case ALUMNI = 'alumni';
