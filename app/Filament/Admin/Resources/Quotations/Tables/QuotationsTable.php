@@ -82,7 +82,7 @@ class QuotationsTable
                 TextColumn::make('convertedInvoice.number')
                     ->label('Invoice')
                     ->url(fn (Quotation $record): ?string => $record->converted_invoice_id
-                            ? route('filament.app.resources.invoices.view', $record->converted_invoice_id)
+                            ? route('filament.admin.resources.invoices.view', $record->converted_invoice_id)
                             : null
                     )
                     ->color('primary')
@@ -146,7 +146,7 @@ class QuotationsTable
                                 ->body("Invoice {$invoice->number} has been created.")
                                 ->send();
 
-                            redirect()->route('filament.app.resources.invoices.view', $invoice);
+                            redirect()->route('filament.admin.resources.invoices.view', $invoice);
                         }),
 
                     DeleteAction::make()

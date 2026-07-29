@@ -55,14 +55,27 @@ class PaymentResource extends Resource
 
     public static function getNavigationBadge(): ?string
     {
-        return static::getEloquentQuery()->where('status', PaymentStatus::PENDING)->count();
+        $count = static::getEloquentQuery()
+            ->whereIn('status', [PaymentStatus::PENDING, PaymentStatus::UNPAID])
+            ->count();
+
+        return $count > 0 ? (string) $count : null;
     }
 
     public static function getNavigationBadgeColor(): string|array|null
     {
-        return static::getEloquentQuery()->where('status', PaymentStatus::FAILED)->count() > 0
-            ? 'danger'
-            : 'warning';
+        $hasFailed = static::getEloquentQuery()->where('status', PaymentStatus::FAILED)->count() > 0;
+        $hasUnpaid = static::getEloquentQuery()->where('status', PaymentStatus::UNPAID)->count() > 0;
+
+        if ($hasFailed) {
+            return 'danger';
+        }
+
+        if ($hasUnpaid) {
+            return 'warning';
+        }
+
+        return 'warning';
     }
 
     public static function shouldCheckPolicyExistence(): bool
@@ -262,6 +275,8 @@ class PaymentResource extends Resource
                         Gateway::BANK_TRANSFER => 'blue',
                         Gateway::CHIP => 'green',
                         Gateway::CASH => 'gray',
+                        Gateway::BILLPLZ => 'warning',
+                        Gateway::STRIPE => 'purple',
                     })
                     ->searchable()
                     ->sortable(),
@@ -274,6 +289,8 @@ class PaymentResource extends Resource
                         PaymentStatus::FAILED => 'danger',
                         PaymentStatus::CANCELLED => 'gray',
                         PaymentStatus::REFUNDED => 'info',
+                        PaymentStatus::PARTIALLY_PAID => 'info',
+                        PaymentStatus::UNPAID => 'danger',
                     })
                     ->formatStateUsing(fn (PaymentStatus $state): string => match ($state) {
                         PaymentStatus::PENDING => 'Pending',
@@ -281,6 +298,8 @@ class PaymentResource extends Resource
                         PaymentStatus::FAILED => 'Failed',
                         PaymentStatus::CANCELLED => 'Cancelled',
                         PaymentStatus::REFUNDED => 'Refunded',
+                        PaymentStatus::PARTIALLY_PAID => 'Partially Paid',
+                        PaymentStatus::UNPAID => 'Unpaid',
                     })
                     ->searchable()
                     ->sortable(),

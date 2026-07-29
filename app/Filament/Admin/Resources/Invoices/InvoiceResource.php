@@ -288,7 +288,7 @@ class InvoiceResource extends Resource
                     ->label('Billing Month')
                     ->date('M, Y')
                     ->sortable()
-                    ->description(fn (Invoice $record): string => 'Due: '.$record->due_at->format('M d, Y')),
+                    ->description(fn (Invoice $record): ?string => $record->due_at ? 'Due: '.$record->due_at->format('M d, Y') : null),
 
                 TextColumn::make('status')
                     ->badge()

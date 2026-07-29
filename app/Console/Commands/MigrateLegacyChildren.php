@@ -219,7 +219,7 @@ class MigrateLegacyChildren extends Command
             'mykid_no' => $legacy->mykid_no ?: null,
             'date_of_birth' => $dateOfBirth ?? '2000-01-01',
             'place_of_birth' => $legacy->pob ?: null,
-            'gender' => $gender ?? 'male',
+            'gender' => $gender,
             'cert_number' => $legacy->cert_no ?: null,
             'position_of_child' => ! empty($legacy->post_of_child) ? (int) $legacy->post_of_child : null,
             'race' => $race,

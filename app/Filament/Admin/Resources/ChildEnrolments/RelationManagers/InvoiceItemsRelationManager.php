@@ -115,7 +115,7 @@ class InvoiceItemsRelationManager extends RelationManager
                 TextColumn::make('invoice.number')
                     ->label('Invoice #')
                     ->url(
-                        fn ($record): string => route('filament.app.resources.invoices.view', [
+                        fn ($record): string => route('filament.admin.resources.invoices.view', [
                             'tenant' => filament()->getTenant()->id ?? 'default',
                             'record' => $record->invoice_id,
                         ])
@@ -247,7 +247,7 @@ class InvoiceItemsRelationManager extends RelationManager
                         ->icon('heroicon-o-document-text')
                         ->color('primary')
                         ->url(
-                            fn ($record): string => route('filament.app.resources.invoices.view', [
+                            fn ($record): string => route('filament.admin.resources.invoices.view', [
                                 'tenant' => filament()->getTenant(),
                                 'record' => $record->invoice_id,
                             ])

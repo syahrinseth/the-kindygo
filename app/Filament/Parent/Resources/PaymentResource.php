@@ -98,6 +98,8 @@ class PaymentResource extends Resource
                         PaymentStatus::FAILED => 'danger',
                         PaymentStatus::CANCELLED => 'gray',
                         PaymentStatus::REFUNDED => 'info',
+                        PaymentStatus::PARTIALLY_PAID => 'info',
+                        PaymentStatus::UNPAID => 'danger',
                     })
                     ->formatStateUsing(fn (PaymentStatus $state): string => match ($state) {
                         PaymentStatus::PENDING => 'Pending',
@@ -105,6 +107,8 @@ class PaymentResource extends Resource
                         PaymentStatus::FAILED => 'Failed',
                         PaymentStatus::CANCELLED => 'Cancelled',
                         PaymentStatus::REFUNDED => 'Refunded',
+                        PaymentStatus::PARTIALLY_PAID => 'Partially Paid',
+                        PaymentStatus::UNPAID => 'Unpaid',
                     })
                     ->searchable()
                     ->sortable(),
@@ -115,6 +119,8 @@ class PaymentResource extends Resource
                         Gateway::BANK_TRANSFER => 'blue',
                         Gateway::CHIP => 'green',
                         Gateway::CASH => 'gray',
+                        Gateway::BILLPLZ => 'warning',
+                        Gateway::STRIPE => 'purple',
                     })
                     ->searchable()
                     ->sortable(),

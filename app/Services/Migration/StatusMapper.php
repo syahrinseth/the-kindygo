@@ -169,8 +169,8 @@ class StatusMapper
     public static function gender(?int $legacyGender): ?string
     {
         return match ($legacyGender) {
-            1 => 'male',
-            2 => 'female',
+            1 => 'female',
+            2 => 'male',
             default => null,
         };
     }

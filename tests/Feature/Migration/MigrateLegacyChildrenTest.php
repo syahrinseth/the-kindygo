@@ -119,12 +119,13 @@ it('maps gender correctly', function () {
     $this->artisan('migrate:legacy-children', ['--tenant-id' => 1])
         ->assertSuccessful();
 
-    // Seeded: odd IDs = gender 2 (female), even IDs = gender 1 (male) based on ($i % 2) + 1
+    // Seeded: odd IDs = gender 2 (male), even IDs = gender 1 (female) based on ($i % 2) + 1
+    // Legacy mapping: 1 = female, 2 = male
     $child1 = DB::table('children')->where('id', 1)->first();
     $child2 = DB::table('children')->where('id', 2)->first();
 
-    expect($child1->gender)->toBe('female'); // (1 % 2) + 1 = 2 → female
-    expect($child2->gender)->toBe('male');   // (2 % 2) + 1 = 1 → male
+    expect($child1->gender)->toBe('male');   // (1 % 2) + 1 = 2 → male
+    expect($child2->gender)->toBe('female'); // (2 % 2) + 1 = 1 → female
 });
 
 it('maps race and religion correctly', function () {

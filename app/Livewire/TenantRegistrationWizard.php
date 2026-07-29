@@ -6,6 +6,7 @@ use App\Actions\Registration\CompleteParentRegistrationAction;
 use App\Actions\Registration\CreateChildrenForParentAction;
 use App\Actions\Registration\RegisterParentBasicInfoAction;
 use App\Actions\Registration\UpdateParentDetailsAction;
+use App\Enums\MalaysianState;
 use App\Http\Requests\AgreementRequest;
 use App\Http\Requests\ChildInformationRequest;
 use App\Http\Requests\ParentBasicInfoRequest;
@@ -25,6 +26,7 @@ use Filament\Forms\Contracts\HasForms;
 use Filament\Schemas\Components\Section;
 use Filament\Schemas\Schema;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Validation\Rule;
 use Livewire\Component;
@@ -115,7 +117,10 @@ class TenantRegistrationWizard extends Component implements HasForms
             }
 
             $this->loadSavedRegistrationData($user);
-            $this->currentStep = $step ?? $user->getCurrentRegistrationStep() ?? 1;
+            $this->initializeDefaultStateValues();
+            // registration_step of 0 means the user has not started yet — default to step 1.
+            $savedStep = $user->getCurrentRegistrationStep();
+            $this->currentStep = $step ?? (($savedStep > 0) ? $savedStep : 1);
         } elseif ($step) {
             $this->currentStep = $step;
         }
@@ -196,6 +201,38 @@ class TenantRegistrationWizard extends Component implements HasForms
             $this->tnc_accepted = $step4Data['tnc_accepted'] ?? false;
             $this->undertaking_accepted = $step4Data['undertaking_accepted'] ?? false;
         }
+    }
+
+    /**
+     * Initialise default values for form fields that are still empty after loading saved
+     * registration data and existing profile/address models. Ensures the form always has
+     * selectable content for users without registration_data.
+     */
+    protected function initializeDefaultStateValues(): void
+    {
+        Log::debug('TenantRegistrationWizard: Initialising default state values', [
+            'user_id' => Auth::id(),
+            'current_state' => $this->state,
+            'current_office_state' => $this->office_state,
+        ]);
+
+        // Set first state in the list (Johor) as default when state is not yet populated.
+        if (empty($this->state)) {
+            $this->state = MalaysianState::JOHOR->value;
+
+            Log::debug('TenantRegistrationWizard: Set default state to Johor', [
+                'state' => $this->state,
+            ]);
+        } else {
+            Log::debug('TenantRegistrationWizard: State already set, skipping default', [
+                'state' => $this->state,
+            ]);
+        }
+
+        // office_state is optional - leave empty and let the user choose if needed.
+        Log::debug('TenantRegistrationWizard: office_state left empty (optional field)', [
+            'office_state' => $this->office_state,
+        ]);
     }
 
     public function form(Schema $schema): Schema

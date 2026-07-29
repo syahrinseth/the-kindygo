@@ -32,6 +32,28 @@ trait LegacyMigrationTestHelper
         DB::connection('legacy')->setPdo($defaultPdo);
 
         $this->createLegacyTables();
+        $this->resetLegacyTables();
+    }
+
+    /**
+     * Clear legacy fixtures before each test while keeping the shared schema intact.
+     */
+    protected function resetLegacyTables(): void
+    {
+        foreach ([
+            '1_transactions',
+            '1_invoices',
+            '1_child',
+            '1_product',
+            '1_model_has_roles',
+            '1_users',
+            '1_roles',
+            '1_preschool',
+            '1_campuses',
+            '1_state',
+        ] as $table) {
+            DB::connection('legacy')->table($table)->delete();
+        }
     }
 
     /**
