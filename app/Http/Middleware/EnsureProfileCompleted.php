@@ -24,7 +24,7 @@ class EnsureProfileCompleted
         }
 
         // Skip check if user is not a Parent
-        if (! $user->hasRole('Parent')) {
+        if (! $user->hasRole('parent')) {
             return $next($request);
         }
 

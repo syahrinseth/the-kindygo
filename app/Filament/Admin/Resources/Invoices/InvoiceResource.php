@@ -133,7 +133,7 @@ class InvoiceResource extends Resource
                                         $query = Centre::where('tenant_id', $user->current_tenant_id);
 
                                         // If Principal, limit to their centres
-                                        if ($user->hasRole('Principal')) {
+                                        if ($user->hasRole('principal')) {
                                             $query->whereHas('users', function (Builder $q) use ($user) {
                                                 $q->where('users.id', $user->id);
                                             });

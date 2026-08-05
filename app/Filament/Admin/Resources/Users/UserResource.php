@@ -2,6 +2,7 @@
 
 namespace App\Filament\Admin\Resources\Users;
 
+use App\Enums\ApplicationRole;
 use App\Filament\Admin\Resources\Users\Actions\InviteUserToTenantAction;
 use App\Filament\Admin\Resources\Users\Pages\CreateUser;
 use App\Filament\Admin\Resources\Users\Pages\EditUser;
@@ -100,7 +101,8 @@ class UserResource extends Resource
                 TextColumn::make('roles.name')
                     ->badge()
                     ->searchable()
-                    ->sortable(),
+                    ->sortable()
+                    ->formatStateUsing(fn (?string $state): string => ApplicationRole::labelFor($state)),
                 TextColumn::make('centres.name')
                     ->badge()
                     ->searchable()
@@ -168,6 +170,7 @@ class UserResource extends Resource
             ->filters([
                 SelectFilter::make('roles')
                     ->relationship('roles', 'name')
+                    ->getOptionLabelFromRecordUsing(fn (\Spatie\Permission\Models\Role $record): string => ApplicationRole::labelFor($record->name))
                     ->multiple()
                     ->preload(),
                 SelectFilter::make('centres')

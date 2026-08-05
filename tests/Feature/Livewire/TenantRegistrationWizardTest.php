@@ -13,7 +13,7 @@ use Spatie\Permission\Models\Role;
 uses(RefreshDatabase::class);
 
 beforeEach(function () {
-    Role::firstOrCreate(['name' => 'Parent', 'guard_name' => 'web']);
+    Role::firstOrCreate(['name' => 'parent', 'guard_name' => 'web']);
 
     $this->tenant = Tenant::factory()->create([
         'name' => 'Test Kindergarten',

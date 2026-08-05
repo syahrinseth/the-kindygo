@@ -16,11 +16,11 @@ beforeEach(function () {
     $this->tenant = Tenant::factory()->create();
 
     // Create roles
-    Role::firstOrCreate(['name' => 'Admin']);
+    Role::firstOrCreate(['name' => 'admin']);
 
     $this->admin = User::factory()->create();
     $this->admin->tenants()->attach($this->tenant->id);
-    $this->admin->assignRole('Admin');
+    $this->admin->assignRole('admin');
     $this->admin->update(['current_tenant_id' => $this->tenant->id]);
 
     Filament::setCurrentPanel(Filament::getPanel('admin'));

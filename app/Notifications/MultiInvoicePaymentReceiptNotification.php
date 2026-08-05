@@ -38,8 +38,8 @@ class MultiInvoicePaymentReceiptNotification extends Notification implements Sho
     {
         // Detect user's panel based on role
         // Parents (who are ONLY parents, not admins) use parent panel, others use admin panel
-        $isOnlyParent = $notifiable->hasRole('Parent') &&
-                        ! $notifiable->hasAnyRole(['Super Admin', 'Admin', 'Principal', 'Teacher']);
+        $isOnlyParent = $notifiable->hasRole('parent') &&
+                        ! $notifiable->hasAnyRole(['super-admin', 'admin', 'principal', 'teacher']);
 
         $panelId = $isOnlyParent ? 'parent' : 'admin';
         $resourceClass = $isOnlyParent

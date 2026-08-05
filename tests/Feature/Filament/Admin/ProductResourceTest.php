@@ -12,11 +12,11 @@ use Spatie\Permission\Models\Role;
 beforeEach(function () {
     $this->tenant = Tenant::factory()->create();
 
-    Role::firstOrCreate(['name' => 'Admin', 'guard_name' => 'web']);
+    Role::firstOrCreate(['name' => 'admin', 'guard_name' => 'web']);
 
     $this->admin = User::factory()->create();
     $this->admin->tenants()->attach($this->tenant->id);
-    $this->admin->assignRole('Admin');
+    $this->admin->assignRole('admin');
     $this->admin->update(['current_tenant_id' => $this->tenant->id]);
 
     Filament::setCurrentPanel(Filament::getPanel('admin'));

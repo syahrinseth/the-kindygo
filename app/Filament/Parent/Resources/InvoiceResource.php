@@ -79,7 +79,7 @@ class InvoiceResource extends Resource
     {
         $user = Auth::user();
 
-        return $user->can('viewAny', Invoice::class) && $user->hasRole('Parent');
+        return $user->can('viewAny', Invoice::class) && $user->hasRole('parent');
     }
 
     public static function canCreate(): bool
@@ -89,7 +89,7 @@ class InvoiceResource extends Resource
 
     public static function shouldRegisterNavigation(): bool
     {
-        return Auth::user()->can('viewAny', Invoice::class) && Auth::user()->hasRole('Parent');
+        return Auth::user()->can('viewAny', Invoice::class) && Auth::user()->hasRole('parent');
     }
 
     public static function form(Schema $schema): Schema

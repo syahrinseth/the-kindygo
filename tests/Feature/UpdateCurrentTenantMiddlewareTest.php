@@ -29,8 +29,8 @@ test('user current tenant id is updated when accessing tenant route', function (
     $user->tenants()->attach($tenant->id);
 
     // Ensure role exists, give the user a panel role
-    Role::firstOrCreate(['name' => 'Admin']);
-    $user->assignRole('Admin');
+    Role::firstOrCreate(['name' => 'admin']);
+    $user->assignRole('admin');
 
     // Sanity check: user should have tenant attached
     expect($user->tenants()->count())->toBeGreaterThan(0);
@@ -78,8 +78,8 @@ test('user current tenant id is updated when switching between tenants', functio
     $user->update(['current_tenant_id' => $tenant1->id]);
 
     // Ensure role exists and assign so user can access panel
-    Role::firstOrCreate(['name' => 'Admin']);
-    $user->assignRole('Admin');
+    Role::firstOrCreate(['name' => 'admin']);
+    $user->assignRole('admin');
 
     // Sanity check: latestTenant should now return tenant2 (it has the newer updated_at)
     $user->refresh();

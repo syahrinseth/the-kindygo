@@ -25,6 +25,29 @@ enum ApplicationRole: string
         return $role;
     }
 
+    /**
+     * Get the selectable role values and their display labels.
+     *
+     * @return array<string, string>
+     */
+    public static function options(): array
+    {
+        return collect(self::cases())
+            ->mapWithKeys(fn (self $role): array => [$role->value => $role->label()])
+            ->all();
+    }
+
+    public static function labelFor(?string $role): string
+    {
+        if ($role === null || $role === '') {
+            return '';
+        }
+
+        $canonicalRole = self::normalise($role);
+
+        return self::tryFrom($canonicalRole)?->label() ?? str($canonicalRole)->headline();
+    }
+
     public function label(): string
     {
         return match ($this) {

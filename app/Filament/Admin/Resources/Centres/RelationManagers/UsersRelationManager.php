@@ -2,6 +2,7 @@
 
 namespace App\Filament\Admin\Resources\Centres\RelationManagers;
 
+use App\Enums\ApplicationRole;
 use App\Filament\Forms\UserForm;
 use Filament\Actions\AttachAction;
 use Filament\Actions\BulkActionGroup;
@@ -43,7 +44,8 @@ class UsersRelationManager extends RelationManager
                     ->placeholder('Not set'),
                 TextColumn::make('roles.name')
                     ->badge()
-                    ->searchable(),
+                    ->searchable()
+                    ->formatStateUsing(fn (?string $state): string => ApplicationRole::labelFor($state)),
             ])
             ->filters([
                 //

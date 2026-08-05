@@ -13,8 +13,8 @@ beforeEach(function () {
 
     Notification::fake();
 
-    Role::create(['name' => 'Parent', 'guard_name' => 'web']);
-    Role::create(['name' => 'Staff', 'guard_name' => 'web']);
+    Role::create(['name' => 'parent', 'guard_name' => 'web']);
+    Role::create(['name' => 'staff', 'guard_name' => 'web']);
 
     $this->tenant = Tenant::factory()->create();
     $this->letter = LetterOfUndertaking::factory()->create([
@@ -25,11 +25,11 @@ beforeEach(function () {
 
 it('sends notification to all parents of tenant', function () {
     $parent1 = User::factory()->create();
-    $parent1->assignRole('Parent');
+    $parent1->assignRole('parent');
     $parent1->tenants()->attach($this->tenant->id);
 
     $parent2 = User::factory()->create();
-    $parent2->assignRole('Parent');
+    $parent2->assignRole('parent');
     $parent2->tenants()->attach($this->tenant->id);
 
     $this->action->execute($this->letter);
@@ -39,11 +39,11 @@ it('sends notification to all parents of tenant', function () {
 
 it('excludes non-parent users', function () {
     $parent = User::factory()->create();
-    $parent->assignRole('Parent');
+    $parent->assignRole('parent');
     $parent->tenants()->attach($this->tenant->id);
 
     $staff = User::factory()->create();
-    $staff->assignRole('Staff');
+    $staff->assignRole('staff');
     $staff->tenants()->attach($this->tenant->id);
 
     $this->action->execute($this->letter);
@@ -54,12 +54,12 @@ it('excludes non-parent users', function () {
 
 it('excludes parents from other tenants', function () {
     $parent = User::factory()->create();
-    $parent->assignRole('Parent');
+    $parent->assignRole('parent');
     $parent->tenants()->attach($this->tenant->id);
 
     $otherTenant = Tenant::factory()->create();
     $otherParent = User::factory()->create();
-    $otherParent->assignRole('Parent');
+    $otherParent->assignRole('parent');
     $otherParent->tenants()->attach($otherTenant->id);
 
     $this->action->execute($this->letter);
@@ -70,7 +70,7 @@ it('excludes parents from other tenants', function () {
 
 it('sends notification with correct letter data', function () {
     $parent = User::factory()->create();
-    $parent->assignRole('Parent');
+    $parent->assignRole('parent');
     $parent->tenants()->attach($this->tenant->id);
 
     $this->action->execute($this->letter);
@@ -83,7 +83,7 @@ it('sends notification with correct letter data', function () {
 it('handles tenant with no parents', function () {
     // Create a staff member but no parents
     $staff = User::factory()->create();
-    $staff->assignRole('Staff');
+    $staff->assignRole('staff');
     $staff->tenants()->attach($this->tenant->id);
 
     $this->action->execute($this->letter);

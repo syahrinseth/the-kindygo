@@ -14,7 +14,7 @@ class FinanceDashboardPolicy
     {
         // Super Admin, Admin, and Principal can access the Finance Dashboard
         // Teachers and Parents cannot access finance information
-        return $user->hasAnyRole(['Super Admin', 'Admin', 'Principal']);
+        return $user->hasAnyRole(['super-admin', 'admin', 'principal']);
     }
 
     /**
@@ -23,7 +23,7 @@ class FinanceDashboardPolicy
     public function viewFinancialStats(User $user): bool
     {
         // Same as dashboard access - only financial managers
-        return $user->hasAnyRole(['Super Admin', 'Admin', 'Principal']);
+        return $user->hasAnyRole(['super-admin', 'admin', 'principal']);
     }
 
     /**
@@ -33,7 +33,7 @@ class FinanceDashboardPolicy
     {
         // Super Admin and Admin can view all analytics
         // Principal can view analytics for their centres only
-        return $user->hasAnyRole(['Super Admin', 'Admin', 'Principal']);
+        return $user->hasAnyRole(['super-admin', 'admin', 'principal']);
     }
 
     /**
@@ -42,7 +42,7 @@ class FinanceDashboardPolicy
     public function viewUpcomingPayments(User $user): bool
     {
         // Same roles that can access invoices can view upcoming payments
-        return $user->hasAnyRole(['Super Admin', 'Admin', 'Principal']);
+        return $user->hasAnyRole(['super-admin', 'admin', 'principal']);
     }
 
     /**
@@ -60,7 +60,7 @@ class FinanceDashboardPolicy
     public function exportFinancialData(User $user): bool
     {
         // Only Super Admin and Admin can export financial data
-        return $user->hasAnyRole(['Super Admin', 'Admin']);
+        return $user->hasAnyRole(['super-admin', 'admin']);
     }
 
     /**
@@ -69,6 +69,6 @@ class FinanceDashboardPolicy
     public function viewAllFinancialData(User $user): bool
     {
         // Super Admin and Admin can view all financial data in their tenant
-        return $user->hasAnyRole(['Super Admin', 'Admin']);
+        return $user->hasAnyRole(['super-admin', 'admin']);
     }
 }

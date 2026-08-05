@@ -57,7 +57,7 @@ class User extends Authenticatable implements FilamentUser, HasAvatar, HasDefaul
 
         // Admin panel - only accessible by users with admin roles
         if ($panel->getId() === 'admin') {
-            return $this->hasAnyRole(['Super Admin', 'Admin', 'Principal', 'Teacher']);
+            return $this->hasAnyRole(['super-admin', 'admin', 'principal', 'teacher']);
         }
 
         return false;
@@ -68,7 +68,7 @@ class User extends Authenticatable implements FilamentUser, HasAvatar, HasDefaul
      */
     public function isAdmin(): bool
     {
-        return $this->hasAnyRole(['Super Admin', 'Admin', 'Principal', 'Teacher']);
+        return $this->hasAnyRole(['super-admin', 'admin', 'principal', 'teacher']);
     }
 
     /**
@@ -118,7 +118,7 @@ class User extends Authenticatable implements FilamentUser, HasAvatar, HasDefaul
             return true;
         }
 
-        return $canonicalRoles === $roles || $this->hasStoredRole($roles, $guard);
+        return $canonicalRoles !== $roles && $this->hasStoredRole($roles, $guard);
     }
 
     /**

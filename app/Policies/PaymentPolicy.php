@@ -16,7 +16,7 @@ class PaymentPolicy
     {
         // Super Admin, Admin, Principal can view the list of payments
         // Parents can also view the list of payments related to them
-        return $user->hasAnyRole(['Super Admin', 'Admin', 'Principal', 'Parent']);
+        return $user->hasAnyRole(['super-admin', 'admin', 'principal', 'parent']);
     }
 
     /**
@@ -25,20 +25,20 @@ class PaymentPolicy
     public function view(User $user, Payment $payment): bool
     {
         // Check role-based permissions first
-        if ($user->hasRole('Super Admin') || $user->hasRole('Admin')) {
+        if ($user->hasRole('super-admin') || $user->hasRole('admin')) {
             // Super Admin and Admin can view any payment in their tenant
             return $payment->tenant_id === $user->current_tenant_id;
         }
 
         // Principal can only view payments for their centres
-        if ($user->hasRole('Principal')) {
+        if ($user->hasRole('principal')) {
             return $payment->tenant_id === $user->current_tenant_id &&
                    ($payment->centres->isEmpty() ||
                     $payment->centres->intersect($user->centres)->isNotEmpty());
         }
 
         // Parents can only view payments that are directly related to them
-        if ($user->hasRole('Parent')) {
+        if ($user->hasRole('parent')) {
             // Direct payments where user_id matches
             if ($payment->user_id === $user->id) {
                 return true;
@@ -61,7 +61,7 @@ class PaymentPolicy
     public function makePayment(User $user): bool
     {
         // Super Admin, Admin, Principal, Parent, and Teacher can make payments
-        return $user->hasAnyRole(['Super Admin', 'Admin', 'Principal', 'Parent', 'Teacher']);
+        return $user->hasAnyRole(['super-admin', 'admin', 'principal', 'parent', 'teacher']);
     }
 
     /**
@@ -71,7 +71,7 @@ class PaymentPolicy
     {
         // Super Admin, Admin, Principal, Parent, and Teacher can create payments
         // But additional checks are done in the MakePaymentAction for specific invoices
-        return $user->hasAnyRole(['Super Admin', 'Admin', 'Principal', 'Parent', 'Teacher']) &&
+        return $user->hasAnyRole(['super-admin', 'admin', 'principal', 'parent', 'teacher']) &&
                $user->current_tenant_id !== null;
     }
 
@@ -81,12 +81,12 @@ class PaymentPolicy
     public function update(User $user, Payment $payment): bool
     {
         // Super Admin and Admin can update any payment in their tenant
-        if ($user->hasAnyRole(['Super Admin', 'Admin'])) {
+        if ($user->hasAnyRole(['super-admin', 'admin'])) {
             return $payment->tenant_id === $user->current_tenant_id;
         }
 
         // Principal can only update pending payments for their centres
-        if ($user->hasRole('Principal')) {
+        if ($user->hasRole('principal')) {
             return $payment->tenant_id === $user->current_tenant_id &&
                    ($payment->centres->isEmpty() ||
                     $payment->centres->intersect($user->centres)->isNotEmpty()) &&
@@ -107,12 +107,12 @@ class PaymentPolicy
         }
 
         // Super Admin and Admin can delete any eligible payment in their tenant
-        if ($user->hasAnyRole(['Super Admin', 'Admin'])) {
+        if ($user->hasAnyRole(['super-admin', 'admin'])) {
             return $payment->tenant_id === $user->current_tenant_id;
         }
 
         // Principal can only delete pending/failed payments for their centres
-        if ($user->hasRole('Principal')) {
+        if ($user->hasRole('principal')) {
             return $payment->tenant_id === $user->current_tenant_id &&
                    ($payment->centres->isEmpty() ||
                     $payment->centres->intersect($user->centres)->isNotEmpty());
@@ -127,7 +127,7 @@ class PaymentPolicy
     public function deleteAny(User $user): bool
     {
         // Only Super Admin and Admin can bulk delete payments
-        return $user->hasAnyRole(['Super Admin', 'Admin']) &&
+        return $user->hasAnyRole(['super-admin', 'admin']) &&
                $user->current_tenant_id !== null;
     }
 
@@ -137,7 +137,7 @@ class PaymentPolicy
     public function forceDelete(User $user, Payment $payment): bool
     {
         // Only Super Admin can permanently delete payments
-        return $user->hasRole('Super Admin') &&
+        return $user->hasRole('super-admin') &&
                $payment->tenant_id === $user->current_tenant_id;
     }
 
@@ -147,7 +147,7 @@ class PaymentPolicy
     public function useBankTransferGateway(User $user): bool
     {
         // Only Super Admin, Admin, and Principal can use bank transfer
-        return $user->hasAnyRole(['Super Admin', 'Admin', 'Principal']);
+        return $user->hasAnyRole(['super-admin', 'admin', 'principal']);
     }
 
     /**

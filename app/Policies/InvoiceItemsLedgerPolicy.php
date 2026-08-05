@@ -13,7 +13,7 @@ class InvoiceItemsLedgerPolicy
     public function viewAny(User $user): bool
     {
         // Only super_admin, admin, and Principal can access the ledger
-        return $user->hasRole(['Super Admin', 'Admin', 'Principal']);
+        return $user->hasRole(['super-admin', 'admin', 'principal']);
     }
 
     /**
@@ -22,12 +22,12 @@ class InvoiceItemsLedgerPolicy
     public function view(User $user, InvoiceItem $invoiceItem): bool
     {
         // Super Admin and Admin can view any invoice item
-        if ($user->hasRole(['Super Admin', 'Admin'])) {
+        if ($user->hasRole(['super-admin', 'admin'])) {
             return true;
         }
 
         // Principal and Teacher can view items within their scope
-        if ($user->hasRole(['Principal', 'Teacher'])) {
+        if ($user->hasRole(['principal', 'teacher'])) {
             // Check if the invoice item belongs to their tenant
             if ($invoiceItem->invoice && $invoiceItem->invoice->tenant_id === $user->current_tenant_id) {
                 // Check if the invoice item is associated with their assigned centres
@@ -92,7 +92,7 @@ class InvoiceItemsLedgerPolicy
     public function export(User $user): bool
     {
         // Allow export for authorized users
-        return $user->hasRole(['Super Admin', 'Admin', 'Principal']);
+        return $user->hasRole(['super-admin', 'admin', 'principal']);
     }
 
     /**
@@ -101,6 +101,6 @@ class InvoiceItemsLedgerPolicy
     public function viewFinancials(User $user): bool
     {
         // Financial details visible to authorized roles
-        return $user->hasRole(['Super Admin', 'Admin', 'Principal']);
+        return $user->hasRole(['super-admin', 'admin', 'principal']);
     }
 }

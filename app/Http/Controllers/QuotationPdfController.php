@@ -22,20 +22,20 @@ class QuotationPdfController extends Controller
             // Allow access
         }
         // Admin, Principal can download quotations from their tenant
-        elseif ($user->hasAnyRole(['Admin', 'Principal'])) {
+        elseif ($user->hasAnyRole(['admin', 'principal'])) {
             if ($quotation->tenant_id !== $user->current_tenant_id) {
                 abort(403, 'Unauthorized access to quotation.');
             }
 
             // For Principal, check if quotation is from centres they're associated with
-            if ($user->hasRole('Principal') && $quotation->centre_id) {
+            if ($user->hasRole('principal') && $quotation->centre_id) {
                 if (! $user->centres()->where('centres.id', $quotation->centre_id)->exists()) {
                     abort(403, 'Unauthorized access to quotation.');
                 }
             }
         }
         // Parent can only download their own quotations
-        elseif ($user->hasRole('Parent')) {
+        elseif ($user->hasRole('parent')) {
             if ($quotation->user_id !== $user->id || $quotation->tenant_id !== $user->current_tenant_id) {
                 abort(403, 'Unauthorized access to quotation.');
             }

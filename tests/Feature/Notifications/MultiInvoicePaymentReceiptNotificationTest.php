@@ -12,14 +12,14 @@ beforeEach(function () {
     $this->tenant = Tenant::factory()->create();
 
     // Create roles
-    Role::firstOrCreate(['name' => 'Parent']);
-    Role::firstOrCreate(['name' => 'Admin']);
+    Role::firstOrCreate(['name' => 'parent']);
+    Role::firstOrCreate(['name' => 'admin']);
 });
 
 test('generates parent panel URL for parent users', function () {
     $parent = User::factory()->create();
     $parent->tenants()->attach($this->tenant->id);
-    $parent->assignRole('Parent');
+    $parent->assignRole('parent');
     $parent->update(['current_tenant_id' => $this->tenant->id]);
 
     $payment = Payment::factory()->create([
@@ -46,7 +46,7 @@ test('generates parent panel URL for parent users', function () {
 test('generates admin panel URL for admin users', function () {
     $admin = User::factory()->create();
     $admin->tenants()->attach($this->tenant->id);
-    $admin->assignRole('Admin');
+    $admin->assignRole('admin');
     $admin->update(['current_tenant_id' => $this->tenant->id]);
 
     $payment = Payment::factory()->create([
@@ -74,7 +74,7 @@ test('notification can be sent to parent users without error', function () {
 
     $parent = User::factory()->create();
     $parent->tenants()->attach($this->tenant->id);
-    $parent->assignRole('Parent');
+    $parent->assignRole('parent');
     $parent->update(['current_tenant_id' => $this->tenant->id]);
 
     $payment = Payment::factory()->create([
@@ -100,7 +100,7 @@ test('notification can be sent to parent users without error', function () {
 test('notification contains correct payment information', function () {
     $parent = User::factory()->create();
     $parent->tenants()->attach($this->tenant->id);
-    $parent->assignRole('Parent');
+    $parent->assignRole('parent');
     $parent->update(['current_tenant_id' => $this->tenant->id]);
 
     $payment = Payment::factory()->create([

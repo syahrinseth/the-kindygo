@@ -13,11 +13,11 @@ uses(RefreshDatabase::class);
 
 beforeEach(function () {
     // Create roles
-    Role::create(['name' => 'Super Admin']);
-    Role::create(['name' => 'Admin']);
-    Role::create(['name' => 'Principal']);
-    Role::create(['name' => 'Parent']);
-    Role::create(['name' => 'Teacher']);
+    Role::create(['name' => 'super-admin']);
+    Role::create(['name' => 'admin']);
+    Role::create(['name' => 'principal']);
+    Role::create(['name' => 'parent']);
+    Role::create(['name' => 'teacher']);
 });
 
 it('allows Super Admin to view payment', function () {
@@ -25,7 +25,7 @@ it('allows Super Admin to view payment', function () {
     $user = User::factory()->create();
     $user->current_tenant_id = $tenant->id;
     $user->save();
-    $user->assignRole('Super Admin');
+    $user->assignRole('super-admin');
     $user->refresh(); // Refresh to load roles
 
     $payment = Payment::factory()->create(['tenant_id' => $tenant->id]);
@@ -40,7 +40,7 @@ it('allows Admin to view payment in their tenant', function () {
     $user = User::factory()->create();
     $user->current_tenant_id = $tenant->id;
     $user->save();
-    $user->assignRole('Admin');
+    $user->assignRole('admin');
     $user->refresh();
 
     $payment = Payment::factory()->create(['tenant_id' => $tenant->id]);
@@ -56,7 +56,7 @@ it('denies Admin from viewing payment in another tenant', function () {
     $user = User::factory()->create();
     $user->current_tenant_id = $tenant1->id;
     $user->save();
-    $user->assignRole('Admin');
+    $user->assignRole('admin');
     $user->refresh();
 
     $payment = Payment::factory()->create(['tenant_id' => $tenant2->id]);
@@ -71,7 +71,7 @@ it('allows Principal to view payment for their centre', function () {
     $user = User::factory()->create();
     $user->current_tenant_id = $tenant->id;
     $user->save();
-    $user->assignRole('Principal');
+    $user->assignRole('principal');
     $user->refresh();
 
     $centre = Centre::factory()->create(['tenant_id' => $tenant->id]);
@@ -90,7 +90,7 @@ it('denies Principal from viewing payment for centres they do not manage', funct
     $user = User::factory()->create();
     $user->current_tenant_id = $tenant->id;
     $user->save();
-    $user->assignRole('Principal');
+    $user->assignRole('principal');
     $user->refresh();
 
     $centre1 = Centre::factory()->create(['tenant_id' => $tenant->id]);
@@ -110,7 +110,7 @@ it('allows Principal to view multi-centre payment if they manage at least one ce
     $user = User::factory()->create();
     $user->current_tenant_id = $tenant->id;
     $user->save();
-    $user->assignRole('Principal');
+    $user->assignRole('principal');
     $user->refresh();
 
     $centre1 = Centre::factory()->create(['tenant_id' => $tenant->id]);
@@ -131,7 +131,7 @@ it('allows Parent to view their own payment', function () {
     $user = User::factory()->create();
     $user->current_tenant_id = $tenant->id;
     $user->save();
-    $user->assignRole('Parent');
+    $user->assignRole('parent');
     $user->refresh();
 
     $payment = Payment::factory()->create([
@@ -152,7 +152,7 @@ it('denies Parent from viewing another user\'s payment', function () {
     $otherUser = User::factory()->create();
     $otherUser->current_tenant_id = $tenant->id;
     $otherUser->save();
-    $user->assignRole('Parent');
+    $user->assignRole('parent');
     $user->refresh();
 
     $payment = Payment::factory()->create([
@@ -170,7 +170,7 @@ it('allows Super Admin to update payment', function () {
     $user = User::factory()->create();
     $user->current_tenant_id = $tenant->id;
     $user->save();
-    $user->assignRole('Super Admin');
+    $user->assignRole('super-admin');
     $user->refresh();
 
     $payment = Payment::factory()->create([
@@ -188,7 +188,7 @@ it('allows Principal to update pending payment for their centre', function () {
     $user = User::factory()->create();
     $user->current_tenant_id = $tenant->id;
     $user->save();
-    $user->assignRole('Principal');
+    $user->assignRole('principal');
     $user->refresh();
 
     $centre = Centre::factory()->create(['tenant_id' => $tenant->id]);
@@ -210,7 +210,7 @@ it('denies Principal from updating paid payment', function () {
     $user = User::factory()->create();
     $user->current_tenant_id = $tenant->id;
     $user->save();
-    $user->assignRole('Principal');
+    $user->assignRole('principal');
     $user->refresh();
 
     $centre = Centre::factory()->create(['tenant_id' => $tenant->id]);
@@ -232,7 +232,7 @@ it('allows Super Admin to delete pending payment', function () {
     $user = User::factory()->create();
     $user->current_tenant_id = $tenant->id;
     $user->save();
-    $user->assignRole('Super Admin');
+    $user->assignRole('super-admin');
     $user->refresh();
 
     $payment = Payment::factory()->create([
@@ -250,7 +250,7 @@ it('allows Super Admin to delete failed payment', function () {
     $user = User::factory()->create();
     $user->current_tenant_id = $tenant->id;
     $user->save();
-    $user->assignRole('Super Admin');
+    $user->assignRole('super-admin');
     $user->refresh();
 
     $payment = Payment::factory()->create([
@@ -268,7 +268,7 @@ it('denies Super Admin from deleting paid payment', function () {
     $user = User::factory()->create();
     $user->current_tenant_id = $tenant->id;
     $user->save();
-    $user->assignRole('Super Admin');
+    $user->assignRole('super-admin');
     $user->refresh();
 
     $payment = Payment::factory()->create([
@@ -286,7 +286,7 @@ it('allows Principal to delete pending payment for their centre', function () {
     $user = User::factory()->create();
     $user->current_tenant_id = $tenant->id;
     $user->save();
-    $user->assignRole('Principal');
+    $user->assignRole('principal');
     $user->refresh();
 
     $centre = Centre::factory()->create(['tenant_id' => $tenant->id]);
@@ -308,7 +308,7 @@ it('denies Principal from deleting payment for centres they do not manage', func
     $user = User::factory()->create();
     $user->current_tenant_id = $tenant->id;
     $user->save();
-    $user->assignRole('Principal');
+    $user->assignRole('principal');
     $user->refresh();
 
     $centre1 = Centre::factory()->create(['tenant_id' => $tenant->id]);

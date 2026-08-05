@@ -19,7 +19,7 @@ uses(RefreshDatabase::class);
 
 it('allows parent users to access make payment page', function () {
     // Create roles
-    Role::create(['name' => 'Parent']);
+    Role::create(['name' => 'parent']);
 
     // Create a tenant
     $tenant = Tenant::factory()->create();
@@ -29,7 +29,7 @@ it('allows parent users to access make payment page', function () {
         'current_tenant_id' => $tenant->id,
         'profile_completed' => true,
     ]);
-    $parent->assignRole('Parent');
+    $parent->assignRole('parent');
     $parent->tenants()->attach($tenant->id);
 
     // Authenticate first, then set tenant
@@ -46,7 +46,7 @@ it('allows parent users to access make payment page', function () {
 
 it('shows empty state when parent has no unpaid invoices', function () {
     // Create roles
-    Role::create(['name' => 'Parent']);
+    Role::create(['name' => 'parent']);
 
     // Create a tenant
     $tenant = Tenant::factory()->create();
@@ -56,7 +56,7 @@ it('shows empty state when parent has no unpaid invoices', function () {
         'current_tenant_id' => $tenant->id,
         'profile_completed' => true,
     ]);
-    $parent->assignRole('Parent');
+    $parent->assignRole('parent');
     $parent->tenants()->attach($tenant->id);
 
     // Authenticate first, then set tenant
@@ -73,7 +73,7 @@ it('shows empty state when parent has no unpaid invoices', function () {
 
 it('displays unpaid invoices for parent', function () {
     // Create roles
-    Role::create(['name' => 'Parent']);
+    Role::create(['name' => 'parent']);
 
     // Create a tenant and centre
     $tenant = Tenant::factory()->create();
@@ -84,7 +84,7 @@ it('displays unpaid invoices for parent', function () {
         'current_tenant_id' => $tenant->id,
         'profile_completed' => true,
     ]);
-    $parent->assignRole('Parent');
+    $parent->assignRole('parent');
     $parent->tenants()->attach($tenant->id);
 
     // Create an unpaid invoice with balance
@@ -120,8 +120,8 @@ it('displays unpaid invoices for parent', function () {
 
 it('prevents non-parent users from accessing the page', function () {
     // Create roles
-    Role::create(['name' => 'Parent']);
-    Role::create(['name' => 'Admin']);
+    Role::create(['name' => 'parent']);
+    Role::create(['name' => 'admin']);
 
     // Create a tenant
     $tenant = Tenant::factory()->create();
@@ -131,7 +131,7 @@ it('prevents non-parent users from accessing the page', function () {
         'current_tenant_id' => $tenant->id,
         'profile_completed' => true,
     ]);
-    $adminUser->assignRole('Admin');
+    $adminUser->assignRole('admin');
     $adminUser->tenants()->attach($tenant->id);
 
     // Authenticate first, then set tenant

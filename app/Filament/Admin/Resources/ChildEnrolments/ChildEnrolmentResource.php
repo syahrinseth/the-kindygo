@@ -82,17 +82,17 @@ class ChildEnrolmentResource extends Resource
         }
 
         // Super Admin can see all enrolments
-        if ($user->hasRole('Super Admin')) {
+        if ($user->hasRole('super-admin')) {
             return $query;
         }
 
         // Admin can see all enrolments in their tenant
-        if ($user->hasRole('Admin')) {
+        if ($user->hasRole('admin')) {
             return $query->where('tenant_id', $user->current_tenant_id);
         }
 
         // Principal and Teacher can see enrolments for centres they have access to
-        if ($user->hasAnyRole(['Principal', 'Teacher'])) {
+        if ($user->hasAnyRole(['principal', 'teacher'])) {
             $userCentreIds = $user->centres()
                 ->where('centres.tenant_id', $user->current_tenant_id)
                 ->pluck('centres.id');
@@ -102,7 +102,7 @@ class ChildEnrolmentResource extends Resource
         }
 
         // Parents can see enrolments for their children only
-        if ($user->hasRole('Parent')) {
+        if ($user->hasRole('parent')) {
             $childIds = $user->children()->pluck('children.id');
 
             return $query->where('tenant_id', $user->current_tenant_id)

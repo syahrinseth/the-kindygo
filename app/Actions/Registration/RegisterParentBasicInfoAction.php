@@ -43,7 +43,7 @@ class RegisterParentBasicInfoAction
             ]);
 
             // Assign Parent role to newly created user
-            $user->assignRole('Parent');
+            $user->assignRole('parent');
 
             $shouldLogin = true;
         }

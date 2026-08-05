@@ -40,15 +40,15 @@ class MakePaymentAction
                 $user = Auth::user();
 
                 // If user is a Parent, redirect to MakePayment page with pre-selected invoice
-                if ($user && $user->hasRole('Parent')) {
+                if ($user && $user->hasRole('parent')) {
                     return '/make-payment?preselect='.$record->id;
                 }
 
                 return null; // Return null to show modal for non-parents
             })
             ->openUrlInNewTab(false)
-            ->schema(fn ($record) => Auth::user()?->hasRole('Parent') ? [] : static::getFormSchema())
-            ->action(fn ($data, $record) => Auth::user()?->hasRole('Parent') ? null : static::getActionCallback()($data, $record))
+            ->schema(fn ($record) => Auth::user()?->hasRole('parent') ? [] : static::getFormSchema())
+            ->action(fn ($data, $record) => Auth::user()?->hasRole('parent') ? null : static::getActionCallback()($data, $record))
             ->visible(function ($record) {
                 $user = Auth::user();
 
@@ -83,9 +83,9 @@ class MakePaymentAction
                 }
 
                 // Super Admin, Admin, Principal can make payments for invoices from their associated centres
-                if ($user->hasAnyRole(['Super Admin', 'Admin', 'Principal'])) {
+                if ($user->hasAnyRole(['super-admin', 'admin', 'principal'])) {
                     // For Super Admin and Admin, check if invoice is from their tenant
-                    if ($user->hasAnyRole(['Super Admin', 'Admin'])) {
+                    if ($user->hasAnyRole(['super-admin', 'admin'])) {
                         $result = $record->tenant_id === $user->current_tenant_id;
                         Log::info('MakePayment Debug: Admin/SuperAdmin check', ['result' => $result]);
 
@@ -93,7 +93,7 @@ class MakePaymentAction
                     }
 
                     // For Principal, check if invoice is from centres they're associated with
-                    if ($user->hasRole('Principal') && $record->centre_id) {
+                    if ($user->hasRole('principal') && $record->centre_id) {
                         $result = $record->tenant_id === $user->current_tenant_id &&
                                $user->centres()->where('centres.id', $record->centre_id)->exists();
                         Log::info('MakePayment Debug: Principal check', ['result' => $result]);
@@ -103,7 +103,7 @@ class MakePaymentAction
                 }
 
                 // Parent and Teacher can only make payments for their own invoices
-                if ($user->hasAnyRole(['Parent', 'Teacher'])) {
+                if ($user->hasAnyRole(['parent', 'teacher'])) {
                     $result = $record->user_id === $user->id &&
                            $record->tenant_id === $user->current_tenant_id;
                     Log::info('MakePayment Debug: Parent/Teacher check', [
@@ -135,15 +135,15 @@ class MakePaymentAction
                 $record = $livewire->record ?? null;
 
                 // If user is a Parent, redirect to MakePayment page with pre-selected invoice
-                if ($user && $user->hasRole('Parent') && $record) {
+                if ($user && $user->hasRole('parent') && $record) {
                     return '/make-payment?preselect='.$record->id;
                 }
 
                 return null; // Return null to show modal for non-parents
             })
             ->openUrlInNewTab(false)
-            ->schema(fn ($livewire) => Auth::user()?->hasRole('Parent') ? [] : static::getFormSchema())
-            ->action(fn ($data, $livewire) => Auth::user()?->hasRole('Parent') ? null : static::getActionCallback()($data, $livewire->record))
+            ->schema(fn ($livewire) => Auth::user()?->hasRole('parent') ? [] : static::getFormSchema())
+            ->action(fn ($data, $livewire) => Auth::user()?->hasRole('parent') ? null : static::getActionCallback()($data, $livewire->record))
             ->visible(function ($livewire) {
                 $user = Auth::user();
 
@@ -178,9 +178,9 @@ class MakePaymentAction
                 }
 
                 // Super Admin, Admin, Principal can make payments for invoices from their associated centres
-                if ($user->hasAnyRole(['Super Admin', 'Admin', 'Principal'])) {
+                if ($user->hasAnyRole(['super-admin', 'admin', 'principal'])) {
                     // For Super Admin and Admin, check if invoice is from their tenant
-                    if ($user->hasAnyRole(['Super Admin', 'Admin'])) {
+                    if ($user->hasAnyRole(['super-admin', 'admin'])) {
                         $result = $record->tenant_id === $user->current_tenant_id;
                         Log::info('MakePayment Debug: Admin/SuperAdmin check', ['result' => $result]);
 
@@ -188,7 +188,7 @@ class MakePaymentAction
                     }
 
                     // For Principal, check if invoice is from centres they're associated with
-                    if ($user->hasRole('Principal') && $record->centre_id) {
+                    if ($user->hasRole('principal') && $record->centre_id) {
                         $result = $record->tenant_id === $user->current_tenant_id &&
                                $user->centres()->where('centres.id', $record->centre_id)->exists();
                         Log::info('MakePayment Debug: Principal check', ['result' => $result]);
@@ -198,7 +198,7 @@ class MakePaymentAction
                 }
 
                 // Parent and Teacher can only make payments for their own invoices
-                if ($user->hasAnyRole(['Parent', 'Teacher'])) {
+                if ($user->hasAnyRole(['parent', 'teacher'])) {
                     $result = $record->user_id === $user->id &&
                            $record->tenant_id === $user->current_tenant_id;
                     Log::info('MakePayment Debug: Parent/Teacher check', [

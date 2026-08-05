@@ -51,7 +51,7 @@ class PaymentResource extends Resource
     {
         $user = Auth::user();
 
-        return $user->can('viewAny', Payment::class) && $user->hasRole('Parent');
+        return $user->can('viewAny', Payment::class) && $user->hasRole('parent');
     }
 
     public static function canCreate(): bool
@@ -61,7 +61,7 @@ class PaymentResource extends Resource
 
     public static function shouldRegisterNavigation(): bool
     {
-        return Auth::user()->can('viewAny', Payment::class) && Auth::user()->hasRole('Parent');
+        return Auth::user()->can('viewAny', Payment::class) && Auth::user()->hasRole('parent');
     }
 
     public static function form(Schema $schema): Schema

@@ -17,16 +17,16 @@ beforeEach(function () {
     $this->centre = Centre::factory()->create(['tenant_id' => $this->tenant->id]);
 
     // Create roles
-    Role::firstOrCreate(['name' => 'Parent']);
+    Role::firstOrCreate(['name' => 'parent']);
 
     $this->parent = User::factory()->create();
     $this->parent->tenants()->attach($this->tenant->id);
-    $this->parent->assignRole('Parent');
+    $this->parent->assignRole('parent');
     $this->parent->update(['current_tenant_id' => $this->tenant->id]);
 
     $this->otherParent = User::factory()->create();
     $this->otherParent->tenants()->attach($this->tenant->id);
-    $this->otherParent->assignRole('Parent');
+    $this->otherParent->assignRole('parent');
     $this->otherParent->update(['current_tenant_id' => $this->tenant->id]);
 
     Filament::setCurrentPanel(Filament::getPanel('parent'));

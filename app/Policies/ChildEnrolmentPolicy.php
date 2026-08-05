@@ -16,7 +16,7 @@ class ChildEnrolmentPolicy
     public function viewAny(User $user): bool
     {
         // All authenticated users with roles can view child enrolments
-        return $user->hasAnyRole(['Super Admin', 'Admin', 'Principal', 'Teacher', 'Parent']);
+        return $user->hasAnyRole(['super-admin', 'admin', 'principal', 'teacher', 'parent']);
     }
 
     /**
@@ -25,22 +25,22 @@ class ChildEnrolmentPolicy
     public function view(User $user, ChildEnrolment $childEnrolment): bool
     {
         // Super Admin can view any child enrolment
-        if ($user->hasRole('Super Admin')) {
+        if ($user->hasRole('super-admin')) {
             return true;
         }
 
         // Admin can view any child enrolment in their tenant
-        if ($user->hasRole('Admin')) {
+        if ($user->hasRole('admin')) {
             return $this->enrolmentBelongsToUserTenant($user, $childEnrolment);
         }
 
         // Principal and Teacher can view enrolments for children in their centres
-        if ($user->hasAnyRole(['Principal', 'Teacher'])) {
+        if ($user->hasAnyRole(['principal', 'teacher'])) {
             return $this->canAccessEnrolmentBasedOnCentres($user, $childEnrolment);
         }
 
         // Parents can only view enrolments for their associated children
-        if ($user->hasRole('Parent')) {
+        if ($user->hasRole('parent')) {
             return $this->isParentOfEnrolledChild($user, $childEnrolment);
         }
 
@@ -53,7 +53,7 @@ class ChildEnrolmentPolicy
     public function create(User $user): bool
     {
         // Super Admin, Admin, Principal and Teachers can create child enrolments
-        return $user->hasAnyRole(['Super Admin', 'Admin', 'Principal', 'Teacher']);
+        return $user->hasAnyRole(['super-admin', 'admin', 'principal', 'teacher']);
     }
 
     /**
@@ -62,17 +62,17 @@ class ChildEnrolmentPolicy
     public function update(User $user, ChildEnrolment $childEnrolment): bool
     {
         // Super Admin can update any child enrolment
-        if ($user->hasRole('Super Admin')) {
+        if ($user->hasRole('super-admin')) {
             return true;
         }
 
         // Admin can update any child enrolment in their tenant
-        if ($user->hasRole('Admin')) {
+        if ($user->hasRole('admin')) {
             return $this->enrolmentBelongsToUserTenant($user, $childEnrolment);
         }
 
         // Principal and Teacher can update enrolments for children in their centres
-        if ($user->hasAnyRole(['Principal', 'Teacher'])) {
+        if ($user->hasAnyRole(['principal', 'teacher'])) {
             return $this->canAccessEnrolmentBasedOnCentres($user, $childEnrolment);
         }
 
@@ -86,17 +86,17 @@ class ChildEnrolmentPolicy
     public function delete(User $user, ChildEnrolment $childEnrolment): bool
     {
         // Super Admin can delete any child enrolment
-        if ($user->hasRole('Super Admin')) {
+        if ($user->hasRole('super-admin')) {
             return true;
         }
 
         // Admin can delete child enrolments in their tenant
-        if ($user->hasRole('Admin')) {
+        if ($user->hasRole('admin')) {
             return $this->enrolmentBelongsToUserTenant($user, $childEnrolment);
         }
 
         // Principal can delete enrolments for children in their centres
-        if ($user->hasRole('Principal')) {
+        if ($user->hasRole('principal')) {
             return $this->canAccessEnrolmentBasedOnCentres($user, $childEnrolment);
         }
 
@@ -110,11 +110,11 @@ class ChildEnrolmentPolicy
     public function restore(User $user, ChildEnrolment $childEnrolment): bool
     {
         // Only Super Admin and Admin can restore child enrolments
-        if ($user->hasRole('Super Admin')) {
+        if ($user->hasRole('super-admin')) {
             return true;
         }
 
-        if ($user->hasRole('Admin')) {
+        if ($user->hasRole('admin')) {
             return $this->enrolmentBelongsToUserTenant($user, $childEnrolment);
         }
 
@@ -127,7 +127,7 @@ class ChildEnrolmentPolicy
     public function forceDelete(User $user, ChildEnrolment $childEnrolment): bool
     {
         // Only Super Admin can permanently delete child enrolments
-        return $user->hasRole('Super Admin');
+        return $user->hasRole('super-admin');
     }
 
     /**
@@ -178,12 +178,12 @@ class ChildEnrolmentPolicy
     private function canAccessEnrolmentBasedOnCentres(User $user, ChildEnrolment $childEnrolment): bool
     {
         // Super Admin and Admin can access all enrolments in their tenant (no centre restriction)
-        if ($user->hasAnyRole(['Super Admin', 'Admin'])) {
+        if ($user->hasAnyRole(['super-admin', 'admin'])) {
             return $this->enrolmentBelongsToUserTenant($user, $childEnrolment);
         }
 
         // Principal and Teacher can only access enrolments in their assigned centres
-        if ($user->hasAnyRole(['Principal', 'Teacher'])) {
+        if ($user->hasAnyRole(['principal', 'teacher'])) {
             return $this->enrolmentBelongsToUserTenant($user, $childEnrolment) &&
                 $this->enrolmentBelongsToUserCentres($user, $childEnrolment);
         }

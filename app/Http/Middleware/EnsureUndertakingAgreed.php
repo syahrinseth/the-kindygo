@@ -19,7 +19,7 @@ class EnsureUndertakingAgreed
         $user = auth()->user();
 
         // Skip if user is not authenticated or not a parent
-        if (! $user || ! $user->hasRole('Parent')) {
+        if (! $user || ! $user->hasRole('parent')) {
             return $next($request);
         }
 

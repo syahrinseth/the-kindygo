@@ -14,7 +14,7 @@ class UserPolicy
         // Super Admin and Admin can view all users
         // Principals can view users in their tenant
         // Teachers and Parents cannot view user management
-        return $user->hasAnyRole(['Super Admin', 'Admin', 'Principal']);
+        return $user->hasAnyRole(['super-admin', 'admin', 'principal']);
     }
 
     /**
@@ -28,17 +28,17 @@ class UserPolicy
         }
 
         // Super Admin can view any user
-        if ($user->hasRole('Super Admin')) {
+        if ($user->hasRole('super-admin')) {
             return true;
         }
 
         // Admin can view any user in the same tenant
-        if ($user->hasRole('Admin')) {
+        if ($user->hasRole('admin')) {
             return $this->sharesTenant($user, $model);
         }
 
         // Principal can view users in their centres
-        if ($user->hasRole('Principal')) {
+        if ($user->hasRole('principal')) {
             return $this->sharesCurrentCentre($user, $model);
         }
 
@@ -51,7 +51,7 @@ class UserPolicy
     public function create(User $user): bool
     {
         // Super Admin, Admin, and Principal can create users
-        return $user->hasAnyRole(['Super Admin', 'Admin', 'Principal']);
+        return $user->hasAnyRole(['super-admin', 'admin', 'principal']);
     }
 
     /**
@@ -65,17 +65,17 @@ class UserPolicy
         }
 
         // Super Admin can update any user
-        if ($user->hasRole('Super Admin')) {
+        if ($user->hasRole('super-admin')) {
             return true;
         }
 
         // Admin can update users in the same tenant
-        if ($user->hasRole('Admin')) {
+        if ($user->hasRole('admin')) {
             return $this->sharesTenant($user, $model);
         }
 
         // Principal can update users in their centres
-        if ($user->hasRole('Principal')) {
+        if ($user->hasRole('principal')) {
             return $this->sharesCurrentCentre($user, $model);
         }
 
@@ -93,17 +93,17 @@ class UserPolicy
         }
 
         // Super Admin can delete any user except themselves
-        if ($user->hasRole('Super Admin')) {
+        if ($user->hasRole('super-admin')) {
             return true;
         }
 
         // Admin can delete users in the same tenant (except Super Admins)
-        if ($user->hasRole('Admin') && ! $model->hasRole('Super Admin')) {
+        if ($user->hasRole('admin') && ! $model->hasRole('super-admin')) {
             return $this->sharesTenant($user, $model);
         }
 
         // Principal can delete Teachers and Parents in their centres
-        if ($user->hasRole('Principal') && $model->hasAnyRole(['Teacher', 'Parent'])) {
+        if ($user->hasRole('principal') && $model->hasAnyRole(['teacher', 'parent'])) {
             return $this->sharesCurrentCentre($user, $model);
         }
 
@@ -115,7 +115,7 @@ class UserPolicy
      */
     public function deleteAny(User $user): bool
     {
-        return $user->hasAnyRole(['Super Admin', 'Admin', 'Principal']);
+        return $user->hasAnyRole(['super-admin', 'admin', 'principal']);
     }
 
     /**
@@ -124,7 +124,7 @@ class UserPolicy
     public function restore(User $user, User $model): bool
     {
         // Only Super Admin can restore users
-        return $user->hasRole('Super Admin');
+        return $user->hasRole('super-admin');
     }
 
     /**
@@ -133,7 +133,7 @@ class UserPolicy
     public function forceDelete(User $user, User $model): bool
     {
         // Only Super Admin can force delete users
-        return $user->hasRole('Super Admin');
+        return $user->hasRole('super-admin');
     }
 
     /**
@@ -142,7 +142,7 @@ class UserPolicy
     public function accessPanel(User $user): bool
     {
         // All roles except Parent can access the admin panel
-        return $user->hasAnyRole(['Super Admin', 'Admin', 'Principal', 'Teacher', 'Parent']);
+        return $user->hasAnyRole(['super-admin', 'admin', 'principal', 'teacher', 'parent']);
     }
 
     /**
@@ -156,19 +156,19 @@ class UserPolicy
         }
 
         // Super Admin can manage any roles
-        if ($user->hasRole('Super Admin')) {
+        if ($user->hasRole('super-admin')) {
             return true;
         }
 
         // Admin can manage roles for non-Super Admin users in same tenant
-        if ($user->hasRole('Admin') && ! $model->hasRole('Super Admin')) {
+        if ($user->hasRole('admin') && ! $model->hasRole('super-admin')) {
             return $this->sharesTenant($user, $model);
         }
 
         // Principal can only assign Teacher and Parent roles
-        if ($user->hasRole('Principal')) {
+        if ($user->hasRole('principal')) {
             return $this->sharesCurrentCentre($user, $model) &&
-                   $model->hasAnyRole(['Teacher', 'Parent']);
+                   $model->hasAnyRole(['teacher', 'parent']);
         }
 
         return false;
@@ -180,12 +180,12 @@ class UserPolicy
     public function manageCentres(User $user, User $model): bool
     {
         // Super Admin and Admin can manage centre assignments
-        if ($user->hasAnyRole(['Super Admin', 'Admin'])) {
+        if ($user->hasAnyRole(['super-admin', 'admin'])) {
             return true;
         }
 
         // Principal can manage centre assignments for their centres
-        if ($user->hasRole('Principal')) {
+        if ($user->hasRole('principal')) {
             return $this->sharesCurrentCentre($user, $model);
         }
 
@@ -197,7 +197,7 @@ class UserPolicy
      */
     public function inviteUsers(User $user): bool
     {
-        return $user->hasAnyRole(['Super Admin', 'Admin', 'Principal']);
+        return $user->hasAnyRole(['super-admin', 'admin', 'principal']);
     }
 
     /**
@@ -206,7 +206,7 @@ class UserPolicy
     public function viewAllUsers(User $user): bool
     {
         // Super Admin and Admin can view all users in their context
-        return $user->hasAnyRole(['Super Admin', 'Admin']);
+        return $user->hasAnyRole(['super-admin', 'admin']);
     }
 
     /**
@@ -216,7 +216,7 @@ class UserPolicy
     {
         // Only Super Admin can assign Super Admin and Admin roles
         // Admin can assign Principal, Teacher, Parent roles
-        return $user->hasAnyRole(['Super Admin', 'Admin']);
+        return $user->hasAnyRole(['super-admin', 'admin']);
     }
 
     /**
@@ -224,7 +224,7 @@ class UserPolicy
      */
     public function bulkEdit(User $user): bool
     {
-        return $user->hasAnyRole(['Super Admin', 'Admin']);
+        return $user->hasAnyRole(['super-admin', 'admin']);
     }
 
     /**

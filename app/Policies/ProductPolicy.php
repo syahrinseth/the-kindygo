@@ -14,7 +14,7 @@ class ProductPolicy
     public function viewAny(User $user): bool
     {
         // Super Admin, Admin, Principal can view the list of products
-        return $user->hasAnyRole(['Super Admin', 'Admin', 'Principal']);
+        return $user->hasAnyRole(['super-admin', 'admin', 'principal']);
     }
 
     /**
@@ -23,13 +23,13 @@ class ProductPolicy
     public function view(User $user, Product $product): bool
     {
         // Check role-based permissions first
-        if ($user->hasRole('Super Admin') || $user->hasRole('Admin')) {
+        if ($user->hasRole('super-admin') || $user->hasRole('admin')) {
             // Super Admin and Admin can view any product in their tenant
             return $product->tenant_id === $user->current_tenant_id;
         }
 
         // Principal can only view products for their centres or global products
-        if ($user->hasRole('Principal')) {
+        if ($user->hasRole('principal')) {
             // Allow access if product belongs to their tenant
             if ($product->tenant_id !== $user->current_tenant_id) {
                 return false;
@@ -53,7 +53,7 @@ class ProductPolicy
     public function create(User $user): bool
     {
         // Super Admin, Admin, and Principal can create products
-        return $user->hasAnyRole(['Super Admin', 'Admin', 'Principal']);
+        return $user->hasAnyRole(['super-admin', 'admin', 'principal']);
     }
 
     /**
@@ -62,12 +62,12 @@ class ProductPolicy
     public function update(User $user, Product $product): bool
     {
         // Super Admin and Admin can update any product in their tenant
-        if ($user->hasAnyRole(['Super Admin', 'Admin'])) {
+        if ($user->hasAnyRole(['super-admin', 'admin'])) {
             return $product->tenant_id === $user->current_tenant_id;
         }
 
         // Principal can only update products for their centres or global products
-        if ($user->hasRole('Principal')) {
+        if ($user->hasRole('principal')) {
             // Check tenant first
             if ($product->tenant_id !== $user->current_tenant_id) {
                 return false;
@@ -96,12 +96,12 @@ class ProductPolicy
         }
 
         // Super Admin and Admin can delete any eligible product in their tenant
-        if ($user->hasAnyRole(['Super Admin', 'Admin'])) {
+        if ($user->hasAnyRole(['super-admin', 'admin'])) {
             return $product->tenant_id === $user->current_tenant_id;
         }
 
         // Principal can only delete products for their centres or global products
-        if ($user->hasRole('Principal')) {
+        if ($user->hasRole('principal')) {
             // Check tenant first
             if ($product->tenant_id !== $user->current_tenant_id) {
                 return false;
@@ -125,7 +125,7 @@ class ProductPolicy
     public function deleteAny(User $user): bool
     {
         // Super Admin, Admin, and Principal can bulk delete products
-        return $user->hasAnyRole(['Super Admin', 'Admin', 'Principal']) &&
+        return $user->hasAnyRole(['super-admin', 'admin', 'principal']) &&
                $user->current_tenant_id !== null;
     }
 
@@ -135,7 +135,7 @@ class ProductPolicy
     public function forceDelete(User $user, Product $product): bool
     {
         // Only Super Admin can permanently delete products
-        return $user->hasRole('Super Admin') &&
+        return $user->hasRole('super-admin') &&
                $product->tenant_id === $user->current_tenant_id;
     }
 
@@ -145,7 +145,7 @@ class ProductPolicy
     public function restore(User $user, Product $product): bool
     {
         // Super Admin and Admin can restore products
-        return $user->hasAnyRole(['Super Admin', 'Admin']) &&
+        return $user->hasAnyRole(['super-admin', 'admin']) &&
                $product->tenant_id === $user->current_tenant_id;
     }
 }

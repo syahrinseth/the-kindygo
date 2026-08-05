@@ -57,7 +57,7 @@ class TelescopeServiceProvider extends TelescopeApplicationServiceProvider
     {
         Gate::define('viewTelescope', function ($user) {
             // Allow access only for Super Admin and Admin roles
-            return $user->hasAnyRole(['Super Admin', 'Admin']);
+            return $user->hasAnyRole(['super-admin', 'admin']);
         });
     }
 }

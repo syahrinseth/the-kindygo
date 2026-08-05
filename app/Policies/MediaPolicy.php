@@ -38,7 +38,7 @@ class MediaPolicy
     private function canViewChildMedia(User $user, $child): bool
     {
         // Admin users can view all media
-        if ($user->hasRole('Admin')) {
+        if ($user->hasRole('admin')) {
             return true;
         }
 

@@ -473,6 +473,6 @@ class MakePayment extends Page implements HasActions, HasSchemas, HasTable
 
     public static function canAccess(): bool
     {
-        return Auth::check() && Auth::user()->hasRole('Parent');
+        return Auth::check() && Auth::user()->hasRole('parent');
     }
 }

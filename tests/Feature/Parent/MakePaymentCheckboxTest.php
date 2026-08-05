@@ -31,8 +31,8 @@ beforeEach(function () {
     ]);
 
     // Assign Parent role
-    \Spatie\Permission\Models\Role::firstOrCreate(['name' => 'Parent']);
-    $this->parent->assignRole('Parent');
+    \Spatie\Permission\Models\Role::firstOrCreate(['name' => 'parent']);
+    $this->parent->assignRole('parent');
 
     $this->parent->tenants()->attach($this->tenant->id);
 

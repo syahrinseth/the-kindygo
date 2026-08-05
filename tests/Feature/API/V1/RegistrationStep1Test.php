@@ -12,7 +12,7 @@ uses(RefreshDatabase::class);
 
 beforeEach(function () {
     // Create the Parent role for registration
-    Role::create(['name' => 'Parent', 'guard_name' => 'web']);
+    Role::create(['name' => 'parent', 'guard_name' => 'web']);
 
     $this->tenant = Tenant::factory()->create([
         'name' => 'Test Kindergarten',
@@ -158,7 +158,7 @@ describe('POST /api/v1/auth/register/step-1', function () {
 
         $user = User::where('email', 'test@example.com')->first();
 
-        expect($user->hasRole('Parent'))->toBeTrue();
+        expect($user->hasRole('parent'))->toBeTrue();
     });
 
     it('updates existing unverified user instead of creating duplicate', function () {

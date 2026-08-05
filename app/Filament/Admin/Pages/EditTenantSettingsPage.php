@@ -46,7 +46,7 @@ class EditTenantSettingsPage extends Page implements HasForms
         }
 
         // Only show for admin roles
-        return $user->hasAnyRole(['Super Admin', 'Admin']);
+        return $user->hasAnyRole(['super-admin', 'admin']);
     }
 
     public static function canAccess(): bool
@@ -58,7 +58,7 @@ class EditTenantSettingsPage extends Page implements HasForms
         }
 
         // Only admins can access
-        return $user->hasAnyRole(['Super Admin', 'Admin']);
+        return $user->hasAnyRole(['super-admin', 'admin']);
     }
 
     public function mount(): void

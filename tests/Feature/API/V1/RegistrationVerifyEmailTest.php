@@ -14,7 +14,7 @@ uses(RefreshDatabase::class);
 
 beforeEach(function () {
     // Create the Parent role for registration
-    Role::create(['name' => 'Parent', 'guard_name' => 'web']);
+    Role::create(['name' => 'parent', 'guard_name' => 'web']);
 
     $this->tenant = Tenant::factory()->create([
         'name' => 'Test Kindergarten',

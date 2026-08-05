@@ -10,11 +10,11 @@ uses(RefreshDatabase::class);
 
 beforeEach(function () {
     // Create roles
-    Role::firstOrCreate(['name' => 'Super Admin', 'guard_name' => 'web']);
-    Role::firstOrCreate(['name' => 'Admin', 'guard_name' => 'web']);
-    Role::firstOrCreate(['name' => 'Principal', 'guard_name' => 'web']);
-    Role::firstOrCreate(['name' => 'Teacher', 'guard_name' => 'web']);
-    Role::firstOrCreate(['name' => 'Parent', 'guard_name' => 'web']);
+    Role::firstOrCreate(['name' => 'super-admin', 'guard_name' => 'web']);
+    Role::firstOrCreate(['name' => 'admin', 'guard_name' => 'web']);
+    Role::firstOrCreate(['name' => 'principal', 'guard_name' => 'web']);
+    Role::firstOrCreate(['name' => 'teacher', 'guard_name' => 'web']);
+    Role::firstOrCreate(['name' => 'parent', 'guard_name' => 'web']);
 });
 
 it('redirects admin user to /admin after login', function () {
@@ -22,7 +22,7 @@ it('redirects admin user to /admin after login', function () {
         'password' => bcrypt('password'),
         'profile_completed' => true,
     ]);
-    $user->assignRole('Admin');
+    $user->assignRole('admin');
 
     // Create tenant for the user
     $tenant = Tenant::create([
@@ -48,7 +48,7 @@ it('redirects parent user to /dashboard after login', function () {
         'password' => bcrypt('password'),
         'profile_completed' => true,
     ]);
-    $user->assignRole('Parent');
+    $user->assignRole('parent');
 
     // Create tenant for the user
     $tenant = Tenant::create([
@@ -73,7 +73,7 @@ it('redirects admin user from root to /admin', function () {
     $user = User::factory()->create([
         'profile_completed' => true,
     ]);
-    $user->assignRole('Admin');
+    $user->assignRole('admin');
 
     // Create tenant for the user
     $tenant = Tenant::create([
@@ -95,7 +95,7 @@ it('parent user stays on root panel', function () {
     $user = User::factory()->create([
         'profile_completed' => true,
     ]);
-    $user->assignRole('Parent');
+    $user->assignRole('parent');
 
     // Create tenant for the user
     $tenant = Tenant::create([
@@ -115,7 +115,7 @@ it('parent user stays on root panel', function () {
 
 it('admin user can access admin panel', function () {
     $user = User::factory()->create();
-    $user->assignRole('Admin');
+    $user->assignRole('admin');
 
     // Create tenant for the user
     $tenant = Tenant::create([
@@ -135,7 +135,7 @@ it('admin user can access admin panel', function () {
 
 it('admin user can access parent panel', function () {
     $user = User::factory()->create();
-    $user->assignRole('Admin');
+    $user->assignRole('admin');
 
     Filament::setCurrentPanel(Filament::getPanel('parent'));
 
@@ -144,7 +144,7 @@ it('admin user can access parent panel', function () {
 
 it('parent user cannot access admin panel', function () {
     $user = User::factory()->create();
-    $user->assignRole('Parent');
+    $user->assignRole('parent');
 
     Filament::setCurrentPanel(Filament::getPanel('admin'));
 
@@ -153,7 +153,7 @@ it('parent user cannot access admin panel', function () {
 
 it('parent user can access parent panel', function () {
     $user = User::factory()->create();
-    $user->assignRole('Parent');
+    $user->assignRole('parent');
 
     Filament::setCurrentPanel(Filament::getPanel('parent'));
 
@@ -165,7 +165,7 @@ it('user with both admin and parent role defaults to admin panel on login', func
         'password' => bcrypt('password'),
         'profile_completed' => true,
     ]);
-    $user->assignRole(['Admin', 'Parent']);
+    $user->assignRole(['admin', 'parent']);
 
     // Create tenant for the user
     $tenant = Tenant::create([
@@ -189,7 +189,7 @@ it('user with both admin and parent role defaults to admin panel on login', func
 
 it('parent user gets 403 when accessing admin dashboard', function () {
     $user = User::factory()->create();
-    $user->assignRole('Parent');
+    $user->assignRole('parent');
 
     // Create tenant for the user
     $tenant = Tenant::create([
@@ -209,16 +209,16 @@ it('parent user gets 403 when accessing admin dashboard', function () {
 
 it('isAdmin method returns true for admin roles', function () {
     $superAdmin = User::factory()->create();
-    $superAdmin->assignRole('Super Admin');
+    $superAdmin->assignRole('super-admin');
 
     $admin = User::factory()->create();
-    $admin->assignRole('Admin');
+    $admin->assignRole('admin');
 
     $principal = User::factory()->create();
-    $principal->assignRole('Principal');
+    $principal->assignRole('principal');
 
     $teacher = User::factory()->create();
-    $teacher->assignRole('Teacher');
+    $teacher->assignRole('teacher');
 
     expect($superAdmin->isAdmin())->toBeTrue();
     expect($admin->isAdmin())->toBeTrue();
@@ -228,7 +228,7 @@ it('isAdmin method returns true for admin roles', function () {
 
 it('isAdmin method returns false for parent role', function () {
     $parent = User::factory()->create();
-    $parent->assignRole('Parent');
+    $parent->assignRole('parent');
 
     expect($parent->isAdmin())->toBeFalse();
 });

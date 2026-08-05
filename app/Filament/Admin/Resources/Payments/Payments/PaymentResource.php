@@ -97,12 +97,12 @@ class PaymentResource extends Resource
         $query->where('tenant_id', $user->current_tenant_id);
 
         // Apply role-based filtering
-        if ($user->hasRole('Super Admin') || $user->hasRole('Admin')) {
+        if ($user->hasRole('super-admin') || $user->hasRole('admin')) {
             // Super Admin and Admin can view all payments in their tenant
             return $query;
         }
 
-        if ($user->hasRole('Principal')) {
+        if ($user->hasRole('principal')) {
             // Principal can only view payments for their centres or payments without a specific centre
             $userCentreIds = $user->centres()
                 ->where('centres.tenant_id', $user->current_tenant_id)
@@ -116,7 +116,7 @@ class PaymentResource extends Resource
             });
         }
 
-        if ($user->hasRole('Parent')) {
+        if ($user->hasRole('parent')) {
             // Parents can only view payments directly related to them
             return $query->where(function ($q) use ($user) {
                 // Direct payments where user_id matches

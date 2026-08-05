@@ -15,7 +15,7 @@ class InvoicePolicy
     {
         // Super Admin, Admin, Principal can view the list of invoices
         // Parents can also view the list of invoices related to them
-        return $user->hasAnyRole(['Super Admin', 'Admin', 'Principal', 'Parent']);
+        return $user->hasAnyRole(['super-admin', 'admin', 'principal', 'parent']);
     }
 
     /**
@@ -24,19 +24,19 @@ class InvoicePolicy
     public function view(User $user, Invoice $invoice): bool
     {
         // Check role-based permissions first
-        if ($user->hasRole('Super Admin') || $user->hasRole('Admin')) {
+        if ($user->hasRole('super-admin') || $user->hasRole('admin')) {
             // Super Admin and Admin can view any invoice in their tenant
             return $invoice->tenant_id === $user->current_tenant_id;
         }
 
         // Principal can only view invoices for their centres
-        if ($user->hasRole('Principal')) {
+        if ($user->hasRole('principal')) {
             return $invoice->tenant_id === $user->current_tenant_id &&
                    $user->centres()->where('centres.id', $invoice->centre_id)->exists();
         }
 
         // Parents can only view invoices that are directly related to them
-        if ($user->hasRole('Parent')) {
+        if ($user->hasRole('parent')) {
             // Direct invoices where user_id matches
             if ($invoice->user_id === $user->id) {
                 return true;
@@ -60,7 +60,7 @@ class InvoicePolicy
     public function create(User $user): bool
     {
         // Only Super Admin and Admin can create invoices
-        return $user->hasAnyRole(['Super Admin', 'Admin']);
+        return $user->hasAnyRole(['super-admin', 'admin']);
     }
 
     /**
@@ -69,12 +69,12 @@ class InvoicePolicy
     public function update(User $user, Invoice $invoice): bool
     {
         // Super Admin and Admin can update any invoice in their tenant
-        if ($user->hasAnyRole(['Super Admin', 'Admin'])) {
+        if ($user->hasAnyRole(['super-admin', 'admin'])) {
             return $invoice->tenant_id === $user->current_tenant_id;
         }
 
         // Principal can only update draft invoices for their centres
-        if ($user->hasRole('Principal')) {
+        if ($user->hasRole('principal')) {
             return $invoice->tenant_id === $user->current_tenant_id &&
                    $user->centres()->where('centres.id', $invoice->centre_id)->exists() &&
                    $invoice->status === InvoiceStatus::DRAFT;
@@ -94,12 +94,12 @@ class InvoicePolicy
         }
 
         // Super Admin and Admin can delete any draft invoice in their tenant
-        if ($user->hasAnyRole(['Super Admin', 'Admin'])) {
+        if ($user->hasAnyRole(['super-admin', 'admin'])) {
             return $invoice->tenant_id === $user->current_tenant_id;
         }
 
         // Principal can only delete draft invoices for their centres
-        if ($user->hasRole('Principal')) {
+        if ($user->hasRole('principal')) {
             return $invoice->tenant_id === $user->current_tenant_id &&
                    $user->centres()->where('centres.id', $invoice->centre_id)->exists();
         }
@@ -113,7 +113,7 @@ class InvoicePolicy
     public function deleteAny(User $user): bool
     {
         // Only Super Admin and Admin can bulk delete invoices
-        return $user->hasAnyRole(['Super Admin', 'Admin']) &&
+        return $user->hasAnyRole(['super-admin', 'admin']) &&
                $user->current_tenant_id !== null;
     }
 
@@ -123,7 +123,7 @@ class InvoicePolicy
     public function forceDelete(User $user, Invoice $invoice): bool
     {
         // Only Super Admin can permanently delete invoices
-        return $user->hasRole('Super Admin') &&
+        return $user->hasRole('super-admin') &&
                $invoice->tenant_id === $user->current_tenant_id;
     }
 }

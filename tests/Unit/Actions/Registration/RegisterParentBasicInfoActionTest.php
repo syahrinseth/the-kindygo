@@ -13,7 +13,7 @@ beforeEach(function () {
     $this->action = new RegisterParentBasicInfoAction;
 
     // Create the Parent role
-    Role::create(['name' => 'Parent', 'guard_name' => 'web']);
+    Role::create(['name' => 'parent', 'guard_name' => 'web']);
 
     // Create a tenant with centres
     $this->tenant = Tenant::factory()->create();
@@ -54,7 +54,7 @@ it('assigns Parent role to new user', function () {
     $result = $this->action->execute($validated, $this->tenant);
     $user = $result['user'];
 
-    expect($user->hasRole('Parent'))->toBeTrue();
+    expect($user->hasRole('parent'))->toBeTrue();
 });
 
 it('creates TenantUser relationship', function () {

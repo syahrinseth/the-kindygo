@@ -23,7 +23,7 @@ class ProfileCompletionWidget extends Widget
         $user = Auth::user();
 
         // Only show for Parents
-        if (! $user || ! $user->hasRole('Parent')) {
+        if (! $user || ! $user->hasRole('parent')) {
             return false;
         }
 

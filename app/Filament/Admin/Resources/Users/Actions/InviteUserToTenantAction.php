@@ -2,6 +2,7 @@
 
 namespace App\Filament\Admin\Resources\Users\Actions;
 
+use App\Enums\ApplicationRole;
 use App\Models\User;
 use App\Notifications\TenantInvitation as TenantInvitationNotification;
 use Filament\Actions\Action;
@@ -32,25 +33,39 @@ class InviteUserToTenantAction extends Action
                     ->label('Role')
                     ->options(function () {
                         $user = Auth::user();
-                        $allRoles = Role::all();
+                        $allRoles = Role::query()
+                            ->whereIn('name', array_keys(ApplicationRole::options()))
+                            ->get();
+
+                        $roleOptions = $allRoles->mapWithKeys(fn (Role $role): array => [
+                            $role->name => ApplicationRole::labelFor($role->name),
+                        ]);
 
                         // Super Admin can assign any role
-                        if ($user->hasRole('Super Admin')) {
-                            return $allRoles->pluck('name', 'name');
+                        if ($user->hasRole('super-admin')) {
+                            return $roleOptions;
                         }
 
                         // Admin can assign all roles except Super Admin
-                        if ($user->hasRole('Admin')) {
-                            return $allRoles->where('name', '!=', 'super-admin')->pluck('name', 'name');
+                        if ($user->hasRole('admin')) {
+                            return $allRoles
+                                ->where('name', '!=', 'super-admin')
+                                ->mapWithKeys(fn (Role $role): array => [
+                                    $role->name => ApplicationRole::labelFor($role->name),
+                                ]);
                         }
 
                         // Principal can only assign Teacher and Parent roles
-                        if ($user->hasRole('Principal')) {
-                            return $allRoles->whereIn('name', ['teacher', 'parent'])->pluck('name', 'name');
+                        if ($user->hasRole('principal')) {
+                            return $allRoles
+                                ->whereIn('name', ['teacher', 'parent'])
+                                ->mapWithKeys(fn (Role $role): array => [
+                                    $role->name => ApplicationRole::labelFor($role->name),
+                                ]);
                         }
 
                         // Default fallback to Parent role only
-                        return collect(['parent' => 'parent']);
+                        return collect(['parent' => 'Parent']);
                     })
                     ->default('parent')
                     ->required(),

@@ -113,7 +113,7 @@ class BulkPayInvoicesBulkAction
                 ->send();
 
             // Redirect based on user role
-            if ($user->hasRole('Parent')) {
+            if ($user->hasRole('parent')) {
                 // Parents go to MakePayment page with pre-selection
                 $invoiceIds = implode(',', $validInvoices);
 

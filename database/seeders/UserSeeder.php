@@ -21,7 +21,7 @@ class UserSeeder extends Seeder
             'email' => 'admin@example.com',
             'password' => Hash::make('password@123'),
         ]);
-        $admin->assignRole('Admin');
+        $admin->assignRole('admin');
 
         $adminTenant = Tenant::create([
             'user_id' => $admin->id,
@@ -44,7 +44,7 @@ class UserSeeder extends Seeder
             'email' => 'superadmin@example.com',
             'password' => Hash::make('password@123'),
         ]);
-        $superAdmin->assignRole('Super Admin');
+        $superAdmin->assignRole('super-admin');
         $adminTenant->users()->attach($superAdmin->id);
         $superAdmin->update(['current_tenant_id' => $adminTenant->id]);
 
@@ -54,7 +54,7 @@ class UserSeeder extends Seeder
             'email' => 'teacher@example.com',
             'password' => Hash::make('password@123'),
         ]);
-        $teacher->assignRole('Teacher');
+        $teacher->assignRole('teacher');
         $adminTenant->users()->attach($teacher->id);
         $teacher->update(['current_tenant_id' => $adminTenant->id]);
 
@@ -64,7 +64,7 @@ class UserSeeder extends Seeder
             'email' => 'parent@example.com',
             'password' => Hash::make('password@123'),
         ]);
-        $parent->assignRole('Parent');
+        $parent->assignRole('parent');
         $adminTenant->users()->attach($parent->id);
         $parent->update(['current_tenant_id' => $adminTenant->id]);
 
@@ -74,7 +74,7 @@ class UserSeeder extends Seeder
             'email' => 'test@example.com',
             'password' => Hash::make('password@123'),
         ]);
-        $testUser->assignRole('Admin');
+        $testUser->assignRole('admin');
 
         $testTenant = Tenant::create([
             'user_id' => $testUser->id,

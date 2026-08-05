@@ -127,7 +127,7 @@ class InvoiceItemsLedgerResource extends Resource
         $user = Auth::user();
 
         // Filter data based on user role
-        if ($user && $user->hasRole(['Principal', 'Teacher'])) {
+        if ($user && $user->hasRole(['principal', 'teacher'])) {
             // Get user's assigned centre IDs
             $userCentreIds = $user->centres->pluck('id')->toArray();
 

@@ -8,8 +8,8 @@ use Spatie\Permission\Models\Role;
 uses(RefreshDatabase::class);
 
 beforeEach(function () {
-    Role::firstOrCreate(['name' => 'Admin', 'guard_name' => 'web']);
-    Role::firstOrCreate(['name' => 'Parent', 'guard_name' => 'web']);
+    Role::firstOrCreate(['name' => 'admin', 'guard_name' => 'web']);
+    Role::firstOrCreate(['name' => 'parent', 'guard_name' => 'web']);
 });
 
 it('redirects authenticated admin user to /admin after login', function () {
@@ -19,7 +19,7 @@ it('redirects authenticated admin user to /admin after login', function () {
         'password' => bcrypt($password),
         'profile_completed' => true,
     ]);
-    $user->assignRole('Admin');
+    $user->assignRole('admin');
 
     // Create tenant for the user
     $tenant = Tenant::create([
@@ -47,7 +47,7 @@ it('redirects authenticated parent user to /dashboard after login', function () 
         'password' => bcrypt($password),
         'profile_completed' => true,
     ]);
-    $user->assignRole('Parent');
+    $user->assignRole('parent');
 
     // Create tenant for the user
     $tenant = Tenant::create([
@@ -72,7 +72,7 @@ it('admin panel is accessible to authenticated admin user', function () {
     $user = User::factory()->create([
         'profile_completed' => true, // Mark profile as completed
     ]);
-    $user->assignRole('Admin');
+    $user->assignRole('admin');
 
     // Give the user a tenant so Filament has a valid home URL
     $tenant = Tenant::create([
@@ -102,7 +102,7 @@ it('parent panel is accessible to authenticated parent user', function () {
     $user = User::factory()->create([
         'profile_completed' => true, // Mark profile as completed
     ]);
-    $user->assignRole('Parent');
+    $user->assignRole('parent');
 
     // Give the user a tenant so Filament has a valid home URL
     $tenant = Tenant::create([

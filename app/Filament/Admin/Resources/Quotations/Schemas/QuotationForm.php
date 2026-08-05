@@ -38,7 +38,7 @@ class QuotationForm
 
                                         $query = Centre::where('tenant_id', $user->current_tenant_id);
 
-                                        if ($user->hasRole('Principal')) {
+                                        if ($user->hasRole('principal')) {
                                             $query->whereHas('users', function (Builder $q) use ($user) {
                                                 $q->where('users.id', $user->id);
                                             });

@@ -45,7 +45,7 @@ class SendBulkNotificationAction
                 } catch (Exception $e) {
                     // Fallback to role-based check if policy method doesn't exist
                     if (method_exists($user, 'hasAnyRole')) {
-                        return $user->hasAnyRole(['Super Admin', 'Admin', 'Principal']);
+                        return $user->hasAnyRole(['super-admin', 'admin', 'principal']);
                     }
 
                     // Final fallback - check if user can view any invoices

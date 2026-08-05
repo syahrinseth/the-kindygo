@@ -2,6 +2,7 @@
 
 namespace App\Filament\Forms;
 
+use App\Enums\ApplicationRole;
 use App\Enums\MalaysianState;
 use App\Models\User;
 use Filament\Forms\Components\Select;
@@ -265,18 +266,32 @@ class UserForm
                                         ->relationship('roles', 'name')
                                         ->options(function () {
                                             $user = Auth::user();
-                                            $allRoles = Role::all();
+                                            $allRoles = Role::query()
+                                                ->whereIn('name', array_keys(ApplicationRole::options()))
+                                                ->get();
 
-                                            if ($user->hasRole('Super Admin')) {
-                                                return $allRoles->pluck('name', 'id');
+                                            $roleOptions = $allRoles->mapWithKeys(fn (Role $role): array => [
+                                                $role->getKey() => ApplicationRole::labelFor($role->name),
+                                            ]);
+
+                                            if ($user->hasRole('super-admin')) {
+                                                return $roleOptions;
                                             }
 
-                                            if ($user->hasRole('Admin')) {
-                                                return $allRoles->where('name', '!=', 'super-admin')->pluck('name', 'id');
+                                            if ($user->hasRole('admin')) {
+                                                return $allRoles
+                                                    ->where('name', '!=', 'super-admin')
+                                                    ->mapWithKeys(fn (Role $role): array => [
+                                                        $role->getKey() => ApplicationRole::labelFor($role->name),
+                                                    ]);
                                             }
 
-                                            if ($user->hasRole('Principal')) {
-                                                return $allRoles->whereIn('name', ['teacher', 'parent'])->pluck('name', 'id');
+                                            if ($user->hasRole('principal')) {
+                                                return $allRoles
+                                                    ->whereIn('name', ['teacher', 'parent'])
+                                                    ->mapWithKeys(fn (Role $role): array => [
+                                                        $role->getKey() => ApplicationRole::labelFor($role->name),
+                                                    ]);
                                             }
 
                                             return collect();
@@ -311,11 +326,11 @@ class UserForm
                                         ->relationship('centres', 'name', function ($query) {
                                             $user = Auth::user();
 
-                                            if ($user->hasAnyRole(['Super Admin', 'Admin'])) {
+                                            if ($user->hasAnyRole(['super-admin', 'admin'])) {
                                                 return $query;
                                             }
 
-                                            if ($user->hasRole('Principal')) {
+                                            if ($user->hasRole('principal')) {
                                                 return $query->whereHas('users', function ($q) use ($user) {
                                                     $q->where('users.id', $user->id);
                                                 });

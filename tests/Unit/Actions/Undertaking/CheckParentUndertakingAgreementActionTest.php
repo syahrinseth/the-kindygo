@@ -10,14 +10,14 @@ use Spatie\Permission\Models\Role;
 beforeEach(function () {
     $this->action = new CheckParentUndertakingAgreementAction;
 
-    Role::create(['name' => 'Parent', 'guard_name' => 'web']);
+    Role::create(['name' => 'parent', 'guard_name' => 'web']);
 
     $this->tenant = Tenant::factory()->create([
         'require_undertaking_agreement' => true,
     ]);
 
     $this->user = User::factory()->create();
-    $this->user->assignRole('Parent');
+    $this->user->assignRole('parent');
 });
 
 it('returns null when tenant does not require undertaking agreement', function () {

@@ -12,7 +12,7 @@ test('parent with incomplete profile is redirected to profile completion', funct
     $tenant = Tenant::factory()->create();
 
     // Create Parent role
-    $parentRole = Role::create(['name' => 'Parent']);
+    $parentRole = Role::create(['name' => 'parent']);
 
     // Create a user with Parent role and incomplete profile
     /** @var User $user */
@@ -39,7 +39,7 @@ test('parent with complete profile can access profile page', function () {
     $tenant = Tenant::factory()->create();
 
     // Create Parent role
-    $parentRole = Role::create(['name' => 'Parent']);
+    $parentRole = Role::create(['name' => 'parent']);
 
     // Create a user with Parent role and complete profile
     /** @var User $user */
@@ -77,7 +77,7 @@ test('non parent user is not redirected', function () {
     $tenant = Tenant::factory()->create();
 
     // Create Admin role
-    $adminRole = Role::create(['name' => 'Admin']);
+    $adminRole = Role::create(['name' => 'admin']);
 
     // Create a user with Admin role and incomplete profile
     /** @var User $user */

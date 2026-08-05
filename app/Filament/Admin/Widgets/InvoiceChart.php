@@ -48,7 +48,7 @@ class InvoiceChart extends ChartWidget
         $baseQuery = Invoice::where('tenant_id', $user->current_tenant_id);
 
         // If user is Principal, only show their centres
-        if ($user->hasRole('Principal')) {
+        if ($user->hasRole('principal')) {
             $baseQuery->whereIn('centre_id', $user->centres()->pluck('centres.id'));
         }
 

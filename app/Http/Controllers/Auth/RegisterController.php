@@ -42,7 +42,7 @@ class RegisterController extends Controller
             ]);
 
             // Assign the Admin role to the new user
-            $user->assignRole('Admin');
+            $user->assignRole('admin');
 
             // Create a personal tenant for the user
             $tenant = Tenant::create([
@@ -111,7 +111,7 @@ class RegisterController extends Controller
             ]);
 
             // Check if Parent role exists, if not create it
-            $parentRole = Role::firstOrCreate(['name' => 'Parent']);
+            $parentRole = Role::firstOrCreate(['name' => 'parent']);
 
             // Assign the Parent role to the new user
             $user->assignRole($parentRole);

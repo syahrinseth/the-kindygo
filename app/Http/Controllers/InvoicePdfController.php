@@ -23,16 +23,16 @@ class InvoicePdfController extends Controller
         $user = Auth::user();
 
         // Super Admin, Admin, Principal can download invoices from their associated centres
-        if ($user->hasAnyRole(['Super Admin', 'Admin', 'Principal'])) {
+        if ($user->hasAnyRole(['super-admin', 'admin', 'principal'])) {
             // For Super Admin and Admin, check if invoice is from their tenant
-            if ($user->hasAnyRole(['Super Admin', 'Admin'])) {
+            if ($user->hasAnyRole(['super-admin', 'admin'])) {
                 if ($invoice->tenant_id !== $user->current_tenant_id) {
                     abort(403, 'Unauthorized access to invoice.');
                 }
             }
 
             // For Principal, check if invoice is from centres they're associated with
-            if ($user->hasRole('Principal') && $invoice->centre_id) {
+            if ($user->hasRole('principal') && $invoice->centre_id) {
                 if ($invoice->tenant_id !== $user->current_tenant_id ||
                     ! $user->centres()->where('centres.id', $invoice->centre_id)->exists()) {
                     abort(403, 'Unauthorized access to invoice.');
@@ -40,7 +40,7 @@ class InvoicePdfController extends Controller
             }
         }
         // Parent and Teacher can only download their own invoices
-        elseif ($user->hasAnyRole(['Parent', 'Teacher'])) {
+        elseif ($user->hasAnyRole(['parent', 'teacher'])) {
             if ($invoice->user_id !== $user->id || $invoice->tenant_id !== $user->current_tenant_id) {
                 abort(403, 'Unauthorized access to invoice.');
             }

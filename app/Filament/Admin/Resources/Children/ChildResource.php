@@ -85,12 +85,12 @@ class ChildResource extends Resource
         $user = Auth::user();
 
         // If user is Parent, restrict to their children
-        if ($user->hasRole('Parent')) {
+        if ($user->hasRole('parent')) {
             $query->whereHas('users', fn ($q) => $q->where('users.id', $user->id));
         }
 
         // If user is Teacher or Principal, restrict to children in their centres
-        if ($user->hasAnyRole(['Teacher', 'Principal'])) {
+        if ($user->hasAnyRole(['teacher', 'principal'])) {
             $userCentreIds = $user->centres()
                 ->where('centres.tenant_id', $user->current_tenant_id)
                 ->pluck('centres.id');
@@ -241,11 +241,11 @@ class ChildResource extends Resource
                         }
 
                         // Get centres based on user role and permissions
-                        if ($user->hasAnyRole(['Super Admin', 'Admin'])) {
+                        if ($user->hasAnyRole(['super-admin', 'admin'])) {
                             // Super Admin and Admin can see all centres in their tenant
                             return Centre::where('tenant_id', $user->current_tenant_id)
                                 ->pluck('name', 'id');
-                        } elseif ($user->hasAnyRole(['Teacher', 'Principal'])) {
+                        } elseif ($user->hasAnyRole(['teacher', 'principal'])) {
                             // Teachers and Principals can only see centres they're assigned to
                             return $user->centres()
                                 ->where('centres.tenant_id', $user->current_tenant_id)
