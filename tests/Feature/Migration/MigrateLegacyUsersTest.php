@@ -163,6 +163,36 @@ it('migrates user address data', function () {
     expect($address->state_code)->toBe('10');
 });
 
+it('normalises legacy string state values during user migration', function () {
+    $this->seedLegacyUsers(1, 1);
+
+    DB::connection('legacy')->table('1_users')->where('id', 1)->update([
+        'state' => 'SGR',
+        'company_state' => 'KUL',
+    ]);
+
+    $this->artisan('migrate:legacy-users', ['--tenant-id' => 1])
+        ->assertSuccessful();
+
+    expect(DB::table('user_addresses')->where('user_id', 1)->value('state_code'))->toBe('10')
+        ->and(DB::table('user_office_infos')->where('user_id', 1)->value('office_state_code'))->toBe('14');
+});
+
+it('does not persist unknown legacy state values', function () {
+    $this->seedLegacyUsers(1, 1);
+
+    DB::connection('legacy')->table('1_users')->where('id', 1)->update([
+        'state' => 'Canada',
+        'company_state' => 'N/a',
+    ]);
+
+    $this->artisan('migrate:legacy-users', ['--tenant-id' => 1])
+        ->assertSuccessful();
+
+    expect(DB::table('user_addresses')->where('user_id', 1)->value('state_code'))->toBeNull()
+        ->and(DB::table('user_office_infos')->where('user_id', 1)->value('office_state_code'))->toBeNull();
+});
+
 // ──────────────────────────────────────────────
 // User Office Info Migration
 // ──────────────────────────────────────────────

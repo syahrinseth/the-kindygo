@@ -134,29 +134,57 @@ class StatusMapper
      *
      * @see docs/migration/02-DATA-MAPPING.md section 2.4.1
      */
-    public static function state(?int $legacyStateId): ?string
+    public static function state(int|string|null $legacyState): ?string
     {
-        if ($legacyStateId === null) {
+        if ($legacyState === null || trim((string) $legacyState) === '') {
             return null;
         }
 
-        $mapping = match ($legacyStateId) {
-            1 => MalaysianState::JOHOR,
-            2 => MalaysianState::KEDAH,
-            3 => MalaysianState::KELANTAN,
-            4 => MalaysianState::MELAKA,
-            5 => MalaysianState::NEGERI_SEMBILAN,
-            6 => MalaysianState::PAHANG,
-            7 => MalaysianState::PULAU_PINANG,
-            8 => MalaysianState::PERAK,
-            9 => MalaysianState::PERLIS,
-            10 => MalaysianState::SELANGOR,
-            11 => MalaysianState::TERENGGANU,
-            12 => MalaysianState::WP_KUALA_LUMPUR,
-            13 => MalaysianState::WP_LABUAN,
-            14 => MalaysianState::WP_PUTRAJAYA,
-            15 => MalaysianState::SABAH,
-            16 => MalaysianState::SARAWAK,
+        $state = trim((string) $legacyState);
+
+        if (ctype_digit($state)) {
+            $mapping = match ((int) $state) {
+                1 => MalaysianState::JOHOR,
+                2 => MalaysianState::KEDAH,
+                3 => MalaysianState::KELANTAN,
+                4 => MalaysianState::MELAKA,
+                5 => MalaysianState::NEGERI_SEMBILAN,
+                6 => MalaysianState::PAHANG,
+                7 => MalaysianState::PULAU_PINANG,
+                8 => MalaysianState::PERAK,
+                9 => MalaysianState::PERLIS,
+                10 => MalaysianState::SELANGOR,
+                11 => MalaysianState::TERENGGANU,
+                12 => MalaysianState::WP_KUALA_LUMPUR,
+                13 => MalaysianState::WP_LABUAN,
+                14 => MalaysianState::WP_PUTRAJAYA,
+                15 => MalaysianState::SABAH,
+                16 => MalaysianState::SARAWAK,
+                default => null,
+            };
+
+            return $mapping?->value;
+        }
+
+        $normalisedState = preg_replace('/[^A-Z]/', '', strtoupper($state));
+
+        $mapping = match ($normalisedState) {
+            'JHR', 'JOHOR' => MalaysianState::JOHOR,
+            'KDH', 'KEDAH' => MalaysianState::KEDAH,
+            'KTN', 'KELANTAN' => MalaysianState::KELANTAN,
+            'MLK', 'MELAKA', 'MALACCA' => MalaysianState::MELAKA,
+            'NSN', 'NEGERISEMBILAN' => MalaysianState::NEGERI_SEMBILAN,
+            'PHG', 'PAHANG' => MalaysianState::PAHANG,
+            'PNG', 'PENANG', 'PULAUPINANG' => MalaysianState::PULAU_PINANG,
+            'PRK', 'PERAK' => MalaysianState::PERAK,
+            'PLS', 'PERLIS' => MalaysianState::PERLIS,
+            'SGR', 'SELANGOR' => MalaysianState::SELANGOR,
+            'TRG', 'TERENGGANU' => MalaysianState::TERENGGANU,
+            'SBH', 'SABAH' => MalaysianState::SABAH,
+            'SWK', 'SARAWAK' => MalaysianState::SARAWAK,
+            'KUL', 'KUALALUMPUR', 'WILAYAHPERSEKUTUAN', 'WILAYAHPERSEKETUAN', 'WILAYAHPERSEKUTUANKUALALUMPUR' => MalaysianState::WP_KUALA_LUMPUR,
+            'LBN', 'LABUAN', 'WILAYAHPERSEKUTUANLABUAN' => MalaysianState::WP_LABUAN,
+            'PJY', 'PUTRAJAYA', 'WILAYAHPERSEKUTUANPUTRAJAYA' => MalaysianState::WP_PUTRAJAYA,
             default => null,
         };
 

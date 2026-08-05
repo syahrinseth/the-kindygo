@@ -371,24 +371,7 @@ class TenantRegistrationWizard extends Component implements HasForms
                     Select::make('state')
                         ->label('State')
                         ->required()
-                        ->options([
-                            'JHR' => 'Johor',
-                            'KDH' => 'Kedah',
-                            'KTN' => 'Kelantan',
-                            'KUL' => 'Kuala Lumpur',
-                            'LBN' => 'Labuan',
-                            'MLK' => 'Melaka',
-                            'NSN' => 'Negeri Sembilan',
-                            'PHG' => 'Pahang',
-                            'PNG' => 'Penang',
-                            'PRK' => 'Perak',
-                            'PLS' => 'Perlis',
-                            'PJY' => 'Putrajaya',
-                            'SBH' => 'Sabah',
-                            'SGR' => 'Selangor',
-                            'SWK' => 'Sarawak',
-                            'TRG' => 'Terengganu',
-                        ])
+                        ->options(MalaysianState::options())
                         ->searchable(),
                 ])
                 ->columns(3),
@@ -415,24 +398,7 @@ class TenantRegistrationWizard extends Component implements HasForms
 
                     Select::make('office_state')
                         ->label('Office State')
-                        ->options([
-                            'JHR' => 'Johor',
-                            'KDH' => 'Kedah',
-                            'KTN' => 'Kelantan',
-                            'KUL' => 'Kuala Lumpur',
-                            'LBN' => 'Labuan',
-                            'MLK' => 'Melaka',
-                            'NSN' => 'Negeri Sembilan',
-                            'PHG' => 'Pahang',
-                            'PNG' => 'Penang',
-                            'PRK' => 'Perak',
-                            'PLS' => 'Perlis',
-                            'PJY' => 'Putrajaya',
-                            'SBH' => 'Sabah',
-                            'SGR' => 'Selangor',
-                            'SWK' => 'Sarawak',
-                            'TRG' => 'Terengganu',
-                        ])
+                        ->options(MalaysianState::options())
                         ->searchable(),
                 ])
                 ->columns(3)

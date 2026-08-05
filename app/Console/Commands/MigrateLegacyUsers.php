@@ -290,15 +290,7 @@ class MigrateLegacyUsers extends Command
             return;
         }
 
-        // Map state - could be numeric ID or string
-        $stateCode = null;
-        if (! empty($legacy->state)) {
-            if (is_numeric($legacy->state)) {
-                $stateCode = StatusMapper::state((int) $legacy->state);
-            } else {
-                $stateCode = $legacy->state;
-            }
-        }
+        $stateCode = StatusMapper::state($legacy->state);
 
         DB::table('user_addresses')->updateOrInsert(
             ['user_id' => $legacy->id],
@@ -330,15 +322,7 @@ class MigrateLegacyUsers extends Command
             return;
         }
 
-        // Map company state
-        $officeStateCode = null;
-        if (! empty($legacy->company_state)) {
-            if (is_numeric($legacy->company_state)) {
-                $officeStateCode = StatusMapper::state((int) $legacy->company_state);
-            } else {
-                $officeStateCode = $legacy->company_state;
-            }
-        }
+        $officeStateCode = StatusMapper::state($legacy->company_state);
 
         DB::table('user_office_infos')->updateOrInsert(
             ['user_id' => $legacy->id],
@@ -369,25 +353,9 @@ class MigrateLegacyUsers extends Command
             return;
         }
 
-        // Map spouse state
-        $spouseStateCode = null;
-        if (! empty($legacy->spouse_state)) {
-            if (is_numeric($legacy->spouse_state)) {
-                $spouseStateCode = StatusMapper::state((int) $legacy->spouse_state);
-            } else {
-                $spouseStateCode = $legacy->spouse_state;
-            }
-        }
+        $spouseStateCode = StatusMapper::state($legacy->spouse_state);
 
-        // Map spouse company state
-        $spouseOfficeStateCode = null;
-        if (! empty($legacy->spouse_company_state)) {
-            if (is_numeric($legacy->spouse_company_state)) {
-                $spouseOfficeStateCode = StatusMapper::state((int) $legacy->spouse_company_state);
-            } else {
-                $spouseOfficeStateCode = $legacy->spouse_company_state;
-            }
-        }
+        $spouseOfficeStateCode = StatusMapper::state($legacy->spouse_company_state);
 
         DB::table('family_members')->updateOrInsert(
             [

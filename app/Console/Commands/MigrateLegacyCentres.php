@@ -102,7 +102,7 @@ class MigrateLegacyCentres extends Command
                     'address_2' => $legacy->add_2 ?: null,
                     'postal_code' => $legacy->postcode ?: null,
                     'city' => $legacy->city ?: null,
-                    'state' => StatusMapper::state(is_numeric($legacy->state) ? (int) $legacy->state : null),
+                    'state' => StatusMapper::state($legacy->state),
                     'created_at' => $legacy->created_at ?? now(),
                     'updated_at' => $legacy->updated_at ?? now(),
                 ];
@@ -193,7 +193,7 @@ class MigrateLegacyCentres extends Command
                 }
 
                 // Map state from int to MalaysianState enum value
-                $stateValue = StatusMapper::state(is_numeric($legacy->state) ? (int) $legacy->state : null);
+                $stateValue = StatusMapper::state($legacy->state);
 
                 $data = [
                     'id' => $legacy->id,
@@ -307,7 +307,7 @@ class MigrateLegacyCentres extends Command
             'address_2' => $legacy->add_2 ?: null,
             'postal_code' => $legacy->postcode ?: null,
             'city' => $legacy->city ?: null,
-            'state' => StatusMapper::state(is_numeric($legacy->state) ? (int) $legacy->state : null),
+            'state' => StatusMapper::state($legacy->state),
             'created_at' => $legacy->created_at ?? now(),
             'updated_at' => $legacy->updated_at ?? now(),
         ]);
