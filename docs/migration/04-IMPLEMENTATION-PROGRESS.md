@@ -24,6 +24,7 @@
 | 2b | Master Data: Children command | DONE | 2,425 children |
 | 3a | Financial Data: Invoices command | DONE | 43,118 invoices |
 | 3b | Financial Data: Payments command | DONE | 38,569 payments |
+| 3c | Financial Data: Historical quotations command | DONE | Legacy quotations and quotation items |
 | 4 | Media migration command | CREATED | Dry-run verified |
 | 5 | Validation command | DONE | 17/17 FK checks PASS |
 | 6 | Orchestrator command | DONE | All phases chained |
@@ -169,6 +170,15 @@ Command: `migrate:legacy-payments` (3 steps)
 Additional migrations created:
 - `2026_03_02_053138_make_payments_reference_no_nullable_for_legacy_migration.php`
 
+### Phase 3c — Historical Quotations (DONE)
+
+Command: `migrate:legacy-quotations`
+
+- Migrates `1_quotations` and `1_quotation_transactions` after financial dependencies exist.
+- Preserves IDs and quotation numbers, but logs and skips target-ID conflicts instead of overwriting current records.
+- Retains quotations as expired history; no invoice conversion is inferred from the legacy data.
+- Recalculates quotation totals from migrated items and validates counts, foreign keys, and item totals.
+
 Date sanitisation added: `sanitiseDatetime()` method handles malformed dates (2-digit years, epoch dates).
 
 ---
@@ -246,6 +256,7 @@ Pest tests in `tests/Feature/Migration/` for each phase.
 | `MigrateLegacyChildrenTest.php` | 2b (Children) | 31 | - |
 | `MigrateLegacyInvoicesTest.php` | 3a (Invoices) | 23 | - |
 | `MigrateLegacyPaymentsTest.php` | 3b (Payments) | 26 | - |
+| `MigrateLegacyQuotationsTest.php` | 3c (Historical quotations) | 3 | - |
 | `MigrateLegacyValidateTest.php` | 5 (Validation) | 20 | - |
 | `MigrateLegacyAllTest.php` | 6 (Orchestrator) | 12 | - |
 | **Total** | **All** | **161** | **533** |
@@ -308,6 +319,7 @@ Key testing techniques:
 | 2026-03-02 | 2b | Children: 2,425 children with enrolments and all pivots |
 | 2026-03-02 | 3a | Invoices: 43,118 invoices with 86,466 items (1,661 orphaned) |
 | 2026-03-02 | 3b | Payments: 38,569 payments, 38,548 pivots, invoice status updates |
+| 2026-08-05 | 3c | Historical quotation command, validation, mappings, and Pest coverage added |
 | 2026-03-02 | 4 | Media command created and dry-run verified (not executed for real) |
 | 2026-03-02 | 5 | Validation: 17/17 FK PASS, all checks completed |
 | 2026-03-02 | 6 | Orchestrator command created |

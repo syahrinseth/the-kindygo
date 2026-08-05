@@ -119,6 +119,16 @@ class MigrateLegacyValidate extends Command
                 'legacy' => "SELECT COUNT(*) as cnt FROM `1_transactions` WHERE type = 'payment' AND deleted_at IS NULL",
                 'current' => "SELECT COUNT(*) as cnt FROM payments WHERE tenant_id = {$tenantId}",
             ],
+            [
+                'label' => 'Quotations',
+                'legacy' => 'SELECT COUNT(*) as cnt FROM `1_quotations`',
+                'current' => "SELECT COUNT(*) as cnt FROM quotations WHERE tenant_id = {$tenantId}",
+            ],
+            [
+                'label' => 'Quotation Items',
+                'legacy' => 'SELECT COUNT(*) as cnt FROM `1_quotation_transactions`',
+                'current' => "SELECT COUNT(*) as cnt FROM quotation_items WHERE quotation_id IN (SELECT id FROM quotations WHERE tenant_id = {$tenantId})",
+            ],
         ];
 
         $rows = [];
@@ -171,6 +181,26 @@ class MigrateLegacyValidate extends Command
             [
                 'label' => 'Invoice Items → Children',
                 'query' => "SELECT COUNT(*) as cnt FROM invoice_items ii INNER JOIN invoices i ON ii.invoice_id = i.id WHERE i.tenant_id = {$tenantId} AND ii.child_id IS NOT NULL AND ii.child_id NOT IN (SELECT id FROM children)",
+            ],
+            [
+                'label' => 'Quotations → Users',
+                'query' => "SELECT COUNT(*) as cnt FROM quotations WHERE tenant_id = {$tenantId} AND user_id NOT IN (SELECT id FROM users)",
+            ],
+            [
+                'label' => 'Quotations → Centres',
+                'query' => "SELECT COUNT(*) as cnt FROM quotations WHERE tenant_id = {$tenantId} AND centre_id NOT IN (SELECT id FROM centres)",
+            ],
+            [
+                'label' => 'Quotation Items → Quotations',
+                'query' => "SELECT COUNT(*) as cnt FROM quotation_items WHERE quotation_id NOT IN (SELECT id FROM quotations WHERE tenant_id = {$tenantId})",
+            ],
+            [
+                'label' => 'Quotation Items → Products',
+                'query' => "SELECT COUNT(*) as cnt FROM quotation_items qi INNER JOIN quotations q ON qi.quotation_id = q.id WHERE q.tenant_id = {$tenantId} AND qi.product_id IS NOT NULL AND qi.product_id NOT IN (SELECT id FROM products)",
+            ],
+            [
+                'label' => 'Quotation Items → Children',
+                'query' => "SELECT COUNT(*) as cnt FROM quotation_items qi INNER JOIN quotations q ON qi.quotation_id = q.id WHERE q.tenant_id = {$tenantId} AND qi.child_id IS NOT NULL AND qi.child_id NOT IN (SELECT id FROM children)",
             ],
             [
                 'label' => 'Payments → Users',
@@ -257,6 +287,12 @@ class MigrateLegacyValidate extends Command
         $rows[] = ['Invoice total vs item sum', $mismatchedInvoices, $status];
         $this->trackResult('Financial', $status === 'PASS', $status === 'WARN',
             $status !== 'PASS' ? "{$mismatchedInvoices} invoices have total != sum of items" : null);
+
+        $mismatchedQuotations = DB::selectOne("\n            SELECT COUNT(*) as cnt FROM quotations q\n            WHERE q.tenant_id = {$tenantId}\n            AND q.total != (\n                SELECT COALESCE(SUM(qi.total), 0) FROM quotation_items qi WHERE qi.quotation_id = q.id\n            )\n        ")->cnt;
+        $status = $mismatchedQuotations === 0 ? 'PASS' : 'WARN';
+        $rows[] = ['Quotation total vs item sum', $mismatchedQuotations, $status];
+        $this->trackResult('Financial', $status === 'PASS', $status === 'WARN',
+            $status !== 'PASS' ? "{$mismatchedQuotations} quotations have total != sum of items" : null);
 
         // Check 2: Invoices marked PAID with no payments
         $paidNoPayments = DB::selectOne("

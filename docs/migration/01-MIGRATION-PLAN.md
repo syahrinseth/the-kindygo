@@ -329,6 +329,15 @@ Legacy 1_child record:
 - [ ] **3.2.2** Map payment_method to gateway
 - [ ] **3.2.3** Create invoice_payment pivot records
 
+#### Phase 3.3: Historical Quotations
+
+| Legacy Table | Target Table | Handling |
+|--------------|--------------|----------|
+| `1_quotations` | `quotations` | Preserve IDs and quotation numbers; migrate as expired historical records. The legacy table has no soft-delete column. |
+| `1_quotation_transactions` | `quotation_items` | Preserve IDs; map items, products, children, and matching enrolments. |
+
+Legacy quotations do not include expiry, workflow status, terms, notes, or an invoice reference. Set `valid_until` to the legacy date, set `status` to `expired`, and leave `converted_invoice_id` null. Do not infer invoice links. Skip and log target-ID conflicts and unresolved required parent/centre records.
+
 ---
 
 ### Phase 4: Relationships & Media (Days 20-21)

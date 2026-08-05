@@ -34,6 +34,7 @@ Update these as you review each section:
 3. [Children & Enrollments](#3-children--enrollments)
 4. [Products](#4-products)
 5. [Financial Data](#5-financial-data)
+   - [5.5 Quotations](#55-quotations)
 6. [Relationships](#6-relationships)
 7. [Media Files](#7-media-files)
    - [7.1 Child Media](#71-child-media)
@@ -791,6 +792,22 @@ calculations as a `bill` transaction in section 5.2.
 Preserve negative `amount` values as negative invoice line items so historical booking offsets
 remain intact. Do not create `payments` or `invoice_payment` records from `deposit` transactions;
 only legacy `payment` transactions follow the payment migration in section 5.3.
+
+### 5.5 Quotations
+
+**Review Status**: [x]
+
+| Legacy Source | Target | Transform |
+|---------------|--------|-----------|
+| `1_quotations.id` | `quotations.id` | Preserve ID; skip and log a target-ID conflict. |
+| `quotation_no` | `number` | Preserve; use `LEGACY-QUO-{id}` when blank and add a duplicate suffix if needed. |
+| `parent_id`, `preschool_id` | `user_id`, `centre_id` | Required direct references; skip and log when unresolved. |
+| `date` | `date`, `valid_until` | Preserve as the issue date and set the expiry to the same timestamp. |
+| - | `tenant_id`, `status` | Set target tenant and `expired`, respectively. |
+| - | `converted_invoice_id`, terms, notes | Set null; the legacy schema has no reliable values. |
+| `1_quotation_transactions` | `quotation_items` | Preserve IDs and map product, child, matching enrolment, label, remarks, amount, quantity, discount, and bill date. |
+
+Quotation items are migrated as unpaid product items. Their `total` and `balance_amount` are calculated from the legacy amount, quantity, and discount. No invoice-link heuristic is applied.
 
 ---
 

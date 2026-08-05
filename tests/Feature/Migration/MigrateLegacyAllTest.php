@@ -19,6 +19,8 @@ beforeEach(function () {
     $this->seedLegacyInvoices(2, 1, 1);
     $this->seedLegacyBills(2, 1, 1, 1, 1, 1);
     $this->seedLegacyPayments(startId: 100, count: 1, invoiceId: 1, parentId: 1, preschoolId: 1, amount: 15000);
+    $this->seedLegacyQuotations(1, 1, 1);
+    $this->seedLegacyQuotationTransactions(1, 1, 1, 1, 1, 1);
 });
 
 // ──────────────────────────────────────────────
@@ -41,6 +43,8 @@ it('runs all phases successfully end-to-end', function () {
     expect(DB::table('children')->count())->toBe(2);
     expect(DB::table('invoices')->where('tenant_id', 1)->count())->toBe(2);
     expect(DB::table('payments')->where('tenant_id', 1)->count())->toBeGreaterThanOrEqual(1);
+    expect(DB::table('quotations')->where('tenant_id', 1)->count())->toBe(1);
+    expect(DB::table('quotation_items')->count())->toBe(1);
 });
 
 it('runs all phases including validation', function () {
@@ -260,6 +264,7 @@ it('creates migration log entries for each phase', function () {
     expect($phases)->toContain('phase_1');
     expect($phases)->toContain('phase_2a');
     expect($phases)->toContain('phase_3a_invoices');
+    expect($phases)->toContain('phase_3c_quotations');
 
     // All logs should be completed
     $incomplete = $logs->whereNull('completed_at')->count();

@@ -191,6 +191,12 @@ class MigrateLegacyAll extends Command
                 'options' => $baseOptions,
                 'description' => 'Financial — Payments & Invoice-Payment Pivot',
             ],
+            [
+                'phase' => 3,
+                'command' => 'migrate:legacy-quotations',
+                'options' => $baseOptions,
+                'description' => 'Financial — Historical Quotations & Items',
+            ],
         ];
 
         if (! $skipMedia) {

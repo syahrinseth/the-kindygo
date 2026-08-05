@@ -42,6 +42,8 @@ trait LegacyMigrationTestHelper
     {
         foreach ([
             '1_transactions',
+            '1_quotation_transactions',
+            '1_quotations',
             '1_invoices',
             '1_child',
             '1_product',
@@ -71,6 +73,8 @@ trait LegacyMigrationTestHelper
         $this->createLegacyStateTable();
         $this->createLegacyInvoicesTable();
         $this->createLegacyTransactionsTable();
+        $this->createLegacyQuotationsTable();
+        $this->createLegacyQuotationTransactionsTable();
     }
 
     protected function createLegacyCampusesTable(): void
@@ -386,6 +390,46 @@ trait LegacyMigrationTestHelper
         });
     }
 
+    protected function createLegacyQuotationsTable(): void
+    {
+        if (Schema::hasTable('1_quotations')) {
+            return;
+        }
+
+        Schema::create('1_quotations', function ($table) {
+            $table->id();
+            $table->string('quotation_no')->nullable();
+            $table->unsignedInteger('parent_id');
+            $table->unsignedInteger('preschool_id');
+            $table->dateTime('date');
+            $table->integer('price')->default(0);
+            $table->timestamps();
+        });
+    }
+
+    protected function createLegacyQuotationTransactionsTable(): void
+    {
+        if (Schema::hasTable('1_quotation_transactions')) {
+            return;
+        }
+
+        Schema::create('1_quotation_transactions', function ($table) {
+            $table->id();
+            $table->unsignedInteger('parent_id');
+            $table->unsignedInteger('child_id')->nullable();
+            $table->unsignedBigInteger('quotation_id')->nullable();
+            $table->unsignedInteger('product_id')->nullable();
+            $table->unsignedInteger('preschool_id')->nullable();
+            $table->string('label')->nullable();
+            $table->string('remarks')->nullable();
+            $table->integer('amount')->default(0);
+            $table->dateTime('bill_date')->nullable();
+            $table->integer('quantity')->default(0);
+            $table->integer('discount_amount')->default(0);
+            $table->timestamps();
+        });
+    }
+
     /**
      * Seed legacy campuses with test data.
      *
@@ -645,6 +689,58 @@ trait LegacyMigrationTestHelper
         }
 
         return $invoices;
+    }
+
+    /** @return array<int, array<string, mixed>> */
+    protected function seedLegacyQuotations(int $count = 3, int $parentId = 1, int $preschoolId = 1): array
+    {
+        $quotations = [];
+
+        for ($i = 1; $i <= $count; $i++) {
+            $quotation = [
+                'id' => $i,
+                'quotation_no' => "QUO/2025/{$i}",
+                'parent_id' => $parentId,
+                'preschool_id' => $preschoolId,
+                'date' => '2025-01-'.str_pad($i, 2, '0', STR_PAD_LEFT).' 09:00:00',
+                'price' => 15000 * $i,
+                'created_at' => now(),
+                'updated_at' => now(),
+            ];
+            DB::connection('legacy')->table('1_quotations')->insert($quotation);
+            $quotations[] = $quotation;
+        }
+
+        return $quotations;
+    }
+
+    /** @return array<int, array<string, mixed>> */
+    protected function seedLegacyQuotationTransactions(int $count = 3, int $quotationId = 1, int $childId = 1, int $productId = 1, int $parentId = 1, int $preschoolId = 1): array
+    {
+        $transactions = [];
+
+        for ($i = 1; $i <= $count; $i++) {
+            $transaction = [
+                'id' => $i,
+                'parent_id' => $parentId,
+                'child_id' => $childId,
+                'quotation_id' => $quotationId,
+                'product_id' => $productId,
+                'preschool_id' => $preschoolId,
+                'label' => "Quotation Item {$i}",
+                'remarks' => "Quotation item description {$i}",
+                'amount' => 10000 + ($i * 5000),
+                'bill_date' => '2025-01-15 00:00:00',
+                'quantity' => 1,
+                'discount_amount' => 0,
+                'created_at' => now(),
+                'updated_at' => now(),
+            ];
+            DB::connection('legacy')->table('1_quotation_transactions')->insert($transaction);
+            $transactions[] = $transaction;
+        }
+
+        return $transactions;
     }
 
     /**
