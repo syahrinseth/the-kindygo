@@ -2,6 +2,7 @@
 
 namespace App\Console\Commands;
 
+use App\Models\Payment;
 use App\Services\Migration\MigrationLogger;
 use App\Services\Migration\OrphanLogger;
 use App\Services\Migration\StatusMapper;
@@ -27,7 +28,7 @@ class MigrateLegacyPayments extends Command
      *
      * @var string
      */
-    protected $description = 'Migrate legacy payment and deposit transactions (1_transactions → payments + invoice_payment pivot)';
+    protected $description = 'Migrate legacy payment transactions (1_transactions → payments + invoice_payment pivot)';
 
     /**
      * Execute the console command.
@@ -44,7 +45,7 @@ class MigrateLegacyPayments extends Command
 
         $this->info('Starting legacy payments migration...');
 
-        // Step 1: Migrate payment + deposit transactions → payments table
+        // Step 1: Reconcile prior deposit imports, then migrate payment transactions.
         $result = $this->migratePayments($tenantId, $chunkSize, $dryRun);
         if ($result !== Command::SUCCESS) {
             return $result;
@@ -66,7 +67,7 @@ class MigrateLegacyPayments extends Command
     }
 
     /**
-     * Step 1: Migrate legacy payment and deposit transactions to the payments table.
+     * Step 1: Migrate legacy payment transactions to the payments table.
      */
     private function migratePayments(int $tenantId, int $chunkSize, bool $dryRun): int
     {
@@ -76,6 +77,8 @@ class MigrateLegacyPayments extends Command
         $logger = new MigrationLogger('phase_3b_payments', '1_transactions', 'payments');
         $skipExisting = $this->option('skip-existing');
         $startId = (int) $this->option('start-id');
+
+        $this->reconcilePreviouslyMigratedDeposits($dryRun);
 
         // Use flipped arrays for O(1) lookup
         $existingIds = $skipExisting
@@ -87,12 +90,12 @@ class MigrateLegacyPayments extends Command
 
         $totalCount = DB::connection('legacy')
             ->table('1_transactions')
-            ->whereIn('type', ['payment', 'deposit'])
+            ->where('type', 'payment')
             ->whereNull('deleted_at')
             ->count();
 
         $logger->setTotalSource($totalCount);
-        $this->info("Found {$totalCount} legacy payment/deposit transactions to migrate.");
+        $this->info("Found {$totalCount} legacy payment transactions to migrate.");
 
         if ($startId > 0) {
             $this->info("Starting from ID {$startId} (skipping earlier records).");
@@ -107,7 +110,7 @@ class MigrateLegacyPayments extends Command
 
         $query = DB::connection('legacy')
             ->table('1_transactions')
-            ->whereIn('type', ['payment', 'deposit'])
+            ->where('type', 'payment')
             ->whereNull('deleted_at')
             ->orderBy('id');
 
@@ -116,7 +119,7 @@ class MigrateLegacyPayments extends Command
 
             $skippedByStartId = DB::connection('legacy')
                 ->table('1_transactions')
-                ->whereIn('type', ['payment', 'deposit'])
+                ->where('type', 'payment')
                 ->whereNull('deleted_at')
                 ->where('id', '<', $startId)
                 ->count();
@@ -178,6 +181,45 @@ class MigrateLegacyPayments extends Command
     }
 
     /**
+     * Remove payments created by earlier migrations for legacy deposit transactions.
+     *
+     * Deposits are invoice items, not payments. Limit reconciliation to rows with the
+     * legacy deposit metadata so unrelated application payments cannot be removed.
+     */
+    private function reconcilePreviouslyMigratedDeposits(bool $dryRun): void
+    {
+        $this->info('Reconciling previously migrated deposit transactions...');
+
+        $reconciled = 0;
+        DB::connection('legacy')
+            ->table('1_transactions')
+            ->where('type', 'deposit')
+            ->whereNull('deleted_at')
+            ->orderBy('id')
+            ->chunkById(500, function ($deposits) use ($dryRun, &$reconciled) {
+                $payments = Payment::withoutGlobalScopes()
+                    ->whereIn('id', $deposits->pluck('id'))
+                    ->get()
+                    ->filter(fn (Payment $payment): bool => data_get($payment->meta, 'legacy_type') === 'deposit');
+
+                $reconciled += $payments->count();
+
+                if ($dryRun) {
+                    return;
+                }
+
+                $payments->each(function (Payment $payment): void {
+                    $payment->clearMediaCollection('payment_proof');
+                    $payment->delete();
+                });
+            });
+
+        $this->info($dryRun
+            ? "DRY RUN: {$reconciled} incorrectly migrated deposit payment(s) would be removed."
+            : "Reconciled {$reconciled} incorrectly migrated deposit payment(s).");
+    }
+
+    /**
      * Build a payment row from a legacy transaction.
      *
      * @param  array<int, true>  $validUserIds  Flipped array for O(1) lookup
@@ -198,10 +240,7 @@ class MigrateLegacyPayments extends Command
             return null; // Skip — user_id is a required FK on payments
         }
 
-        // Determine amount: payments use paid_amount, deposits use amount
-        $amount = $legacy->type === 'deposit'
-            ? (int) ($legacy->amount ?? 0)
-            : (int) ($legacy->paid_amount ?? 0);
+        $amount = (int) ($legacy->paid_amount ?? 0);
 
         // Determine gateway: check for billplz first, then map payment_method, default to BANK_TRANSFER
         $gateway = $this->resolveGateway($legacy);
@@ -222,15 +261,18 @@ class MigrateLegacyPayments extends Command
 
         // Build meta JSON
         $meta = array_filter([
-            'legacy_type' => $legacy->type,
             'legacy_label' => $legacy->label,
             'remark' => $legacy->remarks,
             'payment_by' => $legacy->payment_by,
             'prev_invoice_id' => $legacy->prev_invoice_id,
-            'payment_slip' => $legacy->payment_slip,
             'preschool_id' => $legacy->preschool_id,
             'child_id' => $legacy->child_id,
             'gateway_collection_id' => $legacy->billplz_collection_id,
+            'legacy_payment_method' => $legacy->payment_method,
+            'legacy' => [
+                'transaction_type' => $legacy->type,
+                'payment_slip_path' => $legacy->payment_slip,
+            ],
         ], fn ($v) => $v !== null && $v !== '' && $v !== 0);
 
         return [
@@ -336,7 +378,7 @@ class MigrateLegacyPayments extends Command
 
         $totalCount = DB::connection('legacy')
             ->table('1_transactions')
-            ->whereIn('type', ['payment', 'deposit'])
+            ->where('type', 'payment')
             ->whereNull('deleted_at')
             ->whereNotNull('invoice_id')
             ->count();
@@ -353,7 +395,7 @@ class MigrateLegacyPayments extends Command
 
         $query = DB::connection('legacy')
             ->table('1_transactions')
-            ->whereIn('type', ['payment', 'deposit'])
+            ->where('type', 'payment')
             ->whereNull('deleted_at')
             ->whereNotNull('invoice_id')
             ->orderBy('id');
@@ -363,7 +405,7 @@ class MigrateLegacyPayments extends Command
 
             $skippedByStartId = DB::connection('legacy')
                 ->table('1_transactions')
-                ->whereIn('type', ['payment', 'deposit'])
+                ->where('type', 'payment')
                 ->whereNull('deleted_at')
                 ->whereNotNull('invoice_id')
                 ->where('id', '<', $startId)
@@ -411,10 +453,7 @@ class MigrateLegacyPayments extends Command
                         continue;
                     }
 
-                    // Determine amount for pivot: payments use paid_amount, deposits use amount
-                    $amount = $legacy->type === 'deposit'
-                        ? (int) ($legacy->amount ?? 0)
-                        : (int) ($legacy->paid_amount ?? 0);
+                    $amount = (int) ($legacy->paid_amount ?? 0);
 
                     $batch[] = [
                         'payment_id' => $paymentId,

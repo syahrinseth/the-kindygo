@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Enums\ApplicationRole;
 use App\Models\Scopes\TenantScope;
 use Database\Factories\UserFactory;
 use Exception;
@@ -27,12 +28,19 @@ use Laravel\Sanctum\HasApiTokens;
 use Spatie\MediaLibrary\HasMedia;
 use Spatie\MediaLibrary\InteractsWithMedia;
 use Spatie\MediaLibrary\MediaCollections\Models\Media;
+use Spatie\Permission\Contracts\Role as RoleContract;
+use Spatie\Permission\Exceptions\RoleDoesNotExist;
 use Spatie\Permission\Traits\HasRoles;
 
 class User extends Authenticatable implements FilamentUser, HasAvatar, HasDefaultTenant, HasMedia, HasTenants, MustVerifyEmail
 {
     /** @use HasFactory<UserFactory> */
-    use HasApiTokens, HasFactory, HasRoles, InteractsWithMedia, Notifiable;
+    use HasApiTokens, HasFactory, HasRoles {
+        HasRoles::getStoredRole as protected getStoredRoleFromHasRoles;
+        HasRoles::hasRole as protected hasStoredRole;
+    }
+
+    use InteractsWithMedia, Notifiable;
 
     /**
      * Determine if the user can access the given Filament panel.
@@ -61,6 +69,68 @@ class User extends Authenticatable implements FilamentUser, HasAvatar, HasDefaul
     public function isAdmin(): bool
     {
         return $this->hasAnyRole(['Super Admin', 'Admin', 'Principal', 'Teacher']);
+    }
+
+    /**
+     * Resolve legacy display names to canonical kebab-case role names.
+     *
+     * @param  mixed  $role
+     */
+    protected function getStoredRole($role): RoleContract
+    {
+        if (! is_string($role)) {
+            return $this->getStoredRoleFromHasRoles($role);
+        }
+
+        $canonicalRole = ApplicationRole::normalise($role);
+
+        try {
+            return $this->getStoredRoleFromHasRoles($canonicalRole);
+        } catch (RoleDoesNotExist) {
+            return $this->getStoredRoleFromHasRoles($role);
+        }
+    }
+
+    /**
+     * Check roles using canonical names while accepting legacy display names during transition.
+     *
+     * @param  mixed  $roles
+     */
+    public function hasRole($roles, ?string $guard = null): bool
+    {
+        if (is_array($roles)) {
+            foreach ($roles as $role) {
+                if ($this->hasRole($role, $guard)) {
+                    return true;
+                }
+            }
+
+            return false;
+        }
+
+        if (! is_string($roles)) {
+            return $this->hasStoredRole($roles, $guard);
+        }
+
+        $canonicalRoles = $this->normaliseRoles($roles);
+
+        if ($this->hasStoredRole($canonicalRoles, $guard)) {
+            return true;
+        }
+
+        return $canonicalRoles === $roles || $this->hasStoredRole($roles, $guard);
+    }
+
+    /**
+     * @param  mixed  $roles
+     */
+    private function normaliseRoles($roles): mixed
+    {
+        if (is_string($roles)) {
+            return ApplicationRole::normalise($roles);
+        }
+
+        return $roles;
     }
 
     /**

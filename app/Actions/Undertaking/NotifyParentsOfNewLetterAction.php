@@ -15,7 +15,7 @@ class NotifyParentsOfNewLetterAction
     public function execute(LetterOfUndertaking $letter): void
     {
         // Get all users with Parent role belonging to this tenant
-        $parents = User::role('Parent')
+        $parents = User::role('parent')
             ->whereHas('tenants', function ($query) use ($letter) {
                 $query->where('tenant_id', $letter->tenant_id);
             })

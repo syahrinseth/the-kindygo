@@ -7,6 +7,10 @@
 
 ## Phases Overview
 
+> The record totals below are historical results from the earlier staging run. Financial and
+> validation totals must be regenerated after the corrected deposit-to-invoice-item mapping is
+> run against a clean local target database.
+
 | Phase | Description | Status | Records |
 |-------|-------------|--------|---------|
 | 0a | DB migrations for missing columns | DONE | 5 columns added |
@@ -180,7 +184,10 @@ Command: `migrate:legacy-media` (4 steps)
 | 3 | Family member media (spouse mykad, photo) | 504 | 1,254 | 0 |
 | 4 | Payment proof | 5,263 | 1 | 0 |
 
-Source: `/storage/app/kindygo-legacy/c136c9fde0ee46499ef6da5e15455449/`
+Documented source: `{LEGACY_APP_PATH}/storage/app/{LEGACY_WEBSITE_UUID}/`
+
+The figures above are historical dry-run results from the former staging copy. Re-run the media
+dry run after the legacy files are restored to the documented source location.
 
 **Not yet executed for real** — will copy ~10,619 files (~7.5 GB).
 

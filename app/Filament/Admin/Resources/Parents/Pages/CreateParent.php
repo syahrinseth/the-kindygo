@@ -14,7 +14,7 @@ class CreateParent extends CreateRecord
     protected function mutateFormDataBeforeCreate(array $data): array
     {
         // Set default Parent role
-        $parentRole = Role::where('name', 'Parent')->first();
+        $parentRole = Role::where('name', 'parent')->first();
         if ($parentRole) {
             $data['roles'] = [$parentRole->id];
         }

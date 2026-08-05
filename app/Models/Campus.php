@@ -29,6 +29,7 @@ class Campus extends Model
         'tenant_id',
         'name',
         'description',
+        'meta_data',
         'phone',
         'email',
         'address_1',
@@ -37,6 +38,18 @@ class Campus extends Model
         'city',
         'state',
     ];
+
+    /**
+     * Get the attributes that should be cast.
+     *
+     * @return array<string, string>
+     */
+    protected function casts(): array
+    {
+        return [
+            'meta_data' => 'array',
+        ];
+    }
 
     /**
      * Get the tenant that owns the campus.

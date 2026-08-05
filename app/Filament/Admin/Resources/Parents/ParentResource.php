@@ -61,7 +61,7 @@ class ParentResource extends Resource
     {
         $query = parent::getEloquentQuery()
             ->with(['profile', 'userAddress', 'officeInfo'])
-            ->whereHas('roles', fn (Builder $query) => $query->where('name', 'Parent')
+            ->whereHas('roles', fn (Builder $query) => $query->where('name', 'parent')
             );
 
         $user = Auth::user();

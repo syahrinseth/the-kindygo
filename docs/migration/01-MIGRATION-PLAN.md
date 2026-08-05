@@ -102,7 +102,7 @@ Architecture: Multi-tenant with Filament 4
 - [ ] **0.5** Create migration logging table
 - [ ] **0.6** Create orphan records log table
 - [ ] **0.7** Document all soft-deleted record counts
-- [ ] **0.8** Verify media files exist at `/storage/app/kindygo-legacy/`
+- [ ] **0.8** Verify source media structures under `{LEGACY_APP_PATH}/storage/app/{LEGACY_WEBSITE_UUID}/` and `{LEGACY_APP_PATH}/storage/app/public/child_log_images/`; reconcile them with database file references
 
 **Deliverables:**
 - Data quality report
@@ -259,7 +259,7 @@ Legacy 1_child record:
 - [ ] **2.3.1** Migrate products (skip soft-deleted)
 - [ ] **2.3.2** Map `product_type` to `ProductType` enum
 - [ ] **2.3.3** Create product_prices from `price` field
-- [ ] **2.3.4** Store `price_history` in meta/JSON
+- [ ] **2.3.4** Create historical `product_prices` records from `price_history`
 
 ---
 
@@ -361,10 +361,14 @@ Legacy 1_child record:
 | 4.2.3 | `1_child.immunization_card` | `children.immunization_card` |
 | 4.2.4 | `1_users.user_mykad_image` | `users.mykad` |
 | 4.2.5 | `1_users.user_passport_size_photo` | `users.photo` |
+| 4.2.6 | `1_users.user_immunization_card` | `users.immunization_card` |
+| 4.2.7 | `1_users.spouse_mykad_image`, `spouse_passport_size_photo` | `family_members.mykad`, `family_members.photo` |
+| 4.2.8 | `1_transactions.payment_slip` (type = `payment`) | `payments.payment_proof` |
+| 4.2.9 | `1_media` ChildLog `child_log_pics` collection | Deferred: no current target model |
 
 **Tasks:**
 
-- [ ] **4.2.1** Verify files exist in `/storage/app/kindygo-legacy/`
+- [ ] **4.2.1** Reconcile database file references with `{LEGACY_APP_PATH}/storage/app/{LEGACY_WEBSITE_UUID}/` and the ChildLog public-media root
 - [ ] **4.2.2** Copy files to Spatie media library
 - [ ] **4.2.3** Create media records for children
 - [ ] **4.2.4** Create media records for users
@@ -531,12 +535,9 @@ public function handle()
 
 ### Phase-Level Rollback
 
-Each phase can be rolled back independently:
-
-```bash
-# Rollback Phase 3 (Financial Data)
-php artisan migrate:legacy:rollback --phase=3
-```
+There is no automated phase-level rollback command. Run migration tests against a disposable
+target database, or restore the target database from its pre-migration backup when a rollback is
+required. Do not manually delete ID-preserved records from a shared target database.
 
 ### Full Rollback
 

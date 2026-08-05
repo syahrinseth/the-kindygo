@@ -82,12 +82,16 @@ trait LegacyMigrationTestHelper
         Schema::create('1_campuses', function ($table) {
             $table->id();
             $table->string('name');
+            $table->string('ssm_comp_name')->nullable();
+            $table->string('ssm_no')->nullable();
             $table->string('no_phone')->nullable();
             $table->string('add_1')->nullable();
             $table->string('add_2')->nullable();
             $table->string('postcode')->nullable();
             $table->string('city')->nullable();
             $table->string('state')->nullable();
+            $table->string('short_name')->nullable();
+            $table->string('status')->nullable();
             $table->timestamps();
             $table->softDeletes();
         });

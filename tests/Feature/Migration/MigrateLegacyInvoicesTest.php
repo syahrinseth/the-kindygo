@@ -199,6 +199,21 @@ it('migrates bill transactions to invoice_items', function () {
     expect($item->description)->toBe('Description for bill item 1');
 });
 
+it('migrates deposit transactions as product invoice items', function () {
+    $this->seedLegacyInvoices(1, parentId: 1, preschoolId: 1);
+    $this->seedLegacyDeposits(startId: 200, count: 1, invoiceId: 1, parentId: 1, preschoolId: 1, amount: -5000);
+
+    $this->artisan('migrate:legacy-invoices', ['--tenant-id' => 1])
+        ->assertSuccessful();
+
+    $item = DB::table('invoice_items')->where('id', 200)->first();
+
+    expect($item)->not->toBeNull();
+    expect($item->type)->toBe('product');
+    expect($item->price)->toBe(-5000);
+    expect($item->total)->toBe(-5000);
+});
+
 it('calculates item amounts correctly', function () {
     $this->seedLegacyInvoices(1, parentId: 1, preschoolId: 1);
     $this->seedLegacyBills(1, invoiceId: 1, childId: 1, productId: 1, parentId: 1, preschoolId: 1);

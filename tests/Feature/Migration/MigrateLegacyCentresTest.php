@@ -136,7 +136,7 @@ it('generates unique slugs and codes for centres', function () {
     expect(count(array_unique($codes)))->toBe(count($codes));
 });
 
-it('sets campus_id to null when campus does not exist', function () {
+it('sets campus_id to null when a positive legacy campus ID does not exist', function () {
     // Don't seed any campuses
     DB::connection('legacy')->table('1_preschool')->insert([
         'id' => 1, 'name' => 'Orphan Centre', 'short_name' => 'OC',
@@ -152,6 +152,48 @@ it('sets campus_id to null when campus does not exist', function () {
 
     // Should log orphan
     expect(DB::table('migration_orphans')->count())->toBeGreaterThanOrEqual(1);
+});
+
+it('creates and assigns a campus for a preschool without a legacy campus', function () {
+    DB::connection('legacy')->table('1_preschool')->insert([
+        'id' => 10,
+        'name' => 'Ungrouped Legacy Preschool',
+        'short_name' => 'ULP',
+        'campus_id' => 0,
+        'status' => 'active',
+        'no_phone' => '0123456789',
+        'add_1' => '10 Legacy Road',
+        'city' => 'Shah Alam',
+        'postcode' => '40000',
+        'state' => '10',
+        'created_at' => now(),
+        'updated_at' => now(),
+    ]);
+
+    $this->artisan('migrate:legacy-centres', ['--tenant-id' => 1])
+        ->assertSuccessful();
+
+    $centre = DB::table('centres')->where('id', 10)->first();
+    $campus = DB::table('campuses')->where('id', $centre->campus_id)->first();
+    $metaData = json_decode($campus->meta_data, true);
+
+    expect($campus->name)->toBe('Legacy Campus — Ungrouped Legacy Preschool (10)');
+    expect($campus->phone)->toBe('0123456789');
+    expect($metaData['legacy_preschool_id'])->toBe(10);
+    expect($metaData['generated_for_unassigned_centre'])->toBeTrue();
+});
+
+it('does not duplicate generated campuses when re-run', function () {
+    $this->seedLegacyPreschools(1, 0);
+
+    $this->artisan('migrate:legacy-centres', ['--tenant-id' => 1])
+        ->assertSuccessful();
+
+    $this->artisan('migrate:legacy-centres', ['--tenant-id' => 1])
+        ->assertSuccessful();
+
+    expect(DB::table('campuses')->count())->toBe(1);
+    expect(DB::table('centres')->where('id', 1)->value('campus_id'))->toBe(1);
 });
 
 it('is idempotent - re-running does not create duplicates', function () {
@@ -229,7 +271,7 @@ it('creates required roles during migration', function () {
         ->assertSuccessful();
 
     // Should have all 9 unique target roles
-    $expectedRoles = ['Super Admin', 'Admin', 'Accountant', 'Principal', 'Teacher', 'Parent', 'Staff', 'Auditor', 'Owner'];
+    $expectedRoles = ['super-admin', 'admin', 'accountant', 'principal', 'teacher', 'parent', 'staff', 'auditor', 'owner'];
 
     foreach ($expectedRoles as $role) {
         expect(DB::table('roles')->where('name', $role)->where('guard_name', 'web')->exists())->toBeTrue(
@@ -257,9 +299,9 @@ it('does not duplicate existing roles', function () {
 });
 
 it('maps legacy role IDs correctly', function () {
-    expect(\App\Console\Commands\MigrateLegacyRoles::getTargetRoleName(1))->toBe('Super Admin');
-    expect(\App\Console\Commands\MigrateLegacyRoles::getTargetRoleName(7))->toBe('Parent');
+    expect(\App\Console\Commands\MigrateLegacyRoles::getTargetRoleName(1))->toBe('super-admin');
+    expect(\App\Console\Commands\MigrateLegacyRoles::getTargetRoleName(7))->toBe('parent');
     expect(\App\Console\Commands\MigrateLegacyRoles::getTargetRoleName(10))->toBeNull(); // Application = skip
-    expect(\App\Console\Commands\MigrateLegacyRoles::getTargetRoleName(12))->toBe('Owner');
+    expect(\App\Console\Commands\MigrateLegacyRoles::getTargetRoleName(12))->toBe('owner');
     expect(\App\Console\Commands\MigrateLegacyRoles::getTargetRoleName(99))->toBeNull(); // Unknown
 });

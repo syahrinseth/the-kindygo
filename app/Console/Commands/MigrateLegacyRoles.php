@@ -2,6 +2,7 @@
 
 namespace App\Console\Commands;
 
+use App\Enums\ApplicationRole;
 use App\Services\Migration\MigrationLogger;
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\DB;
@@ -29,18 +30,18 @@ class MigrateLegacyRoles extends Command
      * @var array<int, string|null>
      */
     private const ROLE_MAPPING = [
-        1 => 'Super Admin',
-        2 => 'Admin',
-        3 => 'Accountant',
-        4 => 'Principal',
-        5 => 'Accountant',
-        6 => 'Teacher',
-        7 => 'Parent',
-        8 => 'Staff',
-        9 => 'Staff',
+        1 => ApplicationRole::SuperAdmin->value,
+        2 => ApplicationRole::Admin->value,
+        3 => ApplicationRole::Accountant->value,
+        4 => ApplicationRole::Principal->value,
+        5 => ApplicationRole::Accountant->value,
+        6 => ApplicationRole::Teacher->value,
+        7 => ApplicationRole::Parent->value,
+        8 => ApplicationRole::Staff->value,
+        9 => ApplicationRole::Staff->value,
         10 => null, // Application - skip
-        11 => 'Auditor',
-        12 => 'Owner',
+        11 => ApplicationRole::Auditor->value,
+        12 => ApplicationRole::Owner->value,
     ];
 
     /**

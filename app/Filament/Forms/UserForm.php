@@ -272,11 +272,11 @@ class UserForm
                                             }
 
                                             if ($user->hasRole('Admin')) {
-                                                return $allRoles->where('name', '!=', 'Super Admin')->pluck('name', 'id');
+                                                return $allRoles->where('name', '!=', 'super-admin')->pluck('name', 'id');
                                             }
 
                                             if ($user->hasRole('Principal')) {
-                                                return $allRoles->whereIn('name', ['Teacher', 'Parent'])->pluck('name', 'id');
+                                                return $allRoles->whereIn('name', ['teacher', 'parent'])->pluck('name', 'id');
                                             }
 
                                             return collect();
@@ -292,7 +292,7 @@ class UserForm
                                         })
                                         ->afterStateHydrated(function ($component, ?User $record = null) {
                                             if (! $record && empty($component->getState())) {
-                                                $parentRole = Role::where('name', 'Parent')->first();
+                                                $parentRole = Role::where('name', 'parent')->first();
                                                 if ($parentRole) {
                                                     $component->state([$parentRole->id]);
                                                 }

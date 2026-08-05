@@ -41,18 +41,18 @@ class InviteUserToTenantAction extends Action
 
                         // Admin can assign all roles except Super Admin
                         if ($user->hasRole('Admin')) {
-                            return $allRoles->where('name', '!=', 'Super Admin')->pluck('name', 'name');
+                            return $allRoles->where('name', '!=', 'super-admin')->pluck('name', 'name');
                         }
 
                         // Principal can only assign Teacher and Parent roles
                         if ($user->hasRole('Principal')) {
-                            return $allRoles->whereIn('name', ['Teacher', 'Parent'])->pluck('name', 'name');
+                            return $allRoles->whereIn('name', ['teacher', 'parent'])->pluck('name', 'name');
                         }
 
                         // Default fallback to Parent role only
-                        return collect(['Parent' => 'Parent']);
+                        return collect(['parent' => 'parent']);
                     })
-                    ->default('Parent')
+                    ->default('parent')
                     ->required(),
             ])
             ->modalHeading('Invite User to a Company')

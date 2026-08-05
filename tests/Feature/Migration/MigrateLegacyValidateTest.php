@@ -23,6 +23,7 @@ function runFullMigration(): void
     test()->seedLegacyChildren(2, 1, 1, 1);
     test()->seedLegacyInvoices(2, 1, 1);
     test()->seedLegacyBills(2, 1, 1, 1, 1, 1);
+    test()->seedLegacyDeposits(startId: 200, count: 1, invoiceId: 1, parentId: 1, preschoolId: 1, amount: 5000);
     test()->seedLegacyPayments(startId: 100, count: 1, invoiceId: 1, parentId: 1, preschoolId: 1, amount: 15000);
 
     test()->artisan('migrate:legacy-centres', ['--tenant-id' => 1]);
@@ -211,17 +212,12 @@ it('validates total payment amounts between legacy and current', function () {
         WHERE type = 'payment' AND deleted_at IS NULL
     ")->total;
 
-    $legacyDepositTotal = DB::connection('legacy')->selectOne("
-        SELECT COALESCE(SUM(amount), 0) as total FROM `1_transactions`
-        WHERE type = 'deposit' AND deleted_at IS NULL
-    ")->total;
-
     $currentTotal = DB::selectOne(
         'SELECT COALESCE(SUM(amount), 0) as total FROM payments WHERE tenant_id = 1'
     )->total;
 
     // Payment amounts should match between legacy and current
-    expect((int) $currentTotal)->toBe((int) $legacyPaymentTotal + (int) $legacyDepositTotal);
+    expect((int) $currentTotal)->toBe((int) $legacyPaymentTotal);
 });
 
 // ──────────────────────────────────────────────

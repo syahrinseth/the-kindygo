@@ -287,10 +287,10 @@ class Invoice extends Model
         $query->where('tenant_id', $user->current_tenant_id);
 
         // Additional restrictions based on user role
-        if ($user->roles && $user->roles->contains('name', 'Parent')) {
+        if ($user->roles && $user->roles->contains('name', 'parent')) {
             // Parents can only see their own invoices
             $query->where('user_id', $user->id);
-        } elseif ($user->roles && $user->roles->contains('name', 'Principal')) {
+        } elseif ($user->roles && $user->roles->contains('name', 'principal')) {
             // Principals can see invoices from centres they're associated with
             $centreIds = $user->centres()->pluck('id');
             if ($centreIds->isNotEmpty()) {

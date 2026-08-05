@@ -27,7 +27,7 @@ class MigrateLegacyInvoices extends Command
      *
      * @var string
      */
-    protected $description = 'Migrate legacy invoices (1_invoices → invoices) and bill transactions (1_transactions type=bill → invoice_items)';
+    protected $description = 'Migrate legacy invoices (1_invoices → invoices) and bill/deposit transactions (1_transactions → invoice_items)';
 
     /**
      * Execute the console command.
@@ -50,7 +50,7 @@ class MigrateLegacyInvoices extends Command
             return $result;
         }
 
-        // Step 2: Migrate invoice items (bill transactions)
+        // Step 2: Migrate invoice items (bill and deposit transactions)
         $result = $this->migrateInvoiceItems($chunkSize, $dryRun);
         if ($result !== Command::SUCCESS) {
             return $result;
@@ -292,12 +292,12 @@ class MigrateLegacyInvoices extends Command
     }
 
     /**
-     * Migrate legacy bill transactions to invoice_items table.
+     * Migrate legacy bill and deposit transactions to the invoice_items table.
      */
     private function migrateInvoiceItems(int $chunkSize, bool $dryRun): int
     {
         $this->newLine();
-        $this->info('--- Migrating Invoice Items (bill transactions) ---');
+        $this->info('--- Migrating Invoice Items (bill and deposit transactions) ---');
 
         $logger = new MigrationLogger('phase_3a_items', '1_transactions', 'invoice_items');
         $skipExisting = $this->option('skip-existing');
@@ -327,12 +327,12 @@ class MigrateLegacyInvoices extends Command
 
         $totalCount = DB::connection('legacy')
             ->table('1_transactions')
-            ->where('type', 'bill')
+            ->whereIn('type', ['bill', 'deposit'])
             ->whereNull('deleted_at')
             ->count();
 
         $logger->setTotalSource($totalCount);
-        $this->info("Found {$totalCount} legacy bill transactions to migrate as invoice items.");
+        $this->info("Found {$totalCount} legacy bill and deposit transactions to migrate as invoice items.");
 
         if ($skipExisting && count($existingIds) > 0) {
             $this->info('Skip-existing mode: will skip '.count($existingIds).' already-migrated items.');
@@ -344,7 +344,7 @@ class MigrateLegacyInvoices extends Command
         // Load invoice period dates per-chunk to avoid memory exhaustion
         DB::connection('legacy')
             ->table('1_transactions')
-            ->where('type', 'bill')
+            ->whereIn('type', ['bill', 'deposit'])
             ->whereNull('deleted_at')
             ->orderBy('id')
             ->chunk($chunkSize, function ($legacyItems) use ($dryRun, $logger, $bar, $validInvoiceIds, $validProductIds, $validChildIds, $enrolmentLookup, $skipExisting, $existingIds) {
@@ -416,7 +416,7 @@ class MigrateLegacyInvoices extends Command
     }
 
     /**
-     * Build an invoice item row from a legacy bill transaction.
+     * Build an invoice item row from a legacy bill or deposit transaction.
      * Returns null if the item should be skipped (orphaned invoice).
      *
      * @param  array<int, true>  $validInvoiceIds  Flipped array for O(1) lookup
@@ -435,7 +435,7 @@ class MigrateLegacyInvoices extends Command
                 '1_transactions',
                 $legacy->id,
                 "invoice_id {$invoiceId} not found in invoices table",
-                ['transaction_id' => $legacy->id, 'invoice_id' => $invoiceId, 'type' => 'bill']
+                ['transaction_id' => $legacy->id, 'invoice_id' => $invoiceId, 'type' => $legacy->type]
             );
 
             return null; // Skip — can't create item without valid invoice
@@ -479,7 +479,9 @@ class MigrateLegacyInvoices extends Command
         $total = ($price * $quantity) - ($discount * $quantity);
 
         // Determine item type
-        $type = ($legacy->is_discount || $price < 0) ? 'invoice_discount' : 'product';
+        $type = $legacy->type === 'deposit'
+            ? 'product'
+            : (($legacy->is_discount || $price < 0) ? 'invoice_discount' : 'product');
 
         // Get period dates from pre-loaded invoice periods
         $periodStart = $invoicePeriods[$invoiceId]['start_date'] ?? null;

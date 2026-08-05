@@ -110,13 +110,13 @@ class MigrateLegacyValidate extends Command
                 'current' => "SELECT COUNT(*) as cnt FROM invoices WHERE tenant_id = {$tenantId}",
             ],
             [
-                'label' => 'Invoice Items (from bills)',
-                'legacy' => "SELECT COUNT(*) as cnt FROM `1_transactions` WHERE type = 'bill' AND deleted_at IS NULL",
+                'label' => 'Invoice Items (bill+deposit)',
+                'legacy' => "SELECT COUNT(*) as cnt FROM `1_transactions` WHERE type IN ('bill', 'deposit') AND deleted_at IS NULL",
                 'current' => "SELECT COUNT(*) as cnt FROM invoice_items WHERE invoice_id IN (SELECT id FROM invoices WHERE tenant_id = {$tenantId})",
             ],
             [
-                'label' => 'Payments (payment+deposit)',
-                'legacy' => "SELECT COUNT(*) as cnt FROM `1_transactions` WHERE type IN ('payment', 'deposit') AND deleted_at IS NULL",
+                'label' => 'Payments',
+                'legacy' => "SELECT COUNT(*) as cnt FROM `1_transactions` WHERE type = 'payment' AND deleted_at IS NULL",
                 'current' => "SELECT COUNT(*) as cnt FROM payments WHERE tenant_id = {$tenantId}",
             ],
         ];
@@ -301,20 +301,15 @@ class MigrateLegacyValidate extends Command
             SELECT COALESCE(SUM(paid_amount), 0) as total FROM `1_transactions`
             WHERE type = 'payment' AND deleted_at IS NULL
         ")->total;
-        $legacyDepositTotal = DB::connection('legacy')->selectOne("
-            SELECT COALESCE(SUM(amount), 0) as total FROM `1_transactions`
-            WHERE type = 'deposit' AND deleted_at IS NULL
-        ")->total;
         $currentPaymentTotal = DB::selectOne("
             SELECT COALESCE(SUM(amount), 0) as total FROM payments WHERE tenant_id = {$tenantId}
         ")->total;
 
-        $legacyTotal = $legacyPaymentTotal + $legacyDepositTotal;
-        $diff = abs($currentPaymentTotal - $legacyTotal);
+        $diff = abs($currentPaymentTotal - $legacyPaymentTotal);
         $status = $diff === 0 ? 'PASS' : 'WARN';
         $rows[] = [
             'Total payment amounts',
-            'Legacy: '.number_format($legacyTotal / 100, 2).' | Current: '.number_format($currentPaymentTotal / 100, 2),
+            'Legacy: '.number_format($legacyPaymentTotal / 100, 2).' | Current: '.number_format($currentPaymentTotal / 100, 2),
             $status,
         ];
         $this->trackResult('Financial', $status === 'PASS', $status === 'WARN',

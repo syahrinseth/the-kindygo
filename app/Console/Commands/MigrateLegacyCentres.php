@@ -88,6 +88,14 @@ class MigrateLegacyCentres extends Command
                     'tenant_id' => $tenantId,
                     'name' => $legacy->name,
                     'description' => null,
+                    'meta_data' => json_encode([
+                        'legacy_source_table' => '1_campuses',
+                        'legacy_id' => $legacy->id,
+                        'legacy_short_name' => $legacy->short_name ?: null,
+                        'legacy_status' => $legacy->status ?: null,
+                        'legacy_ssm_comp_name' => $legacy->ssm_comp_name ?: null,
+                        'legacy_ssm_no' => $legacy->ssm_no ?: null,
+                    ]),
                     'phone' => $legacy->no_phone ?: null,
                     'email' => null,
                     'address_1' => $legacy->add_1 ?: null,
@@ -95,7 +103,7 @@ class MigrateLegacyCentres extends Command
                     'postal_code' => $legacy->postcode ?: null,
                     'city' => $legacy->city ?: null,
                     'state' => StatusMapper::state(is_numeric($legacy->state) ? (int) $legacy->state : null),
-                    'created_at' => $legacy->created_at,
+                    'created_at' => $legacy->created_at ?? now(),
                     'updated_at' => $legacy->updated_at ?? now(),
                 ];
 
@@ -164,14 +172,7 @@ class MigrateLegacyCentres extends Command
                 $code = $legacy->short_name ?: Str::upper(Str::substr(Str::slug($legacy->name, ''), 0, 10));
                 $code = $this->ensureUniqueCode($code, $legacy->id, $existingCodes);
 
-                // Map campus_id: 0 or null → null (no campus)
-                $campusId = ($legacy->campus_id && $legacy->campus_id > 0) ? $legacy->campus_id : null;
-
-                // Validate campus exists if set
-                if ($campusId && ! DB::table('campuses')->where('id', $campusId)->exists()) {
-                    OrphanLogger::log('1_preschool', $legacy->id, "campus_id {$campusId} not found in campuses table", (array) $legacy);
-                    $campusId = null;
-                }
+                $campusId = $this->resolveCampusId($legacy, $tenantId, $dryRun);
 
                 // Map centre status (close → inactive, licensee → active)
                 $mappedStatus = StatusMapper::centreStatus($legacy->status);
@@ -246,6 +247,70 @@ class MigrateLegacyCentres extends Command
         ]);
 
         return Command::SUCCESS;
+    }
+
+    /**
+     * Resolve the campus for a legacy preschool.
+     */
+    private function resolveCampusId(object $legacy, int $tenantId, bool $dryRun): ?int
+    {
+        $legacyCampusId = is_numeric($legacy->campus_id) ? (int) $legacy->campus_id : 0;
+
+        if ($legacyCampusId > 0) {
+            if (DB::table('campuses')->where('id', $legacyCampusId)->where('tenant_id', $tenantId)->exists()) {
+                return $legacyCampusId;
+            }
+
+            OrphanLogger::log('1_preschool', $legacy->id, "campus_id {$legacyCampusId} not found in campuses table", (array) $legacy);
+
+            return null;
+        }
+
+        if ($dryRun) {
+            return null;
+        }
+
+        return $this->createOrFindGeneratedCampus($legacy, $tenantId);
+    }
+
+    /**
+     * Create one campus for a preschool that was not assigned to a legacy campus.
+     */
+    private function createOrFindGeneratedCampus(object $legacy, int $tenantId): int
+    {
+        $existingCampus = DB::table('campuses')
+            ->where('tenant_id', $tenantId)
+            ->orderBy('id')
+            ->get(['id', 'meta_data'])
+            ->first(function (object $campus) use ($legacy): bool {
+                return data_get(json_decode($campus->meta_data ?? '[]', true), 'legacy_preschool_id') === (int) $legacy->id;
+            });
+
+        if ($existingCampus) {
+            return $existingCampus->id;
+        }
+
+        $name = Str::limit("Legacy Campus — {$legacy->name}", 220, '');
+
+        return DB::table('campuses')->insertGetId([
+            'tenant_id' => $tenantId,
+            'name' => "{$name} ({$legacy->id})",
+            'description' => 'Created during legacy migration because the source preschool had no campus assignment.',
+            'meta_data' => json_encode([
+                'legacy_source_table' => '1_preschool',
+                'legacy_preschool_id' => (int) $legacy->id,
+                'generated_for_unassigned_centre' => true,
+            ]),
+            'phone' => $legacy->no_phone ?: null,
+            'email' => null,
+            'address_1' => $legacy->add_1 ?: null,
+            'address_2' => $legacy->add_2 ?: null,
+            'postal_code' => $legacy->postcode ?: null,
+            'city' => $legacy->city ?: null,
+            'state' => StatusMapper::state(is_numeric($legacy->state) ? (int) $legacy->state : null),
+            'created_at' => $legacy->created_at ?? now(),
+            'updated_at' => $legacy->updated_at ?? now(),
+        ]);
     }
 
     /**

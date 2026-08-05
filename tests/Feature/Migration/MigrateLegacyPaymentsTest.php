@@ -54,16 +54,14 @@ it('migrates legacy payment transactions to payments table', function () {
     expect($payment->description)->toBe('Payment 100');
 });
 
-it('migrates legacy deposit transactions to payments table', function () {
+it('does not migrate legacy deposit transactions to payments or invoice_payment', function () {
     $this->seedLegacyDeposits(startId: 200, count: 1, invoiceId: 1, parentId: 1, preschoolId: 1, amount: 5000);
 
     $this->artisan('migrate:legacy-payments', ['--tenant-id' => 1])
         ->assertSuccessful();
 
-    $payment = DB::table('payments')->where('id', 200)->first();
-    expect($payment)->not->toBeNull();
-    expect($payment->amount)->toBe(5000); // deposits use 'amount' field
-    expect($payment->description)->toBe('Deposit 200');
+    expect(DB::table('payments')->where('id', 200)->exists())->toBeFalse();
+    expect(DB::table('invoice_payment')->where('payment_id', 200)->exists())->toBeFalse();
 });
 
 it('preserves legacy transaction IDs as payment IDs', function () {
@@ -87,14 +85,38 @@ it('uses paid_amount for payment transactions', function () {
     expect($payment->amount)->toBe(25000);
 });
 
-it('uses amount field for deposit transactions', function () {
+it('reconciles previously migrated deposit payments and their pivots', function () {
     $this->seedLegacyDeposits(startId: 200, count: 1, invoiceId: 1, parentId: 1, amount: 8000);
 
+    DB::table('payments')->insert([
+        'id' => 200,
+        'tenant_id' => 1,
+        'user_id' => 1,
+        'gateway' => 'bank_transfer',
+        'reference_no' => 'DEP-200',
+        'status' => 'paid',
+        'amount' => 8000,
+        'meta' => json_encode(['legacy_type' => 'deposit']),
+        'paid_at' => now(),
+        'created_at' => now(),
+        'updated_at' => now(),
+    ]);
+    DB::table('invoice_payment')->insert([
+        'payment_id' => 200,
+        'invoice_id' => 1,
+        'amount' => 8000,
+        'created_at' => now(),
+        'updated_at' => now(),
+    ]);
+
+    $this->artisan('migrate:legacy-invoices', ['--tenant-id' => 1])
+        ->assertSuccessful();
     $this->artisan('migrate:legacy-payments', ['--tenant-id' => 1])
         ->assertSuccessful();
 
-    $payment = DB::table('payments')->where('id', 200)->first();
-    expect($payment->amount)->toBe(8000);
+    expect(DB::table('payments')->where('id', 200)->exists())->toBeFalse();
+    expect(DB::table('invoice_payment')->where('payment_id', 200)->exists())->toBeFalse();
+    expect(DB::table('invoice_items')->where('id', 200)->where('type', 'product')->exists())->toBeTrue();
 });
 
 // ──────────────────────────────────────────────
@@ -290,10 +312,10 @@ it('stores legacy metadata in meta JSON field', function () {
     $payment = DB::table('payments')->where('id', 100)->first();
     $meta = json_decode($payment->meta, true);
 
-    expect($meta['legacy_type'])->toBe('payment');
+    expect($meta['legacy']['transaction_type'])->toBe('payment');
     expect($meta['legacy_label'])->toBe('Payment 100');
     expect($meta['payment_by'])->toBe('Online');
-    expect($meta['payment_slip'])->toContain('payment_slips/100.jpg');
+    expect($meta['legacy']['payment_slip_path'])->toContain('payment_slips/100.jpg');
 });
 
 it('stores reference_no from legacy reference_id', function () {

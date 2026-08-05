@@ -318,8 +318,8 @@ it('migrates user role assignments to model_has_roles', function () {
     $this->artisan('migrate:legacy-users', ['--tenant-id' => 1])
         ->assertSuccessful();
 
-    $parentRoleId = DB::table('roles')->where('name', 'Parent')->value('id');
-    $adminRoleId = DB::table('roles')->where('name', 'Admin')->value('id');
+    $parentRoleId = DB::table('roles')->where('name', 'parent')->value('id');
+    $adminRoleId = DB::table('roles')->where('name', 'admin')->value('id');
 
     expect(DB::table('model_has_roles')
         ->where('role_id', $parentRoleId)
@@ -362,7 +362,7 @@ it('maps Account and Account Staff to Accountant role', function () {
     $this->artisan('migrate:legacy-users', ['--tenant-id' => 1])
         ->assertSuccessful();
 
-    $accountantRoleId = DB::table('roles')->where('name', 'Accountant')->value('id');
+    $accountantRoleId = DB::table('roles')->where('name', 'accountant')->value('id');
 
     expect(DB::table('model_has_roles')
         ->where('role_id', $accountantRoleId)

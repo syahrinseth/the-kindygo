@@ -55,7 +55,16 @@ class MigrateLegacyMedia extends Command
      */
     public function handle(): int
     {
-        $this->legacyBasePath = storage_path('app/kindygo-legacy/c136c9fde0ee46499ef6da5e15455449');
+        $legacyAppPath = rtrim((string) config('legacy-migration.app_path'), DIRECTORY_SEPARATOR);
+        $legacyWebsiteUuid = trim((string) config('legacy-migration.website_uuid'));
+
+        if ($legacyAppPath === '' || $legacyWebsiteUuid === '') {
+            $this->error('LEGACY_APP_PATH and LEGACY_WEBSITE_UUID must be configured.');
+
+            return Command::FAILURE;
+        }
+
+        $this->legacyBasePath = $legacyAppPath.'/storage/app/'.$legacyWebsiteUuid;
 
         if (! File::isDirectory($this->legacyBasePath)) {
             $this->error("Legacy media directory not found: {$this->legacyBasePath}");
@@ -416,7 +425,7 @@ class MigrateLegacyMedia extends Command
      * Step 4: Migrate payment proof media.
      *
      * Source: transactions/bills/payment_slips/{transaction_id}.{ext}
-     * The payment_slip path is stored in payments.meta JSON field.
+     * The payment_slip path is stored in payments.meta.legacy JSON field.
      * Target: Payment model media collection 'payment_proof'
      */
     private function migratePaymentProofMedia(bool $dryRun): int
@@ -437,10 +446,11 @@ class MigrateLegacyMedia extends Command
             return Command::SUCCESS;
         }
 
-        // Query payments that have a payment_slip path in their meta JSON
+        // Query payment transactions that have a payment_slip path in their legacy metadata.
         $query = Payment::withoutGlobalScopes()
             ->whereNotNull('meta')
-            ->whereRaw("JSON_EXTRACT(meta, '$.payment_slip') IS NOT NULL")
+            ->where('meta->legacy->transaction_type', 'payment')
+            ->whereNotNull('meta->legacy->payment_slip_path')
             ->where('id', '>', $startId)
             ->orderBy('id');
 
@@ -462,7 +472,7 @@ class MigrateLegacyMedia extends Command
                 }
 
                 $meta = is_array($payment->meta) ? $payment->meta : json_decode($payment->meta, true);
-                $paymentSlipPath = $meta['payment_slip'] ?? null;
+                $paymentSlipPath = data_get($meta, 'legacy.payment_slip_path');
 
                 if (empty($paymentSlipPath)) {
                     $this->counters['missing']++;

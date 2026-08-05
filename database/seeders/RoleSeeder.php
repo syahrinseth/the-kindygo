@@ -2,6 +2,7 @@
 
 namespace Database\Seeders;
 
+use App\Enums\ApplicationRole;
 use Illuminate\Database\Seeder;
 use Spatie\Permission\Models\Role;
 
@@ -13,10 +14,8 @@ class RoleSeeder extends Seeder
     public function run(): void
     {
         // You can add other roles here if needed
-        Role::create(['name' => 'Super Admin']);
-        Role::create(['name' => 'Admin']);
-        Role::create(['name' => 'Principal']);
-        Role::create(['name' => 'Teacher']);
-        Role::create(['name' => 'Parent']);
+        foreach (ApplicationRole::cases() as $role) {
+            Role::firstOrCreate(['name' => $role->value, 'guard_name' => 'web']);
+        }
     }
 }
