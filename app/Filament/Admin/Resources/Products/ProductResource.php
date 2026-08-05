@@ -155,14 +155,7 @@ class ProductResource extends Resource
 
                 TextColumn::make('type')
                     ->badge()
-                    ->color(fn (ProductType $state): string => match ($state) {
-                        ProductType::SERVICE => 'primary',
-                        ProductType::PRODUCT => 'secondary',
-                        ProductType::FEE => 'info',
-                        ProductType::PROGRAMME => 'success',
-                        ProductType::ANNUAL_FEE => 'danger',
-                        ProductType::OTHERS => 'gray',
-                    })
+                    ->color(fn (ProductType $state): string => $state->getBadgeColor())
                     ->formatStateUsing(fn (ProductType $state): string => $state->getDisplayName())
                     ->sortable(),
 

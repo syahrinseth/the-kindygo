@@ -86,6 +86,26 @@ enum ProductType: string
     }
 
     /**
+     * Get the Filament badge colour for the product type.
+     */
+    public function getBadgeColor(): string
+    {
+        return match ($this) {
+            self::SERVICE => 'primary',
+            self::PRODUCT => 'secondary',
+            self::FEE => 'info',
+            self::PROGRAMME => 'success',
+            self::ANNUAL_FEE => 'danger',
+            self::OTHERS => 'gray',
+            self::EVENT => 'info',
+            self::MERCHANDISE => 'secondary',
+            self::OVERTIME => 'warning',
+            self::STAYIN => 'primary',
+            self::DEPOSIT => 'danger',
+        };
+    }
+
+    /**
      * Get payment allocation explanation for this product type.
      */
     public function getPriorityExplanation(): string
