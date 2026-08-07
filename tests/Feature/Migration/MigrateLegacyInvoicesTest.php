@@ -443,6 +443,18 @@ it('supports start-id option to resume migration', function () {
     expect(DB::table('invoices')->where('id', 3)->exists())->toBeTrue();
 });
 
+it('supports items-start-id option to resume invoice item migration', function () {
+    $this->seedLegacyInvoices(3, parentId: 1, preschoolId: 1);
+    $this->seedLegacyBills(3, invoiceId: 1, childId: 1, productId: 1, parentId: 1, preschoolId: 1);
+
+    $this->artisan('migrate:legacy-invoices', ['--tenant-id' => 1, '--items-start-id' => 2])
+        ->assertSuccessful();
+
+    expect(DB::table('invoice_items')->where('id', 1)->exists())->toBeFalse();
+    expect(DB::table('invoice_items')->where('id', 2)->exists())->toBeTrue();
+    expect(DB::table('invoice_items')->where('id', 3)->exists())->toBeTrue();
+});
+
 // ──────────────────────────────────────────────
 // Migration Logs
 // ──────────────────────────────────────────────

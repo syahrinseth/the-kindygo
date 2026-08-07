@@ -20,7 +20,8 @@ class MigrateLegacyInvoices extends Command
                             {--chunk=500 : Number of records to process at once}
                             {--tenant-id=1 : Target tenant ID}
                             {--skip-existing : Skip records already migrated (faster re-runs)}
-                            {--start-id=0 : Start from a specific legacy ID (skips all records below this ID)}';
+                            {--start-id=0 : Start from a specific legacy invoice ID (skips all records below this ID)}
+                            {--items-start-id=0 : Start from a specific legacy transaction ID when migrating invoice items}';
 
     /**
      * The console command description.
@@ -331,6 +332,8 @@ class MigrateLegacyInvoices extends Command
             ->whereNull('deleted_at')
             ->count();
 
+        $itemsStartId = (int) $this->option('items-start-id');
+
         $logger->setTotalSource($totalCount);
         $this->info("Found {$totalCount} legacy bill and deposit transactions to migrate as invoice items.");
 
@@ -338,14 +341,33 @@ class MigrateLegacyInvoices extends Command
             $this->info('Skip-existing mode: will skip '.count($existingIds).' already-migrated items.');
         }
 
+        if ($itemsStartId > 0) {
+            $this->info("Starting invoice items from transaction ID {$itemsStartId} (skipping earlier records).");
+        }
+
         $bar = $this->output->createProgressBar($totalCount);
         $bar->start();
 
         // Load invoice period dates per-chunk to avoid memory exhaustion
-        DB::connection('legacy')
+        $query = DB::connection('legacy')
             ->table('1_transactions')
             ->whereIn('type', ['bill', 'deposit'])
-            ->whereNull('deleted_at')
+            ->whereNull('deleted_at');
+
+        if ($itemsStartId > 0) {
+            $query->where('id', '>=', $itemsStartId);
+
+            $skippedByStartId = DB::connection('legacy')
+                ->table('1_transactions')
+                ->whereIn('type', ['bill', 'deposit'])
+                ->whereNull('deleted_at')
+                ->where('id', '<', $itemsStartId)
+                ->count();
+            $bar->advance($skippedByStartId);
+            $logger->incrementSkipped($skippedByStartId);
+        }
+
+        $query
             ->orderBy('id')
             ->chunk($chunkSize, function ($legacyItems) use ($dryRun, $logger, $bar, $validInvoiceIds, $validProductIds, $validChildIds, $enrolmentLookup, $skipExisting, $existingIds) {
                 // Batch-load invoice period dates for this chunk
