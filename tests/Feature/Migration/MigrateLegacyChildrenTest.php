@@ -35,6 +35,25 @@ beforeEach(function () {
 // Core Child Migration
 // ──────────────────────────────────────────────
 
+it('supports process-level child ID ranges', function () {
+    $this->seedLegacyChildren(3, parentId: 1, preschoolId: 1, productId: 1);
+
+    $this->artisan('migrate:legacy-children', [
+        '--tenant-id' => 1,
+        '--end-id' => 2,
+    ])->assertSuccessful();
+
+    expect(DB::table('children')->whereIn('id', [1, 2])->count())->toBe(2)
+        ->and(DB::table('children')->where('id', 3)->exists())->toBeFalse();
+
+    $this->artisan('migrate:legacy-children', [
+        '--tenant-id' => 1,
+        '--start-id' => 2,
+    ])->assertSuccessful();
+
+    expect(DB::table('children')->where('id', 3)->exists())->toBeTrue();
+});
+
 it('migrates legacy children to children table', function () {
     $this->seedLegacyChildren(3, parentId: 1, preschoolId: 1, productId: 1);
 

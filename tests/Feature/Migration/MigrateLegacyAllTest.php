@@ -27,6 +27,22 @@ beforeEach(function () {
 // Full Orchestrator Tests
 // ──────────────────────────────────────────────
 
+it('fails preflight before importing when the target tenant is missing', function () {
+    DB::table('tenants')->where('id', 1)->delete();
+
+    $this->artisan('migrate:legacy', [
+        '--tenant-id' => 1,
+        '--skip-media' => true,
+        '--skip-validation' => true,
+        '--no-interaction' => true,
+    ])
+        ->expectsOutputToContain('Target tenant 1 does not exist')
+        ->assertFailed();
+
+    expect(DB::table('campuses')->count())->toBe(0)
+        ->and(DB::table('centres')->count())->toBe(0);
+});
+
 it('runs all phases successfully end-to-end', function () {
     $this->artisan('migrate:legacy', [
         '--tenant-id' => 1,

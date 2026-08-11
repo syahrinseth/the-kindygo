@@ -21,7 +21,12 @@ class MigrateLegacyInvoices extends Command
                             {--tenant-id=1 : Target tenant ID}
                             {--skip-existing : Skip records already migrated (faster re-runs)}
                             {--start-id=0 : Start from a specific legacy invoice ID (skips all records below this ID)}
-                            {--items-start-id=0 : Start from a specific legacy transaction ID when migrating invoice items}';
+                            {--end-id= : Stop after this legacy invoice ID}
+                            {--items-start-id=0 : Start from a specific legacy transaction ID when migrating invoice items}
+                            {--items-end-id= : Stop after this legacy transaction ID when migrating invoice items}
+                            {--skip-invoices : Skip invoice headers}
+                            {--skip-items : Skip invoice items}
+                            {--skip-recalculation : Skip invoice total recalculation until the final batch}';
 
     /**
      * The console command description.
@@ -45,20 +50,23 @@ class MigrateLegacyInvoices extends Command
 
         $this->info('Starting legacy invoices migration...');
 
-        // Step 1: Migrate invoices
-        $result = $this->migrateInvoices($tenantId, $chunkSize, $dryRun);
-        if ($result !== Command::SUCCESS) {
-            return $result;
+        if (! $this->option('skip-invoices')) {
+            $result = $this->migrateInvoices($tenantId, $chunkSize, $dryRun);
+            if ($result !== Command::SUCCESS) {
+                return $result;
+            }
         }
 
-        // Step 2: Migrate invoice items (bill and deposit transactions)
-        $result = $this->migrateInvoiceItems($chunkSize, $dryRun);
-        if ($result !== Command::SUCCESS) {
-            return $result;
+        if (! $this->option('skip-items')) {
+            $result = $this->migrateInvoiceItems($chunkSize, $dryRun);
+            if ($result !== Command::SUCCESS) {
+                return $result;
+            }
         }
 
-        // Step 3: Recalculate invoice totals from migrated items
-        $this->recalculateInvoiceTotals($tenantId, $chunkSize, $dryRun);
+        if (! $this->option('skip-recalculation')) {
+            $this->recalculateInvoiceTotals($tenantId, $chunkSize, $dryRun);
+        }
 
         $this->newLine();
         $this->info('Legacy invoices migration completed!');
@@ -88,6 +96,7 @@ class MigrateLegacyInvoices extends Command
 
         // Track used invoice numbers per centre to handle duplicates
         $usedNumbers = [];
+        $nextDuplicateSuffixes = [];
         if (! $dryRun) {
             DB::table('invoices')
                 ->where('tenant_id', $tenantId)
@@ -107,6 +116,7 @@ class MigrateLegacyInvoices extends Command
             ->count();
 
         $startId = (int) $this->option('start-id');
+        $endId = $this->option('end-id') !== null ? (int) $this->option('end-id') : null;
 
         $logger->setTotalSource($totalCount);
         $this->info("Found {$totalCount} legacy invoices to migrate.");
@@ -140,7 +150,11 @@ class MigrateLegacyInvoices extends Command
             $logger->incrementSkipped($skippedByStartId);
         }
 
-        $query->chunk($chunkSize, function ($legacyInvoices) use ($tenantId, $dryRun, $logger, $bar, $validUserIds, $validCentreIds, $skipExisting, $existingIds, &$usedNumbers) {
+        if ($endId !== null) {
+            $query->where('id', '<=', $endId);
+        }
+
+        $query->chunk($chunkSize, function ($legacyInvoices) use ($tenantId, $dryRun, $logger, $bar, $validUserIds, $validCentreIds, $skipExisting, $existingIds, &$usedNumbers, &$nextDuplicateSuffixes) {
             $batch = [];
 
             foreach ($legacyInvoices as $legacy) {
@@ -152,7 +166,7 @@ class MigrateLegacyInvoices extends Command
                         continue;
                     }
 
-                    $row = $this->buildInvoiceRow($legacy, $tenantId, $validUserIds, $validCentreIds, $usedNumbers);
+                    $row = $this->buildInvoiceRow($legacy, $tenantId, $validUserIds, $validCentreIds, $usedNumbers, $nextDuplicateSuffixes);
                     if ($row !== null) {
                         $batch[] = $row;
                         $logger->incrementMigrated();
@@ -197,9 +211,10 @@ class MigrateLegacyInvoices extends Command
      * @param  array<int, true>  $validUserIds
      * @param  array<int, true>  $validCentreIds
      * @param  array<string, bool>  $usedNumbers
+     * @param  array<string, int>  $nextDuplicateSuffixes
      * @return array<string, mixed>|null
      */
-    private function buildInvoiceRow(object $legacy, int $tenantId, array $validUserIds, array $validCentreIds, array &$usedNumbers): ?array
+    private function buildInvoiceRow(object $legacy, int $tenantId, array $validUserIds, array $validCentreIds, array &$usedNumbers, array &$nextDuplicateSuffixes): ?array
     {
         // Validate user_id
         $userId = $legacy->parent ? (int) $legacy->parent : null;
@@ -226,7 +241,7 @@ class MigrateLegacyInvoices extends Command
         }
 
         // Generate invoice number: replace spaces with hyphens
-        $invoiceNumber = $this->generateInvoiceNumber($legacy, $centreId, $usedNumbers);
+        $invoiceNumber = $this->generateInvoiceNumber($legacy, $centreId, $usedNumbers, $nextDuplicateSuffixes);
 
         // Map status
         $status = StatusMapper::invoiceStatus((int) ($legacy->payment_status ?? 1));
@@ -260,8 +275,9 @@ class MigrateLegacyInvoices extends Command
      * Replaces spaces with hyphens and handles duplicates/nulls.
      *
      * @param  array<string, bool>  $usedNumbers
+     * @param  array<string, int>  $nextDuplicateSuffixes
      */
-    private function generateInvoiceNumber(object $legacy, ?int $centreId, array &$usedNumbers): string
+    private function generateInvoiceNumber(object $legacy, ?int $centreId, array &$usedNumbers, array &$nextDuplicateSuffixes): string
     {
         if (empty($legacy->invoice_no)) {
             // Generate fallback for null invoice_no
@@ -280,7 +296,7 @@ class MigrateLegacyInvoices extends Command
         }
 
         // Handle duplicates by appending suffix
-        $suffix = 2;
+        $suffix = $nextDuplicateSuffixes[$key] ?? 2;
         do {
             $candidateNumber = $baseNumber.'-DUP'.$suffix;
             $candidateKey = $centreId.'|'.$candidateNumber;
@@ -288,6 +304,7 @@ class MigrateLegacyInvoices extends Command
         } while (isset($usedNumbers[$candidateKey]));
 
         $usedNumbers[$candidateKey] = true;
+        $nextDuplicateSuffixes[$key] = $suffix;
 
         return $candidateNumber;
     }
@@ -333,6 +350,7 @@ class MigrateLegacyInvoices extends Command
             ->count();
 
         $itemsStartId = (int) $this->option('items-start-id');
+        $itemsEndId = $this->option('items-end-id') !== null ? (int) $this->option('items-end-id') : null;
 
         $logger->setTotalSource($totalCount);
         $this->info("Found {$totalCount} legacy bill and deposit transactions to migrate as invoice items.");
@@ -365,6 +383,10 @@ class MigrateLegacyInvoices extends Command
                 ->count();
             $bar->advance($skippedByStartId);
             $logger->incrementSkipped($skippedByStartId);
+        }
+
+        if ($itemsEndId !== null) {
+            $query->where('id', '<=', $itemsEndId);
         }
 
         $query

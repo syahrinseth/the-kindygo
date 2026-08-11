@@ -182,7 +182,7 @@ class StatusMapper
             'TRG', 'TERENGGANU' => MalaysianState::TERENGGANU,
             'SBH', 'SABAH' => MalaysianState::SABAH,
             'SWK', 'SARAWAK' => MalaysianState::SARAWAK,
-            'KUL', 'KUALALUMPUR', 'WILAYAHPERSEKUTUAN', 'WILAYAHPERSEKETUAN', 'WILAYAHPERSEKUTUANKUALALUMPUR' => MalaysianState::WP_KUALA_LUMPUR,
+            'KUL', 'KUALALUMPUR', 'WPKUALALUMPUR', 'WILAYAHPERSEKUTUAN', 'WILAYAHPERSEKETUAN', 'WILAYAHPERSEKUTUANKUALALUMPUR' => MalaysianState::WP_KUALA_LUMPUR,
             'LBN', 'LABUAN', 'WILAYAHPERSEKUTUANLABUAN' => MalaysianState::WP_LABUAN,
             'PJY', 'PUTRAJAYA', 'WILAYAHPERSEKUTUANPUTRAJAYA' => MalaysianState::WP_PUTRAJAYA,
             default => null,

@@ -11,6 +11,7 @@ it('maps legacy state names and abbreviations to canonical codes', function () {
     expect(StatusMapper::state('SGR'))->toBe('10')
         ->and(StatusMapper::state('Selangor'))->toBe('10')
         ->and(StatusMapper::state('KUL'))->toBe('14')
+        ->and(StatusMapper::state('WP KUALA LUMPUR'))->toBe('14')
         ->and(StatusMapper::state('Wilayah Persekutuan'))->toBe('14')
         ->and(StatusMapper::state('Pulau Pinang'))->toBe('07');
 });

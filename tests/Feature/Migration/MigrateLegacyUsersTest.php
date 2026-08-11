@@ -1,5 +1,8 @@
 <?php
 
+use App\Enums\MalaysianState;
+use App\Models\UserAddress;
+use App\Models\UserOfficeInfo;
 use Illuminate\Support\Facades\DB;
 use Tests\Traits\LegacyMigrationTestHelper;
 
@@ -49,6 +52,48 @@ it('preserves legacy user IDs', function () {
             "User with ID {$i} should exist"
         );
     }
+});
+
+it('supports process-level user ID ranges without migrating roles', function () {
+    $this->seedLegacyUsers(3, 1);
+
+    $this->artisan('migrate:legacy-users', [
+        '--tenant-id' => 1,
+        '--end-id' => 2,
+        '--skip-roles' => true,
+    ])->assertSuccessful();
+
+    expect(DB::table('users')->whereIn('id', [1, 2])->count())->toBe(2)
+        ->and(DB::table('users')->where('id', 3)->exists())->toBeFalse()
+        ->and(DB::table('model_has_roles')->count())->toBe(0);
+
+    $this->artisan('migrate:legacy-users', [
+        '--tenant-id' => 1,
+        '--start-id' => 2,
+        '--skip-roles' => true,
+    ])->assertSuccessful();
+
+    expect(DB::table('users')->where('id', 3)->exists())->toBeTrue();
+});
+
+it('can migrate role assignments independently with bulk-safe inserts', function () {
+    $this->seedLegacyUsers(2, 1);
+    $this->seedLegacyModelHasRoles([
+        ['role_id' => 7, 'model_id' => 1],
+        ['role_id' => 2, 'model_id' => 2],
+    ]);
+
+    $this->artisan('migrate:legacy-users', [
+        '--tenant-id' => 1,
+        '--skip-roles' => true,
+    ])->assertSuccessful();
+
+    $this->artisan('migrate:legacy-users', [
+        '--tenant-id' => 1,
+        '--skip-users' => true,
+    ])->assertSuccessful();
+
+    expect(DB::table('model_has_roles')->count())->toBeGreaterThan(0);
 });
 
 it('preserves legacy hashed passwords without double-hashing', function () {
@@ -168,14 +213,20 @@ it('normalises legacy string state values during user migration', function () {
 
     DB::connection('legacy')->table('1_users')->where('id', 1)->update([
         'state' => 'SGR',
-        'company_state' => 'KUL',
+        'company_state' => 'WP KUALA LUMPUR',
+        'spouse_state' => 'Selangor',
+        'spouse_company_state' => 'KUL',
     ]);
 
     $this->artisan('migrate:legacy-users', ['--tenant-id' => 1])
         ->assertSuccessful();
 
     expect(DB::table('user_addresses')->where('user_id', 1)->value('state_code'))->toBe('10')
-        ->and(DB::table('user_office_infos')->where('user_id', 1)->value('office_state_code'))->toBe('14');
+        ->and(DB::table('user_office_infos')->where('user_id', 1)->value('office_state_code'))->toBe('14')
+        ->and(DB::table('family_members')->where('user_id', 1)->value('state_code'))->toBe('10')
+        ->and(DB::table('family_members')->where('user_id', 1)->value('office_state_code'))->toBe('14')
+        ->and(UserAddress::query()->where('user_id', 1)->firstOrFail()->state_code)->toBe(MalaysianState::SELANGOR)
+        ->and(UserOfficeInfo::query()->where('user_id', 1)->firstOrFail()->office_state_code)->toBe(MalaysianState::WP_KUALA_LUMPUR);
 });
 
 it('does not persist unknown legacy state values', function () {

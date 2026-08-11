@@ -12,13 +12,18 @@ beforeEach(function () {
 
 /**
  * Helper: run a full migration pipeline so validation has data to check.
+ *
+ * @param  array<string, mixed>  $legacyUserOverrides
  */
-function runFullMigration(): void
+function runFullMigration(array $legacyUserOverrides = []): void
 {
     test()->seedLegacyCampuses(1);
     test()->seedLegacyPreschools(2, 1);
     test()->seedLegacyRoles();
     test()->seedLegacyUsers(3, 1);
+    if ($legacyUserOverrides !== []) {
+        DB::connection('legacy')->table('1_users')->where('id', 1)->update($legacyUserOverrides);
+    }
     test()->seedLegacyProducts(2, [1]);
     test()->seedLegacyChildren(2, 1, 1, 1);
     test()->seedLegacyInvoices(2, 1, 1);
@@ -349,6 +354,34 @@ it('detects invalid enum values inserted directly', function () {
     $invalid = array_diff($allStatuses, $validStatuses);
     expect($invalid)->not->toBeEmpty();
     expect($invalid)->toContain('invalid_status');
+});
+
+it('fails validation when a migrated state value is not canonical', function () {
+    runFullMigration();
+
+    DB::table('user_addresses')
+        ->where('user_id', 1)
+        ->update(['state_code' => 'SGR']);
+
+    $this->artisan('migrate:legacy-validate', ['--tenant-id' => 1])
+        ->expectsOutputToContain('User address state codes')
+        ->assertFailed();
+});
+
+it('passes state validation after canonical legacy migration mapping', function () {
+    runFullMigration([
+        'state' => 'SGR',
+        'company_state' => 'WP KUALA LUMPUR',
+        'spouse_state' => 'Selangor',
+        'spouse_company_state' => 'KUL',
+    ]);
+
+    $validStateCodes = ['01', '02', '03', '04', '05', '06', '07', '08', '09', '10', '11', '12', '13', '14', '15', '16'];
+
+    expect(DB::table('user_addresses')->whereNotNull('state_code')->whereNotIn('state_code', $validStateCodes)->count())->toBe(0)
+        ->and(DB::table('user_office_infos')->whereNotNull('office_state_code')->whereNotIn('office_state_code', $validStateCodes)->count())->toBe(0)
+        ->and(DB::table('family_members')->whereNotNull('state_code')->whereNotIn('state_code', $validStateCodes)->count())->toBe(0)
+        ->and(DB::table('family_members')->whereNotNull('office_state_code')->whereNotIn('office_state_code', $validStateCodes)->count())->toBe(0);
 });
 
 // ──────────────────────────────────────────────

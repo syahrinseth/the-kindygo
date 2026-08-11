@@ -2,7 +2,9 @@
 
 namespace App\Console\Commands;
 
+use App\Enums\MalaysianState;
 use Illuminate\Console\Command;
+use Illuminate\Database\Query\Builder;
 use Illuminate\Support\Facades\DB;
 
 class MigrateLegacyValidate extends Command
@@ -448,8 +450,65 @@ class MigrateLegacyValidate extends Command
 
         $rows[] = ['Child enrolment statuses', implode(', ', array_map(fn ($s, $c) => "{$s}({$c})", array_keys($enrolmentStatuses), $enrolmentStatuses)), 'INFO'];
 
+        $validStateCodes = array_map(
+            fn (MalaysianState $state): string => $state->value,
+            MalaysianState::cases(),
+        );
+
+        $tenantUserIds = DB::table('tenant_user')
+            ->select('user_id')
+            ->where('tenant_id', $tenantId);
+
+        $stateChecks = [
+            'Campus state codes' => DB::table('campuses')->where('tenant_id', $tenantId),
+            'Centre state codes' => DB::table('centres')->where('tenant_id', $tenantId),
+            'User address state codes' => DB::table('user_addresses')->whereIn('user_id', clone $tenantUserIds),
+            'User office state codes' => DB::table('user_office_infos')->whereIn('user_id', clone $tenantUserIds),
+            'Family member state codes' => DB::table('family_members')->whereIn('user_id', clone $tenantUserIds),
+            'Family member office state codes' => DB::table('family_members')->whereIn('user_id', clone $tenantUserIds),
+        ];
+
+        $stateColumns = [
+            'Campus state codes' => 'state',
+            'Centre state codes' => 'state',
+            'User address state codes' => 'state_code',
+            'User office state codes' => 'office_state_code',
+            'Family member state codes' => 'state_code',
+            'Family member office state codes' => 'office_state_code',
+        ];
+
+        foreach ($stateChecks as $label => $query) {
+            $column = $stateColumns[$label];
+            $invalidValues = $this->invalidStateValues($query, $column, $validStateCodes);
+            $status = $invalidValues === [] ? 'PASS' : 'FAIL';
+            $displayValues = $invalidValues === [] ? 'All values canonical or null' : implode(', ', $invalidValues);
+
+            $rows[] = [$label, $displayValues, $status];
+            $this->trackResult(
+                'Enums',
+                $status === 'PASS',
+                false,
+                $status !== 'PASS' ? "{$label}: invalid values ".implode(', ', $invalidValues) : null,
+            );
+        }
+
         $this->table(['Check', 'Values', 'Status'], $rows);
         $this->newLine();
+    }
+
+    /**
+     * @param  array<int, string>  $validStateCodes
+     * @return array<int, string>
+     */
+    private function invalidStateValues(Builder $query, string $column, array $validStateCodes): array
+    {
+        return $query
+            ->whereNotNull($column)
+            ->whereNotIn($column, $validStateCodes)
+            ->distinct()
+            ->orderBy($column)
+            ->pluck($column)
+            ->all();
     }
 
     /**

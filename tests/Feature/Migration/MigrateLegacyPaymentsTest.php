@@ -39,6 +39,31 @@ beforeEach(function () {
 // Core Payment Migration
 // ──────────────────────────────────────────────
 
+it('supports bounded payment and pivot process ranges', function () {
+    $this->seedLegacyPayments(startId: 100, count: 3, invoiceId: 1, parentId: 1, preschoolId: 1, amount: 15000);
+
+    $this->artisan('migrate:legacy-payments', [
+        '--tenant-id' => 1,
+        '--end-id' => 101,
+        '--skip-pivots' => true,
+        '--skip-status-update' => true,
+    ])->assertSuccessful();
+
+    expect(DB::table('payments')->whereIn('id', [100, 101])->count())->toBe(2)
+        ->and(DB::table('payments')->where('id', 102)->exists())->toBeFalse()
+        ->and(DB::table('invoice_payment')->count())->toBe(0);
+
+    $this->artisan('migrate:legacy-payments', [
+        '--tenant-id' => 1,
+        '--end-id' => 101,
+        '--skip-payments' => true,
+        '--skip-status-update' => true,
+    ])->assertSuccessful();
+
+    expect(DB::table('invoice_payment')->whereIn('payment_id', [100, 101])->count())->toBe(2)
+        ->and(DB::table('invoice_payment')->where('payment_id', 102)->exists())->toBeFalse();
+});
+
 it('migrates legacy payment transactions to payments table', function () {
     $this->seedLegacyPayments(startId: 100, count: 2, invoiceId: 1, parentId: 1, preschoolId: 1, amount: 15000);
 

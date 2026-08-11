@@ -91,18 +91,17 @@ it('generates fallback number for null invoice_no', function () {
 });
 
 it('handles duplicate invoice numbers with DUP suffix', function () {
-    DB::connection('legacy')->table('1_invoices')->insert([
-        'id' => 1, 'parent' => 1, 'preschool' => 1,
-        'invoice_no' => 'INV-001', 'invoice_date' => '2025-01-01',
-        'payment_status' => 1, 'price' => 10000,
-        'created_at' => now(), 'updated_at' => now(),
-    ]);
-    DB::connection('legacy')->table('1_invoices')->insert([
-        'id' => 2, 'parent' => 1, 'preschool' => 1,
-        'invoice_no' => 'INV-001', 'invoice_date' => '2025-01-02',
-        'payment_status' => 1, 'price' => 20000,
-        'created_at' => now(), 'updated_at' => now(),
-    ]);
+    $invoices = [];
+    foreach (range(1, 25) as $id) {
+        $invoices[] = [
+            'id' => $id, 'parent' => 1, 'preschool' => 1,
+            'invoice_no' => 'INV-001', 'invoice_date' => '2025-01-01',
+            'payment_status' => 1, 'price' => 10000,
+            'created_at' => now(), 'updated_at' => now(),
+        ];
+    }
+
+    DB::connection('legacy')->table('1_invoices')->insert($invoices);
 
     $this->artisan('migrate:legacy-invoices', ['--tenant-id' => 1])
         ->assertSuccessful();
@@ -110,6 +109,7 @@ it('handles duplicate invoice numbers with DUP suffix', function () {
     $numbers = DB::table('invoices')->pluck('number')->toArray();
     expect($numbers)->toContain('INV-001');
     expect($numbers)->toContain('INV-001-DUP2');
+    expect($numbers)->toContain('INV-001-DUP25');
 });
 
 it('maps invoice statuses correctly', function () {
@@ -441,6 +441,32 @@ it('supports start-id option to resume migration', function () {
     expect(DB::table('invoices')->where('id', 1)->exists())->toBeFalse();
     expect(DB::table('invoices')->where('id', 2)->exists())->toBeTrue();
     expect(DB::table('invoices')->where('id', 3)->exists())->toBeTrue();
+});
+
+it('supports bounded header and item process ranges', function () {
+    $this->seedLegacyInvoices(3, parentId: 1, preschoolId: 1);
+    $this->seedLegacyBills(3, invoiceId: 1, childId: 1, productId: 1, parentId: 1, preschoolId: 1);
+
+    $this->artisan('migrate:legacy-invoices', [
+        '--tenant-id' => 1,
+        '--end-id' => 2,
+        '--skip-items' => true,
+        '--skip-recalculation' => true,
+    ])->assertSuccessful();
+
+    expect(DB::table('invoices')->whereIn('id', [1, 2])->count())->toBe(2)
+        ->and(DB::table('invoices')->where('id', 3)->exists())->toBeFalse()
+        ->and(DB::table('invoice_items')->count())->toBe(0);
+
+    $this->artisan('migrate:legacy-invoices', [
+        '--tenant-id' => 1,
+        '--skip-invoices' => true,
+        '--items-end-id' => 2,
+        '--skip-recalculation' => true,
+    ])->assertSuccessful();
+
+    expect(DB::table('invoice_items')->whereIn('id', [1, 2])->count())->toBe(2)
+        ->and(DB::table('invoice_items')->where('id', 3)->exists())->toBeFalse();
 });
 
 it('supports items-start-id option to resume invoice item migration', function () {

@@ -3,6 +3,8 @@
 namespace App\Console\Commands;
 
 use Illuminate\Console\Command;
+use Illuminate\Support\Facades\DB;
+use Throwable;
 
 class MigrateLegacyAll extends Command
 {
@@ -13,7 +15,7 @@ class MigrateLegacyAll extends Command
      */
     protected $signature = 'migrate:legacy
                             {--dry-run : Run all phases in dry-run mode}
-                            {--chunk=2000 : Number of records to process per chunk}
+                            {--chunk=500 : Number of records to process per chunk}
                             {--media-chunk=50 : Number of media records to process per chunk}
                             {--media-start-id=0 : Resume media migration after this record ID}
                             {--media-memory-limit=512M : PHP memory limit used by the media migration}
@@ -54,6 +56,10 @@ class MigrateLegacyAll extends Command
         $skipValidation = $this->option('skip-validation');
         $fromPhase = (int) $this->option('from-phase');
         $toPhase = (int) $this->option('to-phase');
+
+        if (! $this->passesPreflight((int) $tenantId)) {
+            return Command::FAILURE;
+        }
 
         $this->buildPhaseList($dryRun, $chunkSize, $mediaChunkSize, $mediaStartId, $mediaMemoryLimit, $tenantId, $skipExisting, $skipMedia, $skipValidation);
 
@@ -137,6 +143,29 @@ class MigrateLegacyAll extends Command
         $this->info('All migration phases completed successfully!');
 
         return Command::SUCCESS;
+    }
+
+    /**
+     * Verify required target and source dependencies before importing anything.
+     */
+    private function passesPreflight(int $tenantId): bool
+    {
+        if (! DB::table('tenants')->where('id', $tenantId)->exists()) {
+            $this->error("Target tenant {$tenantId} does not exist. Run the legacy migration bootstrap seeder first.");
+
+            return false;
+        }
+
+        try {
+            DB::connection('legacy')->getPdo();
+            DB::connection('legacy')->table('1_users')->limit(1)->exists();
+        } catch (Throwable $exception) {
+            $this->error('Legacy database preflight failed: '.$exception->getMessage());
+
+            return false;
+        }
+
+        return true;
     }
 
     /**

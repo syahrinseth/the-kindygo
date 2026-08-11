@@ -21,7 +21,11 @@ class MigrateLegacyPayments extends Command
                             {--chunk=2000 : Number of records to process at once}
                             {--tenant-id=1 : Target tenant ID}
                             {--skip-existing : Skip records already migrated (faster re-runs)}
-                            {--start-id=0 : Start from a specific legacy ID (skips all records below this ID)}';
+                            {--start-id=0 : Start from a specific legacy ID (skips all records below this ID)}
+                            {--end-id= : Stop after this legacy transaction ID}
+                            {--skip-payments : Skip payment records}
+                            {--skip-pivots : Skip invoice-payment pivot records}
+                            {--skip-status-update : Skip invoice status updates until the final batch}';
 
     /**
      * The console command description.
@@ -45,20 +49,23 @@ class MigrateLegacyPayments extends Command
 
         $this->info('Starting legacy payments migration...');
 
-        // Step 1: Reconcile prior deposit imports, then migrate payment transactions.
-        $result = $this->migratePayments($tenantId, $chunkSize, $dryRun);
-        if ($result !== Command::SUCCESS) {
-            return $result;
+        if (! $this->option('skip-payments')) {
+            $result = $this->migratePayments($tenantId, $chunkSize, $dryRun);
+            if ($result !== Command::SUCCESS) {
+                return $result;
+            }
         }
 
-        // Step 2: Create invoice_payment pivot entries
-        $result = $this->migrateInvoicePaymentPivot($chunkSize, $dryRun);
-        if ($result !== Command::SUCCESS) {
-            return $result;
+        if (! $this->option('skip-pivots')) {
+            $result = $this->migrateInvoicePaymentPivot($chunkSize, $dryRun);
+            if ($result !== Command::SUCCESS) {
+                return $result;
+            }
         }
 
-        // Step 3: Update invoice statuses based on payments received
-        $this->updateInvoiceStatusesFromPayments($tenantId, $dryRun);
+        if (! $this->option('skip-status-update')) {
+            $this->updateInvoiceStatusesFromPayments($tenantId, $dryRun);
+        }
 
         $this->newLine();
         $this->info('Legacy payments migration completed!');
@@ -77,6 +84,7 @@ class MigrateLegacyPayments extends Command
         $logger = new MigrationLogger('phase_3b_payments', '1_transactions', 'payments');
         $skipExisting = $this->option('skip-existing');
         $startId = (int) $this->option('start-id');
+        $endId = $this->option('end-id') !== null ? (int) $this->option('end-id') : null;
 
         $this->reconcilePreviouslyMigratedDeposits($dryRun);
 
@@ -125,6 +133,10 @@ class MigrateLegacyPayments extends Command
                 ->count();
             $bar->advance($skippedByStartId);
             $logger->incrementSkipped($skippedByStartId);
+        }
+
+        if ($endId !== null) {
+            $query->where('id', '<=', $endId);
         }
 
         $query->chunk($chunkSize, function ($legacyTransactions) use ($tenantId, $dryRun, $logger, $bar, $validUserIds, $skipExisting, $existingIds) {
@@ -358,6 +370,7 @@ class MigrateLegacyPayments extends Command
         $logger = new MigrationLogger('phase_3b_pivot', '1_transactions', 'invoice_payment');
         $skipExisting = $this->option('skip-existing');
         $startId = (int) $this->option('start-id');
+        $endId = $this->option('end-id') !== null ? (int) $this->option('end-id') : null;
 
         // Pre-load valid payment IDs and invoice IDs for FK validation
         $validPaymentIds = array_flip(DB::table('payments')->pluck('id')->toArray());
@@ -412,6 +425,10 @@ class MigrateLegacyPayments extends Command
                 ->count();
             $bar->advance($skippedByStartId);
             $logger->incrementSkipped($skippedByStartId);
+        }
+
+        if ($endId !== null) {
+            $query->where('id', '<=', $endId);
         }
 
         $query->chunk($chunkSize, function ($legacyTransactions) use ($dryRun, $logger, $bar, $validPaymentIds, $validInvoiceIds, $skipExisting, $existingPivots) {

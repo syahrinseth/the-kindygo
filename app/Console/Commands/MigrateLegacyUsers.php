@@ -19,7 +19,11 @@ class MigrateLegacyUsers extends Command
                             {--dry-run : Run without making changes}
                             {--chunk=500 : Number of records to process at once}
                             {--tenant-id=1 : Target tenant ID}
-                            {--skip-existing : Skip users already migrated (faster re-runs)}';
+                            {--start-id=0 : Migrate users after this legacy user ID}
+                            {--end-id= : Migrate users up to and including this legacy user ID}
+                            {--skip-existing : Skip users already migrated (faster re-runs)}
+                            {--skip-users : Skip user records and migrate role assignments only}
+                            {--skip-roles : Skip role assignments for process-level user batching}';
 
     /**
      * The console command description.
@@ -43,14 +47,16 @@ class MigrateLegacyUsers extends Command
 
         $this->info('Starting legacy users migration...');
 
-        // Step 1: Migrate user records
-        $result = $this->migrateUsers($tenantId, $chunkSize, $dryRun);
-        if ($result !== Command::SUCCESS) {
-            return $result;
+        if (! $this->option('skip-users')) {
+            $result = $this->migrateUsers($tenantId, $chunkSize, $dryRun);
+            if ($result !== Command::SUCCESS) {
+                return $result;
+            }
         }
 
-        // Step 2: Migrate roles
-        $this->migrateRoles($dryRun);
+        if (! $this->option('skip-roles')) {
+            $this->migrateRoles($dryRun);
+        }
 
         $this->newLine();
         $this->info('Legacy users migration completed!');
@@ -68,14 +74,19 @@ class MigrateLegacyUsers extends Command
 
         $logger = new MigrationLogger('phase_2a', '1_users', 'users');
         $skipExisting = $this->option('skip-existing');
+        $startId = (int) $this->option('start-id');
+        $endId = $this->option('end-id') !== null ? (int) $this->option('end-id') : null;
 
         // Pre-load existing user IDs if skipping
         $existingUserIds = $skipExisting ? DB::table('users')->pluck('id')->toArray() : [];
 
-        $totalCount = DB::connection('legacy')
+        $legacyUsersQuery = DB::connection('legacy')
             ->table('1_users')
             ->whereNull('deleted_at')
-            ->count();
+            ->where('id', '>', $startId)
+            ->when($endId !== null, fn ($query) => $query->where('id', '<=', $endId));
+
+        $totalCount = (clone $legacyUsersQuery)->count();
 
         $logger->setTotalSource($totalCount);
         $this->info("Found {$totalCount} legacy users to migrate.");
@@ -90,9 +101,7 @@ class MigrateLegacyUsers extends Command
         // Pre-load valid centre IDs for validation
         $validCentreIds = DB::table('centres')->pluck('id')->toArray();
 
-        DB::connection('legacy')
-            ->table('1_users')
-            ->whereNull('deleted_at')
+        $legacyUsersQuery
             ->orderBy('id')
             ->chunk($chunkSize, function ($legacyUsers) use ($tenantId, $dryRun, $logger, $bar, $validCentreIds, $skipExisting, $existingUserIds) {
                 foreach ($legacyUsers as $legacy) {
@@ -482,7 +491,7 @@ class MigrateLegacyUsers extends Command
 
         $logger = new MigrationLogger('phase_2a', '1_model_has_roles', 'model_has_roles');
 
-        // Get all legacy role assignments for non-deleted users
+        // Get all legacy role assignments for non-deleted users.
         $legacyRoles = DB::connection('legacy')
             ->table('1_model_has_roles')
             ->join('1_users', '1_users.id', '=', '1_model_has_roles.model_id')
@@ -502,6 +511,8 @@ class MigrateLegacyUsers extends Command
 
         $bar = $this->output->createProgressBar($legacyRoles->count());
         $bar->start();
+
+        $assignments = [];
 
         foreach ($legacyRoles as $legacyRole) {
             try {
@@ -525,20 +536,14 @@ class MigrateLegacyUsers extends Command
                 }
 
                 if (! $dryRun) {
-                    // Check if assignment already exists (avoid duplicate key)
-                    $exists = DB::table('model_has_roles')
-                        ->where('role_id', $targetRoleId)
-                        ->where('model_type', 'App\\Models\\User')
-                        ->where('model_id', $legacyRole->model_id)
-                        ->exists();
+                    $assignment = [
+                        'role_id' => $targetRoleId,
+                        'model_type' => 'App\\Models\\User',
+                        'model_id' => $legacyRole->model_id,
+                    ];
 
-                    if (! $exists) {
-                        DB::table('model_has_roles')->insert([
-                            'role_id' => $targetRoleId,
-                            'model_type' => 'App\\Models\\User',
-                            'model_id' => $legacyRole->model_id,
-                        ]);
-                    }
+                    $assignmentKey = implode(':', $assignment);
+                    $assignments[$assignmentKey] = $assignment;
                 }
 
                 $logger->incrementMigrated();
@@ -549,6 +554,12 @@ class MigrateLegacyUsers extends Command
             }
 
             $bar->advance();
+        }
+
+        if (! $dryRun) {
+            foreach (array_chunk(array_values($assignments), 500) as $assignmentChunk) {
+                DB::table('model_has_roles')->insertOrIgnore($assignmentChunk);
+            }
         }
 
         $bar->finish();

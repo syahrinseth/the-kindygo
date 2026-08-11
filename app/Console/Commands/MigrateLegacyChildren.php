@@ -21,6 +21,8 @@ class MigrateLegacyChildren extends Command
                             {--dry-run : Run without making changes}
                             {--chunk=500 : Number of records to process at once}
                             {--tenant-id=1 : Target tenant ID}
+                            {--start-id=0 : Migrate children after this legacy child ID}
+                            {--end-id= : Migrate children up to and including this legacy child ID}
                             {--skip-existing : Skip children already migrated (faster re-runs)}';
 
     /**
@@ -79,16 +81,21 @@ class MigrateLegacyChildren extends Command
 
         $logger = new MigrationLogger('phase_2b', '1_child', 'children');
         $skipExisting = $this->option('skip-existing');
+        $startId = (int) $this->option('start-id');
+        $endId = $this->option('end-id') !== null ? (int) $this->option('end-id') : null;
 
         // Pre-load existing child IDs if skipping (include soft-deleted)
         $existingChildIds = $skipExisting
             ? DB::table('children')->pluck('id')->toArray()
             : [];
 
-        // NOTE: Children include soft-deleted records (unlike other tables)
-        $totalCount = DB::connection('legacy')
+        // NOTE: Children include soft-deleted records (unlike other tables).
+        $legacyChildrenQuery = DB::connection('legacy')
             ->table('1_child')
-            ->count();
+            ->where('id', '>', $startId)
+            ->when($endId !== null, fn ($query) => $query->where('id', '<=', $endId));
+
+        $totalCount = (clone $legacyChildrenQuery)->count();
 
         $logger->setTotalSource($totalCount);
         $this->info("Found {$totalCount} legacy children to migrate (including soft-deleted).");
@@ -105,8 +112,7 @@ class MigrateLegacyChildren extends Command
         $validProductIds = DB::table('products')->pluck('id')->toArray();
         $validUserIds = DB::table('users')->pluck('id')->toArray();
 
-        DB::connection('legacy')
-            ->table('1_child')
+        $legacyChildrenQuery
             ->orderBy('id')
             ->chunk($chunkSize, function ($legacyChildren) use ($tenantId, $dryRun, $logger, $bar, $validCentreIds, $validProductIds, $validUserIds, $skipExisting, $existingChildIds) {
                 foreach ($legacyChildren as $legacy) {
