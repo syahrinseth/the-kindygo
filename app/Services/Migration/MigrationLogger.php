@@ -6,6 +6,8 @@ use Illuminate\Support\Facades\DB;
 
 class MigrationLogger
 {
+    private const MAX_RECORDED_ERRORS = 100;
+
     protected int $logId;
 
     public function __construct(
@@ -65,16 +67,18 @@ class MigrationLogger
     {
         $log = DB::table('migration_logs')->where('id', $this->logId)->first();
         $errors = json_decode($log->errors ?? '[]', true);
-        $errors[] = [
-            'message' => $message,
-            'source_id' => $sourceId,
-            'timestamp' => now()->toIso8601String(),
-        ];
+        if (count($errors) < self::MAX_RECORDED_ERRORS) {
+            $errors[] = [
+                'message' => $message,
+                'source_id' => $sourceId,
+                'timestamp' => now()->toIso8601String(),
+            ];
+        }
 
         DB::table('migration_logs')
             ->where('id', $this->logId)
             ->update([
-                'total_errors' => count($errors),
+                'total_errors' => ((int) $log->total_errors) + 1,
                 'errors' => json_encode($errors),
                 'updated_at' => now(),
             ]);

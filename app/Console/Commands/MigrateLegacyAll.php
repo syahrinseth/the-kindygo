@@ -14,7 +14,11 @@ class MigrateLegacyAll extends Command
     protected $signature = 'migrate:legacy
                             {--dry-run : Run all phases in dry-run mode}
                             {--chunk=2000 : Number of records to process per chunk}
+                            {--media-chunk=50 : Number of media records to process per chunk}
+                            {--media-start-id=0 : Resume media migration after this record ID}
+                            {--media-memory-limit=512M : PHP memory limit used by the media migration}
                             {--tenant-id=1 : Target tenant ID}
+                            {--skip-existing : Skip media records that already have media attached}
                             {--skip-media : Skip media migration (Phase 4)}
                             {--skip-validation : Skip validation (Phase 5)}
                             {--from-phase=1 : Start from a specific phase (1-5)}
@@ -41,13 +45,17 @@ class MigrateLegacyAll extends Command
     {
         $dryRun = $this->option('dry-run');
         $chunkSize = $this->option('chunk');
+        $mediaChunkSize = $this->option('media-chunk');
+        $mediaStartId = $this->option('media-start-id');
+        $mediaMemoryLimit = $this->option('media-memory-limit');
         $tenantId = $this->option('tenant-id');
+        $skipExisting = $this->option('skip-existing');
         $skipMedia = $this->option('skip-media');
         $skipValidation = $this->option('skip-validation');
         $fromPhase = (int) $this->option('from-phase');
         $toPhase = (int) $this->option('to-phase');
 
-        $this->buildPhaseList($dryRun, $chunkSize, $tenantId, $skipMedia, $skipValidation);
+        $this->buildPhaseList($dryRun, $chunkSize, $mediaChunkSize, $mediaStartId, $mediaMemoryLimit, $tenantId, $skipExisting, $skipMedia, $skipValidation);
 
         $this->newLine();
         $this->info('==============================================');
@@ -61,6 +69,7 @@ class MigrateLegacyAll extends Command
         $this->info("Phases: {$fromPhase} to {$toPhase}");
         $this->info("Tenant ID: {$tenantId}");
         $this->info("Chunk size: {$chunkSize}");
+        $this->info("Media chunk size: {$mediaChunkSize}");
         $this->newLine();
 
         $totalPhases = count($this->phases);
@@ -136,7 +145,11 @@ class MigrateLegacyAll extends Command
     private function buildPhaseList(
         bool $dryRun,
         string $chunkSize,
+        string $mediaChunkSize,
+        string $mediaStartId,
+        string $mediaMemoryLimit,
         string $tenantId,
+        bool $skipExisting,
         bool $skipMedia,
         bool $skipValidation,
     ): void {
@@ -204,7 +217,10 @@ class MigrateLegacyAll extends Command
                 'phase' => 4,
                 'command' => 'migrate:legacy-media',
                 'options' => array_filter([
-                    '--chunk' => $chunkSize,
+                    '--chunk' => $mediaChunkSize,
+                    '--start-id' => $mediaStartId,
+                    '--memory-limit' => $mediaMemoryLimit,
+                    '--skip-existing' => $skipExisting ?: null,
                     '--dry-run' => $dryRun ?: null,
                 ], fn ($v) => $v !== null),
                 'description' => 'Media — Children, Users, Family Members, Payment Proof',

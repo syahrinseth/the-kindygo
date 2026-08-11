@@ -21,8 +21,9 @@ class MigrateLegacyMedia extends Command
     protected $signature = 'migrate:legacy-media
                             {--dry-run : Run without making changes}
                             {--step= : Run only a specific step (1=children, 2=users, 3=family-members, 4=payment-proof)}
-                            {--chunk=500 : Number of records to process at once}
+                            {--chunk=50 : Number of records to process at once (maximum 500)}
                             {--start-id=0 : Start from a specific ID (skips all records below this ID)}
+                            {--memory-limit=512M : PHP memory limit for this migration process}
                             {--skip-existing : Skip records that already have media attached}';
 
     /**
@@ -55,6 +56,10 @@ class MigrateLegacyMedia extends Command
      */
     public function handle(): int
     {
+        if (! $this->configureRuntimeLimits()) {
+            return Command::FAILURE;
+        }
+
         $legacyAppPath = rtrim((string) config('legacy-migration.app_path'), DIRECTORY_SEPARATOR);
         $legacyWebsiteUuid = trim((string) config('legacy-migration.website_uuid'));
 
@@ -80,6 +85,7 @@ class MigrateLegacyMedia extends Command
         }
 
         $this->info('Starting legacy media migration...');
+        $this->info('Chunk size: '.$this->mediaChunkSize().'; memory limit: '.ini_get('memory_limit').'.');
         $this->newLine();
 
         $steps = $step ? [(int) $step] : [1, 2, 3, 4];
@@ -146,7 +152,7 @@ class MigrateLegacyMedia extends Command
         $bar = $this->output->createProgressBar($totalChildren);
         $bar->start();
 
-        $query->chunk($chunkSize, function ($children) use ($mediaMapping, $childrenDir, $dryRun, $skipExisting, $logger, $bar) {
+        $query->chunkById($chunkSize, function ($children) use ($mediaMapping, $childrenDir, $dryRun, $skipExisting, $logger, $bar) {
             foreach ($children as $child) {
                 $this->counters['processed']++;
                 $childDir = $childrenDir.'/'.$child->id.'/profile';
@@ -201,6 +207,8 @@ class MigrateLegacyMedia extends Command
 
                 $bar->advance();
             }
+
+            $this->releaseBatchMemory($children);
         });
 
         $bar->finish();
@@ -252,7 +260,7 @@ class MigrateLegacyMedia extends Command
         $bar = $this->output->createProgressBar($totalUsers);
         $bar->start();
 
-        $query->chunk($chunkSize, function ($users) use ($mediaMapping, $usersDir, $dryRun, $skipExisting, $logger, $bar) {
+        $query->chunkById($chunkSize, function ($users) use ($mediaMapping, $usersDir, $dryRun, $skipExisting, $logger, $bar) {
             foreach ($users as $user) {
                 $this->counters['processed']++;
                 $userDir = $usersDir.'/'.$user->id.'/profile';
@@ -305,6 +313,8 @@ class MigrateLegacyMedia extends Command
 
                 $bar->advance();
             }
+
+            $this->releaseBatchMemory($users);
         });
 
         $bar->finish();
@@ -356,7 +366,7 @@ class MigrateLegacyMedia extends Command
         $bar = $this->output->createProgressBar($totalFamilyMembers);
         $bar->start();
 
-        $query->chunk($chunkSize, function ($familyMembers) use ($mediaMapping, $usersDir, $dryRun, $skipExisting, $logger, $bar) {
+        $query->chunkById($chunkSize, function ($familyMembers) use ($mediaMapping, $usersDir, $dryRun, $skipExisting, $logger, $bar) {
             foreach ($familyMembers as $familyMember) {
                 $this->counters['processed']++;
 
@@ -411,6 +421,8 @@ class MigrateLegacyMedia extends Command
 
                 $bar->advance();
             }
+
+            $this->releaseBatchMemory($familyMembers);
         });
 
         $bar->finish();
@@ -460,7 +472,7 @@ class MigrateLegacyMedia extends Command
         $bar = $this->output->createProgressBar($totalPayments);
         $bar->start();
 
-        $query->chunk($chunkSize, function ($payments) use ($paymentSlipsDir, $dryRun, $skipExisting, $logger, $bar) {
+        $query->chunkById($chunkSize, function ($payments) use ($paymentSlipsDir, $dryRun, $skipExisting, $logger, $bar) {
             foreach ($payments as $payment) {
                 $this->counters['processed']++;
 
@@ -525,6 +537,8 @@ class MigrateLegacyMedia extends Command
 
                 $bar->advance();
             }
+
+            $this->releaseBatchMemory($payments);
         });
 
         $bar->finish();
@@ -588,6 +602,61 @@ class MigrateLegacyMedia extends Command
         }
 
         return null;
+    }
+
+    /**
+     * Configure safeguards for synchronous media conversion work.
+     */
+    private function configureRuntimeLimits(): bool
+    {
+        $chunkSize = $this->mediaChunkSize();
+        if ($chunkSize < 1 || $chunkSize > 500) {
+            $this->error('The --chunk option must be an integer between 1 and 500.');
+
+            return false;
+        }
+
+        $memoryLimit = (string) $this->option('memory-limit');
+        if (! preg_match('/^\\d+[KMG]$/i', $memoryLimit)) {
+            $this->error('The --memory-limit option must use K, M, or G units, for example 512M.');
+
+            return false;
+        }
+
+        if (ini_set('memory_limit', $memoryLimit) === false) {
+            $this->error("Unable to set the PHP memory limit to {$memoryLimit}.");
+
+            return false;
+        }
+
+        return true;
+    }
+
+    private function mediaChunkSize(): int
+    {
+        return (int) $this->option('chunk');
+    }
+
+    /**
+     * @param  iterable<object>  $models
+     */
+    private function releaseBatchMemory(iterable $models): void
+    {
+        foreach ($models as $model) {
+            if (method_exists($model, 'unsetRelations')) {
+                $model->unsetRelations();
+            }
+        }
+
+        unset($models);
+        gc_collect_cycles();
+
+        $this->newLine();
+        $this->line(sprintf(
+            'Memory — current: %.1f MiB; peak: %.1f MiB.',
+            memory_get_usage(true) / 1024 / 1024,
+            memory_get_peak_usage(true) / 1024 / 1024,
+        ));
     }
 
     /**
