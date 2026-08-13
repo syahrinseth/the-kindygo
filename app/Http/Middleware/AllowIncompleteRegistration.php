@@ -26,13 +26,17 @@ class AllowIncompleteRegistration
 
         $user = auth()->user();
 
-        // Allow authenticated users with incomplete profiles to continue registration
-        if (! $user->profile_completed) {
+        // Admin roles always use the admin panel, even if they also have the Parent role.
+        if ($user->isAdmin()) {
+            return redirect('/admin');
+        }
+
+        // Only incomplete Parent users may continue registration.
+        if ($user->requiresParentRegistration()) {
             return $next($request);
         }
 
-        // Redirect authenticated users with completed profiles to appropriate dashboard
-        // Let the root route middleware handle role-based routing logic
+        // Let the root route choose the appropriate destination for everyone else.
         return redirect('/');
     }
 }

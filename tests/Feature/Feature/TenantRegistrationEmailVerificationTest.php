@@ -7,10 +7,13 @@ use Illuminate\Auth\Notifications\VerifyEmail;
 use Illuminate\Support\Facades\Notification;
 use Illuminate\Support\Facades\URL;
 use Livewire\Livewire;
+use Spatie\Permission\Models\Role;
 
 uses()->group('registration', 'email-verification');
 
 beforeEach(function () {
+    Role::firstOrCreate(['name' => 'parent', 'guard_name' => 'web']);
+
     $this->tenant = Tenant::factory()->create([
         'name' => 'Test Kindergarten',
         'slug' => 'test-kindergarten',
@@ -47,6 +50,7 @@ test('verification notice page is displayed to unverified users', function () {
         'registration_step' => 1,
         'profile_completed' => false,
     ]);
+    $user->assignRole('parent');
     $user->tenants()->attach($this->tenant);
 
     $response = $this->actingAs($user)->get(route('verification.notice'));
@@ -79,6 +83,7 @@ test('user can verify email and continue to step 2', function () {
         'registration_step' => 1,
         'profile_completed' => false,
     ]);
+    $user->assignRole('parent');
     $user->tenants()->attach($this->tenant);
     $user->centres()->attach($this->centre);
 
@@ -106,6 +111,7 @@ test('unverified user cannot access step 2', function () {
         'registration_step' => 2, // Set to step 2 to allow checking
         'profile_completed' => false,
     ]);
+    $user->assignRole('parent');
     $user->tenants()->attach($this->tenant);
     $user->centres()->attach($this->centre);
 
@@ -123,6 +129,7 @@ test('unverified user is redirected to verification notice when accessing wizard
         'registration_step' => 1,
         'profile_completed' => false,
     ]);
+    $user->assignRole('parent');
     $user->tenants()->attach($this->tenant);
 
     // Since mount() triggers redirect, test via HTTP instead
@@ -139,6 +146,7 @@ test('verified user can proceed to step 2', function () {
         'registration_step' => 1,
         'profile_completed' => false,
     ]);
+    $user->assignRole('parent');
     $user->tenants()->attach($this->tenant);
     $user->centres()->attach($this->centre);
 
@@ -155,6 +163,7 @@ test('user can edit email by returning to step 1', function () {
         'registration_step' => 1,
         'profile_completed' => false,
     ]);
+    $user->assignRole('parent');
     $user->tenants()->attach($this->tenant);
     $user->centres()->attach($this->centre);
 

@@ -23,8 +23,8 @@ class EnsureProfileCompleted
             return $next($request);
         }
 
-        // Skip check if user is not a Parent
-        if (! $user->hasRole('parent')) {
+        // Only incomplete Parent users without an admin role use the registration wizard.
+        if (! $user->requiresParentRegistration()) {
             return $next($request);
         }
 
@@ -44,27 +44,19 @@ class EnsureProfileCompleted
             return $next($request);
         }
 
-        // Check if profile is not completed
-        if (! $user->profile_completed) {
-            // Get current registration step
-            $currentStep = $user->getCurrentRegistrationStep();
+        // If user has a current tenant, redirect to wizard with current step
+        if ($user->current_tenant_id) {
+            $tenant = $user->currentTenant();
 
-            // If user has a current tenant, redirect to wizard with current step
-            if ($user->current_tenant_id) {
-                $tenant = $user->currentTenant();
-
-                return redirect()->route('tenant.register.form', [
-                    'tenant' => $tenant->slug,
-                    'step' => $currentStep,
-                    'email' => $user->email,
-                ]);
-            }
-
-            // Fallback to old profile completion page if no tenant
-            return redirect()->route('profile.complete')
-                ->with('warning', 'Please complete your profile to continue.');
+            return redirect()->route('tenant.register.form', [
+                'tenant' => $tenant->slug,
+                'step' => $user->getCurrentRegistrationStep(),
+                'email' => $user->email,
+            ]);
         }
 
-        return $next($request);
+        // Fallback to old profile completion page if no tenant
+        return redirect()->route('profile.complete')
+            ->with('warning', 'Please complete your profile to continue.');
     }
 }

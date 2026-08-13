@@ -72,6 +72,16 @@ class User extends Authenticatable implements FilamentUser, HasAvatar, HasDefaul
     }
 
     /**
+     * Determine whether the user must complete the parent registration wizard.
+     */
+    public function requiresParentRegistration(): bool
+    {
+        return ! $this->isAdmin()
+            && $this->hasRole('parent')
+            && ! $this->profile_completed;
+    }
+
+    /**
      * Resolve legacy display names to canonical kebab-case role names.
      *
      * @param  mixed  $role

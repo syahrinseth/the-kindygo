@@ -16,8 +16,13 @@ use Illuminate\Support\Facades\Route;
 Route::middleware('auth')->get('/', function () {
     $user = auth()->user();
 
-    // If profile is not completed, redirect to complete it
-    if (! $user->profile_completed) {
+    // Admin roles always take priority, including users who also have the Parent role.
+    if ($user->isAdmin()) {
+        return redirect('/admin');
+    }
+
+    // Incomplete Parent users must finish registration before using the parent panel.
+    if ($user->requiresParentRegistration()) {
         // If user has a current tenant, redirect to tenant registration wizard
         if ($user->current_tenant_id) {
             $tenant = $user->currentTenant();
@@ -33,12 +38,6 @@ Route::middleware('auth')->get('/', function () {
         // Fallback to profile completion page if no tenant
         return redirect()->route('profile.complete')
             ->with('warning', 'Please complete your profile to continue.');
-    }
-
-    // Profile is completed - route to appropriate dashboard
-    // Admin roles (Super Admin, Admin, Principal, Teacher) redirect to /admin panel
-    if ($user->isAdmin()) {
-        return redirect('/admin');
     }
 
     // Parents and other users stay on root panel (dashboard)
