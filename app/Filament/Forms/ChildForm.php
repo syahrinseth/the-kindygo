@@ -20,126 +20,7 @@ class ChildForm
                 ->tabs([
                     Tabs\Tab::make('Basic Information')
                         ->icon('heroicon-o-user')
-                        ->schema([
-                            Grid::make(3)
-                                ->schema([
-                                    TextInput::make('first_name')
-                                        ->label('First Name')
-                                        ->required()
-                                        ->maxLength(255)
-                                        ->placeholder('e.g., Muhammad')
-                                        ->suffixIcon('heroicon-m-user'),
-
-                                    TextInput::make('patronymic')
-                                        ->label('Middle Name')
-                                        ->maxLength(255)
-                                        ->placeholder('Optional')
-                                        ->suffixIcon('heroicon-m-user'),
-
-                                    TextInput::make('last_name')
-                                        ->label('Last Name')
-                                        ->required()
-                                        ->maxLength(255)
-                                        ->placeholder('e.g., Abdullah')
-                                        ->suffixIcon('heroicon-m-user'),
-                                ]),
-
-                            Section::make('Personal Details')
-                                ->schema([
-                                    Grid::make(3)
-                                        ->schema([
-                                            Select::make('gender')
-                                                ->required()
-                                                ->options([
-                                                    'male' => 'Male',
-                                                    'female' => 'Female',
-                                                ])
-                                                ->native(false)
-                                                ->prefixIcon('heroicon-m-users'),
-
-                                            DatePicker::make('date_of_birth')
-                                                ->label('Date of Birth')
-                                                ->required()
-                                                ->maxDate(now())
-                                                ->native(false)
-                                                ->displayFormat('d/m/Y')
-                                                ->prefixIcon('heroicon-m-cake')
-                                                ->helperText('Child\'s birth date'),
-
-                                            TextInput::make('place_of_birth')
-                                                ->label('Place of Birth')
-                                                ->maxLength(255)
-                                                ->placeholder('e.g., Kuala Lumpur')
-                                                ->suffixIcon('heroicon-m-map-pin'),
-                                        ]),
-
-                                    Grid::make(3)
-                                        ->schema([
-                                            Select::make('race')
-                                                ->label('Race')
-                                                ->options([
-                                                    'Malay' => 'Malay',
-                                                    'Chinese' => 'Chinese',
-                                                    'Indian' => 'Indian',
-                                                    'Bumiputera Sabah' => 'Bumiputera Sabah',
-                                                    'Bumiputera Sarawak' => 'Bumiputera Sarawak',
-                                                    'Orang Asli' => 'Orang Asli',
-                                                    'Other' => 'Other',
-                                                ])
-                                                ->searchable()
-                                                ->native(false)
-                                                ->prefixIcon('heroicon-m-globe-alt')
-                                                ->placeholder('Select race'),
-
-                                            Select::make('religion')
-                                                ->label('Religion')
-                                                ->options([
-                                                    'Islam' => 'Islam',
-                                                    'Christianity' => 'Christianity',
-                                                    'Buddhism' => 'Buddhism',
-                                                    'Hinduism' => 'Hinduism',
-                                                    'Sikhism' => 'Sikhism',
-                                                    'Taoism' => 'Taoism',
-                                                    'Other' => 'Other',
-                                                    'No Religion' => 'No Religion',
-                                                ])
-                                                ->searchable()
-                                                ->native(false)
-                                                ->prefixIcon('heroicon-m-heart')
-                                                ->placeholder('Select religion'),
-
-                                            TextInput::make('position_of_child')
-                                                ->label('Position in Family')
-                                                ->helperText('e.g., 1st child, 2nd child')
-                                                ->numeric()
-                                                ->minValue(1)
-                                                ->maxValue(20)
-                                                ->suffixIcon('heroicon-m-numbered-list')
-                                                ->placeholder('1'),
-                                        ]),
-
-                                    Select::make('languages')
-                                        ->label('Languages Spoken')
-                                        ->multiple()
-                                        ->options([
-                                            'Malay' => 'Malay',
-                                            'English' => 'English',
-                                            'Mandarin' => 'Mandarin',
-                                            'Tamil' => 'Tamil',
-                                            'Cantonese' => 'Cantonese',
-                                            'Hokkien' => 'Hokkien',
-                                            'Arabic' => 'Arabic',
-                                            'Other' => 'Other',
-                                        ])
-                                        ->searchable()
-                                        ->native(false)
-                                        ->prefixIcon('heroicon-m-language')
-                                        ->helperText('Select all languages the child can speak')
-                                        ->placeholder('Select languages')
-                                        ->columnSpanFull(),
-                                ])
-                                ->collapsible(),
-                        ]),
+                        ->schema(static::basic()),
 
                     Tabs\Tab::make('Identification')
                         ->icon('heroicon-o-identification')
@@ -350,7 +231,7 @@ class ChildForm
     }
 
     /**
-     * Get basic form schema with only essential fields
+     * Get the standalone basic information section used by the full child form.
      */
     public static function basic(): array
     {
@@ -358,7 +239,7 @@ class ChildForm
             Section::make('Basic Information')
                 ->icon('heroicon-o-user')
                 ->schema([
-                    Grid::make(2)
+                    Grid::make(3)
                         ->schema([
                             TextInput::make('first_name')
                                 ->label('First Name')
@@ -367,30 +248,115 @@ class ChildForm
                                 ->placeholder('e.g., Muhammad')
                                 ->suffixIcon('heroicon-m-user'),
 
+                            TextInput::make('patronymic')
+                                ->label('Middle Name')
+                                ->maxLength(255)
+                                ->placeholder('Optional')
+                                ->suffixIcon('heroicon-m-user'),
+
                             TextInput::make('last_name')
                                 ->label('Last Name')
                                 ->required()
                                 ->maxLength(255)
                                 ->placeholder('e.g., Abdullah')
                                 ->suffixIcon('heroicon-m-user'),
-
-                            Select::make('gender')
-                                ->required()
-                                ->options([
-                                    'male' => 'Male',
-                                    'female' => 'Female',
-                                ])
-                                ->native(false)
-                                ->prefixIcon('heroicon-m-users'),
-
-                            DatePicker::make('date_of_birth')
-                                ->label('Date of Birth')
-                                ->required()
-                                ->maxDate(now())
-                                ->native(false)
-                                ->displayFormat('d/m/Y')
-                                ->prefixIcon('heroicon-m-cake'),
                         ]),
+
+                    Section::make('Personal Details')
+                        ->schema([
+                            Grid::make(3)
+                                ->schema([
+                                    Select::make('gender')
+                                        ->required()
+                                        ->options([
+                                            'male' => 'Male',
+                                            'female' => 'Female',
+                                        ])
+                                        ->native(false)
+                                        ->prefixIcon('heroicon-m-users'),
+
+                                    DatePicker::make('date_of_birth')
+                                        ->label('Date of Birth')
+                                        ->required()
+                                        ->maxDate(now())
+                                        ->native(false)
+                                        ->displayFormat('d/m/Y')
+                                        ->prefixIcon('heroicon-m-cake')
+                                        ->helperText('Child\'s birth date'),
+
+                                    TextInput::make('place_of_birth')
+                                        ->label('Place of Birth')
+                                        ->maxLength(255)
+                                        ->placeholder('e.g., Kuala Lumpur')
+                                        ->suffixIcon('heroicon-m-map-pin'),
+                                ]),
+
+                            Grid::make(3)
+                                ->schema([
+                                    Select::make('race')
+                                        ->label('Race')
+                                        ->options([
+                                            'Malay' => 'Malay',
+                                            'Chinese' => 'Chinese',
+                                            'Indian' => 'Indian',
+                                            'Bumiputera Sabah' => 'Bumiputera Sabah',
+                                            'Bumiputera Sarawak' => 'Bumiputera Sarawak',
+                                            'Orang Asli' => 'Orang Asli',
+                                            'Other' => 'Other',
+                                        ])
+                                        ->searchable()
+                                        ->native(false)
+                                        ->prefixIcon('heroicon-m-globe-alt')
+                                        ->placeholder('Select race'),
+
+                                    Select::make('religion')
+                                        ->label('Religion')
+                                        ->options([
+                                            'Islam' => 'Islam',
+                                            'Christianity' => 'Christianity',
+                                            'Buddhism' => 'Buddhism',
+                                            'Hinduism' => 'Hinduism',
+                                            'Sikhism' => 'Sikhism',
+                                            'Taoism' => 'Taoism',
+                                            'Other' => 'Other',
+                                            'No Religion' => 'No Religion',
+                                        ])
+                                        ->searchable()
+                                        ->native(false)
+                                        ->prefixIcon('heroicon-m-heart')
+                                        ->placeholder('Select religion'),
+
+                                    TextInput::make('position_of_child')
+                                        ->label('Position in Family')
+                                        ->helperText('e.g., 1st child, 2nd child')
+                                        ->numeric()
+                                        ->minValue(1)
+                                        ->maxValue(20)
+                                        ->suffixIcon('heroicon-m-numbered-list')
+                                        ->placeholder('1'),
+                                ]),
+
+                            Select::make('languages')
+                                ->label('Languages Spoken')
+                                ->multiple()
+                                ->options([
+                                    'Malay' => 'Malay',
+                                    'English' => 'English',
+                                    'Mandarin' => 'Mandarin',
+                                    'Tamil' => 'Tamil',
+                                    'Cantonese' => 'Cantonese',
+                                    'Hokkien' => 'Hokkien',
+                                    'Arabic' => 'Arabic',
+                                    'Other' => 'Other',
+                                ])
+                                ->searchable()
+                                ->native(false)
+                                ->prefixIcon('heroicon-m-language')
+                                ->helperText('Select all languages the child can speak')
+                                ->placeholder('Select languages')
+                                ->columnSpanFull(),
+                        ])
+                        ->collapsible(),
                 ]),
         ];
     }
