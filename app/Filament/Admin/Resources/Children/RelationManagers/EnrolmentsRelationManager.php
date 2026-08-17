@@ -7,6 +7,7 @@ use App\Enums\ChildEnrolmentStatus;
 use App\Enums\ChildEnrolmentType;
 use App\Models\Centre;
 use App\Models\Product;
+use Closure;
 use Filament\Actions\BulkActionGroup;
 use Filament\Actions\CreateAction;
 use Filament\Actions\DeleteAction;
@@ -14,7 +15,9 @@ use Filament\Actions\DeleteBulkAction;
 use Filament\Actions\EditAction;
 use Filament\Actions\ViewAction;
 use Filament\Forms\Components\DateTimePicker;
+use Filament\Forms\Components\Repeater;
 use Filament\Forms\Components\Select;
+use Filament\Forms\Components\Textarea;
 use Filament\Resources\RelationManagers\RelationManager;
 use Filament\Schemas\Components\Section;
 use Filament\Schemas\Schema;
@@ -47,17 +50,15 @@ class EnrolmentsRelationManager extends RelationManager
                             ->preload()
                             ->required()
                             ->live()
-                            ->afterStateUpdated(function (callable $set) {
-                                $set('product_id', null); // Reset product when centre changes
+                            ->afterStateUpdated(function (callable $set): void {
+                                $set('product_id', null);
                             })
-                            ->options(function () {
-                                // Get centres associated with this child
-                                $child = $this->getOwnerRecord();
-
-                                return $child->centres()->pluck('centres.name', 'centres.id')->toArray();
+                            ->options(function (): array {
+                                // The relation manager is already tenant-scoped through the Centre model.
+                                return Centre::query()->pluck('name', 'id')->all();
                             })
                             ->placeholder('Select a centre')
-                            ->helperText('Only centres associated with this child are shown')
+                            ->helperText('Only centres in the current tenant are shown')
                             ->columnSpan(1),
 
                         Select::make('product_id')
@@ -65,24 +66,34 @@ class EnrolmentsRelationManager extends RelationManager
                             ->searchable()
                             ->preload()
                             ->required()
-                            ->options(function (callable $get) {
-                                $centreId = $get('centre_id');
-                                if (! $centreId) {
-                                    return [];
-                                }
-
-                                // Get products associated with the selected centre
-                                // Also include products that have no centres (available for all centres)
-                                return Product::where(function ($query) use ($centreId) {
-                                    $query->whereHas('centres', function ($centreQuery) use ($centreId) {
-                                        $centreQuery->where('centres.id', $centreId);
-                                    })
-                                        // Include products with no centre associations (available for all centres)
-                                        ->orWhereDoesntHave('centres');
-                                })->pluck('name', 'id')->toArray();
+                            ->options(function (callable $get): array {
+                                return $this->getProductsForCentre($get('centre_id'));
                             })
                             ->placeholder('Select a centre first')
                             ->disabled(fn (callable $get): bool => ! $get('centre_id'))
+                            ->rules([
+                                function (callable $get): Closure {
+                                    return function (string $attribute, mixed $value, Closure $fail) use ($get): void {
+                                        $centreId = $get('centre_id');
+
+                                        if (! $centreId || ! $value) {
+                                            return;
+                                        }
+
+                                        $product = Product::find($value);
+
+                                        if (! $product) {
+                                            return;
+                                        }
+
+                                        $hasAccess = $product->centres()->whereKey($centreId)->exists();
+
+                                        if (! $hasAccess) {
+                                            $fail('The selected product is not available for the selected centre.');
+                                        }
+                                    };
+                                },
+                            ])
                             ->columnSpan(1),
 
                         Select::make('status')
@@ -95,6 +106,15 @@ class EnrolmentsRelationManager extends RelationManager
                             ->options(ChildEnrolmentType::options())
                             ->default(ChildEnrolmentType::FULL_TIME->value)
                             ->required()
+                            ->live()
+                            ->afterStateUpdated(function (callable $set, mixed $state): void {
+                                $set(
+                                    'billed_every',
+                                    $state === ChildEnrolmentType::TRIAL->value
+                                        ? ChildEnrolmentBilledEvery::ONE_TIME->value
+                                        : ChildEnrolmentBilledEvery::MONTHLY->value,
+                                );
+                            })
                             ->columnSpan(1),
                     ])
                     ->columns(2),
@@ -103,7 +123,15 @@ class EnrolmentsRelationManager extends RelationManager
                     ->schema([
                         Select::make('billed_every')
                             ->label('Billing Frequency')
-                            ->options(ChildEnrolmentBilledEvery::options())
+                            ->options(function (callable $get): array {
+                                if ($get('type') === ChildEnrolmentType::TRIAL->value) {
+                                    return [
+                                        ChildEnrolmentBilledEvery::ONE_TIME->value => 'One Time',
+                                    ];
+                                }
+
+                                return ChildEnrolmentBilledEvery::options();
+                            })
                             ->default(ChildEnrolmentBilledEvery::MONTHLY->value)
                             ->required()
                             ->columnSpan(1),
@@ -120,7 +148,93 @@ class EnrolmentsRelationManager extends RelationManager
                             ->columnSpan(2),
                     ])
                     ->columns(2),
+
+                Section::make('Additional Products')
+                    ->schema([
+                        Repeater::make('additional_products')
+                            ->schema([
+                                Select::make('product_id')
+                                    ->label('Product')
+                                    ->searchable()
+                                    ->preload()
+                                    ->required()
+                                    ->options(function (callable $get): array {
+                                        return $this->getProductsForCentre($get('../../centre_id'));
+                                    })
+                                    ->placeholder('Select a centre first')
+                                    ->disabled(fn (callable $get): bool => ! $get('../../centre_id'))
+                                    ->columnSpan(2),
+
+                                Select::make('billed_every')
+                                    ->label('Billing Frequency')
+                                    ->options(ChildEnrolmentBilledEvery::options())
+                                    ->default(ChildEnrolmentBilledEvery::MONTHLY->value)
+                                    ->required()
+                                    ->columnSpan(1),
+
+                                DateTimePicker::make('date_start')
+                                    ->label('Start Date')
+                                    ->default(now())
+                                    ->columnSpan(1),
+
+                                DateTimePicker::make('date_end')
+                                    ->label('End Date')
+                                    ->nullable()
+                                    ->columnSpan(1),
+
+                                Textarea::make('notes')
+                                    ->label('Notes')
+                                    ->placeholder('Optional notes for this additional product')
+                                    ->columnSpan(3),
+                            ])
+                            ->columns(3)
+                            ->collapsible()
+                            ->collapsed()
+                            ->addActionLabel('Add Additional Product')
+                            ->reorderableWithButtons()
+                            ->defaultItems(0)
+                            ->itemLabel(function (array $state): ?string {
+                                if (! isset($state['product_id'])) {
+                                    return 'New Additional Product';
+                                }
+
+                                $product = Product::find($state['product_id']);
+
+                                if (! $product) {
+                                    return 'Additional Product';
+                                }
+
+                                $billingFrequency = isset($state['billed_every'])
+                                    ? ucwords(str_replace('_', ' ', $state['billed_every']))
+                                    : 'Monthly';
+
+                                return "{$product->name} - {$billingFrequency}";
+                            }),
+                    ])
+                    ->collapsible()
+                    ->collapsed()
+                    ->description('Add additional products to this enrolment with their own billing frequencies'),
             ]);
+    }
+
+    /**
+     * Get active products assigned to a tenant centre.
+     *
+     * @return array<int|string, string>
+     */
+    protected function getProductsForCentre(int|string|null $centreId): array
+    {
+        if (! $centreId || ! Centre::query()->whereKey($centreId)->exists()) {
+            return [];
+        }
+
+        return Product::query()
+            ->whereHas('centres', function (Builder $query) use ($centreId): void {
+                $query->whereKey($centreId);
+            })
+            ->active()
+            ->pluck('name', 'id')
+            ->all();
     }
 
     public function table(Table $table): Table

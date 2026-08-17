@@ -65,7 +65,7 @@ it('creates single child with correct data', function () {
         'race' => 'Malay',
         'religion' => 'Islam',
         'position_of_child' => 1,
-        'mykid_no' => '200115011234',
+        'mykid_no' => '200115-01-1234',
         'cert_number' => 'BC123456',
     ]);
 
@@ -156,7 +156,7 @@ it('sets TenantChild status to NEW', function () {
 
     $this->action->execute($this->user, $childrenData);
 
-    $child = Child::withoutGlobalScopes()->where('mykid_no', '200901011234')->first();
+    $child = Child::withoutGlobalScopes()->where('mykid_no', '200901-01-1234')->first();
 
     assertDatabaseHas('tenant_child', [
         'tenant_id' => $this->tenant->id,
@@ -231,7 +231,7 @@ it('establishes relationships for all children', function () {
     expect($this->user->children()->withoutGlobalScopes()->count())->toBe(2);
 
     // Check all children are linked to tenant
-    $children = Child::withoutGlobalScopes()->whereIn('mykid_no', ['190101011111', '200101012222'])->get();
+    $children = Child::withoutGlobalScopes()->whereIn('mykid_no', ['190101-01-1111', '200101-01-2222'])->get();
     foreach ($children as $child) {
         assertDatabaseHas('tenant_child', [
             'tenant_id' => $this->tenant->id,
@@ -268,7 +268,7 @@ it('updates existing child when mykid_no matches', function () {
             'place_of_birth' => 'Kuala Lumpur',
             'race' => 'Malay',
             'religion' => 'Islam',
-            'mykid_no' => '200115011234',
+            'mykid_no' => '200115-01-1234',
             'cert_number' => 'BC123456',
         ],
     ];

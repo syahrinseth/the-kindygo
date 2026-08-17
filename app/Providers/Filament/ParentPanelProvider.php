@@ -28,7 +28,7 @@ class ParentPanelProvider extends PanelProvider
         return $panel
             ->default()
             ->id('parent')
-            ->path('')
+            ->path('parent')
             ->viteTheme('resources/css/filament/parent/theme.css')
             ->colors([
                 'primary' => Color::Amber,

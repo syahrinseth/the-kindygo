@@ -46,6 +46,7 @@ describe('POST /api/v1/auth/register/step-3', function () {
                     'place_of_birth' => 'Kuala Lumpur',
                     'race' => 'Malay',
                     'religion' => 'Islam',
+                    'mykid_no' => '200515011234',
                 ],
             ],
         ]);
@@ -74,7 +75,10 @@ describe('POST /api/v1/auth/register/step-3', function () {
             ]);
 
         // Assert child was created
-        expect(Child::where('first_name', 'Ahmad')->exists())->toBeTrue();
+        $child = Child::where('first_name', 'Ahmad')->first();
+        expect($child)->not->toBeNull()
+            ->and($child->mykid_no)->toBe('200515-01-1234')
+            ->and($this->user->fresh()->getRegistrationData('step_3.children.0.mykid_no'))->toBe('200515-01-1234');
 
         // Assert relationship was established
         $this->user->refresh();

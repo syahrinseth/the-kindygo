@@ -14,16 +14,19 @@ use App\Models\Product;
 use App\Models\Scopes\TenantScope;
 use App\Models\Tenant;
 use App\Models\User;
+use App\Services\Payments\TenantChipService;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Notification;
 use Illuminate\Support\Facades\Storage;
-use SyahrinSeth\ChipLaravel\ChipService;
 
 beforeEach(function () {
     Storage::fake('private');
     Notification::fake();
 
-    $this->tenant = Tenant::factory()->create();
+    $this->tenant = Tenant::factory()->create([
+        'chip_brand_id' => 'brand_123',
+        'chip_api_key' => 'chip-secret-key',
+    ]);
     $this->user = User::factory()->create(['current_tenant_id' => $this->tenant->id]);
     $this->tenant->users()->attach($this->user->id);
     $this->actingAs($this->user);
@@ -36,7 +39,7 @@ beforeEach(function () {
 });
 
 it('executes CHIP payment through gateway factory', function () {
-    $chipServiceMock = $this->mock(ChipService::class, function ($mock) {
+    $chipServiceMock = $this->mock(TenantChipService::class, function ($mock) {
         $mock->shouldReceive('createPurchase')
             ->once()
             ->andReturn((object) [
@@ -240,7 +243,7 @@ it('handles payment with payment proof for bank transfer', function () {
 });
 
 it('returns failure result when gateway throws exception', function () {
-    $chipServiceMock = $this->mock(ChipService::class, function ($mock) {
+    $chipServiceMock = $this->mock(TenantChipService::class, function ($mock) {
         $mock->shouldReceive('createPurchase')
             ->once()
             ->andThrow(new Exception('CHIP API error'));

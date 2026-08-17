@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Support\MyKadNumber;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -39,6 +40,11 @@ class FamilyMember extends Model implements HasMedia
         'office_postal_code',
         'office_state_code',
     ];
+
+    public function setNricAttribute(?string $value): void
+    {
+        $this->attributes['nric'] = MyKadNumber::format($value);
+    }
 
     /**
      * Get the user that this family member belongs to.

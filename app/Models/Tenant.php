@@ -44,6 +44,8 @@ class Tenant extends Model
         'einvoice_client_id',
         'einvoice_client_secret',
         'einvoice_environment',
+        'chip_brand_id',
+        'chip_api_key',
     ];
 
     /**
@@ -53,6 +55,7 @@ class Tenant extends Model
      */
     protected $casts = [
         'personal_tenant' => 'boolean',
+        'chip_api_key' => 'encrypted',
     ];
 
     /**
@@ -369,6 +372,14 @@ class Tenant extends Model
     public function hasEInvoiceCredentials(): bool
     {
         return ! empty($this->einvoice_client_id) && ! empty($this->einvoice_client_secret);
+    }
+
+    /**
+     * Determine whether CHIP payments are configured for this tenant.
+     */
+    public function hasChipCredentials(): bool
+    {
+        return filled($this->chip_brand_id) && filled($this->chip_api_key);
     }
 
     /**

@@ -6,6 +6,7 @@ use App\Services\Migration\MigrationLogger;
 use App\Services\Migration\NameParser;
 use App\Services\Migration\OrphanLogger;
 use App\Services\Migration\StatusMapper;
+use App\Support\MalaysianIdentificationNumber;
 use Illuminate\Console\Command;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\DB;
@@ -30,7 +31,7 @@ class MigrateLegacyChildren extends Command
      *
      * @var string
      */
-    protected $description = 'Migrate legacy children (1_child → children, child_enrolments, child_user, tenant_child, centre_child)';
+    protected $description = 'Migrate legacy children (1_child → children, child_enrolments, child_user, tenant_child)';
 
     /**
      * Counters for summary table.
@@ -41,7 +42,6 @@ class MigrateLegacyChildren extends Command
         'enrolments' => 0,
         'child_user' => 0,
         'tenant_child' => 0,
-        'centre_child' => 0,
     ];
 
     /**
@@ -149,7 +149,6 @@ class MigrateLegacyChildren extends Command
             ['Enrolments', $this->counts['enrolments']],
             ['Child-User Links', $this->counts['child_user']],
             ['Tenant-Child Links', $this->counts['tenant_child']],
-            ['Centre-Child Links', $this->counts['centre_child']],
         ]);
 
         return Command::SUCCESS;
@@ -179,10 +178,7 @@ class MigrateLegacyChildren extends Command
         // 3. Create tenant_child pivot
         $this->createTenantChildPivot($legacy, $tenantId, $dryRun);
 
-        // 4. Create centre_child pivot
-        $this->createCentreChildPivot($legacy, $dryRun, $validCentreIds);
-
-        // 5. Create child_enrolments from product field
+        // 4. Create child_enrolments from product field
         $this->createEnrolment($legacy, $tenantId, $dryRun, $validCentreIds, $validProductIds);
     }
 
@@ -222,7 +218,7 @@ class MigrateLegacyChildren extends Command
             'id' => $legacy->id,
             'first_name' => $name['first_name'] ?: 'Unknown',
             'last_name' => $name['last_name'] ?: '',
-            'mykid_no' => $legacy->mykid_no ?: null,
+            'mykid_no' => MalaysianIdentificationNumber::format($legacy->mykid_no ?: null),
             'date_of_birth' => $dateOfBirth ?? '2000-01-01',
             'place_of_birth' => $legacy->pob ?: null,
             'gender' => $gender,
@@ -322,50 +318,6 @@ class MigrateLegacyChildren extends Command
         );
 
         $this->counts['tenant_child']++;
-    }
-
-    /**
-     * Create centre_child pivot record from preschool_id.
-     *
-     * @param  array<int>  $validCentreIds
-     */
-    private function createCentreChildPivot(object $legacy, bool $dryRun, array $validCentreIds): void
-    {
-        if (empty($legacy->preschool_id) || (int) $legacy->preschool_id <= 0) {
-            return;
-        }
-
-        $centreId = (int) $legacy->preschool_id;
-
-        if (! in_array($centreId, $validCentreIds)) {
-            OrphanLogger::log(
-                '1_child',
-                $legacy->id,
-                "preschool_id {$centreId} not found in centres table",
-                ['child_id' => $legacy->id, 'preschool_id' => $centreId]
-            );
-
-            return;
-        }
-
-        if ($dryRun) {
-            $this->counts['centre_child']++;
-
-            return;
-        }
-
-        DB::table('centre_child')->updateOrInsert(
-            [
-                'centre_id' => $centreId,
-                'child_id' => $legacy->id,
-            ],
-            [
-                'created_at' => $legacy->created_at ?? now(),
-                'updated_at' => $legacy->updated_at ?? now(),
-            ]
-        );
-
-        $this->counts['centre_child']++;
     }
 
     /**

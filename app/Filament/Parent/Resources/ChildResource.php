@@ -8,7 +8,6 @@ use App\Filament\Parent\Resources\ChildResource\Pages\CreateChild;
 use App\Filament\Parent\Resources\ChildResource\Pages\EditChild;
 use App\Filament\Parent\Resources\ChildResource\Pages\ListChildren;
 use App\Filament\Parent\Resources\ChildResource\Pages\ViewChild;
-use App\Filament\Parent\Resources\ChildResource\RelationManagers\CentresRelationManager;
 use App\Models\Child;
 use Filament\Actions\ActionGroup;
 use Filament\Actions\DeleteAction;
@@ -35,7 +34,7 @@ class ChildResource extends Resource
 
     public static function getEloquentQuery(): Builder
     {
-        $query = parent::getEloquentQuery();
+        $query = parent::getEloquentQuery()->with('enrolments.centre');
         $user = Auth::user();
 
         // Parents can only see their own children
@@ -81,10 +80,10 @@ class ChildResource extends Resource
                         'female' => 'pink',
                         default => 'gray',
                     }),
-                TextColumn::make('centres.name')
+                TextColumn::make('enrolment_centre_names')
                     ->label('Centres')
-                    ->searchable()
-                    ->sortable()
+                    ->badge()
+                    ->separator(', ')
                     ->toggleable(),
                 TextColumn::make('tenant_status')
                     ->label('Status')
@@ -190,9 +189,7 @@ class ChildResource extends Resource
 
     public static function getRelations(): array
     {
-        return [
-            CentresRelationManager::class,
-        ];
+        return [];
     }
 
     public static function getPages(): array

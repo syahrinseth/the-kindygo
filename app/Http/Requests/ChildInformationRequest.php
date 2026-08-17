@@ -2,10 +2,28 @@
 
 namespace App\Http\Requests;
 
+use App\Support\MalaysianIdentificationNumber;
 use Illuminate\Foundation\Http\FormRequest;
 
 class ChildInformationRequest extends FormRequest
 {
+    protected function prepareForValidation(): void
+    {
+        $children = $this->input('children');
+
+        if (! is_array($children)) {
+            return;
+        }
+
+        foreach ($children as $index => $child) {
+            if (is_array($child) && array_key_exists('mykid_no', $child)) {
+                $children[$index]['mykid_no'] = MalaysianIdentificationNumber::format($child['mykid_no']);
+            }
+        }
+
+        $this->merge(['children' => $children]);
+    }
+
     public function authorize(): bool
     {
         return true;
@@ -24,7 +42,7 @@ class ChildInformationRequest extends FormRequest
             'children.*.race' => ['nullable', 'string', 'max:100'],
             'children.*.religion' => ['nullable', 'string', 'max:100'],
             'children.*.position_of_child' => ['nullable', 'integer', 'min:1'],
-            'children.*.mykid_no' => ['required', 'string', 'max:12'],
+            'children.*.mykid_no' => ['required', 'string', 'regex:/^\d{6}-\d{2}-\d{4}$/'],
             'children.*.cert_number' => ['required', 'string', 'max:50'],
         ];
     }
@@ -45,7 +63,7 @@ class ChildInformationRequest extends FormRequest
             'children.*.religion.max' => 'Religion must not exceed 100 characters.',
             'children.*.position_of_child.integer' => 'Position of child must be a number.',
             'children.*.position_of_child.min' => 'Position of child must be at least 1.',
-            'children.*.mykid_no.max' => 'MyKID number must not exceed 12 characters.',
+            'children.*.mykid_no.regex' => 'MyKid number must use the format 000000-00-0000.',
             'children.*.cert_number.max' => 'Certificate number must not exceed 50 characters.',
         ];
     }

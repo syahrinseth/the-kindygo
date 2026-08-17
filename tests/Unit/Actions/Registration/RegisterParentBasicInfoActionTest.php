@@ -181,10 +181,10 @@ it('creates UserProfile with mykad and phone', function () {
 
     assertDatabaseHas('user_profiles', [
         'user_id' => $user->id,
-        'nric' => '941234567890',
+        'nric' => '941234-56-7890',
         'phone' => '0123456789',
     ]);
 
     expect($user->profile)->not->toBeNull();
-    expect($user->profile->nric)->toBe('941234567890');
+    expect($user->profile->nric)->toBe('941234-56-7890');
 });

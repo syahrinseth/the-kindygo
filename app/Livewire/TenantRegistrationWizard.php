@@ -14,6 +14,8 @@ use App\Http\Requests\ParentDetailsRequest;
 use App\Models\Centre;
 use App\Models\Tenant;
 use App\Models\User;
+use App\Support\MalaysianIdentificationNumber;
+use App\Support\MyKadNumber;
 use Filament\Forms\Components\Checkbox;
 use Filament\Forms\Components\DatePicker;
 use Filament\Forms\Components\FileUpload;
@@ -134,14 +136,14 @@ class TenantRegistrationWizard extends Component implements HasForms
             $this->name = $step1Data['name'] ?? $user->name;
             $this->email = $step1Data['email'] ?? $user->email;
             $this->phone = $user->profile?->phone ?? null;
-            $this->mykad_number = $user->profile?->nric ?? null;
+            $this->mykad_number = MyKadNumber::format($user->profile?->nric);
             $this->centre_ids = $step1Data['centre_ids'] ?? [];
         } else {
             // Load from database for existing users
             $this->name = $user->name;
             $this->email = $user->email;
             $this->phone = $user->profile?->phone ?? null;
-            $this->mykad_number = $user->profile?->nric ?? null;
+            $this->mykad_number = MyKadNumber::format($user->profile?->nric);
             $this->centre_ids = $user->centres->pluck('id')->toArray();
         }
 
@@ -186,7 +188,7 @@ class TenantRegistrationWizard extends Component implements HasForms
                 'race' => $child->race ?? '',
                 'religion' => $child->religion ?? '',
                 'position_of_child' => $child->position_of_child ?? '',
-                'mykid_no' => $child->mykid_no ?? '',
+                'mykid_no' => MalaysianIdentificationNumber::format($child->mykid_no) ?? '',
                 'cert_number' => $child->cert_number ?? '',
             ])->toArray();
         } else {
@@ -267,9 +269,10 @@ class TenantRegistrationWizard extends Component implements HasForms
                     TextInput::make('mykad_number')
                         ->label('MyKad Number')
                         ->required()
-                        ->maxLength(12)
-                        ->placeholder('e.g., 900101011234')
-                        ->helperText('Enter your 12-digit MyKad number without dashes'),
+                        ->maxLength(14)
+                        ->mask('999999-99-9999')
+                        ->placeholder('e.g., 900101-01-1234')
+                        ->helperText('Enter your 12-digit MyKad number.'),
 
                     TextInput::make('phone')
                         ->label('Phone Number')
@@ -506,7 +509,7 @@ class TenantRegistrationWizard extends Component implements HasForms
             $rules['password'] = ['nullable', 'string', 'min:8', 'confirmed'];
 
             // Make mykad_number optional for existing users
-            $rules['mykad_number'] = ['sometimes', 'string', 'max:12'];
+            $rules['mykad_number'] = ['nullable', 'string', 'regex:/^\d{6}-\d{2}-\d{4}$/'];
         }
 
         // Validate step 1 data
@@ -529,6 +532,8 @@ class TenantRegistrationWizard extends Component implements HasForms
 
             return;
         }
+
+        $this->resetErrorBag();
 
         // Execute action
         try {
@@ -565,6 +570,20 @@ class TenantRegistrationWizard extends Component implements HasForms
         }
     }
 
+    public function updatedMykadNumber(?string $value): void
+    {
+        $this->mykad_number = MyKadNumber::format($value);
+    }
+
+    public function updatedChildren(mixed $value, string $key): void
+    {
+        if (! preg_match('/^(\d+)\.mykid_no$/', $key, $matches)) {
+            return;
+        }
+
+        $this->children[(int) $matches[1]]['mykid_no'] = MalaysianIdentificationNumber::format($value) ?? '';
+    }
+
     public function submitStep2(): void
     {
         // Validate step 2 data
@@ -595,6 +614,8 @@ class TenantRegistrationWizard extends Component implements HasForms
             return;
         }
 
+        $this->resetErrorBag();
+
         // Execute action
         try {
             $action = new UpdateParentDetailsAction;
@@ -621,6 +642,8 @@ class TenantRegistrationWizard extends Component implements HasForms
 
             return;
         }
+
+        $this->resetErrorBag();
 
         // Execute action
         try {
@@ -657,6 +680,8 @@ class TenantRegistrationWizard extends Component implements HasForms
             return;
         }
 
+        $this->resetErrorBag();
+
         // Execute action
         try {
             $action = new CompleteParentRegistrationAction;
@@ -667,7 +692,7 @@ class TenantRegistrationWizard extends Component implements HasForms
             );
 
             // Redirect to parent dashboard
-            return redirect()->route('filament.admin.pages.dashboard');
+            return redirect()->route('filament.parent.pages.dashboard');
         } catch (\Exception $e) {
             // Log the exception or handle it as needed
             \Log::error('Error in Step 4 submission: '.$e->getMessage());

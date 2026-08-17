@@ -172,54 +172,6 @@ class Centre extends Model
     }
 
     /**
-     * Get the children associated with this centre.
-     */
-    public function children(): BelongsToMany
-    {
-        return $this->belongsToMany(Child::class, 'centre_child')
-            ->using(CentreChild::class)
-            ->withTimestamps();
-    }
-
-    /**
-     * Add a child to this centre.
-     *
-     * @param  Child|int  $child  The child or child ID
-     */
-    public function addChild($child): void
-    {
-        $childId = $child instanceof Child ? $child->id : $child;
-
-        if (! $this->children()->where('child_id', $childId)->exists()) {
-            $this->children()->attach($childId);
-        }
-    }
-
-    /**
-     * Remove a child from this centre.
-     *
-     * @param  Child|int  $child  The child or child ID
-     */
-    public function removeChild($child): void
-    {
-        $childId = $child instanceof Child ? $child->id : $child;
-
-        $this->children()->detach($childId);
-    }
-
-    /**
-     * Check if a specific child is in this centre.
-     *
-     * @param  Child|int  $child  The child or child ID
-     */
-    public function hasChild($child): bool
-    {
-        $childId = $child instanceof Child ? $child->id : $child;
-
-        return $this->children()->where('child_id', $childId)->exists();
-    }
-
-    /**
      * Get the products associated with the centre.
      */
     public function products(): BelongsToMany

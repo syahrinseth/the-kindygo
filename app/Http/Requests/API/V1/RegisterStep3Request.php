@@ -2,6 +2,7 @@
 
 namespace App\Http\Requests\API\V1;
 
+use App\Support\MalaysianIdentificationNumber;
 use Illuminate\Foundation\Http\FormRequest;
 
 /**
@@ -12,6 +13,23 @@ use Illuminate\Foundation\Http\FormRequest;
  */
 class RegisterStep3Request extends FormRequest
 {
+    protected function prepareForValidation(): void
+    {
+        $children = $this->input('children');
+
+        if (! is_array($children)) {
+            return;
+        }
+
+        foreach ($children as $index => $child) {
+            if (is_array($child) && array_key_exists('mykid_no', $child)) {
+                $children[$index]['mykid_no'] = MalaysianIdentificationNumber::format($child['mykid_no']);
+            }
+        }
+
+        $this->merge(['children' => $children]);
+    }
+
     /**
      * Determine if the user is authorized to make this request.
      */
@@ -41,7 +59,7 @@ class RegisterStep3Request extends FormRequest
             'children.*.race' => ['nullable', 'string', 'max:50'],
             'children.*.religion' => ['nullable', 'string', 'max:50'],
             'children.*.position_of_child' => ['nullable', 'integer', 'min:1'],
-            'children.*.mykid_no' => ['nullable', 'string', 'max:20'],
+            'children.*.mykid_no' => ['nullable', 'string', 'regex:/^\d{6}-\d{2}-\d{4}$/'],
             'children.*.cert_number' => ['nullable', 'string', 'max:50'],
         ];
     }
@@ -61,7 +79,7 @@ class RegisterStep3Request extends FormRequest
             'children.*.date_of_birth.before' => 'Child\'s date of birth must be in the past.',
             'children.*.gender.required_with' => 'Child\'s gender is required.',
             'children.*.gender.in' => 'Child\'s gender must be male or female.',
-            'children.*.mykid_no.max' => 'MyKID number must not exceed 20 characters.',
+            'children.*.mykid_no.regex' => 'MyKid number must use the format 000000-00-0000.',
         ];
     }
 

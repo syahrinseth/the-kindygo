@@ -23,8 +23,8 @@ test('parent with incomplete profile is redirected to profile completion', funct
     $user->assignRole($parentRole);
     $tenant->addUser($user);
 
-    // Try to access the dashboard
-    $response = $this->actingAs($user)->get('/dashboard');
+    // Try to access the parent dashboard
+    $response = $this->actingAs($user)->get(route('filament.parent.pages.dashboard'));
 
     // Should be redirected to profile completion
     $response->assertRedirect();
@@ -66,8 +66,8 @@ test('parent with complete profile can access profile page', function () {
     // Try to access the profile completion page
     $response = $this->actingAs($user)->get('/profile/complete');
 
-    // Should be redirected to dashboard since profile is already completed
-    $response->assertRedirect('/dashboard');
+    // Should be redirected to the parent panel since profile is already completed
+    $response->assertRedirect(route('filament.parent.pages.dashboard'));
 });
 
 test('non parent user is not redirected', function () {

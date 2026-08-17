@@ -1,6 +1,7 @@
 <?php
 
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Schema;
 use Tests\Traits\LegacyMigrationTestHelper;
 
 uses(LegacyMigrationTestHelper::class);
@@ -165,7 +166,7 @@ it('migrates mykid_no, cert_number, and place_of_birth', function () {
         ->assertSuccessful();
 
     $child = DB::table('children')->where('id', 1)->first();
-    expect($child->mykid_no)->toBe('MYKID-1');
+    expect($child->mykid_no)->toBe('150101-01-0001');
     expect($child->cert_number)->toBe('CERT-1');
     expect($child->place_of_birth)->toBe('Kuala Lumpur');
 });
@@ -294,21 +295,20 @@ it('creates tenant_child pivot with correct status mapping', function () {
 });
 
 // ──────────────────────────────────────────────
-// Centre-Child Pivot
+// Centre Association Through Enrolments
 // ──────────────────────────────────────────────
 
-it('creates centre_child pivot from preschool_id', function () {
+it('uses preschool_id as the enrolment centre without creating a direct pivot', function () {
     $this->seedLegacyChildren(1, parentId: 1, preschoolId: 1, productId: 1);
 
     $this->artisan('migrate:legacy-children', ['--tenant-id' => 1])
         ->assertSuccessful();
 
-    $pivot = DB::table('centre_child')->where('child_id', 1)->first();
-    expect($pivot)->not->toBeNull();
-    expect($pivot->centre_id)->toBe(1);
+    expect(Schema::hasTable('centre_child'))->toBeFalse()
+        ->and(DB::table('child_enrolments')->where('child_id', 1)->value('centre_id'))->toBe(1);
 });
 
-it('logs orphan when preschool_id is invalid for centre_child', function () {
+it('logs an orphan when preschool_id is invalid for an enrolment', function () {
     DB::connection('legacy')->table('1_child')->insert([
         'id' => 10,
         'fullname' => 'Invalid Centre Child',
@@ -323,7 +323,7 @@ it('logs orphan when preschool_id is invalid for centre_child', function () {
     $this->artisan('migrate:legacy-children', ['--tenant-id' => 1])
         ->assertSuccessful();
 
-    expect(DB::table('centre_child')->where('child_id', 10)->exists())->toBeFalse();
+    expect(DB::table('child_enrolments')->where('child_id', 10)->exists())->toBeFalse();
     expect(DB::table('migration_orphans')
         ->where('source_table', '1_child')
         ->where('source_id', 10)
@@ -558,7 +558,6 @@ it('does not make changes in dry-run mode', function () {
     expect(DB::table('child_enrolments')->count())->toBe(0);
     expect(DB::table('child_user')->count())->toBe(0);
     expect(DB::table('tenant_child')->count())->toBe(0);
-    expect(DB::table('centre_child')->count())->toBe(0);
 });
 
 it('skip-existing mode skips already migrated children', function () {

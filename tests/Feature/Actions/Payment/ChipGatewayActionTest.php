@@ -13,10 +13,13 @@ use App\Models\Product;
 use App\Models\Scopes\TenantScope;
 use App\Models\Tenant;
 use App\Models\User;
-use SyahrinSeth\ChipLaravel\ChipService;
+use App\Services\Payments\TenantChipService;
 
 beforeEach(function () {
-    $this->tenant = Tenant::factory()->create();
+    $this->tenant = Tenant::factory()->create([
+        'chip_brand_id' => 'brand_123',
+        'chip_api_key' => 'chip-secret-key',
+    ]);
     $this->user = User::factory()->create(['current_tenant_id' => $this->tenant->id]);
     $this->tenant->users()->attach($this->user->id);
     $this->actingAs($this->user);
@@ -29,8 +32,7 @@ beforeEach(function () {
 });
 
 it('creates CHIP payment with pending status', function () {
-    // Mock ChipService to avoid actual API calls
-    $chipServiceMock = $this->mock(ChipService::class, function ($mock) {
+    $chipServiceMock = $this->mock(TenantChipService::class, function ($mock) {
         $mock->shouldReceive('createPurchase')
             ->once()
             ->andReturn((object) [
@@ -92,7 +94,7 @@ it('creates CHIP payment with pending status', function () {
 });
 
 it('creates CHIP payment with user-defined allocation', function () {
-    $chipServiceMock = $this->mock(ChipService::class, function ($mock) {
+    $chipServiceMock = $this->mock(TenantChipService::class, function ($mock) {
         $mock->shouldReceive('createPurchase')
             ->once()
             ->andReturn((object) [
@@ -172,7 +174,7 @@ it('creates CHIP payment with user-defined allocation', function () {
 });
 
 it('handles CHIP service failure gracefully', function () {
-    $chipServiceMock = $this->mock(ChipService::class, function ($mock) {
+    $chipServiceMock = $this->mock(TenantChipService::class, function ($mock) {
         $mock->shouldReceive('createPurchase')
             ->once()
             ->andThrow(new Exception('CHIP API error'));
@@ -237,6 +239,20 @@ it('throws exception when user has no current tenant', function () {
         userAllocation: null,
         additionalData: []
     ))->toThrow(RuntimeException::class, 'User does not have a current tenant');
+});
+
+it('does not create a payment when CHIP is not configured for the tenant', function () {
+    $tenant = Tenant::factory()->create();
+    $user = User::factory()->create(['current_tenant_id' => $tenant->id]);
+    $tenant->users()->attach($user->id);
+
+    expect(fn () => app(ChipGatewayAction::class)->execute(
+        user: $user,
+        totalAmount: 50000,
+        invoices: [],
+    ))->toThrow(RuntimeException::class, 'CHIP payments are not configured for this organisation.');
+
+    expect(Payment::withoutGlobalScopes()->count())->toBe(0);
 });
 
 it('returns requiresRedirect as true', function () {

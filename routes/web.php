@@ -40,8 +40,8 @@ Route::middleware('auth')->get('/', function () {
             ->with('warning', 'Please complete your profile to continue.');
     }
 
-    // Parents and other users stay on root panel (dashboard)
-    return redirect('/dashboard');
+    // Parents and other users go to the parent panel dashboard.
+    return redirect()->route('filament.parent.pages.dashboard');
 });
 
 // Guests: go to login
@@ -66,9 +66,9 @@ Route::middleware('guest')->group(function () {
     Route::get('/login', [LoginController::class, 'showLoginForm'])->name('login');
     Route::post('/login', [LoginController::class, 'login']);
 
-    // Temporarily redirect general register route to login
+    // Route general registration through tenant selection first.
     Route::get('/register', function () {
-        return redirect('/login');
+        return redirect()->route('tenant.directory');
     })->name('register');
 });
 
@@ -98,7 +98,8 @@ Route::middleware('auth')->group(function () {
         }
 
         // Otherwise redirect to dashboard
-        return redirect('/dashboard')->with('status', 'Email verified successfully!');
+        return redirect()->route('filament.parent.pages.dashboard')
+            ->with('status', 'Email verified successfully!');
     })->middleware(['signed'])->name('verification.verify');
 
     Route::post('/email/verification-notification', function (\Illuminate\Http\Request $request) {

@@ -15,6 +15,17 @@ beforeEach(function () {
     ]);
 });
 
+it('redirects the public registration entry point to the tenant directory', function () {
+    $this->get(route('register'))
+        ->assertRedirect(route('tenant.directory'));
+});
+
+it('exposes the tenant-specific registration link from the directory', function () {
+    $this->get(route('tenant.directory'))
+        ->assertSuccessful()
+        ->assertSee(route('tenant.register.form', ['tenant' => $this->tenant->slug]));
+});
+
 function createRegistrationRedirectUser(string|array $roles, Tenant $tenant): User
 {
     $user = User::factory()->create([
@@ -77,5 +88,5 @@ it('keeps incomplete non-parent users out of the parent wizard', function () {
 
     $this->actingAs($user)
         ->get('/')
-        ->assertRedirect('/dashboard');
+        ->assertRedirect(route('filament.parent.pages.dashboard'));
 });

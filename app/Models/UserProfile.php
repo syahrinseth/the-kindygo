@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Support\MyKadNumber;
 use Exception;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
@@ -24,6 +25,11 @@ class UserProfile extends Model
         'phone',
         'occupation',
     ];
+
+    public function setNricAttribute(?string $value): void
+    {
+        $this->attributes['nric'] = MyKadNumber::format($value);
+    }
 
     /**
      * Get the user that owns the profile.

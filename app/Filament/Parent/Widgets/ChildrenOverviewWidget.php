@@ -28,7 +28,7 @@ class ChildrenOverviewWidget extends BaseWidget
                     ->whereHas('users', function (Builder $query) use ($user) {
                         $query->where('user_id', $user?->id);
                     })
-                    ->with(['tenants', 'enrolments', 'centres'])
+                    ->with(['tenants', 'enrolments.centre'])
             )
             ->columns([
                 Tables\Columns\TextColumn::make('full_name')
@@ -43,7 +43,7 @@ class ChildrenOverviewWidget extends BaseWidget
                     ->label('Date of Birth')
                     ->date('d M Y')
                     ->description(fn (Child $record): string => $record->date_of_birth ? $record->date_of_birth->age.' years old' : ''),
-                Tables\Columns\TextColumn::make('centres.name')
+                Tables\Columns\TextColumn::make('enrolment_centre_names')
                     ->label('Enrolled At')
                     ->badge()
                     ->color('primary')

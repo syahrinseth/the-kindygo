@@ -43,7 +43,7 @@ it('redirects admin user to /admin after login', function () {
     $response->assertRedirect('/admin');
 });
 
-it('redirects parent user to /dashboard after login', function () {
+it('redirects parent user to /parent/dashboard after login', function () {
     $user = User::factory()->create([
         'password' => bcrypt('password'),
         'profile_completed' => true,
@@ -66,7 +66,7 @@ it('redirects parent user to /dashboard after login', function () {
         'password' => 'password',
     ]);
 
-    $response->assertRedirect('/dashboard');
+    $response->assertRedirect(route('filament.parent.pages.dashboard'));
 });
 
 it('redirects admin user from root to /admin', function () {
@@ -91,7 +91,7 @@ it('redirects admin user from root to /admin', function () {
     $response->assertRedirect('/admin');
 });
 
-it('parent user stays on root panel', function () {
+it('redirects parent user from root to the parent panel', function () {
     $user = User::factory()->create([
         'profile_completed' => true,
     ]);
@@ -110,7 +110,7 @@ it('parent user stays on root panel', function () {
 
     $response = $this->actingAs($user)->get('/');
 
-    $response->assertRedirect('/dashboard');
+    $response->assertRedirect(route('filament.parent.pages.dashboard'));
 });
 
 it('admin user can access admin panel', function () {

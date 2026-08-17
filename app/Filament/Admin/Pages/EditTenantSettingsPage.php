@@ -2,6 +2,7 @@
 
 namespace App\Filament\Admin\Pages;
 
+use App\Actions\Tenant\UpdateTenantChipConfigurationAction;
 use App\Enums\NavigationGroup;
 use App\Filament\Forms\TenantForm;
 use App\Models\Tenant;
@@ -77,7 +78,11 @@ class EditTenantSettingsPage extends Page implements HasForms
             return;
         }
 
-        $this->form->fill($tenant->attributesToArray());
+        $attributes = $tenant->attributesToArray();
+        unset($attributes['chip_api_key']);
+        $attributes['chip_enabled'] = $tenant->hasChipCredentials();
+
+        $this->form->fill($attributes);
     }
 
     public function form(Schema $form): Schema
@@ -109,10 +114,28 @@ class EditTenantSettingsPage extends Page implements HasForms
 
         $data = $this->form->getState();
 
-        // Remove fields that shouldn't be updated
-        unset($data['id'], $data['user_id'], $data['personal_tenant'], $data['created_at'], $data['updated_at']);
+        $chipEnabled = (bool) ($data['chip_enabled'] ?? false);
+        $chipBrandId = $data['chip_brand_id'] ?? null;
+        $chipApiKey = $data['chip_api_key'] ?? null;
+
+        unset(
+            $data['id'],
+            $data['user_id'],
+            $data['personal_tenant'],
+            $data['created_at'],
+            $data['updated_at'],
+            $data['chip_enabled'],
+            $data['chip_brand_id'],
+            $data['chip_api_key'],
+        );
 
         $tenant->update($data);
+        app(UpdateTenantChipConfigurationAction::class)->execute(
+            tenant: $tenant,
+            enabled: $chipEnabled,
+            brandId: $chipBrandId,
+            apiKey: $chipApiKey,
+        );
 
         Notification::make()
             ->title('Settings Saved')

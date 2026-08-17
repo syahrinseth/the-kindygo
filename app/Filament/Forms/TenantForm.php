@@ -161,6 +161,28 @@ class TenantForm
                 ->collapsible()
                 ->collapsed(),
 
+            Section::make('CHIP Payment Configuration')
+                ->description('Configure CHIP online payments for this organisation.')
+                ->schema([
+                    Forms\Components\Toggle::make('chip_enabled')
+                        ->label('Enable CHIP payments')
+                        ->live(),
+                    TextInput::make('chip_brand_id')
+                        ->label('CHIP Brand ID')
+                        ->maxLength(255)
+                        ->visible(fn (Get $get): bool => $get('chip_enabled')),
+                    TextInput::make('chip_api_key')
+                        ->label('CHIP API Key')
+                        ->helperText('Leave empty to keep the existing key. The key is stored encrypted.')
+                        ->password()
+                        ->revealable()
+                        ->maxLength(65535)
+                        ->dehydrated(fn (?string $state): bool => filled($state))
+                        ->visible(fn (Get $get): bool => $get('chip_enabled')),
+                ])
+                ->collapsible()
+                ->collapsed(),
+
             Section::make('Parent Agreement Settings')
                 ->description('Configure if parents are required to agree to Letter of Undertaking for this tenant.')
                 ->schema([

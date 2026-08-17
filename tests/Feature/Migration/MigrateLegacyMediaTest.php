@@ -3,11 +3,14 @@
 use App\Models\Child;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\File;
+use Illuminate\Support\Facades\Storage;
 use Tests\Traits\LegacyMigrationTestHelper;
 
 uses(LegacyMigrationTestHelper::class);
 
 beforeEach(function () {
+    Storage::fake('private');
+
     $this->setUpLegacyDatabase();
     $this->createTestTenant();
     config([

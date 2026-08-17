@@ -24,7 +24,7 @@ class TenantSwitcher extends Component
             $user->save();
 
             // Reload the page to apply the new tenant context
-            $this->redirect(request()->header('Referer') ?: '/dashboard');
+            $this->redirect(request()->header('Referer') ?: route('filament.parent.pages.dashboard'));
         }
     }
 

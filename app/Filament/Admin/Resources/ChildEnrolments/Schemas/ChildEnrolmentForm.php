@@ -6,7 +6,6 @@ use App\Enums\ChildEnrolmentBilledEvery;
 use App\Enums\ChildEnrolmentStatus;
 use App\Enums\ChildEnrolmentType;
 use App\Models\Centre;
-use App\Models\Child;
 use App\Models\Product;
 use Closure;
 use Filament\Forms\Components\DateTimePicker;
@@ -50,38 +49,16 @@ class ChildEnrolmentForm
                         ->afterStateUpdated(function (callable $set) {
                             $set('product_id', null); // Reset product when centre changes
                         })
-                        ->options(function (callable $get) {
+                        ->options(function () {
                             return Centre::pluck('name', 'id')->toArray();
                         })
-                        ->placeholder(function (callable $get) {
-                            $childId = $get('child_id');
-                            if (! $childId) {
-                                return 'Select a child first';
-                            }
-
-                            $child = Child::find($childId);
-                            if ($child && $child->centres()->count() === 0) {
-                                return 'No centres associated with this child';
-                            }
-
-                            return 'Select a centre';
-                        })
-                        ->helperText(function (callable $get, string $operation) {
+                        ->placeholder('Select a centre')
+                        ->helperText(function (string $operation) {
                             if ($operation === 'edit') {
                                 return 'Centre cannot be changed after enrolment is created. Create a new enrolment if needed.';
                             }
 
-                            $childId = $get('child_id');
-                            if (! $childId) {
-                                return 'Only centres associated with the selected child will be shown';
-                            }
-
-                            $child = Child::find($childId);
-                            if ($child && $child->centres()->count() === 0) {
-                                return 'This child is not associated with any centres. Please associate the child with a centre first.';
-                            }
-
-                            return 'Only centres associated with the selected child are shown';
+                            return 'Only centres in the current tenant are shown.';
                         })
                         ->columnSpan(1),
 

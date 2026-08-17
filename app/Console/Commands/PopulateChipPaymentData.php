@@ -4,9 +4,9 @@ namespace App\Console\Commands;
 
 use App\Enums\Gateway;
 use App\Models\Payment;
+use App\Services\Payments\TenantChipService;
 use Exception;
 use Illuminate\Console\Command;
-use SyahrinSeth\ChipLaravel\ChipService;
 
 class PopulateChipPaymentData extends Command
 {
@@ -27,11 +27,12 @@ class PopulateChipPaymentData extends Command
     /**
      * Execute the console command.
      */
-    public function handle()
+    public function handle(TenantChipService $chipService): int
     {
         $this->info('Starting to populate CHIP payment data...');
 
-        $chipPayments = Payment::where('gateway', Gateway::CHIP)
+        $chipPayments = Payment::withoutGlobalScopes()
+            ->where('gateway', Gateway::CHIP)
             ->whereNotNull('gateway_payment_id')
             ->whereNull('gateway_payment_data')
             ->get();
@@ -39,12 +40,11 @@ class PopulateChipPaymentData extends Command
         if ($chipPayments->count() === 0) {
             $this->info('No CHIP payments found that need data population.');
 
-            return;
+            return self::SUCCESS;
         }
 
         $this->info("Found {$chipPayments->count()} CHIP payments to process.");
 
-        $chipService = new ChipService;
         $processed = 0;
         $failed = 0;
 
@@ -52,7 +52,13 @@ class PopulateChipPaymentData extends Command
             try {
                 $this->line("Processing payment ID: {$payment->id} (CHIP ID: {$payment->gateway_payment_id})");
 
-                $chipPurchase = $chipService->getPurchase($payment->gateway_payment_id);
+                $tenant = $payment->tenant;
+
+                if (! $tenant) {
+                    throw new Exception('Payment tenant could not be resolved.');
+                }
+
+                $chipPurchase = $chipService->getPurchase($tenant, $payment->gateway_payment_id);
 
                 if ($chipPurchase) {
                     $payment->update([
@@ -123,5 +129,7 @@ class PopulateChipPaymentData extends Command
         $this->info('Completed processing CHIP payments.');
         $this->info("Successfully processed: {$processed}");
         $this->info("Failed: {$failed}");
+
+        return self::SUCCESS;
     }
 }

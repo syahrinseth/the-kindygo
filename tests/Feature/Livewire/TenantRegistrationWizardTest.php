@@ -59,6 +59,75 @@ describe('default state initialisation', function () {
     });
 });
 
+describe('MyKad number formatting', function () {
+    it('formats a plain MyKad number in the component state', function () {
+        Livewire::test(TenantRegistrationWizard::class, ['tenant' => $this->tenant])
+            ->set('mykad_number', '900101011234')
+            ->assertSet('mykad_number', '900101-01-1234');
+    });
+});
+
+describe('MyKid number formatting', function () {
+    it('formats a plain MyKid number in child component state', function () {
+        Livewire::test(TenantRegistrationWizard::class, ['tenant' => $this->tenant])
+            ->call('addChild')
+            ->set('children.0.mykid_no', '150101010001')
+            ->assertSet('children.0.mykid_no', '150101-01-0001');
+    });
+});
+
+describe('validation error state', function () {
+    it('clears resolved errors before advancing to the next registration step', function () {
+        $user = User::factory()->create([
+            'email_verified_at' => now(),
+            'profile_completed' => false,
+            'registration_step' => 1,
+            'current_tenant_id' => $this->tenant->id,
+        ]);
+
+        $component = Livewire::actingAs($user)
+            ->test(TenantRegistrationWizard::class, ['tenant' => $this->tenant, 'step' => 2])
+            ->call('submitStep2')
+            ->assertHasErrors([
+                'address',
+                'postal_code',
+                'city',
+                'information_confirmed',
+            ]);
+
+        $component
+            ->set('address', 'No. 1, Jalan Ampang')
+            ->set('postal_code', '50450')
+            ->set('city', 'Kuala Lumpur')
+            ->set('state', MalaysianState::WP_KUALA_LUMPUR->value)
+            ->set('information_confirmed', true)
+            ->call('submitStep2')
+            ->assertSet('currentStep', 3)
+            ->assertHasNoErrors()
+            ->assertDontSee('Please correct the following errors:');
+    });
+});
+
+describe('registration completion', function () {
+    it('redirects a completed parent registration to the parent panel', function () {
+        $user = User::factory()->create([
+            'email_verified_at' => now(),
+            'profile_completed' => false,
+            'registration_step' => 3,
+            'current_tenant_id' => $this->tenant->id,
+        ]);
+        $user->assignRole('parent');
+        $user->tenants()->attach($this->tenant);
+
+        Livewire::actingAs($user)
+            ->test(TenantRegistrationWizard::class, ['tenant' => $this->tenant, 'step' => 4])
+            ->set('tnc_accepted', true)
+            ->set('undertaking_accepted', true)
+            ->call('submitStep4')
+            ->assertRedirect(route('filament.parent.pages.dashboard'));
+    });
+});
+
 describe('loading from existing profile/address models', function () {
     it('loads name and email from the user model when no registration_data', function () {
         $user = User::factory()->create([
@@ -85,13 +154,13 @@ describe('loading from existing profile/address models', function () {
         UserProfile::create([
             'user_id' => $user->id,
             'phone' => '+60123456789',
-            'nric' => '900101011234',
+            'nric' => '900101-01-1234',
         ]);
 
         Livewire::actingAs($user)
             ->test(TenantRegistrationWizard::class, ['tenant' => $this->tenant])
             ->assertSet('phone', '+60123456789')
-            ->assertSet('mykad_number', '900101011234');
+            ->assertSet('mykad_number', '900101-01-1234');
     });
 
     it('loads state from existing user address model and skips Johor default', function () {

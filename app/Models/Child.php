@@ -4,6 +4,7 @@ namespace App\Models;
 
 use App\Enums\ChildStatus;
 use App\Models\Scopes\BelongsToManyTenantScope;
+use App\Support\MalaysianIdentificationNumber;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
@@ -70,6 +71,11 @@ class Child extends Model implements HasMedia
         'allergies' => 'json',
         'diseases' => 'json',
     ];
+
+    public function setMykidNoAttribute(?string $value): void
+    {
+        $this->attributes['mykid_no'] = MalaysianIdentificationNumber::format($value);
+    }
 
     /**
      * Get the full name of the child.
@@ -202,16 +208,6 @@ class Child extends Model implements HasMedia
     }
 
     /**
-     * Get the centres associated with this child.
-     */
-    public function centres(): BelongsToMany
-    {
-        return $this->belongsToMany(Centre::class, 'centre_child')
-            ->using(CentreChild::class)
-            ->withTimestamps();
-    }
-
-    /**
      * Get the invoice items associated with this child.
      *
      * @return HasMany
@@ -246,41 +242,20 @@ class Child extends Model implements HasMedia
     }
 
     /**
-     * Add this child to a centre.
+     * Get unique centre names derived from every enrolment.
      *
-     * @param  Centre|int  $centre  The centre or centre ID
+     * @return array<int, string>
      */
-    public function addToCentre($centre): void
+    public function getEnrolmentCentreNamesAttribute(): array
     {
-        $centreId = $centre instanceof Centre ? $centre->id : $centre;
+        $this->loadMissing('enrolments.centre');
 
-        if (! $this->centres()->where('centre_id', $centreId)->exists()) {
-            $this->centres()->attach($centreId);
-        }
-    }
-
-    /**
-     * Remove this child from a centre.
-     *
-     * @param  Centre|int  $centre  The centre or centre ID
-     */
-    public function removeFromCentre($centre): void
-    {
-        $centreId = $centre instanceof Centre ? $centre->id : $centre;
-
-        $this->centres()->detach($centreId);
-    }
-
-    /**
-     * Check if this child is associated with a specific centre.
-     *
-     * @param  Centre|int  $centre  The centre or centre ID
-     */
-    public function isInCentre($centre): bool
-    {
-        $centreId = $centre instanceof Centre ? $centre->id : $centre;
-
-        return $this->centres()->where('centre_id', $centreId)->exists();
+        return $this->enrolments
+            ->pluck('centre.name')
+            ->filter()
+            ->unique()
+            ->values()
+            ->all();
     }
 
     /**

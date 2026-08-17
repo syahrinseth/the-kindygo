@@ -13,7 +13,8 @@ return new class extends Migration
     public function up(): void
     {
         // Find all users with incomplete profiles
-        $incompleteUsers = User::where('profile_completed', false)
+        $incompleteUsers = User::withoutGlobalScopes()
+            ->where('profile_completed', false)
             ->whereNull('registration_token')
             ->with(['profile', 'address', 'officeInfo', 'centres'])
             ->get();

@@ -64,12 +64,12 @@ class LoginController extends Controller
                 return redirect()->to($redirectUrl);
             }
 
-            // Redirect based on user role: admin roles go to /admin, parents go to /dashboard
+            // Redirect based on user role: admin roles go to /admin, parents go to /parent/dashboard
             if ($user->isAdmin()) {
                 return redirect('/admin');
             }
 
-            return redirect('/dashboard');
+            return redirect()->route('filament.parent.pages.dashboard');
         }
 
         return back()->withErrors([

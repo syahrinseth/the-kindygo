@@ -4,6 +4,7 @@ namespace App\Actions\Registration;
 
 use App\Models\Child;
 use App\Models\User;
+use App\Support\MalaysianIdentificationNumber;
 
 class CreateChildrenForParentAction
 {
@@ -26,11 +27,14 @@ class CreateChildrenForParentAction
         $createdChildren = [];
 
         foreach ($childrenData as $childData) {
+            $myKidNumber = MalaysianIdentificationNumber::format($childData['mykid_no'] ?? null);
+            $childData['mykid_no'] = $myKidNumber;
+
             // Determine unique identifier for firstOrCreate
             // Priority: mykid_no > combination of first_name + last_name + date_of_birth
-            if (! empty($childData['mykid_no'])) {
+            if (! empty($myKidNumber)) {
                 // Use MyKID as primary identifier
-                $uniqueAttributes = ['mykid_no' => $childData['mykid_no']];
+                $uniqueAttributes = ['mykid_no' => $myKidNumber];
             } else {
                 // Fall back to name + DOB combination
                 $uniqueAttributes = [

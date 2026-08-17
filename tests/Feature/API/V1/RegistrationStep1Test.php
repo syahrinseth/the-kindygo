@@ -404,7 +404,8 @@ describe('POST /api/v1/auth/register/step-1', function () {
 
         $user = User::where('email', 'profile@example.com')->first();
         expect($user->profile)->not->toBeNull();
-        expect($user->profile->nric)->toBe('900101011234');
+        expect($user->profile->nric)->toBe('900101-01-1234');
+        expect($user->getRegistrationData('step_1.mykad_number'))->toBe('900101-01-1234');
         expect($user->profile->phone)->toBe('+60123456789');
     });
 });

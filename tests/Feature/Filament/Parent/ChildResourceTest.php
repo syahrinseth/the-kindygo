@@ -6,6 +6,8 @@ use App\Filament\Parent\Resources\ChildResource\Pages\ListChildren;
 use App\Filament\Parent\Resources\ChildResource\Pages\ViewChild;
 use App\Models\Centre;
 use App\Models\Child;
+use App\Models\ChildEnrolment;
+use App\Models\Product;
 use App\Models\Tenant;
 use App\Models\User;
 use Filament\Facades\Filament;
@@ -75,7 +77,7 @@ test('parent can create a new child', function () {
     $this->assertDatabaseHas('children', [
         'first_name' => 'Ahmad',
         'last_name' => 'Abdullah',
-        'mykid_no' => '200101010001',
+        'mykid_no' => '200101-01-0001',
     ]);
 
     // Verify child is associated with parent
@@ -105,7 +107,10 @@ test('parent can edit their child information', function () {
     $child = Child::factory()->create([
         'first_name' => 'Fatimah',
         'last_name' => 'binti Ahmad',
+        'mykid_no' => '200101-01-0002',
         'race' => 'Malay',
+        'religion' => 'Islam',
+        'languages' => ['Malay'],
         'family_clinic_phone' => '+60123456789',
     ]);
     $child->users()->attach($this->parent->id, ['relationship_type' => 'parent']);
@@ -215,16 +220,23 @@ test('parent can search children by name', function () {
         ->assertCanNotSeeTableRecords([$child2]);
 });
 
-test('parent can view centres relation on child', function () {
+test('parent sees child centres derived from enrolments', function () {
     $this->actingAs($this->parent);
 
     $child = Child::factory()->create();
     $child->users()->attach($this->parent->id, ['relationship_type' => 'parent']);
     $child->tenants()->attach($this->tenant->id, ['status' => ChildStatus::ACTIVE]);
-    $child->centres()->attach($this->centre->id);
+    $product = Product::factory()->create(['tenant_id' => $this->tenant->id]);
+    ChildEnrolment::factory()->create([
+        'tenant_id' => $this->tenant->id,
+        'child_id' => $child->id,
+        'centre_id' => $this->centre->id,
+        'product_id' => $product->id,
+    ]);
 
-    Livewire::test(ViewChild::class, ['record' => $child->id])
-        ->assertSuccessful();
+    Livewire::test(ListChildren::class)
+        ->assertCanSeeTableRecords([$child])
+        ->assertSee($this->centre->name);
 });
 
 test('form does not include parents and guardians section', function () {

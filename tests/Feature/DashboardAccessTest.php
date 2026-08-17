@@ -40,7 +40,7 @@ it('redirects authenticated admin user to /admin after login', function () {
     $response->assertRedirect('/admin');
 });
 
-it('redirects authenticated parent user to /dashboard after login', function () {
+it('redirects authenticated parent user to /parent/dashboard after login', function () {
     $password = 'secret-password';
 
     $user = User::factory()->create([
@@ -65,7 +65,7 @@ it('redirects authenticated parent user to /dashboard after login', function () 
         'password' => $password,
     ]);
 
-    $response->assertRedirect('/dashboard');
+    $response->assertRedirect(route('filament.parent.pages.dashboard'));
 });
 
 it('admin panel is accessible to authenticated admin user', function () {
@@ -119,11 +119,16 @@ it('parent panel is accessible to authenticated parent user', function () {
     $response = $this->actingAs($user)
         ->get('/');
 
-    // Parent users should redirect to the dashboard
-    $response->assertRedirect('/dashboard');
+    // Parent users should redirect to the parent panel
+    $response->assertRedirect(route('filament.parent.pages.dashboard'));
 
     // Visit the Filament parent dashboard URL and assert it is successful
     $this->actingAs($user)
-        ->get('/dashboard')
+        ->get(route('filament.parent.pages.dashboard'))
         ->assertSuccessful();
+});
+
+it('requires authentication to access the parent panel URL', function () {
+    $this->get('/parent/dashboard')
+        ->assertRedirect(route('login'));
 });

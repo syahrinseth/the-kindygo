@@ -20,6 +20,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\HasOne;
+use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use Illuminate\Support\Collection;
@@ -40,7 +41,7 @@ class User extends Authenticatable implements FilamentUser, HasAvatar, HasDefaul
         HasRoles::hasRole as protected hasStoredRole;
     }
 
-    use InteractsWithMedia, Notifiable;
+    use InteractsWithMedia, Notifiable, SoftDeletes;
 
     /**
      * Determine if the user can access the given Filament panel.

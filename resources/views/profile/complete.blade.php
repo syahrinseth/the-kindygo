@@ -61,7 +61,7 @@
                                     <label for="nric" class="block text-sm font-medium text-gray-700 mb-2">NRIC</label>
                                     <input id="nric" name="nric" type="text"
                                            class="block w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 @error('nric') border-red-500 @enderror"
-                                           placeholder="NRIC Number" value="{{ old('nric', $user->profile?->nric) }}">
+                                           maxlength="14" inputmode="numeric" autocomplete="off" oninput="const digits = this.value.replace(/\D/g, '').slice(0, 12); this.value = digits.replace(/^(\d{0,6})(\d{0,2})(\d{0,4}).*$/, (_, first, second, third) => [first, second, third].filter(Boolean).join('-'));" placeholder="e.g., 900101-01-1234" value="{{ old('nric', $user->profile?->nric) }}">
                                     @error('nric')
                                         <p class="mt-2 text-sm text-red-500">{{ $message }}</p>
                                     @enderror

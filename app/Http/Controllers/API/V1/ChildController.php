@@ -40,7 +40,7 @@ class ChildController extends Controller
     /**
      * Get details of a specific child.
      *
-     * Returns detailed information about a specific child including enrolments and centres.
+     * Returns detailed information about a specific child including enrolments.
      * The user must have access to this child (parent relationship).
      */
     #[Endpoint(operationId: 'children.show', title: 'Get child details')]
@@ -58,7 +58,7 @@ class ChildController extends Controller
             ], 403);
         }
 
-        $child->load(['enrolments.centre', 'enrolments.product', 'centres']);
+        $child->load(['enrolments.centre', 'enrolments.product']);
 
         return response()->json([
             'success' => true,

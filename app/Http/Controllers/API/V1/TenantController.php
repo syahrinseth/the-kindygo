@@ -3,7 +3,9 @@
 namespace App\Http\Controllers\API\V1;
 
 use App\Actions\Auth\SwitchTenantAction;
+use App\Actions\Tenant\UpdateTenantChipConfigurationAction;
 use App\Http\Controllers\Controller;
+use App\Http\Requests\API\V1\UpdateTenantChipConfigurationRequest;
 use App\Http\Resources\API\V1\TenantResource;
 use App\Models\Tenant;
 use Dedoc\Scramble\Attributes\Endpoint;
@@ -75,6 +77,118 @@ class TenantController extends Controller
             'data' => [
                 'tenant' => new TenantResource($tenant->load('centres')),
                 'token' => $result['token_result']->toArray(),
+            ],
+        ]);
+    }
+
+    /**
+     * Get the CHIP configuration status for the current tenant.
+     */
+    #[Endpoint(operationId: 'tenants.chip-configuration.show', title: 'Get CHIP configuration')]
+    public function chipConfiguration(Request $request): JsonResponse
+    {
+        /** @var \App\Models\User $user */
+        $user = $request->user();
+
+        if (! $user->hasAnyRole(['super-admin', 'admin'])) {
+            return response()->json([
+                'success' => false,
+                'message' => 'You are not authorised to manage CHIP configuration.',
+            ], 403);
+        }
+
+        $tenant = $user->currentTenant();
+
+        if (! $tenant) {
+            return response()->json([
+                'success' => false,
+                'message' => 'No current organisation is selected.',
+            ], 404);
+        }
+
+        return response()->json([
+            'success' => true,
+            'data' => [
+                'enabled' => $tenant->hasChipCredentials(),
+                'brand_id' => $tenant->chip_brand_id,
+            ],
+        ]);
+    }
+
+    /**
+     * Enable or update CHIP credentials for the current tenant.
+     */
+    #[Endpoint(operationId: 'tenants.chip-configuration.update', title: 'Update CHIP configuration')]
+    public function updateChipConfiguration(
+        UpdateTenantChipConfigurationRequest $request,
+        UpdateTenantChipConfigurationAction $updateChipConfiguration,
+    ): JsonResponse {
+        /** @var \App\Models\User $user */
+        $user = $request->user();
+        $tenant = $user->currentTenant();
+
+        if (! $tenant) {
+            return response()->json([
+                'success' => false,
+                'message' => 'No current organisation is selected.',
+            ], 404);
+        }
+
+        $validated = $request->validated();
+        $tenant = $updateChipConfiguration->execute(
+            tenant: $tenant,
+            enabled: $validated['enabled'],
+            brandId: $validated['brand_id'] ?? null,
+            apiKey: $validated['api_key'] ?? null,
+        );
+
+        return response()->json([
+            'success' => true,
+            'message' => $tenant->hasChipCredentials()
+                ? 'CHIP configuration updated successfully.'
+                : 'CHIP payments have been disabled.',
+            'data' => [
+                'enabled' => $tenant->hasChipCredentials(),
+                'brand_id' => $tenant->chip_brand_id,
+            ],
+        ]);
+    }
+
+    /**
+     * Disable CHIP payments for the current tenant.
+     */
+    #[Endpoint(operationId: 'tenants.chip-configuration.delete', title: 'Disable CHIP configuration')]
+    public function destroyChipConfiguration(
+        Request $request,
+        UpdateTenantChipConfigurationAction $updateChipConfiguration,
+    ): JsonResponse {
+        /** @var \App\Models\User $user */
+        $user = $request->user();
+
+        if (! $user->hasAnyRole(['super-admin', 'admin'])) {
+            return response()->json([
+                'success' => false,
+                'message' => 'You are not authorised to manage CHIP configuration.',
+            ], 403);
+        }
+
+        $tenant = $user->currentTenant();
+
+        if (! $tenant) {
+            return response()->json([
+                'success' => false,
+                'message' => 'No current organisation is selected.',
+            ], 404);
+        }
+
+        $updateChipConfiguration->execute($tenant, false);
+
+        return response()->json([
+            'success' => true,
+            'message' => 'CHIP payments have been disabled.',
+            'data' => [
+                'enabled' => false,
+                'brand_id' => null,
             ],
         ]);
     }

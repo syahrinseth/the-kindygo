@@ -49,10 +49,11 @@ class UserForm
                                         ->schema([
                                             TextInput::make('profile.nric')
                                                 ->label('NRIC/IC Number')
-                                                ->placeholder('e.g., 950101014321')
+                                                ->placeholder('e.g., 950101-01-4321')
                                                 ->helperText('Malaysian NRIC/IC number')
-                                                ->maxLength(12)
-                                                ->rules(['required_without:profile.passport', 'digits:12'])
+                                                ->maxLength(14)
+                                                ->mask('999999-99-9999')
+                                                ->rules(['required_without:profile.passport', 'regex:/^\d{6}-\d{2}-\d{4}$/'])
                                                 ->reactive()
                                                 ->afterStateUpdated(function ($state, callable $set) {
                                                     if (filled($state)) {

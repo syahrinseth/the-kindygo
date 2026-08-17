@@ -217,10 +217,10 @@ test('already verified user redirects to dashboard when accessing verification n
     ]);
     $user->tenants()->attach($this->tenant);
 
-    // When already verified and profile completed, should redirect to dashboard
+    // When already verified and profile completed, should redirect to the parent panel
     $response = $this->actingAs($user)->get('/');
 
-    $response->assertRedirect('/dashboard');
+    $response->assertRedirect(route('filament.parent.pages.dashboard'));
 });
 
 test('verification email resend is rate limited', function () {

@@ -5,6 +5,7 @@ namespace App\Console\Commands;
 use App\Services\Migration\MigrationLogger;
 use App\Services\Migration\OrphanLogger;
 use App\Services\Migration\StatusMapper;
+use App\Support\MyKadNumber;
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\DB;
 
@@ -274,7 +275,7 @@ class MigrateLegacyUsers extends Command
         DB::table('user_profiles')->updateOrInsert(
             ['user_id' => $legacy->id],
             [
-                'nric' => $legacy->ic_no ?: null,
+                'nric' => MyKadNumber::format($legacy->ic_no ?: null),
                 'phone' => $legacy->phone_no ?: null,
                 'occupation' => $legacy->occupation ?: null,
                 'created_at' => $legacy->created_at,
@@ -373,7 +374,7 @@ class MigrateLegacyUsers extends Command
             ],
             [
                 'name' => $legacy->spouse_name,
-                'nric' => $legacy->spouse_ic_no ?: null,
+                'nric' => MyKadNumber::format($legacy->spouse_ic_no ?: null),
                 'phone' => $legacy->spouse_phone_no ?: null,
                 'email' => $legacy->spouse_email ?: null,
                 'occupation' => $legacy->spouse_occupation ?: null,

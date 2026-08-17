@@ -33,11 +33,12 @@ class ChildForm
                                             TextInput::make('mykid_no')
                                                 ->label('MyKid Number')
                                                 ->required()
-                                                ->maxLength(255)
-                                                ->placeholder('e.g., 150101010001')
+                                                ->maxLength(14)
+                                                ->placeholder('e.g., 150101-01-0001')
                                                 ->helperText('Malaysian MyKid identification number')
                                                 ->suffixIcon('heroicon-m-identification')
-                                                ->mask('999999999999'),
+                                                ->mask('999999-99-9999')
+                                                ->rules(['regex:/^\d{6}-\d{2}-\d{4}$/']),
 
                                             TextInput::make('cert_number')
                                                 ->label('Birth Certificate Number')

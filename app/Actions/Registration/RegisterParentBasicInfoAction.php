@@ -4,6 +4,7 @@ namespace App\Actions\Registration;
 
 use App\Models\Tenant;
 use App\Models\User;
+use App\Support\MyKadNumber;
 use Illuminate\Support\Facades\Hash;
 
 class RegisterParentBasicInfoAction
@@ -18,6 +19,8 @@ class RegisterParentBasicInfoAction
      */
     public function execute(array $validated, Tenant $tenant, ?User $existingUser = null): array
     {
+        $myKadNumber = MyKadNumber::format($validated['mykad_number'] ?? null);
+
         // If an existing user is provided, update their information
         if ($existingUser) {
             $user = $existingUser;
@@ -58,7 +61,7 @@ class RegisterParentBasicInfoAction
         $user->profile()->updateOrCreate(
             ['user_id' => $user->id],
             [
-                'nric' => $validated['mykad_number'] ?? null,
+                'nric' => $myKadNumber,
                 'phone' => $validated['phone'],
             ]
         );
@@ -76,7 +79,7 @@ class RegisterParentBasicInfoAction
         $user->updateRegistrationData(1, [
             'name' => $validated['name'],
             'email' => $validated['email'],
-            'mykad_number' => $validated['mykad_number'] ?? null,
+            'mykad_number' => $myKadNumber,
             'phone' => $validated['phone'],
             'centre_ids' => $validated['centre_ids'],
             'tenant_id' => $tenant->id,

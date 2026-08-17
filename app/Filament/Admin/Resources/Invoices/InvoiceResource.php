@@ -84,7 +84,7 @@ class InvoiceResource extends Resource
                 $query->where('status', PaymentStatus::PAID);
             },
             'user.children' => function ($query) {
-                $query->with('centres');
+                $query->with('enrolments');
             },
         ]);
     }
@@ -272,9 +272,9 @@ class InvoiceResource extends Resource
                     ->searchable()
                     ->sortable()
                     ->description(function (Invoice $record): ?string {
-                        // Filter pre-loaded children by the invoice's centre
+                        // Filter pre-loaded children by enrolments at the invoice's centre.
                         $children = $record->user->children->filter(function ($child) use ($record) {
-                            return $child->centres->contains('id', $record->centre_id);
+                            return $child->enrolments->contains('centre_id', $record->centre_id);
                         });
 
                         if ($children->isEmpty()) {

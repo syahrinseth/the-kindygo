@@ -237,10 +237,6 @@ class MigrateLegacyValidate extends Command
                 'query' => "SELECT COUNT(*) as cnt FROM tenant_child WHERE tenant_id = {$tenantId} AND child_id NOT IN (SELECT id FROM children)",
             ],
             [
-                'label' => 'Centre-Child → Children',
-                'query' => 'SELECT COUNT(*) as cnt FROM centre_child WHERE child_id NOT IN (SELECT id FROM children)',
-            ],
-            [
                 'label' => 'Centre-User → Users',
                 'query' => 'SELECT COUNT(*) as cnt FROM centre_user WHERE user_id NOT IN (SELECT id FROM users)',
             ],

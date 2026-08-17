@@ -33,7 +33,6 @@ class ChildResource extends JsonResource
             'emergency_contact_phone' => $this->resource->emergency_contact_phone,
             'relationship_type' => $this->whenPivotLoaded('child_user', fn () => $this->resource->pivot->relationship_type),
             'enrolments' => ChildEnrolmentResource::collection($this->whenLoaded('enrolments')),
-            'centres' => CentreResource::collection($this->whenLoaded('centres')),
             'created_at' => $this->resource->created_at->toIso8601String(),
             'updated_at' => $this->resource->updated_at->toIso8601String(),
         ];

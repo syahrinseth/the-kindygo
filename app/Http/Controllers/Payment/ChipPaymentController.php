@@ -6,16 +6,17 @@ use App\Actions\Payment\ProcessPaymentAllocationAction;
 use App\Enums\PaymentStatus;
 use App\Http\Controllers\Controller;
 use App\Models\Payment;
+use App\Services\Payments\TenantChipService;
 use Exception;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
-use SyahrinSeth\ChipLaravel\ChipService;
 
 class ChipPaymentController extends Controller
 {
     public function __construct(
-        protected ProcessPaymentAllocationAction $processPaymentAllocation
+        protected ProcessPaymentAllocationAction $processPaymentAllocation,
+        protected TenantChipService $chipService,
     ) {}
 
     public function success(Payment $payment)
@@ -302,8 +303,13 @@ class ChipPaymentController extends Controller
     protected function fetchAndPrepareChipData(Payment $payment): ?array
     {
         try {
-            $chipService = new ChipService;
-            $chipPurchase = $chipService->getPurchase($payment->gateway_payment_id);
+            $tenant = $payment->tenant;
+
+            if (! $tenant) {
+                throw new \RuntimeException('Payment tenant could not be resolved.');
+            }
+
+            $chipPurchase = $this->chipService->getPurchase($tenant, $payment->gateway_payment_id);
 
             if (! $chipPurchase) {
                 Log::warning('No CHIP purchase data found', [

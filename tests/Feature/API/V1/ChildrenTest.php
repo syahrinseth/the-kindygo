@@ -42,7 +42,8 @@ describe('GET /api/v1/children', function () {
             ])
             ->assertJson([
                 'success' => true,
-            ]);
+            ])
+            ->assertJsonMissingPath('data.0.centres');
     });
 
     it('requires authentication', function () {
@@ -71,7 +72,8 @@ describe('GET /api/v1/children/{child}', function () {
                 'data' => [
                     'id' => $this->child->id,
                 ],
-            ]);
+            ])
+            ->assertJsonMissingPath('data.centres');
     });
 
     it('returns 404 for non-existent child', function () {

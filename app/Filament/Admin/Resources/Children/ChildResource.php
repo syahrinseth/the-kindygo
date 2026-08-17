@@ -6,9 +6,7 @@ use App\Enums\ChildStatus;
 use App\Filament\Admin\Resources\Children\Pages\CreateChild;
 use App\Filament\Admin\Resources\Children\Pages\EditChild;
 use App\Filament\Admin\Resources\Children\Pages\ListChildren;
-use App\Filament\Admin\Resources\Children\RelationManagers\CentresRelationManager;
 use App\Filament\Admin\Resources\Children\RelationManagers\EnrolmentsRelationManager;
-use App\Filament\Admin\Resources\ChildResource\RelationManagers;
 use App\Filament\Forms\ChildForm;
 use App\Models\Centre;
 use App\Models\Child;
@@ -81,7 +79,7 @@ class ChildResource extends Resource
 
     public static function getEloquentQuery(): Builder
     {
-        $query = parent::getEloquentQuery();
+        $query = parent::getEloquentQuery()->with('enrolments.centre');
         $user = Auth::user();
 
         // If user is Parent, restrict to their children
@@ -96,7 +94,7 @@ class ChildResource extends Resource
                 ->pluck('centres.id');
 
             if ($userCentreIds->isNotEmpty()) {
-                $query->whereHas('centres', fn ($q) => $q->whereIn('centres.id', $userCentreIds));
+                $query->whereHas('enrolments', fn (Builder $query) => $query->whereIn('centre_id', $userCentreIds));
             } else {
                 // If user has no centres assigned, show no children
                 $query->whereRaw('1 = 0');
@@ -141,9 +139,10 @@ class ChildResource extends Resource
                         'female' => 'pink',
                         default => 'gray',
                     }),
-                TextColumn::make('centres.name')
-                    ->searchable()
-                    ->sortable(),
+                TextColumn::make('enrolment_centre_names')
+                    ->label('Centres')
+                    ->badge()
+                    ->separator(', '),
                 TextColumn::make('tenant_status')
                     ->label('Status')
                     ->badge()
@@ -259,8 +258,8 @@ class ChildResource extends Resource
                             return $query;
                         }
 
-                        return $query->whereHas('centres', function (Builder $subQuery) use ($data) {
-                            $subQuery->where('centres.id', $data['value']);
+                        return $query->whereHas('enrolments', function (Builder $subQuery) use ($data) {
+                            $subQuery->where('centre_id', $data['value']);
                         });
                     }),
                 Filter::make('date_of_birth')
@@ -375,9 +374,7 @@ class ChildResource extends Resource
     public static function getRelations(): array
     {
         return [
-            CentresRelationManager::class,
             EnrolmentsRelationManager::class,
-            // RelationManagers\UsersRelationManager::class,
         ];
     }
 

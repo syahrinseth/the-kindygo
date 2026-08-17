@@ -186,29 +186,6 @@ class ChildPolicy
     }
 
     /**
-     * Determine whether the user can associate/disassociate centres with children.
-     */
-    public function manageCentres(User $user, Child $child): bool
-    {
-        // Super Admin can manage any child's centres
-        if ($user->hasRole('super-admin')) {
-            return true;
-        }
-
-        // Admin can manage centres for children in their tenant
-        if ($user->hasRole('admin')) {
-            return $this->childBelongsToUserTenant($user, $child);
-        }
-
-        // Principal can manage centres for children they have access to
-        if ($user->hasRole('principal')) {
-            return $this->canAccessChildBasedOnCentres($user, $child);
-        }
-
-        return false;
-    }
-
-    /**
      * Helper method to check if a child belongs to the user's current tenant.
      */
     private function childBelongsToUserTenant(User $user, Child $child): bool
@@ -246,9 +223,9 @@ class ChildPolicy
             return false;
         }
 
-        // Check if the child is in any of the user's centres
-        return $child->centres()
-            ->whereIn('centres.id', $userCentreIds)
+        // All enrolments, including historical enrolments, establish centre association.
+        return $child->enrolments()
+            ->whereIn('centre_id', $userCentreIds)
             ->exists();
     }
 

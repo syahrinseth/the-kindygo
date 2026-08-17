@@ -19,7 +19,7 @@ it('allows seeded admin user to login and redirects to admin panel', function ()
     $this->assertAuthenticated();
 });
 
-it('allows seeded parent user to login and redirects to dashboard', function () {
+it('allows seeded parent user to login and redirects to the parent panel', function () {
     /** @var Tests\TestCase $this */
     $this->seed(DatabaseSeeder::class);
 
@@ -28,7 +28,7 @@ it('allows seeded parent user to login and redirects to dashboard', function () 
         'password' => 'password@123',
     ]);
 
-    // Parent user should redirect to /dashboard
-    $response->assertRedirect('/dashboard');
+    // Parent user should redirect to /parent/dashboard
+    $response->assertRedirect(route('filament.parent.pages.dashboard'));
     $this->assertAuthenticated();
 });

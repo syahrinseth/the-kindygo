@@ -42,9 +42,6 @@ beforeEach(function () {
     // Associate child with tenant
     $this->child->tenants()->attach($this->tenant->id);
 
-    // Associate child with centre
-    $this->child->centres()->attach($this->centre->id);
-
     // Associate parent with child
     $this->parent->children()->attach($this->child->id);
 

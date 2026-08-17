@@ -10,16 +10,16 @@ use App\Models\Invoice;
 use App\Models\Payment;
 use App\Models\Scopes\TenantScope;
 use App\Models\User;
+use App\Services\Payments\TenantChipService;
 use Exception;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\URL;
-use SyahrinSeth\ChipLaravel\ChipService;
 
 class ChipGatewayAction implements PaymentGatewayInterface
 {
     public function __construct(
-        protected ChipService $chipService
+        protected TenantChipService $chipService
     ) {}
 
     /**
@@ -32,12 +32,18 @@ class ChipGatewayAction implements PaymentGatewayInterface
         ?array $userAllocation = null,
         array $additionalData = []
     ): PaymentResult {
-        return DB::transaction(function () use ($user, $totalAmount, $invoices, $userAllocation) {
-            $tenantId = $user->currentTenant()?->id;
+        $tenant = $user->currentTenant();
 
-            if (! $tenantId) {
-                throw new \RuntimeException('User does not have a current tenant.');
-            }
+        if (! $tenant) {
+            throw new \RuntimeException('User does not have a current tenant.');
+        }
+
+        if (! $tenant->hasChipCredentials()) {
+            throw new \RuntimeException('CHIP payments are not configured for this organisation.');
+        }
+
+        return DB::transaction(function () use ($user, $tenant, $totalAmount, $invoices, $userAllocation) {
+            $tenantId = $tenant->id;
 
             // 1. Load invoice models from invoice IDs
             $invoiceIds = array_column($invoices, 'id');
@@ -157,7 +163,14 @@ class ChipGatewayAction implements PaymentGatewayInterface
         $product->price = $totalAmount;
 
         // Generate signed URLs for callbacks
+        $tenant = $payment->tenant;
+
+        if (! $tenant) {
+            throw new \RuntimeException('Payment tenant could not be resolved.');
+        }
+
         $chipPurchase = $this->chipService->createPurchase(
+            $tenant,
             $user->email,
             [$product],
             URL::signedRoute('payments.chip.success', ['payment' => $payment->id], absolute: true),

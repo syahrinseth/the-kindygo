@@ -103,12 +103,12 @@
                             </svg>
                             MyKad Number
                         </label>
-                        <input type="text" wire:model="mykad_number" maxlength="12" class="w-full px-4 py-3 rounded-lg border-gray-300 shadow-sm focus:border-blue-500 focus:ring-2 focus:ring-blue-500 transition-colors" placeholder="e.g., 900101011234">
+                        <input type="text" wire:model="mykad_number" maxlength="14" inputmode="numeric" autocomplete="off" oninput="const digits = this.value.replace(/\D/g, '').slice(0, 12); this.value = digits.replace(/^(\d{0,6})(\d{0,2})(\d{0,4}).*$/, (_, first, second, third) => [first, second, third].filter(Boolean).join('-'));" class="w-full px-4 py-3 rounded-lg border-gray-300 shadow-sm focus:border-blue-500 focus:ring-2 focus:ring-blue-500 transition-colors" placeholder="e.g., 900101-01-1234">
                         <p class="mt-1.5 text-xs text-gray-500 flex items-center">
                             <svg class="w-3.5 h-3.5 mr-1" fill="currentColor" viewBox="0 0 20 20">
                                 <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clip-rule="evenodd"></path>
                             </svg>
-                            Enter your 12-digit MyKad number without dashes
+                            Enter your 12-digit MyKad number. Hyphens are added automatically.
                         </p>
                         @error('mykad_number') <p class="mt-1 text-sm text-red-600">{{ $message }}</p> @enderror
                     </div>
@@ -608,8 +608,8 @@
                                             <label class="block text-sm font-semibold text-gray-700 mb-2">
                                                 MyKid Number <span class="text-red-500">*</span>
                                             </label>
-                                            <input type="text" wire:model="children.{{ $index }}.mykid_no" maxlength="12" class="w-full px-4 py-3 rounded-lg border-gray-300 shadow-sm focus:border-blue-500 focus:ring-2 focus:ring-blue-500 transition-colors" placeholder="e.g., 150101010001">
-                                            <p class="mt-1.5 text-xs text-gray-500">12-digit MyKid identification number</p>
+                                            <input type="text" wire:model="children.{{ $index }}.mykid_no" maxlength="14" inputmode="numeric" autocomplete="off" oninput="const digits = this.value.replace(/\D/g, '').slice(0, 12); this.value = digits.replace(/^(\d{0,6})(\d{0,2})(\d{0,4}).*$/, (_, first, second, third) => [first, second, third].filter(Boolean).join('-'));" class="w-full px-4 py-3 rounded-lg border-gray-300 shadow-sm focus:border-blue-500 focus:ring-2 focus:ring-blue-500 transition-colors" placeholder="e.g., 150101-01-0001">
+                                            <p class="mt-1.5 text-xs text-gray-500">12-digit MyKid number. Hyphens are added automatically.</p>
                                             @error("children.{$index}.mykid_no") <p class="mt-1 text-sm text-red-600">{{ $message }}</p> @enderror
                                         </div>
                                         <div>
