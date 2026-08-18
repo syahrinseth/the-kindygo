@@ -42,8 +42,8 @@ class ChildInformationRequest extends FormRequest
             'children.*.race' => ['nullable', 'string', 'max:100'],
             'children.*.religion' => ['nullable', 'string', 'max:100'],
             'children.*.position_of_child' => ['nullable', 'integer', 'min:1'],
-            'children.*.mykid_no' => ['required', 'string', 'regex:/^\d{6}-\d{2}-\d{4}$/'],
-            'children.*.cert_number' => ['required', 'string', 'max:50'],
+            'children.*.mykid_no' => ['nullable', 'string', 'regex:/^\d{6}-\d{2}-\d{4}$/'],
+            'children.*.cert_number' => ['nullable', 'string', 'max:50'],
         ];
     }
 

@@ -606,7 +606,7 @@
                                     <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                                         <div>
                                             <label class="block text-sm font-semibold text-gray-700 mb-2">
-                                                MyKid Number <span class="text-red-500">*</span>
+                                                MyKid Number
                                             </label>
                                             <input type="text" wire:model="children.{{ $index }}.mykid_no" maxlength="14" inputmode="numeric" autocomplete="off" oninput="const digits = this.value.replace(/\D/g, '').slice(0, 12); this.value = digits.replace(/^(\d{0,6})(\d{0,2})(\d{0,4}).*$/, (_, first, second, third) => [first, second, third].filter(Boolean).join('-'));" class="w-full px-4 py-3 rounded-lg border-gray-300 shadow-sm focus:border-blue-500 focus:ring-2 focus:ring-blue-500 transition-colors" placeholder="e.g., 150101-01-0001">
                                             <p class="mt-1.5 text-xs text-gray-500">12-digit MyKid number. Hyphens are added automatically.</p>

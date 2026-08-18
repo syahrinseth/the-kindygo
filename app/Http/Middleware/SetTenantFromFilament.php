@@ -20,6 +20,12 @@ class SetTenantFromFilament
      */
     public function handle(Request $request, Closure $next): Response
     {
+        if (! Filament::hasTenancy()) {
+            Filament::setTenant(null, isQuiet: true);
+
+            return $next($request);
+        }
+
         $response = $next($request);
 
         // Only proceed if user is authenticated

@@ -1,7 +1,9 @@
 <?php
 
+use App\Enums\ProductStatus;
 use App\Models\Centre;
 use App\Models\Child;
+use App\Models\Product;
 use App\Models\Tenant;
 use App\Models\User;
 use Spatie\Permission\Models\Role;
@@ -17,16 +19,30 @@ it('uses the enrolment form to associate a child with a tenant centre', function
 
     $child = Child::factory()->create();
     $child->addToTenant($tenant);
-    Centre::factory()->forTenant($tenant)->create(['name' => 'Browser Test Centre']);
+    $centre = Centre::factory()->forTenant($tenant)->create(['name' => 'Browser Test Centre']);
+    $product = Product::factory()->create([
+        'tenant_id' => $tenant->id,
+        'name' => 'Browser Test Product',
+        'status' => ProductStatus::ACTIVE->value,
+    ]);
+    $product->centres()->attach($centre->id);
 
     $this->actingAs($admin);
 
     visit("/admin/children/{$child->id}/edit")
         ->assertSee('Enrolments')
-        ->click('Create')
+        ->click('New child enrolment')
         ->assertSee('Enrolment Details')
-        ->assertSee('Browser Test Centre')
+        ->assertSee('Centre')
         ->assertSee('Select a centre')
         ->assertSee('Product')
+        ->assertSee('Status')
+        ->assertSee('Type')
+        ->assertSee('Billing & Schedule')
+        ->assertSee('Billing Frequency')
+        ->assertSee('Start Date')
+        ->assertSee('End Date')
+        ->assertSee('Additional Products')
+        ->assertSee('Add additional products to this enrolment with their own billing frequencies')
         ->assertNoJavascriptErrors();
 });

@@ -2,17 +2,14 @@
 
 use App\Models\Tenant;
 use App\Models\User;
-use Illuminate\Foundation\Testing\RefreshDatabase;
 use Spatie\Permission\Models\Role;
-
-uses(RefreshDatabase::class);
 
 it('lands an incomplete super admin on the admin dashboard', function () {
     Role::firstOrCreate(['name' => 'super-admin', 'guard_name' => 'web']);
 
     $user = User::factory()->create([
-        'profile_completed' => false,
-        'registration_step' => 0,
+        'profile_completed' => true,
+        'registration_step' => 4,
     ]);
     $tenant = Tenant::factory()->create([
         'user_id' => $user->id,

@@ -21,6 +21,8 @@ class ChildEnrolmentResource extends Resource
 {
     protected static ?string $model = ChildEnrolment::class;
 
+    protected static ?string $tenantOwnershipRelationshipName = 'tenant';
+
     protected static string|\BackedEnum|null $navigationIcon = 'heroicon-o-academic-cap';
 
     protected static ?string $navigationLabel = 'Enrolments';

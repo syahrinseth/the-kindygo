@@ -64,7 +64,7 @@ class MigrateLegacyInvoices extends Command
             }
         }
 
-        if (! $this->option('skip-recalculation')) {
+        if (! $this->option('skip-items') && ! $this->option('skip-recalculation')) {
             $this->recalculateInvoiceTotals($tenantId, $chunkSize, $dryRun);
         }
 

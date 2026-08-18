@@ -118,6 +118,27 @@ describe('POST /api/v1/auth/register/step-3', function () {
         expect($this->user->children()->count())->toBe(2);
     });
 
+    it('does not duplicate children without MyKid numbers when step three is retried', function () {
+        Sanctum::actingAs($this->user, TokenAbility::parentAbilities());
+
+        $payload = [
+            'children' => [
+                [
+                    'first_name' => 'Ahmad',
+                    'last_name' => 'Bin Ali',
+                    'date_of_birth' => '2020-05-15',
+                    'gender' => 'male',
+                ],
+            ],
+        ];
+
+        $this->postJson('/api/v1/auth/register/step-3', $payload)->assertOk();
+        $this->postJson('/api/v1/auth/register/step-3', $payload)->assertOk();
+
+        expect(Child::count())->toBe(1)
+            ->and($this->user->fresh()->children()->count())->toBe(1);
+    });
+
     it('skips children with empty array', function () {
         Sanctum::actingAs($this->user, TokenAbility::parentAbilities());
 

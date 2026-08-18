@@ -451,22 +451,42 @@ it('supports bounded header and item process ranges', function () {
         '--tenant-id' => 1,
         '--end-id' => 2,
         '--skip-items' => true,
-        '--skip-recalculation' => true,
     ])->assertSuccessful();
 
     expect(DB::table('invoices')->whereIn('id', [1, 2])->count())->toBe(2)
         ->and(DB::table('invoices')->where('id', 3)->exists())->toBeFalse()
-        ->and(DB::table('invoice_items')->count())->toBe(0);
+        ->and(DB::table('invoice_items')->count())->toBe(0)
+        ->and(DB::table('invoices')->where('id', 1)->value('total'))->toBe(30000);
 
     $this->artisan('migrate:legacy-invoices', [
         '--tenant-id' => 1,
         '--skip-invoices' => true,
         '--items-end-id' => 2,
-        '--skip-recalculation' => true,
     ])->assertSuccessful();
 
     expect(DB::table('invoice_items')->whereIn('id', [1, 2])->count())->toBe(2)
         ->and(DB::table('invoice_items')->where('id', 3)->exists())->toBeFalse();
+
+    expect(DB::table('invoices')->where('id', 1)->value('total'))->toBe(35000);
+});
+
+it('can defer invoice total recalculation until the final migration batch', function () {
+    $this->seedLegacyInvoices(1, parentId: 1, preschoolId: 1);
+    $this->seedLegacyBills(1, invoiceId: 1, childId: 1, productId: 1, parentId: 1, preschoolId: 1);
+
+    $this->artisan('migrate:legacy-invoices', [
+        '--tenant-id' => 1,
+        '--skip-recalculation' => true,
+    ])->assertSuccessful();
+
+    expect(DB::table('invoices')->where('id', 1)->value('total'))->toBe(30000);
+
+    $this->artisan('migrate:legacy-invoices', [
+        '--tenant-id' => 1,
+        '--skip-invoices' => true,
+    ])->assertSuccessful();
+
+    expect(DB::table('invoices')->where('id', 1)->value('total'))->toBe(15000);
 });
 
 it('supports items-start-id option to resume invoice item migration', function () {

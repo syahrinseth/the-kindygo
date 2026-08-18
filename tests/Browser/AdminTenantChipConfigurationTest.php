@@ -2,10 +2,7 @@
 
 use App\Models\Tenant;
 use App\Models\User;
-use Illuminate\Foundation\Testing\RefreshDatabase;
 use Spatie\Permission\Models\Role;
-
-uses(RefreshDatabase::class);
 
 it('allows an admin to view CHIP payment configuration in organisation settings', function (): void {
     Role::firstOrCreate(['name' => 'admin', 'guard_name' => 'web']);
@@ -19,6 +16,7 @@ it('allows an admin to view CHIP payment configuration in organisation settings'
 
     visit('/admin/organisation-settings')
         ->assertSee('CHIP Payment Configuration')
+        ->click('.fi-section:has(.fi-section-header-heading:text-is("CHIP Payment Configuration")) > .fi-section-header')
         ->assertSee('Enable CHIP payments')
         ->assertNoJavascriptErrors();
 });

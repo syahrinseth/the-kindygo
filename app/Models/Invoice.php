@@ -427,24 +427,7 @@ class Invoice extends Model
      */
     public function calculateAndUpdateTotals(): void
     {
-        $invoiceItems = $this->invoiceItems;
-
-        $totalItems = $invoiceItems->count();
-        $totalAmount = $invoiceItems->sum(function ($item) {
-            return $item->price * $item->quantity;
-        });
-        $totalDiscounts = $invoiceItems->sum(function ($item) {
-            return $item->discount * $item->quantity; // Discount per unit * quantity
-        });
-        $total = $invoiceItems->sum('total');
-
-        // Update the invoice totals
-        $this->update([
-            'total_items' => $totalItems,
-            'total_amount' => $totalAmount, // Before discount amount
-            'total_discounts' => $totalDiscounts,
-            'total' => $total,
-        ]);
+        app(\App\Actions\Invoice\UpdateInvoiceTotals::class)->execute($this);
     }
 
     /**
@@ -453,23 +436,7 @@ class Invoice extends Model
      */
     public function recalculateTotals(): array
     {
-        $invoiceItems = $this->invoiceItems;
-
-        $totalItems = $invoiceItems->count();
-        $totalAmount = $invoiceItems->sum(function ($item) {
-            return $item->price * $item->quantity;
-        });
-        $totalDiscounts = $invoiceItems->sum(function ($item) {
-            return $item->discount * $item->quantity; // Discount per unit * quantity
-        });
-        $total = $invoiceItems->sum('total');
-
-        return [
-            'total_items' => $totalItems,
-            'total_amount' => $totalAmount,
-            'total_discounts' => $totalDiscounts,
-            'total' => $total,
-        ];
+        return app(\App\Actions\Invoice\UpdateInvoiceTotals::class)->calculate($this);
     }
 
     /**

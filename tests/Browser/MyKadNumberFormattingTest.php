@@ -1,9 +1,6 @@
 <?php
 
 use App\Models\Tenant;
-use Illuminate\Foundation\Testing\RefreshDatabase;
-
-uses(RefreshDatabase::class);
 
 it('formats a MyKad number while it is entered in the registration wizard', function () {
     $tenant = Tenant::factory()->create();

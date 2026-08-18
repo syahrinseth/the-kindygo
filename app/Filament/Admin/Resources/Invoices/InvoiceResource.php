@@ -335,7 +335,7 @@ class InvoiceResource extends Resource
                     ->sortable(),
 
                 TextColumn::make('total_amount')
-                    ->label('Amount')
+                    ->label('Subtotal')
                     ->money('MYR', 100)
                     ->sortable(),
 

@@ -3,10 +3,7 @@
 use App\Models\Tenant;
 use App\Models\User;
 use App\Models\UserAddress;
-use Illuminate\Foundation\Testing\RefreshDatabase;
 use Spatie\Permission\Models\Role;
-
-uses(RefreshDatabase::class);
 
 it('loads the admin users page with canonical migrated state data', function () {
     Role::firstOrCreate(['name' => 'admin', 'guard_name' => 'web']);

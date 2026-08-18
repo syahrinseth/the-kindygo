@@ -5,6 +5,7 @@ namespace App\Actions\Registration;
 use App\Models\Child;
 use App\Models\User;
 use App\Support\MalaysianIdentificationNumber;
+use Illuminate\Support\Facades\DB;
 
 class CreateChildrenForParentAction
 {
@@ -13,41 +14,28 @@ class CreateChildrenForParentAction
      */
     public function execute(User $user, ?array $childrenData): void
     {
-        // Allow skipping if no children data provided
-        if (empty($childrenData)) {
-            $user->registration_step = 3;
-            $user->updateRegistrationData(3, [
-                'children_count' => 0,
-                'skipped' => true,
-            ]);
+        DB::transaction(function () use ($user, $childrenData): void {
+            $registrationUser = User::query()->lockForUpdate()->findOrFail($user->id);
 
-            return;
-        }
+            // Allow skipping if no children data provided
+            if (empty($childrenData)) {
+                $registrationUser->registration_step = 3;
+                $registrationUser->updateRegistrationData(3, [
+                    'children_count' => 0,
+                    'skipped' => true,
+                ]);
 
-        $createdChildren = [];
-
-        foreach ($childrenData as $childData) {
-            $myKidNumber = MalaysianIdentificationNumber::format($childData['mykid_no'] ?? null);
-            $childData['mykid_no'] = $myKidNumber;
-
-            // Determine unique identifier for firstOrCreate
-            // Priority: mykid_no > combination of first_name + last_name + date_of_birth
-            if (! empty($myKidNumber)) {
-                // Use MyKID as primary identifier
-                $uniqueAttributes = ['mykid_no' => $myKidNumber];
-            } else {
-                // Fall back to name + DOB combination
-                $uniqueAttributes = [
-                    'first_name' => $childData['first_name'] ?? null,
-                    'last_name' => $childData['last_name'] ?? null,
-                    'date_of_birth' => $childData['date_of_birth'] ?? null,
-                ];
+                return;
             }
 
-            // Create or update the child
-            $child = Child::updateOrCreate(
-                $uniqueAttributes,
-                [
+            $existingChildren = $registrationUser->getRegistrationData('step_3.children');
+            $createdChildren = [];
+
+            foreach ($childrenData as $index => $childData) {
+                $myKidNumber = MalaysianIdentificationNumber::format($childData['mykid_no'] ?? null);
+                $childData['mykid_no'] = $myKidNumber;
+
+                $attributes = [
                     'first_name' => $childData['first_name'] ?? null,
                     'patronymic' => $childData['patronymic'] ?? null,
                     'last_name' => $childData['last_name'] ?? null,
@@ -57,45 +45,76 @@ class CreateChildrenForParentAction
                     'race' => $childData['race'] ?? null,
                     'religion' => $childData['religion'] ?? null,
                     'position_of_child' => $childData['position_of_child'] ?? null,
-                    'mykid_no' => $childData['mykid_no'] ?? null,
+                    'mykid_no' => $myKidNumber,
                     'cert_number' => $childData['cert_number'] ?? null,
-                ]
-            );
+                ];
 
-            // Establish ChildUser relationship with Parent type
-            $user->children()->syncWithoutDetaching([
-                $child->id => ['relationship_type' => 'Parent'],
-            ]);
+                $previousChild = $this->findPreviousChild($registrationUser, $existingChildren, $index);
 
-            // Establish TenantChild relationship with NEW status
-            if ($user->current_tenant_id) {
-                $child->tenants()->syncWithoutDetaching([
-                    $user->current_tenant_id => ['status' => 'new'],
+                $child = $this->shouldReusePreviousChild($previousChild, $myKidNumber)
+                    ? tap($previousChild)->update($attributes)
+                    : ($myKidNumber
+                        ? Child::updateOrCreate(['mykid_no' => $myKidNumber], $attributes)
+                        : Child::create($attributes));
+
+                // Establish ChildUser relationship with Parent type
+                $registrationUser->children()->syncWithoutDetaching([
+                    $child->id => ['relationship_type' => 'Parent'],
                 ]);
+
+                // Establish TenantChild relationship with NEW status
+                if ($registrationUser->current_tenant_id) {
+                    $child->tenants()->syncWithoutDetaching([
+                        $registrationUser->current_tenant_id => ['status' => 'new'],
+                    ]);
+                }
+
+                $createdChildren[] = [
+                    'id' => $child->id,
+                    'first_name' => $child->first_name,
+                    'patronymic' => $child->patronymic,
+                    'last_name' => $child->last_name,
+                    'gender' => $child->gender,
+                    'date_of_birth' => $child->date_of_birth,
+                    'place_of_birth' => $child->place_of_birth,
+                    'race' => $child->race,
+                    'religion' => $child->religion,
+                    'position_of_child' => $child->position_of_child,
+                    'mykid_no' => $child->mykid_no,
+                    'cert_number' => $child->cert_number,
+                ];
             }
 
-            $createdChildren[] = [
-                'id' => $child->id,
-                'first_name' => $child->first_name,
-                'patronymic' => $child->patronymic,
-                'last_name' => $child->last_name,
-                'gender' => $child->gender,
-                'date_of_birth' => $child->date_of_birth,
-                'place_of_birth' => $child->place_of_birth,
-                'race' => $child->race,
-                'religion' => $child->religion,
-                'position_of_child' => $child->position_of_child,
-                'mykid_no' => $child->mykid_no,
-                'cert_number' => $child->cert_number,
-            ];
+            // Update registration progress
+            $registrationUser->registration_step = 3;
+            $registrationUser->updateRegistrationData(3, [
+                'children_count' => count($createdChildren),
+                'children' => $createdChildren,
+                'skipped' => false,
+            ]);
+        });
+    }
+
+    /**
+     * @param  array<int, array<string, mixed>>|null  $existingChildren
+     */
+    private function findPreviousChild(User $user, ?array $existingChildren, int|string $index): ?Child
+    {
+        $childId = $existingChildren[$index]['id'] ?? null;
+
+        return is_int($childId) || ctype_digit((string) $childId)
+            ? $user->children()->find($childId)
+            : null;
+    }
+
+    private function shouldReusePreviousChild(?Child $previousChild, ?string $myKidNumber): bool
+    {
+        if (! $previousChild) {
+            return false;
         }
 
-        // Update registration progress
-        $user->registration_step = 3;
-        $user->updateRegistrationData(3, [
-            'children_count' => count($createdChildren),
-            'children' => $createdChildren,
-            'skipped' => false,
-        ]);
+        return ! $myKidNumber
+            || ! $previousChild->mykid_no
+            || $previousChild->mykid_no === $myKidNumber;
     }
 }

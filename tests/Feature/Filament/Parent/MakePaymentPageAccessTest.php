@@ -39,7 +39,7 @@ it('allows parent users to access make payment page', function () {
     Filament::setCurrentPanel(Filament::getPanel('parent'));
     Filament::setTenant($tenant);
 
-    get('/make-payment')
+    get(route('filament.parent.pages.make-payment'))
         ->assertSuccessful()
         ->assertSeeLivewire(MakePayment::class);
 });
@@ -141,6 +141,6 @@ it('prevents non-parent users from accessing the page', function () {
     Filament::setCurrentPanel(Filament::getPanel('parent'));
     Filament::setTenant($tenant);
 
-    get('/make-payment')
+    get(route('filament.parent.pages.make-payment'))
         ->assertForbidden();
 });

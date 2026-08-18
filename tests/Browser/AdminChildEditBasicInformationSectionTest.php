@@ -3,10 +3,7 @@
 use App\Models\Child;
 use App\Models\Tenant;
 use App\Models\User;
-use Illuminate\Foundation\Testing\RefreshDatabase;
 use Spatie\Permission\Models\Role;
-
-uses(RefreshDatabase::class);
 
 it('shows the basic information section on the admin child edit page', function () {
     Role::firstOrCreate(['name' => 'admin', 'guard_name' => 'web']);

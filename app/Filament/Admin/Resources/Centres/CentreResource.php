@@ -35,6 +35,8 @@ class CentreResource extends Resource
 {
     protected static ?string $model = Centre::class;
 
+    protected static ?string $tenantOwnershipRelationshipName = 'tenant';
+
     protected static string|\BackedEnum|null $navigationIcon = 'heroicon-o-building-storefront';
 
     public static function shouldCheckPolicyExistence(): bool

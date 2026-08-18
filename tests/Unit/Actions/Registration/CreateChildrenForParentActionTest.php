@@ -240,7 +240,7 @@ it('establishes relationships for all children', function () {
     }
 });
 
-it('updates existing child when mykid_no matches', function () {
+it('keeps a child unique and updates it when mykid_no matches', function () {
     $childrenData = [
         [
             'first_name' => 'Ahmad',
@@ -256,6 +256,7 @@ it('updates existing child when mykid_no matches', function () {
     // Create child first time
     $this->action->execute($this->user, $childrenData);
     expect(Child::count())->toBe(1);
+    $childId = Child::first()->id;
 
     // Update same child with additional data
     $updatedData = [
@@ -280,13 +281,14 @@ it('updates existing child when mykid_no matches', function () {
 
     // Check updated fields
     $child = Child::first();
+    expect($child->id)->toBe($childId);
+    expect($child->mykid_no)->toBe('200115-01-1234');
     expect($child->place_of_birth)->toBe('Kuala Lumpur');
     expect($child->race)->toBe('Malay');
     expect($child->religion)->toBe('Islam');
 });
 
-// TODO: Fix this test - date_of_birth matching issue with updateOrCreate
-it('updates existing child when name and dob match without mykid', function () {
+it('creates more than two distinct children when name and date of birth match without mykid', function () {
     $childrenData = [
         [
             'first_name' => 'Sarah',
@@ -294,33 +296,61 @@ it('updates existing child when name and dob match without mykid', function () {
             'date_of_birth' => '2019-05-20',
             'gender' => 'female',
         ],
-    ];
-
-    // Create child without MyKID
-    $this->action->execute($this->user, $childrenData);
-    expect(Child::withoutGlobalScopes()->count())->toBe(1);
-
-    // Update same child (same name + dob, no patronymic change)
-    $updatedData = [
         [
             'first_name' => 'Sarah',
             'last_name' => 'Hassan',
             'date_of_birth' => '2019-05-20',
             'gender' => 'female',
             'place_of_birth' => 'Penang',
+        ],
+        [
+            'first_name' => 'Sarah',
+            'last_name' => 'Hassan',
+            'date_of_birth' => '2019-05-20',
+            'gender' => 'female',
             'race' => 'Chinese',
         ],
     ];
 
-    $this->action->execute($this->user, $updatedData);
+    $this->action->execute($this->user, $childrenData);
 
-    // Should still be 1 child
-    expect(Child::withoutGlobalScopes()->count())->toBe(1);
+    $children = Child::withoutGlobalScopes()
+        ->where('first_name', 'Sarah')
+        ->where('last_name', 'Hassan')
+        ->whereDate('date_of_birth', '2019-05-20')
+        ->whereNull('mykid_no')
+        ->get();
 
-    $child = Child::withoutGlobalScopes()->first();
-    expect($child->place_of_birth)->toBe('Penang');
-    expect($child->race)->toBe('Chinese');
-})->skip('Date matching issue with updateOrCreate - needs investigation');
+    expect($children)->toHaveCount(3)
+        ->and($children->pluck('id')->unique())->toHaveCount(3);
+});
+
+it('reuses children without MyKid numbers when step three is retried', function () {
+    $childrenData = [
+        [
+            'first_name' => 'Sarah',
+            'last_name' => 'Hassan',
+            'date_of_birth' => '2019-05-20',
+            'gender' => 'female',
+        ],
+        [
+            'first_name' => 'Sarah',
+            'last_name' => 'Hassan',
+            'date_of_birth' => '2019-05-20',
+            'gender' => 'female',
+            'place_of_birth' => 'Penang',
+        ],
+    ];
+
+    $this->action->execute($this->user, $childrenData);
+    $childIds = $this->user->fresh()->children()->pluck('children.id')->sort()->values();
+
+    $this->action->execute($this->user, $childrenData);
+
+    expect($this->user->fresh()->children()->pluck('children.id')->sort()->values())
+        ->toEqual($childIds)
+        ->and(Child::withoutGlobalScopes()->count())->toBe(2);
+});
 
 it('creates new child when mykid_no differs', function () {
     $childrenData = [
