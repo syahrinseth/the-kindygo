@@ -52,7 +52,7 @@ class ChildrenRelationManager extends RelationManager
                     ->height(40)
                     ->width(40)
                     ->circular()
-                    ->defaultImageUrl(url('/images/default-avatar.png'))
+                    ->defaultImageUrl(url('/images/default-avatar.svg'))
                     ->toggleable(),
                 TextColumn::make('first_name')
                     ->searchable()
@@ -172,11 +172,11 @@ class ChildrenRelationManager extends RelationManager
             ])
             ->recordActions([
                 ViewAction::make()
-                    ->schema(fn (Form $form) => $form->schema(ChildForm::withoutAssociatedUsers()))
+                    ->schema(ChildForm::withoutAssociatedUsers())
                     ->visible(fn (Child $record) => Auth::user()->can('view', $record)),
 
                 EditAction::make()
-                    ->schema(fn (Form $form) => $form->schema(ChildForm::withoutAssociatedUsers()))
+                    ->schema(ChildForm::withoutAssociatedUsers())
                     ->visible(fn (Child $record) => Auth::user()->can('update', $record)),
 
                 DetachAction::make()
