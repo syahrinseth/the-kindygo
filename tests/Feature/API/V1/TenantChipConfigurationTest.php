@@ -11,6 +11,7 @@ beforeEach(function (): void {
     Role::firstOrCreate(['name' => 'admin', 'guard_name' => 'web']);
 
     $this->tenant = Tenant::factory()->create([
+        'phone' => '+60123456789',
         'business_id_type' => 'BRN',
         'business_id_value' => '202401234567',
     ]);
