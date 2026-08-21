@@ -45,7 +45,7 @@ class InvoicePendingNotification extends Notification implements ShouldQueue
             ->line('You have a pending invoice that requires payment.')
             ->line('**Invoice Details:**')
             ->line("Invoice Number: #{$this->invoice->number}")
-            ->line('Amount: RM '.number_format($this->invoice->total / 100, 2))
+            ->line('Amount: RM '.number_format($this->invoice->total_amount / 100, 2))
             ->line('Due Date: '.$this->invoice->due_at->format('M d, Y'))
             ->line("Centre: {$this->invoice->centre->name}")
             ->action('View Invoice', $invoiceUrl)
@@ -63,7 +63,7 @@ class InvoicePendingNotification extends Notification implements ShouldQueue
         return [
             'invoice_id' => $this->invoice->id,
             'invoice_number' => $this->invoice->number,
-            'amount' => $this->invoice->total,
+            'amount' => $this->invoice->total_amount,
             'due_at' => $this->invoice->due_at,
             'centre_name' => $this->invoice->centre->name,
         ];

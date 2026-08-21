@@ -94,7 +94,7 @@ it('displays unpaid invoices for parent', function () {
         ->for($centre, 'centre')
         ->create([
             'status' => InvoiceStatus::PENDING,
-            'total' => 50000, // RM 500.00
+            'total_amount' => 50000, // RM 500.00
         ]);
 
     // Create invoice item

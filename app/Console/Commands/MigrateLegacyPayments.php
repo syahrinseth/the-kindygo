@@ -540,12 +540,12 @@ class MigrateLegacyPayments extends Command
             SET status = ?
             WHERE tenant_id = ?
             AND status NOT IN (?, ?)
-            AND total > 0
+            AND total_amount > 0
             AND (
                 SELECT COALESCE(SUM(ip.amount), 0)
                 FROM invoice_payment ip
                 WHERE ip.invoice_id = invoices.id
-            ) >= invoices.total
+            ) >= invoices.total_amount
         ', [
             \App\Enums\InvoiceStatus::PAID->value,
             $tenantId,
@@ -561,7 +561,7 @@ class MigrateLegacyPayments extends Command
             SET status = ?
             WHERE tenant_id = ?
             AND status NOT IN (?, ?, ?)
-            AND total > 0
+            AND total_amount > 0
             AND (
                 SELECT COALESCE(SUM(ip.amount), 0)
                 FROM invoice_payment ip
@@ -571,7 +571,7 @@ class MigrateLegacyPayments extends Command
                 SELECT COALESCE(SUM(ip.amount), 0)
                 FROM invoice_payment ip
                 WHERE ip.invoice_id = invoices.id
-            ) < invoices.total
+            ) < invoices.total_amount
         ', [
             \App\Enums\InvoiceStatus::PARTIALLY_PAID->value,
             $tenantId,

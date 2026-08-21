@@ -46,7 +46,7 @@ it('orchestrates full payment allocation flow with FIFO strategy', function () {
         'tenant_id' => test()->tenant->id,
         'centre_id' => test()->centre->id,
         'user_id' => test()->user->id,
-        'total' => 30000,
+        'total_amount' => 30000,
         'due_at' => now()->subDays(10),
         'status' => InvoiceStatus::OVERDUE,
     ]);
@@ -55,7 +55,7 @@ it('orchestrates full payment allocation flow with FIFO strategy', function () {
         'tenant_id' => test()->tenant->id,
         'centre_id' => test()->centre->id,
         'user_id' => test()->user->id,
-        'total' => 20000,
+        'total_amount' => 20000,
         'due_at' => now()->subDays(5),
         'status' => InvoiceStatus::PENDING,
     ]);
@@ -129,7 +129,7 @@ it('orchestrates full payment allocation flow with user-defined allocation', fun
         'tenant_id' => test()->tenant->id,
         'centre_id' => test()->centre->id,
         'user_id' => test()->user->id,
-        'total' => 30000,
+        'total_amount' => 30000,
         'due_at' => now()->subDays(10),
         'status' => InvoiceStatus::PENDING,
     ]);
@@ -138,7 +138,7 @@ it('orchestrates full payment allocation flow with user-defined allocation', fun
         'tenant_id' => test()->tenant->id,
         'centre_id' => test()->centre->id,
         'user_id' => test()->user->id,
-        'total' => 20000,
+        'total_amount' => 20000,
         'due_at' => now()->subDays(5),
         'status' => InvoiceStatus::PENDING,
     ]);
@@ -199,7 +199,7 @@ it('rolls back transaction on allocation failure', function () {
         'tenant_id' => test()->tenant->id,
         'centre_id' => test()->centre->id,
         'user_id' => test()->user->id,
-        'total' => 30000,
+        'total_amount' => 30000,
         'status' => InvoiceStatus::PENDING,
     ]);
 
@@ -248,7 +248,7 @@ it('handles partial payment correctly', function () {
         'tenant_id' => test()->tenant->id,
         'centre_id' => test()->centre->id,
         'user_id' => test()->user->id,
-        'total' => 40000,
+        'total_amount' => 40000,
         'due_at' => now()->subDays(10),
         'status' => InvoiceStatus::OVERDUE,
     ]);
@@ -257,7 +257,7 @@ it('handles partial payment correctly', function () {
         'tenant_id' => test()->tenant->id,
         'centre_id' => test()->centre->id,
         'user_id' => test()->user->id,
-        'total' => 30000,
+        'total_amount' => 30000,
         'due_at' => now()->subDays(5),
         'status' => InvoiceStatus::PENDING,
     ]);
@@ -318,7 +318,7 @@ it('logs allocation process correctly', function () {
         'tenant_id' => test()->tenant->id,
         'centre_id' => test()->centre->id,
         'user_id' => test()->user->id,
-        'total' => 30000,
+        'total_amount' => 30000,
         'status' => InvoiceStatus::PENDING,
     ]);
 
@@ -366,7 +366,7 @@ it('logs errors on allocation failure', function () {
         'tenant_id' => test()->tenant->id,
         'centre_id' => test()->centre->id,
         'user_id' => test()->user->id,
-        'total' => 30000,
+        'total_amount' => 30000,
         'status' => InvoiceStatus::PENDING,
     ]);
 

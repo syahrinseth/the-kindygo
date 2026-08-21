@@ -65,7 +65,7 @@ class InvoicesRelationManager extends RelationManager
                     ->searchable()
                     ->sortable(),
 
-                TextColumn::make('total')
+                TextColumn::make('total_amount')
                     ->money('USD')
                     ->sortable(),
             ])

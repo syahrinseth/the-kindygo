@@ -46,7 +46,7 @@ class InvoiceOverdueNotification extends Notification implements ShouldQueue
             ->line('**This is an urgent reminder about your overdue invoice.**')
             ->line('**Invoice Details:**')
             ->line("Invoice Number: #{$this->invoice->number}")
-            ->line('Amount: RM '.number_format($this->invoice->total / 100, 2))
+            ->line('Amount: RM '.number_format($this->invoice->total_amount / 100, 2))
             ->line('Due Date: '.$this->invoice->due_at->format('M d, Y'))
             ->line("Days Overdue: {$this->daysOverdue} days")
             ->line("Centre: {$this->invoice->centre->name}")
@@ -66,7 +66,7 @@ class InvoiceOverdueNotification extends Notification implements ShouldQueue
         return [
             'invoice_id' => $this->invoice->id,
             'invoice_number' => $this->invoice->number,
-            'amount' => $this->invoice->total,
+            'amount' => $this->invoice->total_amount,
             'due_at' => $this->invoice->due_at,
             'days_overdue' => $this->daysOverdue,
             'centre_name' => $this->invoice->centre->name,

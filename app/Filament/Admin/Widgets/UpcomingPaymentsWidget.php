@@ -41,7 +41,7 @@ class UpcomingPaymentsWidget extends BaseWidget
                     ->date()
                     ->sortable()
                     ->label('Due Date'),
-                TextColumn::make('total')
+                TextColumn::make('total_amount')
                     ->money('MYR', 100)
                     ->sortable(),
                 TextColumn::make('days_until_due')

@@ -70,7 +70,7 @@ class StatsOverviewWidget extends BaseWidget
                 InvoiceStatus::PARTIALLY_PAID,
                 InvoiceStatus::OVERDUE,
             ])
-            ->where('total', '>', 0)
+            ->where('total_amount', '>', 0)
             ->get();
 
         $total = $invoices->sum(fn (Invoice $invoice) => $invoice->getRemainingBalance());
@@ -99,7 +99,7 @@ class StatsOverviewWidget extends BaseWidget
                             ->where('due_at', '<', now());
                     });
             })
-            ->where('total', '>', 0)
+            ->where('total_amount', '>', 0)
             ->count();
     }
 

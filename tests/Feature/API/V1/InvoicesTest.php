@@ -1,8 +1,10 @@
 <?php
 
 use App\Constants\TokenAbility;
+use App\Enums\InvoiceStatus;
 use App\Models\Centre;
 use App\Models\Invoice;
+use App\Models\Payment;
 use App\Models\Tenant;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -116,6 +118,10 @@ describe('GET /api/v1/invoices/{invoice}', function () {
             'user_id' => $this->user->id,
             'tenant_id' => $this->tenant->id,
             'centre_id' => $this->centre->id,
+            'total_items' => 2,
+            'subtotal_amount' => 15000,
+            'discount_amount' => 1000,
+            'total_amount' => 14000,
         ]);
 
         Sanctum::actingAs($this->user, TokenAbility::parentAbilities());
@@ -127,14 +133,82 @@ describe('GET /api/v1/invoices/{invoice}', function () {
                 'success',
                 'data' => [
                     'id',
+                    'invoice_number',
+                    'total_items',
+                    'subtotal_amount',
+                    'subtotal_amount_formatted',
+                    'discount_amount',
+                    'discount_amount_formatted',
+                    'total_amount',
+                    'total_amount_formatted',
+                    'subtotal',
+                    'subtotal_formatted',
+                    'tax_amount',
+                    'tax_amount_formatted',
+                    'total',
+                    'total_formatted',
                 ],
             ])
             ->assertJson([
                 'success' => true,
                 'data' => [
                     'id' => $invoice->id,
+                    'invoice_number' => $invoice->number,
+                    'total_items' => 2,
+                    'subtotal_amount' => 15000,
+                    'subtotal_amount_formatted' => 'RM 150.00',
+                    'discount_amount' => 1000,
+                    'discount_amount_formatted' => 'RM 10.00',
+                    'total_amount' => 14000,
+                    'total_amount_formatted' => 'RM 140.00',
+                    'subtotal' => 15000,
+                    'subtotal_formatted' => 'RM 150.00',
+                    'tax_amount' => null,
+                    'tax_amount_formatted' => null,
+                    'total' => 14000,
+                    'total_formatted' => 'RM 140.00',
                 ],
             ]);
+    });
+
+    it('reports an unpaid past-due invoice as overdue', function () {
+        $invoice = Invoice::factory()->create([
+            'user_id' => $this->user->id,
+            'tenant_id' => $this->tenant->id,
+            'centre_id' => $this->centre->id,
+            'status' => InvoiceStatus::PENDING,
+            'due_at' => now()->subDay(),
+            'total_amount' => 14000,
+        ]);
+
+        Sanctum::actingAs($this->user, TokenAbility::parentAbilities());
+
+        $this->getJson("/api/v1/invoices/{$invoice->id}")
+            ->assertOk()
+            ->assertJsonPath('data.is_overdue', true)
+            ->assertJsonPath('data.amount_due', 14000);
+    });
+
+    it('calculates paid and due amounts from paid allocations', function () {
+        $invoice = Invoice::factory()->create([
+            'user_id' => $this->user->id,
+            'tenant_id' => $this->tenant->id,
+            'centre_id' => $this->centre->id,
+            'total_amount' => 14000,
+        ]);
+        $payment = Payment::factory()->create([
+            'tenant_id' => $this->tenant->id,
+            'user_id' => $this->user->id,
+            'amount' => 5000,
+        ]);
+        $payment->invoices()->attach($invoice->id, ['amount' => 5000]);
+
+        Sanctum::actingAs($this->user, TokenAbility::parentAbilities());
+
+        $this->getJson("/api/v1/invoices/{$invoice->id}")
+            ->assertOk()
+            ->assertJsonPath('data.amount_paid', 5000)
+            ->assertJsonPath('data.amount_due', 9000);
     });
 
     it('returns 404 for non-existent invoice', function () {

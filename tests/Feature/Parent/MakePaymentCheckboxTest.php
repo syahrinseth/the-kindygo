@@ -42,7 +42,7 @@ beforeEach(function () {
         'centre_id' => $this->centre->id,
         'tenant_id' => $this->tenant->id,
         'status' => InvoiceStatus::PENDING,
-        'total' => 10000, // RM 100.00
+        'total_amount' => 10000, // RM 100.00
     ]);
 
     $this->invoice2 = Invoice::factory()->create([
@@ -50,7 +50,7 @@ beforeEach(function () {
         'centre_id' => $this->centre->id,
         'tenant_id' => $this->tenant->id,
         'status' => InvoiceStatus::PENDING,
-        'total' => 20000, // RM 200.00
+        'total_amount' => 20000, // RM 200.00
     ]);
 
     $this->invoice3 = Invoice::factory()->create([
@@ -58,7 +58,7 @@ beforeEach(function () {
         'centre_id' => $this->centre->id,
         'tenant_id' => $this->tenant->id,
         'status' => InvoiceStatus::PENDING,
-        'total' => 30000, // RM 300.00
+        'total_amount' => 30000, // RM 300.00
     ]);
 
     $this->actingAs($this->parent);

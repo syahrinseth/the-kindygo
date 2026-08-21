@@ -110,6 +110,34 @@ test('parent can see download pdf action for invoices', function () {
         ->assertActionVisible('download_pdf');
 });
 
+test('parent invoice view uses the admin statement without admin controls', function () {
+    $this->actingAs($this->parent);
+
+    $invoice = Invoice::factory()->create([
+        'user_id' => $this->parent->id,
+        'tenant_id' => $this->tenant->id,
+        'centre_id' => $this->centre->id,
+        'status' => InvoiceStatus::PENDING,
+        'subtotal_amount' => 10000,
+        'total_amount' => 10000,
+    ]);
+
+    InvoiceItem::factory()->create([
+        'invoice_id' => $invoice->id,
+        'name' => 'Monthly childcare fee',
+    ]);
+
+    Livewire::test(ViewInvoice::class, ['record' => $invoice->id])
+        ->assertSuccessful()
+        ->assertSee('Billed to')
+        ->assertSee('Invoice line items')
+        ->assertSee('Balance due')
+        ->assertSee('Invoice total')
+        ->assertDontSee('Invoice controls')
+        ->assertDontSee('Edit invoice')
+        ->assertDontSee('Manage line items');
+});
+
 test('parent can see make payment action for unpaid invoices', function () {
     $this->actingAs($this->parent);
 
@@ -118,7 +146,7 @@ test('parent can see make payment action for unpaid invoices', function () {
         'tenant_id' => $this->tenant->id,
         'centre_id' => $this->centre->id,
         'status' => InvoiceStatus::PENDING,
-        'total' => 10000, // RM100.00
+        'total_amount' => 10000, // RM100.00
     ]);
 
     InvoiceItem::factory()->create(['invoice_id' => $invoice->id]);
@@ -137,7 +165,7 @@ test('parent can see make payment action visibility based on balance', function 
         'tenant_id' => $this->tenant->id,
         'centre_id' => $this->centre->id,
         'status' => InvoiceStatus::PENDING,
-        'total' => 10000, // RM100.00
+        'total_amount' => 10000, // RM100.00
     ]);
 
     InvoiceItem::factory()->create(['invoice_id' => $invoice->id]);

@@ -54,7 +54,7 @@ it('processes bank transfer payment immediately as PAID', function () {
         'tenant_id' => test()->tenant->id,
         'centre_id' => test()->centre->id,
         'user_id' => test()->user->id,
-        'total' => 30000,
+        'total_amount' => 30000,
         'status' => InvoiceStatus::PENDING,
     ]);
 
@@ -97,7 +97,7 @@ it('processes CHIP payment as PENDING', function () {
         'tenant_id' => test()->tenant->id,
         'centre_id' => test()->centre->id,
         'user_id' => test()->user->id,
-        'total' => 30000,
+        'total_amount' => 30000,
         'status' => InvoiceStatus::PENDING,
     ]);
 
@@ -137,7 +137,7 @@ it('uploads payment proof for bank transfer', function () {
         'tenant_id' => test()->tenant->id,
         'centre_id' => test()->centre->id,
         'user_id' => test()->user->id,
-        'total' => 30000,
+        'total_amount' => 30000,
         'status' => InvoiceStatus::PENDING,
     ]);
 
@@ -174,7 +174,7 @@ it('records ledger entries for bank transfer immediately', function () {
         'tenant_id' => test()->tenant->id,
         'centre_id' => test()->centre->id,
         'user_id' => test()->user->id,
-        'total' => 30000,
+        'total_amount' => 30000,
         'status' => InvoiceStatus::PENDING,
     ]);
 
@@ -216,7 +216,7 @@ it('does not record ledger entries for CHIP payment', function () {
         'tenant_id' => test()->tenant->id,
         'centre_id' => test()->centre->id,
         'user_id' => test()->user->id,
-        'total' => 30000,
+        'total_amount' => 30000,
         'status' => InvoiceStatus::PENDING,
     ]);
 
@@ -251,7 +251,7 @@ it('sends receipt notification for bank transfer', function () {
         'tenant_id' => test()->tenant->id,
         'centre_id' => test()->centre->id,
         'user_id' => test()->user->id,
-        'total' => 30000,
+        'total_amount' => 30000,
         'status' => InvoiceStatus::PENDING,
     ]);
 
@@ -291,7 +291,7 @@ it('does not send notification for CHIP payment', function () {
         'tenant_id' => test()->tenant->id,
         'centre_id' => test()->centre->id,
         'user_id' => test()->user->id,
-        'total' => 30000,
+        'total_amount' => 30000,
         'status' => InvoiceStatus::PENDING,
     ]);
 
@@ -325,7 +325,7 @@ it('processes multiple invoices with FIFO allocation', function () {
         'tenant_id' => test()->tenant->id,
         'centre_id' => test()->centre->id,
         'user_id' => test()->user->id,
-        'total' => 30000,
+        'total_amount' => 30000,
         'due_at' => now()->subDays(10),
         'status' => InvoiceStatus::OVERDUE,
     ]);
@@ -334,7 +334,7 @@ it('processes multiple invoices with FIFO allocation', function () {
         'tenant_id' => test()->tenant->id,
         'centre_id' => test()->centre->id,
         'user_id' => test()->user->id,
-        'total' => 20000,
+        'total_amount' => 20000,
         'due_at' => now()->subDays(5),
         'status' => InvoiceStatus::PENDING,
     ]);
@@ -392,7 +392,7 @@ it('sets centre_id from first invoice', function () {
         'tenant_id' => test()->tenant->id,
         'centre_id' => $centre1->id,
         'user_id' => test()->user->id,
-        'total' => 30000,
+        'total_amount' => 30000,
         'status' => InvoiceStatus::PENDING,
     ]);
 
@@ -400,7 +400,7 @@ it('sets centre_id from first invoice', function () {
         'tenant_id' => test()->tenant->id,
         'centre_id' => $centre2->id,
         'user_id' => test()->user->id,
-        'total' => 20000,
+        'total_amount' => 20000,
         'status' => InvoiceStatus::PENDING,
     ]);
 
@@ -450,7 +450,7 @@ it('rolls back transaction on failure', function () {
         'tenant_id' => test()->tenant->id,
         'centre_id' => test()->centre->id,
         'user_id' => test()->user->id,
-        'total' => 30000,
+        'total_amount' => 30000,
         'status' => InvoiceStatus::PENDING,
     ]);
 

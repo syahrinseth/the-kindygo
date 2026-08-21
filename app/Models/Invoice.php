@@ -37,9 +37,9 @@ class Invoice extends Model
         'due_at',
         'status',
         'total_items',
-        'total_discounts',
+        'subtotal_amount',
+        'discount_amount',
         'total_amount',
-        'total',
         // E-Invoice related fields
         'einvoice_uuid',
         'einvoice_submission_id',
@@ -124,9 +124,9 @@ class Invoice extends Model
         'due_at' => 'datetime',
         'status' => InvoiceStatus::class,
         'total_items' => 'integer',
-        'total_discounts' => 'integer',
+        'subtotal_amount' => 'integer',
+        'discount_amount' => 'integer',
         'total_amount' => 'integer',
-        'total' => 'integer',
         'einvoice_submitted_at' => 'datetime',
     ];
 
@@ -342,7 +342,39 @@ class Invoice extends Model
     {
         $formatted = number_format($amount / 100, 2);
 
-        return $includeCurrency ? '$'.$formatted : $formatted;
+        return $includeCurrency ? 'RM '.$formatted : $formatted;
+    }
+
+    /**
+     * Preserve the legacy final-total attribute without reintroducing its database column.
+     */
+    public function getTotalAttribute(): int
+    {
+        return (int) ($this->attributes['total_amount'] ?? 0);
+    }
+
+    /**
+     * Map legacy writes to the canonical final-total column.
+     */
+    public function setTotalAttribute(mixed $value): void
+    {
+        $this->attributes['total_amount'] = (int) $value;
+    }
+
+    /**
+     * Preserve the legacy discount-total attribute without reintroducing its database column.
+     */
+    public function getTotalDiscountsAttribute(): int
+    {
+        return (int) ($this->attributes['discount_amount'] ?? 0);
+    }
+
+    /**
+     * Map legacy writes to the canonical discount-total column.
+     */
+    public function setTotalDiscountsAttribute(mixed $value): void
+    {
+        $this->attributes['discount_amount'] = (int) $value;
     }
 
     /**
@@ -352,7 +384,7 @@ class Invoice extends Model
      */
     public function getFormattedTotal(bool $includeCurrency = true): string
     {
-        return self::formatMoney($this->total, $includeCurrency);
+        return self::formatMoney($this->total_amount, $includeCurrency);
     }
 
     /**
@@ -444,6 +476,10 @@ class Invoice extends Model
      */
     public function getTotalPaid(): int
     {
+        if (array_key_exists('paid_amount', $this->attributes)) {
+            return (int) $this->attributes['paid_amount'];
+        }
+
         return $this->payments()
             ->where('status', PaymentStatus::PAID)
             ->sum('invoice_payment.amount');
@@ -454,7 +490,7 @@ class Invoice extends Model
      */
     public function getRemainingBalance(): int
     {
-        return $this->total - $this->getTotalPaid();
+        return $this->total_amount - $this->getTotalPaid();
     }
 
     /**
@@ -565,11 +601,11 @@ class Invoice extends Model
                         'currencyID' => config('einvoice.default_currency', 'MYR'),
                     ],
                     'TaxInclusiveAmount' => [
-                        '_' => number_format($this->total / 100, 2, '.', ''),
+                        '_' => number_format($this->total_amount / 100, 2, '.', ''),
                         'currencyID' => config('einvoice.default_currency', 'MYR'),
                     ],
                     'PayableAmount' => [
-                        '_' => number_format($this->total / 100, 2, '.', ''),
+                        '_' => number_format($this->total_amount / 100, 2, '.', ''),
                         'currencyID' => config('einvoice.default_currency', 'MYR'),
                     ],
                 ],

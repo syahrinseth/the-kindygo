@@ -185,7 +185,7 @@ class MigrateLegacyInvoices extends Command
                 DB::table('invoices')->upsert(
                     $batch,
                     ['id'],
-                    ['number', 'tenant_id', 'centre_id', 'user_id', 'date', 'due_at', 'status', 'total_items', 'total_discounts', 'total_amount', 'total', 'updated_at']
+                    ['number', 'tenant_id', 'centre_id', 'user_id', 'date', 'due_at', 'status', 'total_items', 'subtotal_amount', 'discount_amount', 'total_amount', 'updated_at']
                 );
             }
         });
@@ -262,9 +262,9 @@ class MigrateLegacyInvoices extends Command
             'due_at' => $dueAt,
             'status' => $status->value,
             'total_items' => 0,       // Will be recalculated
-            'total_discounts' => 0,   // Will be recalculated
-            'total_amount' => 0,      // Will be recalculated
-            'total' => $legacy->price ?? 0, // Preserve legacy total, recalculated later
+            'subtotal_amount' => 0,   // Will be recalculated
+            'discount_amount' => 0,   // Will be recalculated
+            'total_amount' => $legacy->price ?? 0, // Preserve legacy total, recalculated later
             'created_at' => $legacy->created_at,
             'updated_at' => $legacy->updated_at ?? now(),
         ];
@@ -594,13 +594,13 @@ class MigrateLegacyInvoices extends Command
                 total_items = COALESCE((
                     SELECT COUNT(*) FROM invoice_items WHERE invoice_items.invoice_id = invoices.id
                 ), 0),
-                total_amount = COALESCE((
+                subtotal_amount = COALESCE((
                     SELECT SUM(price * quantity) FROM invoice_items WHERE invoice_items.invoice_id = invoices.id
                 ), 0),
-                total_discounts = COALESCE((
+                discount_amount = COALESCE((
                     SELECT SUM(discount * quantity) FROM invoice_items WHERE invoice_items.invoice_id = invoices.id
                 ), 0),
-                total = COALESCE((
+                total_amount = COALESCE((
                     SELECT SUM(total) FROM invoice_items WHERE invoice_items.invoice_id = invoices.id
                 ), 0)
             WHERE tenant_id = ?

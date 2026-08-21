@@ -37,7 +37,7 @@ class CreateTestChipPayment extends Command
         if ($this->option('clean')) {
             $this->info('Cleaning existing test payments...');
             Payment::where('reference_no', 'like', 'TEST-CHIP-%')->delete();
-            Invoice::where('invoice_number', 'like', 'TEST-%')->delete();
+            Invoice::where('number', 'like', 'TEST-%')->delete();
             $this->info('Cleaned test data.');
 
             return 0;
@@ -66,21 +66,20 @@ class CreateTestChipPayment extends Command
             // Create test invoice
             $invoice = Invoice::create([
                 'tenant_id' => $tenant->id,
-                'centre_id' => $centre->id,
                 'user_id' => $user->id,
-                'invoice_number' => 'TEST-'.time(),
+                'number' => 'TEST-'.time(),
                 'date' => now(),
                 'due_at' => now()->addDays(7),
                 'status' => InvoiceStatus::PENDING,
-                'total_amount' => 10000, // RM 100.00
-                'total_discounts' => 0,
-                'total' => 10000,
+                'total_items' => 1,
+                'subtotal_amount' => 10000, // RM 100.00
+                'discount_amount' => 0,
+                'total_amount' => 10000,
             ]);
 
             // Create test CHIP payment with detailed gateway data
             $payment = Payment::create([
                 'tenant_id' => $tenant->id,
-                'centre_id' => $centre->id,
                 'user_id' => $user->id,
                 'gateway' => Gateway::CHIP,
                 'reference_no' => 'TEST-CHIP-'.time(),
@@ -124,7 +123,7 @@ class CreateTestChipPayment extends Command
                         'currency' => 'MYR',
                         'products' => [
                             [
-                                'name' => 'Payment for Invoice #'.$invoice->invoice_number,
+                                'name' => 'Payment for Invoice #'.$invoice->number,
                                 'price' => 10000,
                             ],
                         ],
@@ -144,6 +143,10 @@ class CreateTestChipPayment extends Command
                 ],
             ]);
 
+            $payment->centres()->attach($centre->id, [
+                'allocated_amount' => 10000,
+            ]);
+
             // Link payment to invoice
             $invoice->payments()->attach($payment->id, [
                 'amount' => 10000,
@@ -155,7 +158,6 @@ class CreateTestChipPayment extends Command
             // Create another test payment without detailed data
             $payment2 = Payment::create([
                 'tenant_id' => $tenant->id,
-                'centre_id' => $centre->id,
                 'user_id' => $user->id,
                 'gateway' => Gateway::CHIP,
                 'reference_no' => 'TEST-CHIP-NO-DATA-'.time(),
@@ -167,13 +169,17 @@ class CreateTestChipPayment extends Command
                 'gateway_payment_data' => null,
             ]);
 
+            $payment2->centres()->attach($centre->id, [
+                'allocated_amount' => 5000,
+            ]);
+
             // Link second payment to invoice
             $invoice->payments()->attach($payment2->id, [
                 'amount' => 5000,
             ]);
 
             $this->info('✅ Test CHIP payments created successfully!');
-            $this->info("Invoice ID: {$invoice->id} (Number: {$invoice->invoice_number})");
+            $this->info("Invoice ID: {$invoice->id} (Number: {$invoice->number})");
             $this->info("Payment 1 ID: {$payment->id} (With detailed CHIP data)");
             $this->info("Payment 2 ID: {$payment2->id} (Without detailed CHIP data)");
             $this->info('');

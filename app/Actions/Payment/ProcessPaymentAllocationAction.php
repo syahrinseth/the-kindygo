@@ -98,7 +98,7 @@ class ProcessPaymentAllocationAction
             $invoice->refresh();
 
             $totalPaid = $invoice->getTotalPaid();
-            $remainingBalance = $invoice->total - $totalPaid;
+            $remainingBalance = $invoice->total_amount - $totalPaid;
 
             // Determine the correct status
             $newStatus = null;
@@ -107,12 +107,12 @@ class ProcessPaymentAllocationAction
                 'invoice_id' => $invoice->id,
                 'invoice_number' => $invoice->number,
                 'current_status' => $invoice->status,
-                'total' => $invoice->total,
+                'total_amount' => $invoice->total_amount,
                 'total_paid' => $totalPaid,
                 'remaining_balance' => $remainingBalance,
             ]);
 
-            if ($totalPaid >= $invoice->total) {
+            if ($totalPaid >= $invoice->total_amount) {
                 // Fully paid
                 if ($invoice->status !== InvoiceStatus::PAID) {
                     $newStatus = InvoiceStatus::PAID;
@@ -136,7 +136,7 @@ class ProcessPaymentAllocationAction
                     'invoice_number' => $invoice->number,
                     'old_status' => $invoice->getOriginal('status'),
                     'new_status' => $newStatus->value,
-                    'total' => $invoice->total,
+                    'total_amount' => $invoice->total_amount,
                     'total_paid' => $totalPaid,
                     'remaining_balance' => $remainingBalance,
                 ]);

@@ -37,7 +37,7 @@ it('allocates payment to single invoice fully', function () {
         'tenant_id' => $this->tenant->id,
         'centre_id' => $this->centre->id,
         'user_id' => $this->user->id,
-        'total' => 50000, // RM 500
+        'total_amount' => 50000, // RM 500
         'due_at' => now()->subDays(5),
         'status' => InvoiceStatus::PENDING,
     ]);
@@ -84,7 +84,7 @@ it('allocates payment to multiple invoices using FIFO by due date', function () 
         'tenant_id' => $this->tenant->id,
         'centre_id' => $this->centre->id,
         'user_id' => $this->user->id,
-        'total' => 30000, // RM 300
+        'total_amount' => 30000, // RM 300
         'due_at' => now()->subDays(10), // Oldest
         'status' => InvoiceStatus::OVERDUE,
     ]);
@@ -93,7 +93,7 @@ it('allocates payment to multiple invoices using FIFO by due date', function () 
         'tenant_id' => $this->tenant->id,
         'centre_id' => $this->centre->id,
         'user_id' => $this->user->id,
-        'total' => 20000, // RM 200
+        'total_amount' => 20000, // RM 200
         'due_at' => now()->subDays(5), // Second oldest
         'status' => InvoiceStatus::PENDING,
     ]);
@@ -102,7 +102,7 @@ it('allocates payment to multiple invoices using FIFO by due date', function () 
         'tenant_id' => $this->tenant->id,
         'centre_id' => $this->centre->id,
         'user_id' => $this->user->id,
-        'total' => 25000, // RM 250
+        'total_amount' => 25000, // RM 250
         'due_at' => now()->subDays(2), // Newest
         'status' => InvoiceStatus::PENDING,
     ]);
@@ -136,7 +136,7 @@ it('allocates partial payment distributed via FIFO', function () {
         'tenant_id' => $this->tenant->id,
         'centre_id' => $this->centre->id,
         'user_id' => $this->user->id,
-        'total' => 40000, // RM 400
+        'total_amount' => 40000, // RM 400
         'due_at' => now()->subDays(10),
         'status' => InvoiceStatus::OVERDUE,
     ]);
@@ -145,7 +145,7 @@ it('allocates partial payment distributed via FIFO', function () {
         'tenant_id' => $this->tenant->id,
         'centre_id' => $this->centre->id,
         'user_id' => $this->user->id,
-        'total' => 30000, // RM 300
+        'total_amount' => 30000, // RM 300
         'due_at' => now()->subDays(5),
         'status' => InvoiceStatus::PENDING,
     ]);
@@ -154,7 +154,7 @@ it('allocates partial payment distributed via FIFO', function () {
         'tenant_id' => $this->tenant->id,
         'centre_id' => $this->centre->id,
         'user_id' => $this->user->id,
-        'total' => 20000, // RM 200
+        'total_amount' => 20000, // RM 200
         'due_at' => now()->subDays(2),
         'status' => InvoiceStatus::PENDING,
     ]);
@@ -237,7 +237,7 @@ it('handles payment for single invoice backward compatibility', function () {
         'tenant_id' => $this->tenant->id,
         'centre_id' => $this->centre->id,
         'user_id' => $this->user->id,
-        'total' => 25000,
+        'total_amount' => 25000,
         'due_at' => now()->subDays(3),
         'status' => InvoiceStatus::PENDING,
     ]);
@@ -271,7 +271,7 @@ it('skips invoices with zero balance', function () {
         'tenant_id' => $this->tenant->id,
         'centre_id' => $this->centre->id,
         'user_id' => $this->user->id,
-        'total' => 30000,
+        'total_amount' => 30000,
         'due_at' => now()->subDays(10),
         'status' => InvoiceStatus::PAID, // Already paid
     ]);
@@ -280,7 +280,7 @@ it('skips invoices with zero balance', function () {
         'tenant_id' => $this->tenant->id,
         'centre_id' => $this->centre->id,
         'user_id' => $this->user->id,
-        'total' => 20000,
+        'total_amount' => 20000,
         'due_at' => now()->subDays(5),
         'status' => InvoiceStatus::PENDING,
     ]);
@@ -311,7 +311,7 @@ it('handles pre-attached invoices with zero amount gracefully', function () {
         'tenant_id' => $this->tenant->id,
         'centre_id' => $this->centre->id,
         'user_id' => $this->user->id,
-        'total' => 50000,
+        'total_amount' => 50000,
         'due_at' => now()->subDays(5),
         'status' => InvoiceStatus::PENDING,
     ]);
@@ -368,7 +368,7 @@ it('is idempotent when processing same payment allocation twice', function () {
         'tenant_id' => $this->tenant->id,
         'centre_id' => $this->centre->id,
         'user_id' => $this->user->id,
-        'total' => 30000,
+        'total_amount' => 30000,
         'due_at' => now()->subDays(5),
         'status' => InvoiceStatus::PENDING,
     ]);
@@ -444,7 +444,7 @@ it('handles multi-centre payment allocation with pre-attached invoices', functio
         'tenant_id' => $this->tenant->id,
         'centre_id' => $this->centre->id,
         'user_id' => $this->user->id,
-        'total' => 30000,
+        'total_amount' => 30000,
         'due_at' => now()->subDays(10),
         'status' => InvoiceStatus::PENDING,
     ]);
@@ -453,7 +453,7 @@ it('handles multi-centre payment allocation with pre-attached invoices', functio
         'tenant_id' => $this->tenant->id,
         'centre_id' => $centre2->id,
         'user_id' => $this->user->id,
-        'total' => 20000,
+        'total_amount' => 20000,
         'due_at' => now()->subDays(5),
         'status' => InvoiceStatus::PENDING,
     ]);

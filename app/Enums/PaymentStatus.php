@@ -39,6 +39,20 @@ enum PaymentStatus: string
     }
 
     /**
+     * Get the Filament colour used to present the status.
+     */
+    public function color(): string
+    {
+        return match ($this) {
+            self::PENDING, self::PARTIALLY_PAID => 'warning',
+            self::PAID => 'success',
+            self::FAILED => 'danger',
+            self::CANCELLED, self::UNPAID => 'gray',
+            self::REFUNDED => 'info',
+        };
+    }
+
+    /**
      * Get all enum cases with their labels.
      */
     public static function options(): array

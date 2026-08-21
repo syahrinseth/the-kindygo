@@ -26,14 +26,14 @@ it('calculates outstanding data correctly', function () {
         'user_id' => $this->user->id,
         'tenant_id' => $this->tenant->id,
         'status' => InvoiceStatus::PENDING,
-        'total' => 10000, // 100.00 in cents
+        'total_amount' => 10000, // 100.00 in cents
     ]);
 
     Invoice::factory()->create([
         'user_id' => $this->user->id,
         'tenant_id' => $this->tenant->id,
         'status' => InvoiceStatus::OVERDUE,
-        'total' => 15000, // 150.00 in cents
+        'total_amount' => 15000, // 150.00 in cents
     ]);
 
     // Create a paid invoice (should not be included)
@@ -41,7 +41,7 @@ it('calculates outstanding data correctly', function () {
         'user_id' => $this->user->id,
         'tenant_id' => $this->tenant->id,
         'status' => InvoiceStatus::PAID,
-        'total' => 5000,
+        'total_amount' => 5000,
     ]);
 
     $widget = new StatsOverviewWidget;
@@ -58,7 +58,7 @@ it('calculates overdue count correctly', function () {
         'user_id' => $this->user->id,
         'tenant_id' => $this->tenant->id,
         'status' => InvoiceStatus::OVERDUE,
-        'total' => 10000,
+        'total_amount' => 10000,
     ]);
 
     // Create pending invoice with past due date (should count as overdue)
@@ -67,7 +67,7 @@ it('calculates overdue count correctly', function () {
         'tenant_id' => $this->tenant->id,
         'status' => InvoiceStatus::PENDING,
         'due_at' => now()->subDays(5),
-        'total' => 15000,
+        'total_amount' => 15000,
     ]);
 
     // Create pending invoice with future due date (should not count as overdue)
@@ -76,7 +76,7 @@ it('calculates overdue count correctly', function () {
         'tenant_id' => $this->tenant->id,
         'status' => InvoiceStatus::PENDING,
         'due_at' => now()->addDays(10),
-        'total' => 5000,
+        'total_amount' => 5000,
     ]);
 
     $widget = new StatsOverviewWidget;
@@ -152,7 +152,7 @@ it('only includes invoices from the correct user and tenant', function () {
         'user_id' => $otherUser->id,
         'tenant_id' => $this->tenant->id,
         'status' => InvoiceStatus::PENDING,
-        'total' => 10000,
+        'total_amount' => 10000,
     ]);
 
     // Create invoice for other tenant
@@ -160,7 +160,7 @@ it('only includes invoices from the correct user and tenant', function () {
         'user_id' => $this->user->id,
         'tenant_id' => $otherTenant->id,
         'status' => InvoiceStatus::PENDING,
-        'total' => 15000,
+        'total_amount' => 15000,
     ]);
 
     // Create invoice for correct user and tenant
@@ -168,7 +168,7 @@ it('only includes invoices from the correct user and tenant', function () {
         'user_id' => $this->user->id,
         'tenant_id' => $this->tenant->id,
         'status' => InvoiceStatus::PENDING,
-        'total' => 5000,
+        'total_amount' => 5000,
     ]);
 
     $widget = new StatsOverviewWidget;

@@ -9,4 +9,18 @@ enum Gateway: string
     case BILLPLZ = 'billplz';
     case STRIPE = 'stripe';
     case CASH = 'cash';
+
+    /**
+     * Get the human-readable payment method name.
+     */
+    public function label(): string
+    {
+        return match ($this) {
+            self::BANK_TRANSFER => 'Bank transfer',
+            self::CHIP => 'CHIP',
+            self::BILLPLZ => 'Billplz',
+            self::STRIPE => 'Stripe',
+            self::CASH => 'Cash',
+        };
+    }
 }

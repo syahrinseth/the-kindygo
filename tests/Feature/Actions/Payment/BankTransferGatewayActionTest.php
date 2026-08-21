@@ -42,7 +42,7 @@ it('creates bank transfer payment with PAID status', function () {
         'tenant_id' => $this->tenant->id,
         'centre_id' => $this->centre->id,
         'user_id' => $this->user->id,
-        'total' => 50000, // RM 500
+        'total_amount' => 50000, // RM 500
         'status' => InvoiceStatus::PENDING,
     ]);
 
@@ -108,7 +108,7 @@ it('handles payment proof upload', function () {
         'tenant_id' => $this->tenant->id,
         'centre_id' => $this->centre->id,
         'user_id' => $this->user->id,
-        'total' => 50000,
+        'total_amount' => 50000,
         'status' => InvoiceStatus::PENDING,
     ]);
 
@@ -147,7 +147,7 @@ it('allocates payment using FIFO when no user allocation provided', function () 
         'tenant_id' => $this->tenant->id,
         'centre_id' => $this->centre->id,
         'user_id' => $this->user->id,
-        'total' => 30000,
+        'total_amount' => 30000,
         'status' => InvoiceStatus::PENDING,
         'due_at' => now()->subDays(10), // Older invoice
     ]);
@@ -156,7 +156,7 @@ it('allocates payment using FIFO when no user allocation provided', function () 
         'tenant_id' => $this->tenant->id,
         'centre_id' => $this->centre->id,
         'user_id' => $this->user->id,
-        'total' => 20000,
+        'total_amount' => 20000,
         'status' => InvoiceStatus::PENDING,
         'due_at' => now()->subDays(5), // Newer invoice
     ]);
@@ -215,7 +215,7 @@ it('allocates payment using user-defined allocation', function () {
         'tenant_id' => $this->tenant->id,
         'centre_id' => $this->centre->id,
         'user_id' => $this->user->id,
-        'total' => 30000,
+        'total_amount' => 30000,
         'status' => InvoiceStatus::PENDING,
     ]);
 
@@ -223,7 +223,7 @@ it('allocates payment using user-defined allocation', function () {
         'tenant_id' => $this->tenant->id,
         'centre_id' => $this->centre->id,
         'user_id' => $this->user->id,
-        'total' => 20000,
+        'total_amount' => 20000,
         'status' => InvoiceStatus::PENDING,
     ]);
 
@@ -285,7 +285,7 @@ it('attaches centre allocations correctly', function () {
         'tenant_id' => $this->tenant->id,
         'centre_id' => $this->centre->id,
         'user_id' => $this->user->id,
-        'total' => 50000,
+        'total_amount' => 50000,
         'status' => InvoiceStatus::PENDING,
     ]);
 
@@ -326,7 +326,7 @@ it('throws exception when user has no current tenant', function () {
         'tenant_id' => $this->tenant->id,
         'centre_id' => $this->centre->id,
         'user_id' => $this->user->id,
-        'total' => 50000,
+        'total_amount' => 50000,
         'status' => InvoiceStatus::PENDING,
     ]);
 

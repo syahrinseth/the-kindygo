@@ -496,7 +496,7 @@ This doesn't fix GANGA - so may need to be added inline -
 							<strong>TOTAL DUE</strong>
 						</td>
 						<td class="align-right">
-							<strong>{{ number_format($invoice->total / 100, 2) }}</strong>
+							<strong>{{ number_format($invoice->total_amount / 100, 2) }}</strong>
 						</td>
 					</tr>
 					@if($invoice->payments->count() > 0)
@@ -513,7 +513,7 @@ This doesn't fix GANGA - so may need to be added inline -
 								<strong>BALANCE DUE</strong>
 							</td>
 							<td class="align-right">
-								<strong>{{ number_format(($invoice->total - $invoice->payments->sum('pivot.amount')) / 100, 2) }}</strong>
+							<strong>{{ number_format(($invoice->total_amount - $invoice->payments->sum('pivot.amount')) / 100, 2) }}</strong>
 							</td>
 						</tr>
 					@endif

@@ -395,8 +395,8 @@ it('recalculates invoice totals from migrated items', function () {
 
     // Bills seeded with amounts: 15000, 20000, 25000
     expect($invoice->total_items)->toBe(3);
-    expect($invoice->total)->toBe(60000); // sum of items
-    expect($invoice->total_discounts)->toBe(0);
+    expect($invoice->total_amount)->toBe(60000); // sum of items
+    expect($invoice->discount_amount)->toBe(0);
 });
 
 // ──────────────────────────────────────────────
@@ -456,7 +456,7 @@ it('supports bounded header and item process ranges', function () {
     expect(DB::table('invoices')->whereIn('id', [1, 2])->count())->toBe(2)
         ->and(DB::table('invoices')->where('id', 3)->exists())->toBeFalse()
         ->and(DB::table('invoice_items')->count())->toBe(0)
-        ->and(DB::table('invoices')->where('id', 1)->value('total'))->toBe(30000);
+        ->and(DB::table('invoices')->where('id', 1)->value('total_amount'))->toBe(30000);
 
     $this->artisan('migrate:legacy-invoices', [
         '--tenant-id' => 1,
@@ -467,7 +467,7 @@ it('supports bounded header and item process ranges', function () {
     expect(DB::table('invoice_items')->whereIn('id', [1, 2])->count())->toBe(2)
         ->and(DB::table('invoice_items')->where('id', 3)->exists())->toBeFalse();
 
-    expect(DB::table('invoices')->where('id', 1)->value('total'))->toBe(35000);
+    expect(DB::table('invoices')->where('id', 1)->value('total_amount'))->toBe(35000);
 });
 
 it('can defer invoice total recalculation until the final migration batch', function () {
@@ -479,14 +479,14 @@ it('can defer invoice total recalculation until the final migration batch', func
         '--skip-recalculation' => true,
     ])->assertSuccessful();
 
-    expect(DB::table('invoices')->where('id', 1)->value('total'))->toBe(30000);
+    expect(DB::table('invoices')->where('id', 1)->value('total_amount'))->toBe(30000);
 
     $this->artisan('migrate:legacy-invoices', [
         '--tenant-id' => 1,
         '--skip-invoices' => true,
     ])->assertSuccessful();
 
-    expect(DB::table('invoices')->where('id', 1)->value('total'))->toBe(15000);
+    expect(DB::table('invoices')->where('id', 1)->value('total_amount'))->toBe(15000);
 });
 
 it('supports items-start-id option to resume invoice item migration', function () {

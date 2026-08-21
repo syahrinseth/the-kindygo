@@ -39,6 +39,20 @@ enum InvoiceStatus: string
     }
 
     /**
+     * Get the Filament colour used to present the status.
+     */
+    public function color(): string
+    {
+        return match ($this) {
+            self::DRAFT, self::CANCELLED => 'gray',
+            self::PENDING => 'warning',
+            self::PARTIALLY_PAID, self::REFUNDED => 'info',
+            self::PAID => 'success',
+            self::OVERDUE => 'danger',
+        };
+    }
+
+    /**
      * Get all cases as an array for select inputs.
      *
      * @return array<string, string>

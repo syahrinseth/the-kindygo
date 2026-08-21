@@ -45,19 +45,19 @@ class InvoiceStats extends BaseWidget
         // Get total amounts
         $totalPending = (clone $query)
             ->where('status', InvoiceStatus::PENDING)
-            ->sum('total');
+            ->sum('total_amount');
 
         $totalPartiallyPaid = (clone $query)
             ->where('status', InvoiceStatus::PARTIALLY_PAID)
-            ->sum('total');
+            ->sum('total_amount');
 
         $totalOverdue = (clone $query)
             ->where('status', InvoiceStatus::OVERDUE)
-            ->sum('total');
+            ->sum('total_amount');
 
         $totalPaid = (clone $query)
             ->where('status', InvoiceStatus::PAID)
-            ->sum('total');
+            ->sum('total_amount');
 
         // Format amounts for display
         $formatMoney = fn ($amount) => 'RM '.number_format($amount / 100, 2);

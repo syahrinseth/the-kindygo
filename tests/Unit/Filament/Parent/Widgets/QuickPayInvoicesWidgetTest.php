@@ -30,7 +30,7 @@ it('getInvoices returns unpaid invoices', function () {
         'tenant_id' => $this->tenant->id,
         'centre_id' => $centre->id,
         'status' => InvoiceStatus::PENDING,
-        'total' => 10000,
+        'total_amount' => 10000,
         'due_at' => now()->addDays(5),
     ]);
 
@@ -39,7 +39,7 @@ it('getInvoices returns unpaid invoices', function () {
         'tenant_id' => $this->tenant->id,
         'centre_id' => $centre->id,
         'status' => InvoiceStatus::OVERDUE,
-        'total' => 15000,
+        'total_amount' => 15000,
         'due_at' => now()->subDays(3),
     ]);
 
@@ -48,7 +48,7 @@ it('getInvoices returns unpaid invoices', function () {
         'tenant_id' => $this->tenant->id,
         'centre_id' => $centre->id,
         'status' => InvoiceStatus::PARTIALLY_PAID,
-        'total' => 20000,
+        'total_amount' => 20000,
         'due_at' => now()->addDays(10),
     ]);
 
@@ -58,7 +58,7 @@ it('getInvoices returns unpaid invoices', function () {
         'tenant_id' => $this->tenant->id,
         'centre_id' => $centre->id,
         'status' => InvoiceStatus::PAID,
-        'total' => 5000,
+        'total_amount' => 5000,
     ]);
 
     $widget = new QuickPayInvoicesWidget;
@@ -77,7 +77,7 @@ it('getInvoices filters by remaining balance > 0', function () {
         'tenant_id' => $this->tenant->id,
         'centre_id' => $centre->id,
         'status' => InvoiceStatus::PARTIALLY_PAID,
-        'total' => 10000,
+        'total_amount' => 10000,
     ]);
 
     // Create invoice that is fully paid (zero remaining balance)
@@ -86,7 +86,7 @@ it('getInvoices filters by remaining balance > 0', function () {
         'tenant_id' => $this->tenant->id,
         'centre_id' => $centre->id,
         'status' => InvoiceStatus::PARTIALLY_PAID,
-        'total' => 10000,
+        'total_amount' => 10000,
     ]);
 
     // Record payment that covers the full invoice
@@ -114,7 +114,7 @@ it('getInvoices limits to 10 invoices', function () {
         'tenant_id' => $this->tenant->id,
         'centre_id' => $centre->id,
         'status' => InvoiceStatus::PENDING,
-        'total' => 10000,
+        'total_amount' => 10000,
         'due_at' => now()->addDays(5),
     ]);
 
@@ -132,7 +132,7 @@ it('getInvoices sorts by due date ascending', function () {
         'tenant_id' => $this->tenant->id,
         'centre_id' => $centre->id,
         'status' => InvoiceStatus::PENDING,
-        'total' => 10000,
+        'total_amount' => 10000,
         'due_at' => now()->addDays(10),
     ]);
 
@@ -141,7 +141,7 @@ it('getInvoices sorts by due date ascending', function () {
         'tenant_id' => $this->tenant->id,
         'centre_id' => $centre->id,
         'status' => InvoiceStatus::PENDING,
-        'total' => 10000,
+        'total_amount' => 10000,
         'due_at' => now()->addDays(5),
     ]);
 
@@ -150,7 +150,7 @@ it('getInvoices sorts by due date ascending', function () {
         'tenant_id' => $this->tenant->id,
         'centre_id' => $centre->id,
         'status' => InvoiceStatus::PENDING,
-        'total' => 10000,
+        'total_amount' => 10000,
         'due_at' => now()->addDays(15),
     ]);
 
@@ -173,7 +173,7 @@ it('getInvoices excludes invoices with zero total', function () {
         'tenant_id' => $this->tenant->id,
         'centre_id' => $centre->id,
         'status' => InvoiceStatus::PENDING,
-        'total' => 0,
+        'total_amount' => 0,
     ]);
 
     // Create invoice with positive total
@@ -182,7 +182,7 @@ it('getInvoices excludes invoices with zero total', function () {
         'tenant_id' => $this->tenant->id,
         'centre_id' => $centre->id,
         'status' => InvoiceStatus::PENDING,
-        'total' => 10000,
+        'total_amount' => 10000,
     ]);
 
     $widget = new QuickPayInvoicesWidget;
@@ -202,7 +202,7 @@ it('getInvoices only returns invoices for authenticated user', function () {
         'tenant_id' => $this->tenant->id,
         'centre_id' => $centre->id,
         'status' => InvoiceStatus::PENDING,
-        'total' => 10000,
+        'total_amount' => 10000,
     ]);
 
     // Create invoice for current user
@@ -211,7 +211,7 @@ it('getInvoices only returns invoices for authenticated user', function () {
         'tenant_id' => $this->tenant->id,
         'centre_id' => $centre->id,
         'status' => InvoiceStatus::PENDING,
-        'total' => 10000,
+        'total_amount' => 10000,
     ]);
 
     $widget = new QuickPayInvoicesWidget;
@@ -243,7 +243,7 @@ it('getInvoices returns empty collection when no current tenant', function () {
         'tenant_id' => $this->tenant->id,
         'centre_id' => $centre->id,
         'status' => InvoiceStatus::PENDING,
-        'total' => 10000,
+        'total_amount' => 10000,
     ]);
 
     $widget = new QuickPayInvoicesWidget;
@@ -261,7 +261,7 @@ it('getInvoices returns empty collection when no unpaid invoices', function () {
         'tenant_id' => $this->tenant->id,
         'centre_id' => $centre->id,
         'status' => InvoiceStatus::PAID,
-        'total' => 10000,
+        'total_amount' => 10000,
     ]);
 
     $widget = new QuickPayInvoicesWidget;

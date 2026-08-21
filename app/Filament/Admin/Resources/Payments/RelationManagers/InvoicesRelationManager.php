@@ -39,7 +39,7 @@ class InvoicesRelationManager extends RelationManager
                             ->where('status', '!=', 'paid')
                             ->get()
                             ->mapWithKeys(function ($invoice) {
-                                return [$invoice->id => "{$invoice->number} - {$invoice->user->name} (RM".number_format($invoice->total / 100, 2).')'];
+                                return [$invoice->id => "{$invoice->number} - {$invoice->user->name} (RM".number_format($invoice->total_amount / 100, 2).')'];
                             });
                     })
                     ->searchable()
@@ -88,7 +88,7 @@ class InvoicesRelationManager extends RelationManager
                         default => 'gray',
                     }),
 
-                TextColumn::make('total')
+                TextColumn::make('total_amount')
                     ->label('Invoice Total')
                     ->money('MYR')
                     ->formatStateUsing(fn ($state) => $state / 100)

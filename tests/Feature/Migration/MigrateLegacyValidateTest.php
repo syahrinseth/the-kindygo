@@ -61,8 +61,8 @@ it('returns failure when foreign key integrity fails', function () {
     // Copy all existing invoices
     DB::statement('INSERT INTO invoices_temp SELECT * FROM invoices');
     // Insert a dangling reference (user_id=99999 does not exist)
-    DB::statement("INSERT INTO invoices_temp (id, number, tenant_id, user_id, date, status, total_items, total_amount, total, created_at, updated_at)
-        VALUES (999, 'INV-FK-TEST', 1, 99999, datetime('now'), 'pending', 0, 0, 0, datetime('now'), datetime('now'))");
+    DB::statement("INSERT INTO invoices_temp (id, number, tenant_id, user_id, date, status, total_items, subtotal_amount, discount_amount, total_amount, created_at, updated_at)
+        VALUES (999, 'INV-FK-TEST', 1, 99999, datetime('now'), 'pending', 0, 0, 0, 0, datetime('now'), datetime('now'))");
     // Replace the original table
     DB::statement('DROP TABLE invoices');
     DB::statement('ALTER TABLE invoices_temp RENAME TO invoices');
@@ -179,7 +179,7 @@ it('validates invoice totals match sum of items', function () {
     $mismatched = DB::selectOne('
         SELECT COUNT(*) as cnt FROM invoices i
         WHERE i.tenant_id = 1
-        AND i.total != (
+        AND i.total_amount != (
             SELECT COALESCE(SUM(ii.total), 0) FROM invoice_items ii WHERE ii.invoice_id = i.id
         )
     ')->cnt;
@@ -339,8 +339,9 @@ it('detects invalid enum values inserted directly', function () {
         'date' => now(),
         'status' => 'invalid_status',
         'total_items' => 0,
+        'subtotal_amount' => 0,
+        'discount_amount' => 0,
         'total_amount' => 0,
-        'total' => 0,
         'created_at' => now(),
         'updated_at' => now(),
     ]);

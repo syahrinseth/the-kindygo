@@ -74,10 +74,12 @@ it('shows invoice actions and related items for an authorised admin', function (
 
     visit(route('filament.admin.resources.invoices.view', $fixture['invoice']))
         ->assertSee($fixture['invoice']->number)
-        ->assertSee('Invoice Items')
+        ->assertSee('INVOICE')
         ->assertSee('Aisyah Browser')
         ->assertSee('Download PDF')
+        ->assertSee('Submit to E-Invoice')
         ->assertSee('Make Payment')
+        ->assertSee('Thank you. Payment allocations and receipts are recorded alongside this invoice.')
         ->assertNoJavascriptErrors();
 });
 

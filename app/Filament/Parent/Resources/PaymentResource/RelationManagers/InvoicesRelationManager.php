@@ -49,7 +49,7 @@ class InvoicesRelationManager extends RelationManager
                         default => 'gray',
                     }),
 
-                TextColumn::make('total')
+                TextColumn::make('total_amount')
                     ->label('Invoice Total')
                     ->money('MYR')
                     ->formatStateUsing(fn ($state) => $state / 100)

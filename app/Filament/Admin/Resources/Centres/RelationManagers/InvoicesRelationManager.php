@@ -65,7 +65,7 @@ class InvoicesRelationManager extends RelationManager
                     ->searchable()
                     ->sortable(),
 
-                TextColumn::make('total')
+                TextColumn::make('total_amount')
                     ->money('MYR', 100)
                     ->sortable(),
             ])
@@ -147,29 +147,29 @@ class InvoicesRelationManager extends RelationManager
 
                         Section::make('Financial Summary')
                             ->schema([
-                                TextEntry::make('total_items')
+                                TextEntry::make('subtotal_amount')
                                     ->label('Subtotal')
-                                    ->money('MYR'),
+                                    ->money('MYR', divideBy: 100),
 
-                                TextEntry::make('total_discounts')
+                                TextEntry::make('discount_amount')
                                     ->label('Total Discounts')
-                                    ->money('MYR')
-                                    ->visible(fn ($record) => $record->total_discounts > 0),
+                                    ->money('MYR', divideBy: 100)
+                                    ->visible(fn ($record) => $record->discount_amount > 0),
 
-                                TextEntry::make('total')
+                                TextEntry::make('total_amount')
                                     ->label('Total Amount')
-                                    ->money('MYR')
+                                    ->money('MYR', divideBy: 100)
                                     ->weight('bold')
                                     ->size('lg'),
 
                                 TextEntry::make('totalPaid')
                                     ->label('Amount Paid')
-                                    ->money('MYR')
+                                    ->money('MYR', divideBy: 100)
                                     ->state(fn ($record) => $record->getTotalPaid()),
 
                                 TextEntry::make('remainingBalance')
                                     ->label('Outstanding Balance')
-                                    ->money('MYR')
+                                    ->money('MYR', divideBy: 100)
                                     ->state(fn ($record) => $record->getRemainingBalance())
                                     ->color(fn ($record) => $record->getRemainingBalance() > 0 ? 'warning' : 'success'),
                             ])->columns(2),

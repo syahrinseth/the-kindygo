@@ -65,12 +65,16 @@ class InvoiceResource extends Resource
                 InvoiceStatus::OVERDUE,
             ])
             ->with([
+                'tenant',
                 'user',
+                'user.userAddress',
                 'centre',
                 'payments' => function ($query) {
-                    $query->where('status', PaymentStatus::PAID);
+                    $query
+                        ->where('status', PaymentStatus::PAID)
+                        ->with(['user', 'media']);
                 },
-                'invoiceItems',
+                'invoiceItems.child',
             ])
             ->latest('date');
     }
@@ -139,7 +143,7 @@ class InvoiceResource extends Resource
                     ->searchable()
                     ->sortable(),
 
-                TextColumn::make('total')
+                TextColumn::make('total_amount')
                     ->label('Total Amount')
                     ->money('MYR', 100)
                     ->sortable(),

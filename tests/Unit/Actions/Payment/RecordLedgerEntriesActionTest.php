@@ -42,7 +42,7 @@ it('creates credit ledger entry for fully paid invoice item', function () {
         'tenant_id' => test()->tenant->id,
         'centre_id' => test()->centre->id,
         'user_id' => test()->user->id,
-        'total' => 30000,
+        'total_amount' => 30000,
     ]);
 
     $item = InvoiceItem::create([
@@ -107,7 +107,7 @@ it('creates credit ledger entry for partially paid invoice item', function () {
         'tenant_id' => test()->tenant->id,
         'centre_id' => test()->centre->id,
         'user_id' => test()->user->id,
-        'total' => 30000,
+        'total_amount' => 30000,
     ]);
 
     $item = InvoiceItem::create([
@@ -165,7 +165,7 @@ it('stores payment metadata in reference_data', function () {
         'tenant_id' => test()->tenant->id,
         'centre_id' => test()->centre->id,
         'user_id' => test()->user->id,
-        'total' => 30000,
+        'total_amount' => 30000,
     ]);
 
     $item = InvoiceItem::create([
@@ -226,7 +226,7 @@ it('uses bulk insert for performance with multiple items', function () {
         'tenant_id' => test()->tenant->id,
         'centre_id' => test()->centre->id,
         'user_id' => test()->user->id,
-        'total' => 90000,
+        'total_amount' => 90000,
     ]);
 
     // Create 3 items
@@ -284,7 +284,7 @@ it('does not create entries for items with zero paid amount', function () {
         'tenant_id' => test()->tenant->id,
         'centre_id' => test()->centre->id,
         'user_id' => test()->user->id,
-        'total' => 60000,
+        'total_amount' => 60000,
     ]);
 
     // Item 1: Paid
@@ -357,7 +357,7 @@ it('calculates credit amount as delta from previous balance', function () {
         'tenant_id' => test()->tenant->id,
         'centre_id' => test()->centre->id,
         'user_id' => test()->user->id,
-        'total' => 30000,
+        'total_amount' => 30000,
     ]);
 
     $item = InvoiceItem::create([
@@ -445,7 +445,7 @@ it('sets correct ledger_type for payment allocation', function () {
         'tenant_id' => test()->tenant->id,
         'centre_id' => test()->centre->id,
         'user_id' => test()->user->id,
-        'total' => 30000,
+        'total_amount' => 30000,
     ]);
 
     $item = InvoiceItem::create([

@@ -44,7 +44,7 @@ it('creates initial debit ledger entry for invoice item', function () {
         'tenant_id' => test()->tenant->id,
         'centre_id' => test()->centre->id,
         'user_id' => test()->user->id,
-        'total' => 30000,
+        'total_amount' => 30000,
         'date' => now()->subDays(5),
     ]);
 

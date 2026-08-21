@@ -40,7 +40,7 @@ class InvoiceListWidget extends BaseWidget
                 TextColumn::make('date')
                     ->date()
                     ->sortable(),
-                TextColumn::make('total')
+                TextColumn::make('total_amount')
                     ->money('MYR', 100)
                     ->sortable(),
                 TextColumn::make('status')

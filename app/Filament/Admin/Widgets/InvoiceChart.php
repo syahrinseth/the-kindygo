@@ -66,25 +66,25 @@ class InvoiceChart extends ChartWidget
             $pendingData[] = (clone $baseQuery)
                 ->where('status', InvoiceStatus::PENDING)
                 ->whereBetween('date', [$startOfMonth, $endOfMonth])
-                ->sum('total') / 100; // Convert to dollars
+                ->sum('total_amount') / 100; // Convert to dollars
 
             // Partially paid invoices for this month
             $partiallyPaidData[] = (clone $baseQuery)
                 ->where('status', InvoiceStatus::PARTIALLY_PAID)
                 ->whereBetween('date', [$startOfMonth, $endOfMonth])
-                ->sum('total') / 100; // Convert to dollars
+                ->sum('total_amount') / 100; // Convert to dollars
 
             // Paid invoices for this month
             $paidData[] = (clone $baseQuery)
                 ->where('status', InvoiceStatus::PAID)
                 ->whereBetween('date', [$startOfMonth, $endOfMonth])
-                ->sum('total') / 100; // Convert to dollars
+                ->sum('total_amount') / 100; // Convert to dollars
 
             // Overdue invoices for this month
             $overdueData[] = (clone $baseQuery)
                 ->where('status', InvoiceStatus::OVERDUE)
                 ->whereBetween('date', [$startOfMonth, $endOfMonth])
-                ->sum('total') / 100; // Convert to dollars
+                ->sum('total_amount') / 100; // Convert to dollars
         }
 
         return [

@@ -31,9 +31,9 @@ class InvoiceFactory extends Factory
             'status' => fake()->randomElement(InvoiceStatus::cases()),
             // Set totals to 0 initially - will be calculated when invoice items are created
             'total_items' => 0,
-            'total_discounts' => 0,
+            'subtotal_amount' => 0,
+            'discount_amount' => 0,
             'total_amount' => 0,
-            'total' => 0,
         ];
     }
 

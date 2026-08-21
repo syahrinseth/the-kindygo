@@ -32,7 +32,7 @@ class UpcomingInvoicesWidget extends BaseWidget
                         InvoiceStatus::OVERDUE,
                         InvoiceStatus::PARTIALLY_PAID,
                     ])
-                    ->where('total', '>', 0)
+                    ->where('total_amount', '>', 0)
                     ->with(['centre'])
                     ->orderBy('due_at', 'asc')
                     ->limit(5)

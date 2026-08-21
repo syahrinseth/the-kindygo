@@ -56,21 +56,46 @@ class InvoicesRelationManager extends RelationManager
                             ->label('Due Date')
                             ->required()
                             ->columnSpan(1),
+                    ])
+                    ->columns(2),
 
-                        TextInput::make('total_amount')
-                            ->label('Total Amount')
+                Section::make('Invoice totals')
+                    ->description('Calculated from invoice line items and cannot be edited here.')
+                    ->schema([
+                        TextInput::make('subtotal_amount')
+                            ->label('Subtotal')
                             ->numeric()
                             ->prefix('RM')
                             ->step(0.01)
-                            ->required()
+                            ->disabled()
+                            ->afterStateHydrated(function (TextInput $component, $state): void {
+                                $component->state(number_format(((int) $state) / 100, 2, '.', ''));
+                            })
+                            ->dehydrateStateUsing(fn ($state): int => (int) ($state * 100))
                             ->columnSpan(1),
 
-                        TextInput::make('total')
-                            ->label('Total')
+                        TextInput::make('discount_amount')
+                            ->label('Discounts')
                             ->numeric()
                             ->prefix('RM')
                             ->step(0.01)
-                            ->required()
+                            ->disabled()
+                            ->afterStateHydrated(function (TextInput $component, $state): void {
+                                $component->state(number_format(((int) $state) / 100, 2, '.', ''));
+                            })
+                            ->dehydrateStateUsing(fn ($state): int => (int) ($state * 100))
+                            ->columnSpan(1),
+
+                        TextInput::make('total_amount')
+                            ->label('Total amount')
+                            ->numeric()
+                            ->prefix('RM')
+                            ->step(0.01)
+                            ->disabled()
+                            ->afterStateHydrated(function (TextInput $component, $state): void {
+                                $component->state(number_format(((int) $state) / 100, 2, '.', ''));
+                            })
+                            ->dehydrateStateUsing(fn ($state): int => (int) ($state * 100))
                             ->columnSpan(1),
                     ])
                     ->columns(2),
@@ -112,14 +137,14 @@ class InvoicesRelationManager extends RelationManager
                     ->date()
                     ->sortable(),
 
-                TextColumn::make('total_amount')
-                    ->label('Amount')
-                    ->money('MYR')
+                TextColumn::make('subtotal_amount')
+                    ->label('Subtotal')
+                    ->money('MYR', divideBy: 100)
                     ->sortable(),
 
-                TextColumn::make('total')
+                TextColumn::make('total_amount')
                     ->label('Total')
-                    ->money('MYR')
+                    ->money('MYR', divideBy: 100)
                     ->sortable()
                     ->weight(FontWeight::Medium),
 
@@ -128,7 +153,7 @@ class InvoicesRelationManager extends RelationManager
                     ->getStateUsing(function ($record) {
                         // Calculate payment status based on payments
                         $totalPaid = $record->payments()->sum('amount') ?? 0;
-                        if ($totalPaid >= $record->total) {
+                        if ($totalPaid >= $record->total_amount) {
                             return 'paid';
                         } elseif ($totalPaid > 0) {
                             return 'partial';

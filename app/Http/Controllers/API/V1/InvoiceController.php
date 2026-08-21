@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\API\V1;
 
+use App\Enums\PaymentStatus;
 use App\Http\Controllers\Controller;
 use App\Http\Resources\API\V1\InvoiceResource;
 use App\Models\Invoice;
@@ -36,6 +37,9 @@ class InvoiceController extends Controller
             ->when($request->query('status'), function ($query, $status) {
                 $query->where('status', $status);
             })
+            ->withSum([
+                'payments as paid_amount' => fn ($query) => $query->where('payments.status', PaymentStatus::PAID->value),
+            ], 'invoice_payment.amount')
             ->with(['items', 'centre'])
             ->orderBy('created_at', 'desc')
             ->paginate($request->query('per_page', 15));
@@ -73,7 +77,10 @@ class InvoiceController extends Controller
             ], 404);
         }
 
-        $invoice->load(['items.child', 'items.product', 'payments', 'centre']);
+        $invoice->load(['items.child', 'items.product', 'payments', 'centre'])
+            ->loadSum([
+                'payments as paid_amount' => fn ($query) => $query->where('payments.status', PaymentStatus::PAID->value),
+            ], 'invoice_payment.amount');
 
         return response()->json([
             'success' => true,

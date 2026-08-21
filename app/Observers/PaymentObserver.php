@@ -45,7 +45,7 @@ class PaymentObserver
             foreach ($payment->invoices as $invoice) {
                 $allocatedAmount = $invoice->pivot->amount;
                 $totalPaid = $invoice->getTotalPaid();
-                $fullyPaid = $totalPaid >= $invoice->total;
+                $fullyPaid = $totalPaid >= $invoice->total_amount;
 
                 $allocationDetails[] = [
                     'invoice_id' => $invoice->id,

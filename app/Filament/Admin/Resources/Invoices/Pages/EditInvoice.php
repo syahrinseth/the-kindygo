@@ -20,6 +20,16 @@ class EditInvoice extends EditRecord
         ];
     }
 
+    public function hasCombinedRelationManagerTabsWithContent(): bool
+    {
+        return true;
+    }
+
+    public function getContentTabLabel(): ?string
+    {
+        return 'Invoice details';
+    }
+
     protected function mutateFormDataBeforeFill(array $data): array
     {
         // Recalculate and update totals from invoice items to ensure accuracy
@@ -32,11 +42,6 @@ class EditInvoice extends EditRecord
     {
         // We don't allow changing tenant_id
         unset($data['tenant_id']);
-
-        // Calculate the total if not specified
-        if (! isset($data['total']) || $data['total'] == 0) {
-            $data['total'] = ($data['total_amount'] ?? 0) - ($data['total_discounts'] ?? 0);
-        }
 
         // If the due date is in the past and status is still PENDING, update to OVERDUE
         if (

@@ -27,7 +27,7 @@ it('returns table with upcoming unpaid invoices', function () {
         'tenant_id' => $this->tenant->id,
         'centre_id' => $centre->id,
         'status' => InvoiceStatus::PENDING,
-        'total' => 10000,
+        'total_amount' => 10000,
         'due_at' => now()->addDays(5),
     ]);
 
@@ -36,7 +36,7 @@ it('returns table with upcoming unpaid invoices', function () {
         'tenant_id' => $this->tenant->id,
         'centre_id' => $centre->id,
         'status' => InvoiceStatus::OVERDUE,
-        'total' => 15000,
+        'total_amount' => 15000,
         'due_at' => now()->subDays(3),
     ]);
 
@@ -45,7 +45,7 @@ it('returns table with upcoming unpaid invoices', function () {
         'tenant_id' => $this->tenant->id,
         'centre_id' => $centre->id,
         'status' => InvoiceStatus::PARTIALLY_PAID,
-        'total' => 20000,
+        'total_amount' => 20000,
         'due_at' => now()->addDays(10),
     ]);
 
@@ -55,7 +55,7 @@ it('returns table with upcoming unpaid invoices', function () {
         'tenant_id' => $this->tenant->id,
         'centre_id' => $centre->id,
         'status' => InvoiceStatus::PAID,
-        'total' => 5000,
+        'total_amount' => 5000,
         'due_at' => now()->addDays(15),
     ]);
 
@@ -66,7 +66,7 @@ it('returns table with upcoming unpaid invoices', function () {
             InvoiceStatus::OVERDUE,
             InvoiceStatus::PARTIALLY_PAID,
         ])
-        ->where('total', '>', 0)
+        ->where('total_amount', '>', 0)
         ->with(['centre'])
         ->orderBy('due_at', 'asc')
         ->get();
@@ -83,7 +83,7 @@ it('sorts invoices by due date ascending', function () {
         'tenant_id' => $this->tenant->id,
         'centre_id' => $centre->id,
         'status' => InvoiceStatus::PENDING,
-        'total' => 10000,
+        'total_amount' => 10000,
         'due_at' => now()->addDays(10),
     ]);
 
@@ -92,7 +92,7 @@ it('sorts invoices by due date ascending', function () {
         'tenant_id' => $this->tenant->id,
         'centre_id' => $centre->id,
         'status' => InvoiceStatus::PENDING,
-        'total' => 10000,
+        'total_amount' => 10000,
         'due_at' => now()->addDays(5),
     ]);
 
@@ -101,14 +101,14 @@ it('sorts invoices by due date ascending', function () {
         'tenant_id' => $this->tenant->id,
         'centre_id' => $centre->id,
         'status' => InvoiceStatus::PENDING,
-        'total' => 10000,
+        'total_amount' => 10000,
         'due_at' => now()->addDays(15),
     ]);
 
     $query = Invoice::query()
         ->where('user_id', $this->user->id)
         ->whereIn('status', [InvoiceStatus::PENDING, InvoiceStatus::OVERDUE, InvoiceStatus::PARTIALLY_PAID])
-        ->where('total', '>', 0)
+        ->where('total_amount', '>', 0)
         ->orderBy('due_at', 'asc')
         ->get();
 
@@ -128,14 +128,14 @@ it('limits results to 5 invoices', function () {
         'tenant_id' => $this->tenant->id,
         'centre_id' => $centre->id,
         'status' => InvoiceStatus::PENDING,
-        'total' => 10000,
+        'total_amount' => 10000,
         'due_at' => now()->addDays(5),
     ]);
 
     $query = Invoice::query()
         ->where('user_id', $this->user->id)
         ->whereIn('status', [InvoiceStatus::PENDING, InvoiceStatus::OVERDUE, InvoiceStatus::PARTIALLY_PAID])
-        ->where('total', '>', 0)
+        ->where('total_amount', '>', 0)
         ->orderBy('due_at', 'asc')
         ->limit(5)
         ->get();
@@ -152,7 +152,7 @@ it('excludes invoices with zero total', function () {
         'tenant_id' => $this->tenant->id,
         'centre_id' => $centre->id,
         'status' => InvoiceStatus::PENDING,
-        'total' => 0,
+        'total_amount' => 0,
         'due_at' => now()->addDays(5),
     ]);
 
@@ -162,14 +162,14 @@ it('excludes invoices with zero total', function () {
         'tenant_id' => $this->tenant->id,
         'centre_id' => $centre->id,
         'status' => InvoiceStatus::PENDING,
-        'total' => 10000,
+        'total_amount' => 10000,
         'due_at' => now()->addDays(5),
     ]);
 
     $query = Invoice::query()
         ->where('user_id', $this->user->id)
         ->whereIn('status', [InvoiceStatus::PENDING, InvoiceStatus::OVERDUE, InvoiceStatus::PARTIALLY_PAID])
-        ->where('total', '>', 0)
+        ->where('total_amount', '>', 0)
         ->orderBy('due_at', 'asc')
         ->limit(5)
         ->get();
@@ -188,7 +188,7 @@ it('only includes invoices for the authenticated user', function () {
         'tenant_id' => $this->tenant->id,
         'centre_id' => $centre->id,
         'status' => InvoiceStatus::PENDING,
-        'total' => 10000,
+        'total_amount' => 10000,
         'due_at' => now()->addDays(5),
     ]);
 
@@ -198,14 +198,14 @@ it('only includes invoices for the authenticated user', function () {
         'tenant_id' => $this->tenant->id,
         'centre_id' => $centre->id,
         'status' => InvoiceStatus::PENDING,
-        'total' => 10000,
+        'total_amount' => 10000,
         'due_at' => now()->addDays(5),
     ]);
 
     $query = Invoice::query()
         ->where('user_id', $this->user->id)
         ->whereIn('status', [InvoiceStatus::PENDING, InvoiceStatus::OVERDUE, InvoiceStatus::PARTIALLY_PAID])
-        ->where('total', '>', 0)
+        ->where('total_amount', '>', 0)
         ->orderBy('due_at', 'asc')
         ->limit(5)
         ->get();
@@ -218,7 +218,7 @@ it('shows empty state when no upcoming invoices', function () {
     $query = Invoice::query()
         ->where('user_id', $this->user->id)
         ->whereIn('status', [InvoiceStatus::PENDING, InvoiceStatus::OVERDUE, InvoiceStatus::PARTIALLY_PAID])
-        ->where('total', '>', 0)
+        ->where('total_amount', '>', 0)
         ->orderBy('due_at', 'asc')
         ->limit(5)
         ->get();

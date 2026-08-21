@@ -200,5 +200,5 @@ it('updates invoice totals after creation', function () {
 
     expect($invoice->total_items)->toBeGreaterThan(0)
         ->and($invoice->total_amount)->toBeGreaterThan(0)
-        ->and($invoice->total)->toBeGreaterThan(0);
+        ->and($invoice->total_amount)->toBeGreaterThan(0);
 });

@@ -24,7 +24,7 @@ it('identifies multi-centre selections correctly', function () {
         'tenant_id' => $tenant->id,
         'centre_id' => $centre1->id,
         'status' => InvoiceStatus::PENDING,
-        'total' => 10000, // 100.00 in cents
+        'total_amount' => 10000, // 100.00 in cents
     ]);
 
     $invoice2 = Invoice::factory()->create([
@@ -32,7 +32,7 @@ it('identifies multi-centre selections correctly', function () {
         'tenant_id' => $tenant->id,
         'centre_id' => $centre2->id,
         'status' => InvoiceStatus::PENDING,
-        'total' => 15000, // 150.00 in cents
+        'total_amount' => 15000, // 150.00 in cents
     ]);
 
     test()->actingAs($user);
@@ -65,7 +65,7 @@ it('calculates centre totals correctly', function () {
         'tenant_id' => $tenant->id,
         'centre_id' => $centre1->id,
         'status' => InvoiceStatus::PENDING,
-        'total' => 10000, // 100.00 in cents
+        'total_amount' => 10000, // 100.00 in cents
         'date' => now()->subDays(3),
     ]);
 
@@ -74,7 +74,7 @@ it('calculates centre totals correctly', function () {
         'tenant_id' => $tenant->id,
         'centre_id' => $centre1->id,
         'status' => InvoiceStatus::PENDING,
-        'total' => 5000, // 50.00 in cents
+        'total_amount' => 5000, // 50.00 in cents
         'date' => now()->subDays(2),
     ]);
 
@@ -83,7 +83,7 @@ it('calculates centre totals correctly', function () {
         'tenant_id' => $tenant->id,
         'centre_id' => $centre2->id,
         'status' => InvoiceStatus::PENDING,
-        'total' => 20000, // 200.00 in cents
+        'total_amount' => 20000, // 200.00 in cents
         'date' => now()->subDays(1),
     ]);
 
@@ -128,7 +128,7 @@ it('groups invoices by centre correctly', function () {
         'tenant_id' => $tenant->id,
         'centre_id' => $centre1->id,
         'status' => InvoiceStatus::PENDING,
-        'total' => 10000,
+        'total_amount' => 10000,
         'date' => now()->subDays(5),
     ]);
 
@@ -137,7 +137,7 @@ it('groups invoices by centre correctly', function () {
         'tenant_id' => $tenant->id,
         'centre_id' => $centre2->id,
         'status' => InvoiceStatus::PENDING,
-        'total' => 10000,
+        'total_amount' => 10000,
         'date' => now()->subDays(4),
     ]);
 
@@ -146,7 +146,7 @@ it('groups invoices by centre correctly', function () {
         'tenant_id' => $tenant->id,
         'centre_id' => $centre1->id,
         'status' => InvoiceStatus::PENDING,
-        'total' => 10000,
+        'total_amount' => 10000,
         'date' => now()->subDays(3),
     ]);
 

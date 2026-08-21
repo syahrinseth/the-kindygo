@@ -49,9 +49,9 @@ class ExportInvoicesAction extends BulkAction
                         $record->user->name,
                         $record->centre->name,
                         $record->total_items,
+                        number_format($record->subtotal_amount / 100, 2),
+                        number_format($record->discount_amount / 100, 2),
                         number_format($record->total_amount / 100, 2),
-                        number_format($record->total_discounts / 100, 2),
-                        number_format($record->total / 100, 2),
                     ]);
                 }
 

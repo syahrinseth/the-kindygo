@@ -145,7 +145,7 @@ class AllocatePaymentToInvoicesAction
 
         // Calculate payment totals for return value
         $totalPaid = $invoice->getTotalPaid();
-        $fullyPaid = ($totalPaid >= $invoice->total);
+        $fullyPaid = ($totalPaid >= $invoice->total_amount);
 
         Log::info('Allocated payment to invoice', [
             'invoice_id' => $invoice->id,
@@ -153,7 +153,7 @@ class AllocatePaymentToInvoicesAction
             'allocated_amount' => $allocatedAmount,
             'fully_paid' => $fullyPaid,
             'total_paid' => $totalPaid,
-            'remaining_balance' => $invoice->total - $totalPaid,
+            'remaining_balance' => $invoice->total_amount - $totalPaid,
         ]);
 
         return [
@@ -162,7 +162,7 @@ class AllocatePaymentToInvoicesAction
             'allocated_amount' => $allocatedAmount,
             'fully_paid' => $fullyPaid,
             'total_paid' => $totalPaid,
-            'remaining_balance' => $invoice->total - $totalPaid,
+            'remaining_balance' => $invoice->total_amount - $totalPaid,
         ];
     }
 

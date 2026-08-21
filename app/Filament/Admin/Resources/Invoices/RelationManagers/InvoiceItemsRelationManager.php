@@ -31,7 +31,7 @@ class InvoiceItemsRelationManager extends RelationManager
 
     protected static ?string $recordTitleAttribute = 'name';
 
-    protected static ?string $title = 'Invoice Items';
+    protected static ?string $title = 'Invoice line items';
 
     protected static ?string $modelLabel = 'Item';
 
@@ -207,19 +207,19 @@ class InvoiceItemsRelationManager extends RelationManager
     {
         return $table
             ->recordTitleAttribute('name')
-            ->heading('Invoice Items')
+            ->heading('Invoice line items')
             ->description(function () {
                 $invoice = $this->getOwnerRecord();
                 $totals = $invoice->recalculateTotals();
 
                 return "Items: {$totals['total_items']} | ".
-                       'Subtotal: RM '.number_format($totals['total_amount'] / 100, 2).' | '.
-                       'Discounts: RM '.number_format($totals['total_discounts'] / 100, 2).' | '.
-                       'Total: RM '.number_format($totals['total'] / 100, 2);
+                       'Subtotal: RM '.number_format($totals['subtotal_amount'] / 100, 2).' | '.
+                       'Discounts: RM '.number_format($totals['discount_amount'] / 100, 2).' | '.
+                       'Total: RM '.number_format($totals['total_amount'] / 100, 2);
             })
             ->columns([
                 TextColumn::make('name')
-                    ->label('Item Name')
+                    ->label('Description')
                     ->searchable()
                     ->sortable()
                     ->limit(40),
@@ -232,6 +232,7 @@ class InvoiceItemsRelationManager extends RelationManager
                     ->toggleable(),
 
                 TextColumn::make('quantity')
+                    ->label('Qty')
                     ->numeric()
                     ->sortable()
                     ->alignCenter(),
@@ -242,7 +243,7 @@ class InvoiceItemsRelationManager extends RelationManager
                     ->sortable(),
 
                 TextColumn::make('discount')
-                    ->label('Discount/Unit')
+                    ->label('Discount per unit')
                     ->money('MYR', divideBy: 100)
                     ->sortable()
                     ->toggleable()
@@ -257,20 +258,22 @@ class InvoiceItemsRelationManager extends RelationManager
                 //     ->placeholder('RM 0.00'),
 
                 TextColumn::make('total')
+                    ->label('Line total')
                     ->money('MYR', divideBy: 100)
                     ->sortable()
                     ->weight('bold')
                     ->color('success'),
 
                 TextColumn::make('child.first_name')
-                    ->label('Child')
+                    ->label('Assigned child')
                     ->formatStateUsing(fn ($record) => $record->child ? $record->child->first_name.' '.$record->child->last_name : '-')
                     ->sortable()
                     ->toggleable()
                     ->placeholder('Not assigned'),
 
-                TextColumn::make('created_at')
-                    ->dateTime()
+                TextColumn::make('effective_date')
+                    ->label('Effective date')
+                    ->date()
                     ->sortable()
                     ->toggleable(isToggledHiddenByDefault: true),
             ])

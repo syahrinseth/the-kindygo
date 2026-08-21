@@ -161,7 +161,7 @@ it('updates invoice totals after conversion', function () {
     // Total should be sum of selected items
     expect($invoice->total_items)->toBe(2)
         ->and($invoice->total_amount)->toBe(60000) // 50000 + 10000
-        ->and($invoice->total)->toBe(60000);
+        ->and($invoice->total_amount)->toBe(60000);
 });
 
 it('creates invoice with correct tenant and centre', function () {

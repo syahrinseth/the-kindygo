@@ -66,7 +66,7 @@ class MakePayment extends Page implements HasActions, HasSchemas, HasTable
 
         $invoices = Invoice::where('user_id', $user->id)
             ->whereIn('status', [InvoiceStatus::PENDING, InvoiceStatus::PARTIALLY_PAID, InvoiceStatus::OVERDUE])
-            ->where('total', '>', 0)
+            ->where('total_amount', '>', 0)
             ->get()
             ->filter(fn (Invoice $invoice) => $invoice->getRemainingBalance() > 0);
 
@@ -121,7 +121,7 @@ class MakePayment extends Page implements HasActions, HasSchemas, HasTable
                         InvoiceStatus::PARTIALLY_PAID,
                         InvoiceStatus::OVERDUE,
                     ])
-                    ->where('total', '>', 0)
+                    ->where('total_amount', '>', 0)
                     ->with(['centre'])
             )
             ->columns([
@@ -235,7 +235,7 @@ class MakePayment extends Page implements HasActions, HasSchemas, HasTable
 
         $invoices = Invoice::where('user_id', $user->id)
             ->whereIn('status', [InvoiceStatus::PENDING, InvoiceStatus::PARTIALLY_PAID, InvoiceStatus::OVERDUE])
-            ->where('total', '>', 0)
+            ->where('total_amount', '>', 0)
             ->get()
             ->filter(fn (Invoice $invoice) => $invoice->getRemainingBalance() > 0);
 
@@ -335,7 +335,7 @@ class MakePayment extends Page implements HasActions, HasSchemas, HasTable
 
         $invoices = Invoice::where('user_id', $user->id)
             ->whereIn('status', [InvoiceStatus::PENDING, InvoiceStatus::PARTIALLY_PAID, InvoiceStatus::OVERDUE])
-            ->where('total', '>', 0)
+            ->where('total_amount', '>', 0)
             ->with(['centre', 'invoiceItems.product'])
             ->orderBy('due_at')
             ->get()
@@ -360,7 +360,7 @@ class MakePayment extends Page implements HasActions, HasSchemas, HasTable
                 'number' => $invoice->number,
                 'date' => $invoice->date,
                 'due_at' => $invoice->due_at,
-                'total' => $invoice->total,
+                'total' => $invoice->total_amount,
                 'balance' => $invoice->getRemainingBalance(),
                 'centre_id' => $invoice->centre_id,
                 'centre_name' => $invoice->centre?->name,

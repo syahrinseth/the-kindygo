@@ -46,9 +46,9 @@ class ReconcileInvoiceTotals extends Command
 
         $invoiceTotals = DB::table('invoice_items')
             ->selectRaw('invoice_id, COUNT(*) as total_items')
-            ->selectRaw('COALESCE(SUM(price * quantity), 0) as total_amount')
-            ->selectRaw('COALESCE(SUM(discount * quantity), 0) as total_discounts')
-            ->selectRaw('COALESCE(SUM(total), 0) as total')
+            ->selectRaw('COALESCE(SUM(price * quantity), 0) as subtotal_amount')
+            ->selectRaw('COALESCE(SUM(discount * quantity), 0) as discount_amount')
+            ->selectRaw('COALESCE(SUM(total), 0) as total_amount')
             ->groupBy('invoice_id');
 
         $invoices = DB::table('invoices')
@@ -59,13 +59,13 @@ class ReconcileInvoiceTotals extends Command
 
         DB::table('invoices')
             ->leftJoinSub($invoiceTotals, 'invoice_totals', fn ($join) => $join->on('invoices.id', '=', 'invoice_totals.invoice_id'))
-            ->select(['invoices.id', 'invoices.total_items', 'invoices.total_amount', 'invoices.total_discounts', 'invoices.total'])
+            ->select(['invoices.id', 'invoices.total_items', 'invoices.subtotal_amount', 'invoices.discount_amount', 'invoices.total_amount'])
             ->when($tenantId !== null, fn ($query) => $query->where('invoices.tenant_id', $tenantId))
             ->where(function ($query) {
                 $query->whereRaw('invoices.total_items != COALESCE(invoice_totals.total_items, 0)')
-                    ->orWhereRaw('invoices.total_amount != COALESCE(invoice_totals.total_amount, 0)')
-                    ->orWhereRaw('invoices.total_discounts != COALESCE(invoice_totals.total_discounts, 0)')
-                    ->orWhereRaw('invoices.total != COALESCE(invoice_totals.total, 0)');
+                    ->orWhereRaw('invoices.subtotal_amount != COALESCE(invoice_totals.subtotal_amount, 0)')
+                    ->orWhereRaw('invoices.discount_amount != COALESCE(invoice_totals.discount_amount, 0)')
+                    ->orWhereRaw('invoices.total_amount != COALESCE(invoice_totals.total_amount, 0)');
             })
             ->orderBy('invoices.id')
             ->chunkById($chunkSize, function ($invoices) use ($updateInvoiceTotals, $dryRun, &$corrected): void {

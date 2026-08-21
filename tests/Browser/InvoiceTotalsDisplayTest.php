@@ -21,9 +21,9 @@ it('labels the pre-discount invoice amount as subtotal in the admin list', funct
         'centre_id' => $centre->id,
         'user_id' => $admin->id,
         'status' => InvoiceStatus::PENDING,
+        'subtotal_amount' => 148000,
+        'discount_amount' => 0,
         'total_amount' => 148000,
-        'total_discounts' => 0,
-        'total' => 148000,
     ]);
 
     $this->actingAs($admin);

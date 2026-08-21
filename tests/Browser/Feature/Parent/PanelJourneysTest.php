@@ -157,6 +157,26 @@ it('shows invoice and payment actions only for the parents owned records', funct
         ->assertNoJavascriptErrors();
 });
 
+it('renders the parent invoice as a styled statement without admin controls', function (): void {
+    $fixture = $this->createParentPanelFixture();
+
+    $page = visit(route('filament.parent.resources.invoices.view', $fixture['invoice']));
+
+    $page
+        ->assertVisible('.invoice-view-grid')
+        ->assertVisible('.invoice-paper')
+        ->assertVisible('.invoice-operations')
+        ->assertSee('Invoice total')
+        ->assertSee('Balance due')
+        ->assertDontSee('Invoice controls')
+        ->assertDontSee('Manage line items')
+        ->assertNoJavascriptErrors();
+
+    expect($page->script("getComputedStyle(document.querySelector('.invoice-view-grid')).display"))->toBe('grid')
+        ->and($page->script("getComputedStyle(document.querySelector('.invoice-paper')).backgroundColor"))
+        ->toBe('rgb(255, 255, 255)');
+});
+
 it('updates the parents shared profile details', function (): void {
     $fixture = $this->createParentPanelFixture();
     $fixture['parent']->profile()->create([

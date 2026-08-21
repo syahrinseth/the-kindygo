@@ -36,7 +36,7 @@ class QuickPayInvoicesWidget extends Widget
 
         return Invoice::where('user_id', $user->id)
             ->whereIn('status', [InvoiceStatus::PENDING, InvoiceStatus::OVERDUE, InvoiceStatus::PARTIALLY_PAID])
-            ->where('total', '>', 0)
+            ->where('total_amount', '>', 0)
             ->orderBy('due_at', 'asc')
             ->limit(10)
             ->get()

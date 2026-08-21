@@ -16,9 +16,9 @@ function createReconciliationInvoice(Tenant $tenant, int $price, int $quantity, 
         'centre_id' => $centre->id,
         'user_id' => $user->id,
         'total_items' => 0,
+        'subtotal_amount' => 0,
+        'discount_amount' => 0,
         'total_amount' => 0,
-        'total_discounts' => 0,
-        'total' => 0,
     ]);
 
     InvoiceItem::factory()->create([
@@ -31,9 +31,9 @@ function createReconciliationInvoice(Tenant $tenant, int $price, int $quantity, 
     $invoice->refresh();
     $invoice->updateQuietly([
         'total_items' => 0,
+        'subtotal_amount' => 0,
+        'discount_amount' => 0,
         'total_amount' => 0,
-        'total_discounts' => 0,
-        'total' => 0,
     ]);
 
     return $invoice;
@@ -50,11 +50,11 @@ it('reconciles inconsistent totals across all tenants', function () {
         ->expectsOutput('Unchanged: 0')
         ->assertSuccessful();
 
-    expect($firstInvoice->fresh()->only(['total_items', 'total_amount', 'total_discounts', 'total']))
-        ->toBe(['total_items' => 1, 'total_amount' => 148000, 'total_discounts' => 1000, 'total' => 147000])
+    expect($firstInvoice->fresh()->only(['total_items', 'subtotal_amount', 'discount_amount', 'total_amount']))
+        ->toBe(['total_items' => 1, 'subtotal_amount' => 148000, 'discount_amount' => 1000, 'total_amount' => 147000])
         ->and($firstInvoice->fresh()->status)->toBe(InvoiceStatus::PAID)
-        ->and($secondInvoice->fresh()->only(['total_items', 'total_amount', 'total_discounts', 'total']))
-        ->toBe(['total_items' => 1, 'total_amount' => 20000, 'total_discounts' => 0, 'total' => 20000]);
+        ->and($secondInvoice->fresh()->only(['total_items', 'subtotal_amount', 'discount_amount', 'total_amount']))
+        ->toBe(['total_items' => 1, 'subtotal_amount' => 20000, 'discount_amount' => 0, 'total_amount' => 20000]);
 });
 
 it('honours tenant filtering and dry runs without updating records', function () {
@@ -68,12 +68,12 @@ it('honours tenant filtering and dry runs without updating records', function ()
         ->expectsOutput('Unchanged: 0')
         ->assertSuccessful();
 
-    expect($firstInvoice->fresh()->total)->toBe(0)
-        ->and($secondInvoice->fresh()->total)->toBe(0);
+    expect($firstInvoice->fresh()->total_amount)->toBe(0)
+        ->and($secondInvoice->fresh()->total_amount)->toBe(0);
 
     $this->artisan('invoices:reconcile-totals', ['--tenant-id' => $firstTenant->id])
         ->assertSuccessful();
 
-    expect($firstInvoice->fresh()->total)->toBe(30000)
-        ->and($secondInvoice->fresh()->total)->toBe(0);
+    expect($firstInvoice->fresh()->total_amount)->toBe(30000)
+        ->and($secondInvoice->fresh()->total_amount)->toBe(0);
 });

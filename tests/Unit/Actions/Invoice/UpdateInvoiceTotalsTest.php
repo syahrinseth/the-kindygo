@@ -29,18 +29,18 @@ it('updates invoice totals with no items', function () {
         'tenant_id' => $this->tenant->id,
         'centre_id' => $this->centre->id,
         'total_items' => 5,
+        'subtotal_amount' => 10000,
+        'discount_amount' => 1000,
         'total_amount' => 10000,
-        'total_discounts' => 1000,
-        'total' => 10000,
     ]);
 
     $this->action->execute($invoice);
 
     $invoice->refresh();
     expect($invoice->total_items)->toBe(0)
-        ->and($invoice->total_amount)->toBe(0)
-        ->and($invoice->total_discounts)->toBe(0)
-        ->and($invoice->total)->toBe(0);
+        ->and($invoice->subtotal_amount)->toBe(0)
+        ->and($invoice->discount_amount)->toBe(0)
+        ->and($invoice->total_amount)->toBe(0);
 });
 
 it('updates invoice totals with multiple items', function () {
@@ -78,9 +78,9 @@ it('updates invoice totals with multiple items', function () {
 
     $invoice->refresh();
     expect($invoice->total_items)->toBe(3)
-        ->and($invoice->total_amount)->toBe(10000)
-        ->and($invoice->total_discounts)->toBe(0)
-        ->and($invoice->total)->toBe(10000);
+        ->and($invoice->subtotal_amount)->toBe(10000)
+        ->and($invoice->discount_amount)->toBe(0)
+        ->and($invoice->total_amount)->toBe(10000);
 });
 
 it('updates invoice totals with a single item', function () {
@@ -102,9 +102,9 @@ it('updates invoice totals with a single item', function () {
 
     $invoice->refresh();
     expect($invoice->total_items)->toBe(1)
-        ->and($invoice->total_amount)->toBe(5000)
-        ->and($invoice->total_discounts)->toBe(0)
-        ->and($invoice->total)->toBe(5000);
+        ->and($invoice->subtotal_amount)->toBe(5000)
+        ->and($invoice->discount_amount)->toBe(0)
+        ->and($invoice->total_amount)->toBe(5000);
 });
 
 it('recalculates totals when items change', function () {
@@ -112,9 +112,9 @@ it('recalculates totals when items change', function () {
         'tenant_id' => $this->tenant->id,
         'centre_id' => $this->centre->id,
         'total_items' => 10,
+        'subtotal_amount' => 99999,
+        'discount_amount' => 99999,
         'total_amount' => 99999,
-        'total_discounts' => 99999,
-        'total' => 99999,
     ]);
 
     InvoiceItem::create([
@@ -138,9 +138,9 @@ it('recalculates totals when items change', function () {
 
     $invoice->refresh();
     expect($invoice->total_items)->toBe(2)
-        ->and($invoice->total_amount)->toBe(4000)
-        ->and($invoice->total_discounts)->toBe(0)
-        ->and($invoice->total)->toBe(4000);
+        ->and($invoice->subtotal_amount)->toBe(4000)
+        ->and($invoice->discount_amount)->toBe(0)
+        ->and($invoice->total_amount)->toBe(4000);
 });
 
 it('calculates subtotal, discounts, and total from discounted item quantities', function () {
@@ -148,9 +148,9 @@ it('calculates subtotal, discounts, and total from discounted item quantities', 
         'tenant_id' => $this->tenant->id,
         'centre_id' => $this->centre->id,
         'total_items' => 0,
+        'subtotal_amount' => 0,
+        'discount_amount' => 0,
         'total_amount' => 0,
-        'total_discounts' => 0,
-        'total' => 0,
     ]);
 
     InvoiceItem::create([
@@ -166,7 +166,7 @@ it('calculates subtotal, discounts, and total from discounted item quantities', 
 
     $invoice->refresh();
     expect($invoice->total_items)->toBe(1)
-        ->and($invoice->total_amount)->toBe(148000)
-        ->and($invoice->total_discounts)->toBe(1000)
-        ->and($invoice->total)->toBe(147000);
+        ->and($invoice->subtotal_amount)->toBe(148000)
+        ->and($invoice->discount_amount)->toBe(1000)
+        ->and($invoice->total_amount)->toBe(147000);
 });

@@ -55,7 +55,7 @@ it('executes CHIP payment through gateway factory', function () {
         'tenant_id' => $this->tenant->id,
         'centre_id' => $this->centre->id,
         'user_id' => $this->user->id,
-        'total' => 50000,
+        'total_amount' => 50000,
         'status' => InvoiceStatus::PENDING,
     ]);
 
@@ -97,7 +97,7 @@ it('executes bank transfer payment through gateway factory', function () {
         'tenant_id' => $this->tenant->id,
         'centre_id' => $this->centre->id,
         'user_id' => $this->user->id,
-        'total' => 50000,
+        'total_amount' => 50000,
         'status' => InvoiceStatus::PENDING,
     ]);
 
@@ -142,7 +142,7 @@ it('executes payment with user-defined allocation', function () {
         'tenant_id' => $this->tenant->id,
         'centre_id' => $this->centre->id,
         'user_id' => $this->user->id,
-        'total' => 30000,
+        'total_amount' => 30000,
         'status' => InvoiceStatus::PENDING,
     ]);
 
@@ -150,7 +150,7 @@ it('executes payment with user-defined allocation', function () {
         'tenant_id' => $this->tenant->id,
         'centre_id' => $this->centre->id,
         'user_id' => $this->user->id,
-        'total' => 20000,
+        'total_amount' => 20000,
         'status' => InvoiceStatus::PENDING,
     ]);
 
@@ -207,7 +207,7 @@ it('handles payment with payment proof for bank transfer', function () {
         'tenant_id' => $this->tenant->id,
         'centre_id' => $this->centre->id,
         'user_id' => $this->user->id,
-        'total' => 50000,
+        'total_amount' => 50000,
         'status' => InvoiceStatus::PENDING,
     ]);
 
@@ -255,7 +255,7 @@ it('returns failure result when gateway throws exception', function () {
         'tenant_id' => $this->tenant->id,
         'centre_id' => $this->centre->id,
         'user_id' => $this->user->id,
-        'total' => 50000,
+        'total_amount' => 50000,
         'status' => InvoiceStatus::PENDING,
     ]);
 
@@ -294,7 +294,7 @@ it('throws exception for unimplemented gateway', function () {
         'tenant_id' => $this->tenant->id,
         'centre_id' => $this->centre->id,
         'user_id' => $this->user->id,
-        'total' => 50000,
+        'total_amount' => 50000,
         'status' => InvoiceStatus::PENDING,
     ]);
 
@@ -366,7 +366,7 @@ it('handles multiple invoices across different centres', function () {
         'tenant_id' => $this->tenant->id,
         'centre_id' => $centre1->id,
         'user_id' => $this->user->id,
-        'total' => 30000,
+        'total_amount' => 30000,
         'status' => InvoiceStatus::PENDING,
     ]);
 
@@ -374,7 +374,7 @@ it('handles multiple invoices across different centres', function () {
         'tenant_id' => $this->tenant->id,
         'centre_id' => $centre2->id,
         'user_id' => $this->user->id,
-        'total' => 20000,
+        'total_amount' => 20000,
         'status' => InvoiceStatus::PENDING,
     ]);
 
@@ -427,7 +427,7 @@ it('logs payment processing information', function () {
         'tenant_id' => $this->tenant->id,
         'centre_id' => $this->centre->id,
         'user_id' => $this->user->id,
-        'total' => 50000,
+        'total_amount' => 50000,
         'status' => InvoiceStatus::PENDING,
     ]);
 

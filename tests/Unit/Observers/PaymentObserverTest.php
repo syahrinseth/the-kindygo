@@ -31,7 +31,7 @@ it('updates invoice status to PAID when payment status changes to PAID and invoi
         'tenant_id' => test()->tenant->id,
         'centre_id' => test()->centre->id,
         'user_id' => test()->user->id,
-        'total' => 10000,
+        'total_amount' => 10000,
         'status' => InvoiceStatus::PENDING,
     ]);
 
@@ -75,7 +75,7 @@ it('updates invoice status to PARTIALLY_PAID when payment status changes to PAID
         'tenant_id' => test()->tenant->id,
         'centre_id' => test()->centre->id,
         'user_id' => test()->user->id,
-        'total' => 10000,
+        'total_amount' => 10000,
         'status' => InvoiceStatus::PENDING,
     ]);
 
@@ -119,7 +119,7 @@ it('updates multiple invoice statuses when payment covers multiple invoices', fu
         'tenant_id' => test()->tenant->id,
         'centre_id' => test()->centre->id,
         'user_id' => test()->user->id,
-        'total' => 10000,
+        'total_amount' => 10000,
         'status' => InvoiceStatus::PENDING,
     ]);
 
@@ -127,7 +127,7 @@ it('updates multiple invoice statuses when payment covers multiple invoices', fu
         'tenant_id' => test()->tenant->id,
         'centre_id' => test()->centre->id,
         'user_id' => test()->user->id,
-        'total' => 5000,
+        'total_amount' => 5000,
         'status' => InvoiceStatus::PENDING,
     ]);
 
@@ -186,7 +186,7 @@ it('does not trigger invoice status update when payment status changes to FAILED
         'tenant_id' => test()->tenant->id,
         'centre_id' => test()->centre->id,
         'user_id' => test()->user->id,
-        'total' => 10000,
+        'total_amount' => 10000,
         'status' => InvoiceStatus::PENDING,
     ]);
 
@@ -226,7 +226,7 @@ it('does not trigger invoice status update when payment status changes to CANCEL
         'tenant_id' => test()->tenant->id,
         'centre_id' => test()->centre->id,
         'user_id' => test()->user->id,
-        'total' => 10000,
+        'total_amount' => 10000,
         'status' => InvoiceStatus::PENDING,
     ]);
 
@@ -291,7 +291,7 @@ it('logs invoice status update when payment status changes to PAID', function ()
         'tenant_id' => test()->tenant->id,
         'centre_id' => test()->centre->id,
         'user_id' => test()->user->id,
-        'total' => 10000,
+        'total_amount' => 10000,
         'status' => InvoiceStatus::PENDING,
     ]);
 
@@ -340,7 +340,7 @@ it('does not trigger when payment is created with PAID status initially', functi
         'tenant_id' => test()->tenant->id,
         'centre_id' => test()->centre->id,
         'user_id' => test()->user->id,
-        'total' => 10000,
+        'total_amount' => 10000,
         'status' => InvoiceStatus::PENDING,
     ]);
 

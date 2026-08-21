@@ -277,14 +277,14 @@ class MigrateLegacyValidate extends Command
         $mismatchedInvoices = DB::selectOne("
             SELECT COUNT(*) as cnt FROM invoices i
             WHERE i.tenant_id = {$tenantId}
-            AND i.total != (
+            AND i.total_amount != (
                 SELECT COALESCE(SUM(ii.total), 0) FROM invoice_items ii WHERE ii.invoice_id = i.id
             )
         ")->cnt;
         $status = $mismatchedInvoices === 0 ? 'PASS' : 'WARN';
         $rows[] = ['Invoice total vs item sum', $mismatchedInvoices, $status];
         $this->trackResult('Financial', $status === 'PASS', $status === 'WARN',
-            $status !== 'PASS' ? "{$mismatchedInvoices} invoices have total != sum of items" : null);
+            $status !== 'PASS' ? "{$mismatchedInvoices} invoices have total_amount != sum of items" : null);
 
         $mismatchedQuotations = DB::selectOne("\n            SELECT COUNT(*) as cnt FROM quotations q\n            WHERE q.tenant_id = {$tenantId}\n            AND q.total != (\n                SELECT COALESCE(SUM(qi.total), 0) FROM quotation_items qi WHERE qi.quotation_id = q.id\n            )\n        ")->cnt;
         $status = $mismatchedQuotations === 0 ? 'PASS' : 'WARN';

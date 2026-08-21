@@ -78,11 +78,16 @@ class InvoiceResource extends Resource
 
         // Apply the forCurrentUser scope for multi-tenant filtering
         return $query->forCurrentUser()->with([
+            'tenant',
             'user',
+            'user.userAddress',
             'centre',
             'payments' => function ($query) {
-                $query->where('status', PaymentStatus::PAID);
+                $query
+                    ->where('status', PaymentStatus::PAID)
+                    ->with(['user', 'media']);
             },
+            'invoiceItems.child',
             'user.children' => function ($query) {
                 $query->with('enrolments');
             },
@@ -334,17 +339,18 @@ class InvoiceResource extends Resource
                     })
                     ->sortable(),
 
-                TextColumn::make('total_amount')
+                TextColumn::make('subtotal_amount')
                     ->label('Subtotal')
                     ->money('MYR', 100)
                     ->sortable(),
 
-                TextColumn::make('total_discounts')
+                TextColumn::make('discount_amount')
                     ->label('Discounts')
                     ->money('MYR', 100)
                     ->sortable(),
 
-                TextColumn::make('total')
+                TextColumn::make('total_amount')
+                    ->label('Total')
                     ->money('MYR', 100)
                     ->sortable(),
 

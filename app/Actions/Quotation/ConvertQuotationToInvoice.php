@@ -25,9 +25,9 @@ class ConvertQuotationToInvoice
             'due_at' => now()->addDays(7),
             'status' => InvoiceStatus::PENDING->value,
             'total_items' => 0,
-            'total_discounts' => 0,
+            'subtotal_amount' => 0,
+            'discount_amount' => 0,
             'total_amount' => 0,
-            'total' => 0,
         ]);
 
         // Get selected quotation items

@@ -48,7 +48,7 @@ it('creates CHIP payment with pending status', function () {
         'tenant_id' => $this->tenant->id,
         'centre_id' => $this->centre->id,
         'user_id' => $this->user->id,
-        'total' => 50000, // RM 500
+        'total_amount' => 50000, // RM 500
         'status' => InvoiceStatus::PENDING,
     ]);
 
@@ -110,7 +110,7 @@ it('creates CHIP payment with user-defined allocation', function () {
         'tenant_id' => $this->tenant->id,
         'centre_id' => $this->centre->id,
         'user_id' => $this->user->id,
-        'total' => 30000,
+        'total_amount' => 30000,
         'status' => InvoiceStatus::PENDING,
     ]);
 
@@ -118,7 +118,7 @@ it('creates CHIP payment with user-defined allocation', function () {
         'tenant_id' => $this->tenant->id,
         'centre_id' => $this->centre->id,
         'user_id' => $this->user->id,
-        'total' => 20000,
+        'total_amount' => 20000,
         'status' => InvoiceStatus::PENDING,
     ]);
 
@@ -186,7 +186,7 @@ it('handles CHIP service failure gracefully', function () {
         'tenant_id' => $this->tenant->id,
         'centre_id' => $this->centre->id,
         'user_id' => $this->user->id,
-        'total' => 50000,
+        'total_amount' => 50000,
         'status' => InvoiceStatus::PENDING,
     ]);
 
@@ -226,7 +226,7 @@ it('throws exception when user has no current tenant', function () {
         'tenant_id' => $this->tenant->id,
         'centre_id' => $this->centre->id,
         'user_id' => $this->user->id,
-        'total' => 50000,
+        'total_amount' => 50000,
         'status' => InvoiceStatus::PENDING,
     ]);
 
